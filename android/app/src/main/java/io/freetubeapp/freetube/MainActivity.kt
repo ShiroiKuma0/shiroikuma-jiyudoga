@@ -1,10 +1,10 @@
 package io.freetubeapp.freetube
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -26,62 +26,83 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import io.freetubeapp.freetube.databinding.ActivityMainBinding
+import io.freetubeapp.freetube.helpers.Promise
+import io.freetubeapp.freetube.javascript.BotGuardJavascriptInterface
+import io.freetubeapp.freetube.javascript.FreeTubeJavaScriptInterface
+import io.freetubeapp.freetube.javascript.dispatchEvent
+import io.freetubeapp.freetube.webviews.BackgroundPlayWebView
+import io.freetubeapp.freetube.webviews.BotGuardWebView
 import org.json.JSONObject
-import java.io.Serializable
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
-import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.BlockingQueue
-import java.util.concurrent.ConcurrentHashMap.KeySetView
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 
-class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
+class MainActivity : AppCompatActivity() {
 
-  private lateinit var binding: ActivityMainBinding
-  private lateinit var permissionsListeners: MutableList<(Int, Array<String?>, IntArray) -> Unit>
-  private lateinit var activityResultListeners: MutableList<(ActivityResult?) -> Unit>
+  // region Keep Alive service
   private lateinit var keepAliveService: KeepAliveService
   private lateinit var keepAliveIntent: Intent
-  private var fullscreenView: View? = null
+  // endregion
+
+  // region JS interfaces
+  private lateinit var jsInterface: FreeTubeJavaScriptInterface
+  lateinit var bgJsInterface: BotGuardJavascriptInterface
+  // endregion
+
+  // region Bindings
+  private lateinit var binding: ActivityMainBinding
   lateinit var webView: BackgroundPlayWebView
-  lateinit var jsInterface: FreeTubeJavaScriptInterface
-  lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+  lateinit var bgWebView: BotGuardWebView
   lateinit var content: View
+  private var fullscreenView: View? = null
+  // endregion
+
+  // region Callbacks
+  private lateinit var activityResultListeners: MutableList<(ActivityResult?) -> Unit>
+  private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+  // endregion
+
+  // region State Information
   var consoleMessages: MutableList<JSONObject> = mutableListOf()
   var showSplashScreen: Boolean = true
   var darkMode: Boolean = false
   var paused: Boolean = false
   var isInAPrompt: Boolean = false
-  var pendingRequestBodies: MutableMap<String, String> = mutableMapOf()
+  // endregion
+
+  // region Thread Pool Executor
   /*
    * Gets the number of available cores
    * (not always the same as the maximum number of cores)
    */
-  private val NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors()
-
+  private val numberOfCores = Runtime.getRuntime().availableProcessors()
   // Instantiates the queue of Runnables as a LinkedBlockingQueue
   private val workQueue: BlockingQueue<Runnable> = LinkedBlockingQueue()
-
   // Sets the amount of time an idle thread waits before terminating
-  private val KEEP_ALIVE_TIME = 1
-
+  private val keepAliveTime = 1
   // Sets the Time Unit to seconds
-  private val KEEP_ALIVE_TIME_UNIT: TimeUnit = TimeUnit.SECONDS
-
+  private val keepAliveTimeUnit: TimeUnit = TimeUnit.SECONDS
   // Creates a thread pool manager
   var threadPoolExecutor = ThreadPoolExecutor(
-    NUMBER_OF_CORES,  // Initial pool size
-    NUMBER_OF_CORES,  // Max pool size
-    KEEP_ALIVE_TIME.toLong(),
-    KEEP_ALIVE_TIME_UNIT,
+    numberOfCores,  // Initial pool size
+    numberOfCores,  // Max pool size
+    keepAliveTime.toLong(),
+    keepAliveTimeUnit,
     workQueue
   )
+  // endregion
 
+  // region Overridden methods
+
+  @SuppressLint("SetJavaScriptEnabled")
   @Suppress("DEPRECATION")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -123,7 +144,7 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
 
     MediaControlsReceiver.notifyMediaSessionListeners = {
         action ->
-      webView.loadUrl(String.format("javascript: window.notifyMediaSessionListeners('%s')", action))
+      webView.dispatchEvent("media-$action")
     }
 
     // this keeps android from shutting off the app to conserve battery
@@ -138,9 +159,6 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
     windowInsetsController.systemBarsBehavior =
       WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-    // initialize the list of listeners for permissions handlers
-    permissionsListeners = arrayOf<(Int, Array<String?>, IntArray) -> Unit>().toMutableList()
-
     binding = ActivityMainBinding.inflate(layoutInflater)
     setContentView(binding.root)
     webView = binding.webView
@@ -149,10 +167,8 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
     // bind the back button to the web-view history
     onBackPressedDispatcher.addCallback {
       if (isInAPrompt) {
-        webView.post {
-          webView.loadUrl("javascript: window.dispatchEvent(new Event(\"exit-prompt\"))")
-          jsInterface.exitPromptMode()
-        }
+        webView.dispatchEvent("exit-prompt")
+        jsInterface.exitPromptMode()
       } else {
         if (webView.canGoBack()) {
           webView.goBack()
@@ -184,7 +200,7 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
         messageData.put("sourceId", consoleMessage.sourceId())
         messageData.put("lineNumber", consoleMessage.lineNumber())
         consoleMessages.add(messageData)
-        webView.loadUrl("javascript: var event = new Event(\"console-message\"); event.data = JSON.parse(${btoa(messageData.toString())}); window.dispatchEvent(event)")
+        webView.dispatchEvent("console-message", "data", messageData)
         return super.onConsoleMessage(consoleMessage);
       }
 
@@ -195,8 +211,7 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
         this@MainActivity.binding.root.addView(view)
         webView.visibility = View.GONE
         this@MainActivity.binding.root.fitsSystemWindows = false
-
-        webView.loadUrl("javascript: window.dispatchEvent(new Event(\"start-fullscreen\"))")
+        webView.dispatchEvent("start-fullscreen")
       }
 
       override fun onHideCustomView() {
@@ -205,15 +220,18 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
         fullscreenView = null
         windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
         this@MainActivity.binding.root.fitsSystemWindows = true
-
-        webView.loadUrl("javascript: window.dispatchEvent(new Event(\"end-fullscreen\"))")
+        webView.dispatchEvent("end-fullscreen")
       }
     }
     webView.webViewClient = object: WebViewClient() {
+
       override fun shouldInterceptRequest(
         view: WebView?,
         request: WebResourceRequest?
       ): WebResourceResponse? {
+        // TODO refactor this to work for video streaming
+        /*
+        // LEFTOVER iOS WORKAROUND CODE
         if (request!!.requestHeaders.containsKey("x-user-agent")) {
           with (URL(request!!.url.toString()).openConnection() as HttpURLConnection) {
             requestMethod = request.method
@@ -274,6 +292,7 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
             return WebResourceResponse(this.contentType, this.contentEncoding, inputStream!!)
           }
         }
+        */
         return super.shouldInterceptRequest(view, request)
       }
       override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -284,7 +303,7 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
         val regex = """^https?:\/\/((www\.)?youtube\.com(\/embed)?|youtu\.be)\/.*$"""
 
         if (Regex(regex).containsMatchIn(request!!.url!!.toString())) {
-          webView.loadUrl("javascript: window.notifyYoutubeLinkHandlers(\"${request!!.url}\")")
+          webView.dispatchEvent("youtube-link", "link", request!!.url!!.toString())
           return true
         }
         // send all requests to a real web browser
@@ -306,44 +325,11 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
     } else {
       webView.loadUrl("file:///android_asset/index.html")
     }
-  }
 
-  fun listenForPermissionsCallbacks(listener: (Int, Array<String?>, IntArray) -> Unit) {
-    permissionsListeners.add(listener)
-  }
-  fun listenForActivityResults(listener: (ActivityResult?) -> Unit) {
-    activityResultListeners.add(listener)
-  }
-
-  fun consoleError(message: String) {
-    consoleLog(message, "error")
-  }
-
-  fun consoleWarn(message: String) {
-    consoleLog(message, "warn")
-  }
-
-  /**
-   * @param message the message to log
-   * @param level used in js as "console.$level" (ex: log, warn, error)
-   */
-  fun consoleLog(message: String, level: String = "log") {
-    webView.post {
-      webView.loadUrl("javascript: console.$level(${btoa(message)})")
-    }
-  }
-
-  /**
-   * encodes a string message for transport across the java bridge
-   * @param message the message to be encoded
-   */
-  fun btoa(message: String): String {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val encoder = Base64.getEncoder()
-      "atob(\"${encoder.encodeToString(message.encodeToByteArray())}\")"
-    } else {
-      "`${message}`"
-    }
+    bgWebView = binding.botGuardWebView
+    bgJsInterface = BotGuardJavascriptInterface(this)
+    bgWebView.addJavascriptInterface(bgJsInterface, "Android")
+    bgWebView.settings.javaScriptEnabled = true
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
@@ -351,28 +337,13 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
     when (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
       Configuration.UI_MODE_NIGHT_NO -> {
         darkMode = false
-        webView.post {
-          webView.loadUrl("javascript: window.dispatchEvent(new Event(\"enabled-light-mode\"))")
-        }
+        webView.dispatchEvent("enabled-light-mode")
       }
       Configuration.UI_MODE_NIGHT_YES -> {
         darkMode = true
-        webView.post {
-          webView.loadUrl("javascript: window.dispatchEvent(new Event(\"enabled-dark-mode\"))")
-        }
+        webView.dispatchEvent("enabled-dark-mode")
       }
     }
-  }
-
-  override fun onRequestPermissionsResult(
-    requestCode: Int, permissions: Array<String?>,
-    grantResults: IntArray
-  ) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    permissionsListeners.forEach {
-      it(requestCode, permissions, grantResults)
-    }
-    permissionsListeners.clear()
   }
 
   /**
@@ -389,20 +360,20 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
       } else {
         uri
       }
-      webView.loadUrl("javascript: window.notifyYoutubeLinkHandlers(\"${url}\")")
+      webView.dispatchEvent("youtube-link", "link", url.toString())
     }
   }
 
   override fun onPause() {
     super.onPause()
     paused = true
-    webView.loadUrl("javascript: window.dispatchEvent(new Event(\"app-pause\"))")
+    webView.dispatchEvent("app-pause")
   }
 
   override fun onResume() {
     super.onResume()
     paused = false
-    webView.loadUrl("javascript: window.dispatchEvent(new Event(\"app-resume\"))")
+    webView.dispatchEvent("app-resume")
   }
 
   override fun onDestroy() {
@@ -414,5 +385,26 @@ class MainActivity : AppCompatActivity(), OnRequestPermissionsResultCallback {
     webView.destroy()
     // call `super`
     super.onDestroy()
+  }
+
+  // endregion
+
+  private fun listenForActivityResults(listener: (ActivityResult?) -> Unit) {
+    activityResultListeners.add(listener)
+  }
+
+  fun launchIntent(intent: Intent): Promise<ActivityResult?, Exception> {
+    return Promise(threadPoolExecutor, {
+        resolve,
+        reject ->
+      try {
+        listenForActivityResults {
+          resolve(it)
+        }
+        activityResultLauncher.launch(intent)
+      } catch (exception: Exception) {
+        reject(exception)
+      }
+    })
   }
 }

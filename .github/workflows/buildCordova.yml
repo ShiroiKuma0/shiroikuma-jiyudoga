@@ -64,7 +64,6 @@ jobs:
         field: name
         value: ${{ steps.appId.outputs.result }}
 
-
     - name: ⬆ Update package.json product name
       uses: jossef/action-set-json-field@v2.1
       with:
@@ -90,13 +89,15 @@ jobs:
         docker push ghcr.io/marmadilemanteater/freetubecordova-nightly:latest
 
     - name: 📡 Upload PWA Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.6.0
       with:
         name: freetube-${{ steps.versionNumber.outputs.result }}-PWA
         path: dist/web
 
     - name: 📦 Pack for 📱Android
-      run: yarn pack:android:dev
+      run: |
+        yarn pack:botGuardScript:android
+        yarn pack:android:dev
 
     - name: 🦴 Fetch keystore from secrets
       run: |
@@ -137,7 +138,7 @@ jobs:
         cp android/app/build/outputs/apk/debug/app-debug.apk dist/freetube-${{ steps.versionNumber.outputs.result }}-Android.apk
 
     - name: 📡 Upload APK Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.6.0
       with:
         name: freetube-${{ steps.versionNumber.outputs.result }}-Android.apk
         path: dist/freetube-${{ steps.versionNumber.outputs.result }}-Android.apk

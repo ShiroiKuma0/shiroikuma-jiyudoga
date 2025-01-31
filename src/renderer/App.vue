@@ -17,11 +17,18 @@
     />
     <ft-prompt
       v-if="showReleaseNotes"
-      :label="changeLogTitle"
       theme="readable-width"
       :fullscreen="true"
       @click="showReleaseNotes = !showReleaseNotes"
     >
+      <template #label="{ labelId }">
+        <h1
+          :id="labelId"
+          class="changeLogTitle"
+        >
+          {{ changeLogTitle }}
+        </h1>
+      </template>
       <span
         class="changeLogText"
         lang="en"
@@ -50,6 +57,9 @@
     />
     <ft-search-filters
       v-if="showSearchFilters"
+    />
+    <ft-keyboard-shortcut-prompt
+      v-if="isKeyboardShortcutPromptShown"
     />
     <ft-playlist-add-video-prompt
       v-if="showAddToPlaylistPrompt"
@@ -101,7 +111,6 @@
       >
         <!-- <keep-alive> -->
         <RouterView
-          ref="router"
           class="routerView"
         />
         <!-- </keep-alive> -->

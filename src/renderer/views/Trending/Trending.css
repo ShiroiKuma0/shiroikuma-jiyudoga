@@ -6,7 +6,6 @@
 
 .trendingInfoTabs {
   inline-size: 100%;
-  display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   margin-block: -3px 10px;
   color: var(--tertiary-text-color);
@@ -23,13 +22,17 @@
 .tab {
   text-align: center;
   padding: 15px;
-  font-size: 15px;
+  font-size: 1.1em;
   cursor: pointer;
   align-self: flex-end;
 }
 
 .tab:hover {
   font-weight: bold;
+}
+
+.trendingIcon {
+  color: var(--primary-color);
 }
 
 @media only screen and (width <= 680px) {

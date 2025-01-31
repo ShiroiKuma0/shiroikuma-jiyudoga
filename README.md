@@ -73,6 +73,8 @@ The first build with a green check mark is the latest build. You will need to ha
 ```bash
 # 📦 Packs the project using `webpack.android.config.js`
 yarn pack:android
+# 🤖 Packs the botguard script
+yarn pack:botGuardScript:android
 # 🚧 for development
 yarn pack:android:dev
 ```
@@ -128,11 +130,7 @@ If you ever have any questions, feel free to make an issue here on GitHub.
 ## Upstream Donations
 If you enjoy using FreeTube Android, you're welcome to leave a donation using the following methods to support upstream development and maintenance.  
 
-* [FreeTube on Liberapay](https://liberapay.com/FreeTube)
-
 * Bitcoin Address: `1Lih7Ho5gnxb1CwPD4o59ss78pwo2T91eS`
-
-* Monero Address: `48WyAPdjwc6VokeXACxSZCFeKEXBiYPV6GjfvBsfg4CrUJ95LLCQSfpM9pvNKy5GE5H4hNaw99P8RZyzmaU9kb1pD7kzhCB`
 
 While your donations are much appreciated, only donate if you really want to.  Donations are used for keeping the website up and running and eventual code signing costs.
 

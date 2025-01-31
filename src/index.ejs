@@ -7,6 +7,9 @@
       <script>
         window.ofetch = window.fetch
         window.fetch = async (...args) => {
+
+          // TODO refactor this to work for video streaming
+          /*
           const requestId = crypto.randomUUID()
           let body
           for (const arg of args) {
@@ -15,6 +18,7 @@
                 body = arg.body
               }
               if ('headers' in arg) {
+                // TODO refactor this code to help move away from file uris
                 if ('append' in arg.headers) {
                   if (arg.headers.get('x-youtube-client-name') == 5) {
                     arg.headers.append('x-fta-request-id', requestId)
@@ -30,11 +34,10 @@
                 }
               }
             }
-          }
+          }*/
 
           if (typeof args[0] === 'string' && args[0].startsWith('file://')) {
             // forward to xml http request
-            /** @type {Response} */
             const response = await new Promise((resolve, reject) => {
               const req = new XMLHttpRequest()
               req.responseType = 'arraybuffer'
@@ -50,48 +53,6 @@
             return response
           }
           return await window.ofetch(...args)
-        }
-        window.mediaSessionListeners = window.mediaSessionListeners || {}
-        window.addMediaSessionEventListener = function (eventName, listener) {
-          if (!(eventName in window.mediaSessionListeners)) {
-            window.mediaSessionListeners[eventName] = [];
-          }
-          window.mediaSessionListeners[eventName].push(listener)
-        }
-        window.notifyMediaSessionListeners = function (eventName, ...message) {
-          if ((eventName in window.mediaSessionListeners)) {
-            window.mediaSessionListeners[eventName].forEach(listener => listener(...message));
-          }
-        }
-        window.clearAllMediaSessionEventListeners = function () {
-          window.mediaSessionListeners = {}
-        }
-        window.awaitAsyncResult = function (id, callbacks = {}) {
-          return new Promise((resolve, reject) => {
-            const interval = setInterval(async () => {
-              if (id in window) {
-                clearInterval(interval)
-                try {
-                  if ('callbacks' in window[id]) {
-                    Object.assign(window[id].callbacks, callbacks)
-                  }
-                  const result = await window[id].promise
-                  resolve(Android.getSyncMessage(id))
-                } catch (ex) {
-                  reject(Android.getSyncMessage(id))
-                }
-              }
-            }, 1)
-          })
-        }
-        window.youtubeLinkHandlers = window.youtubeLinkHandlers || []
-        window.addYoutubeLinkHandler = function (handler) {
-          const i = window.youtubeLinkHandlers.length
-          window.youtubeLinkHandlers.push(handler)
-          return i
-        }
-        window.notifyYoutubeLinkHandlers = function (message) {
-          window.youtubeLinkHandlers.forEach((handler) => handler(message))
         }
       </script>
     <% } %>
