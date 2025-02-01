@@ -77,7 +77,7 @@ const { writeFile, rm, readFile } = require('fs/promises')
     // message is in given arguments (a file was passed that needs to be read)
     givenArguments.message = await readFile(givenArguments.message)
   }
-  const commitMessage = `**Release ${buildNumber}**
+  const commitMessage = `**Release ${versionNumber}**
 
   ${givenArguments.message}
 
