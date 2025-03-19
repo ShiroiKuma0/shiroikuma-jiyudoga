@@ -11,7 +11,7 @@ import {
   getChannelPlaylistId,
   getRelativeTimeFromDate,
 } from '../utils'
-import { generatePOTokenFromVisitorData } from '../android'
+import { generatePOTokenFromVisitorData, generatePOTokens } from '../android'
 
 const TRACKING_PARAM_NAMES = [
   'utm_source',
@@ -221,14 +221,13 @@ export async function getLocalVideoInfo(id) {
       throw error
     }
   } else if (process.env.IS_ANDROID) {
-    try {
-      poToken = await generatePOTokenFromVisitorData(webInnertube.session.context.client.visitorData)
-      webInnertube.session.po_token = poToken
-      webInnertube.session.player.po_token = poToken
-    } catch (error) {
-      console.error('Local API, poToken generation failed', error)
-      throw error
-    }
+    ({ contentPoToken, sessionPoToken } = await generatePOTokens(
+      id,
+      webInnertube.session.context.client.visitorData,
+      JSON.stringify(webInnertube.session.context)
+    ))
+    webInnertube.session.po_token = contentPoToken
+    webInnertube.session.player.po_token = sessionPoToken
   }
 
   const info = await webInnertube.getInfo(id)
@@ -300,11 +299,21 @@ export async function getLocalVideoInfo(id) {
       if (info.streaming_data.dash_manifest_url) {
         let url = info.streaming_data.dash_manifest_url
 
+<<<<<<< HEAD
         if (url.includes('?')) {
           url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
         } else {
           url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
         }
+=======
+      if (url.includes('?')) {
+        url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
+      } else {
+        url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
+      }
+
+        info.streaming_data.dash_manifest_url = url
+>>>>>>> 99fa698e (Merge commit '250ec7c4f50124e7c444f0ffbacb00f85186bd62' into development)
       }
     }
   } catch (ex) {

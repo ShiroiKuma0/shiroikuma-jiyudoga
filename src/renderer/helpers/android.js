@@ -353,3 +353,93 @@ export function getConsoleLogs() {
 export function generatePOTokenFromVisitorData(visitorData) {
   return awaitAsyncResult(android.generatePOTokenFromVisitorData(visitorData))
 }
+
+export async function generatePOTokens(videoId, visitorData, sessionContext) {
+  const id = android.generatePOTokens(videoId, visitorData, sessionContext)
+  const data = JSON.parse(await awaitAsyncResult(id))
+  console.log(data)
+  return data
+}
+
+export async function selectDataDirectory(copyFiles = false) {
+  let uri = null
+  try {
+    const directory = await requestDirectory()
+    const files = await initalizeDatabasesInDirectory(directory)
+    if (files.length > 0) {
+      const locationData = await readFile('data://', 'data-location.json')
+      let locationInfo = { directory: 'data://', files: [] }
+      let hasOldLocation = false
+      let locationMap = {}
+      if (locationData !== '') {
+        locationInfo = JSON.parse(locationData)
+        locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
+        hasOldLocation = locationInfo.files.length !== 0
+      }
+      if (copyFiles) {
+        for (let i = 0; i < files.length; i++) {
+          const data = hasOldLocation
+            ? await readFile(locationMap[files[i].fileName], '')
+            : await readFile('data://', files[i].fileName)
+          await writeFile(files[i].uri, '', data)
+        }
+      }
+      if (hasOldLocation) {
+        // ?? revoke permission for the old location upon move completion
+        android.revokePermissionForTree(locationInfo.directory)
+      }
+      // update the data files
+      await writeFile('data://', 'data-location.json', JSON.stringify({
+        directory: directory.uri,
+        files
+      }))
+      uri = directory.uri
+      showToast(t('Data Settings.Your data directory has been moved successfully'))
+      if (!copyFiles) {
+        // the application must restart in order to refresh the dbs
+        android.restart()
+      }
+    }
+  } catch (exception) {
+    showToast(t('Data Settings.Error moving data directory'))
+    console.error(exception)
+  }
+  return uri
+}
+
+export async function resetDataDirectory(copyFiles = false) {
+  let uri = null
+  try {
+    const locationData = await readFile('data://', 'data-location.json')
+    let locationInfo = { directory: 'data://', files: [] }
+    let locationMap = []
+    if (locationData !== '') {
+      locationInfo = JSON.parse(locationData)
+      locationMap = locationInfo.files.map((file) => { return [file.fileName, file.uri] })
+    }
+    if (locationMap.length !== 0) {
+      if (copyFiles) {
+        for (const [key, value] of locationMap) {
+          await writeFile('data://', key, await readFile(value))
+        }
+      }
+      if (locationInfo.files.length !== 0) {
+        // ?? revoke permission for the old location upon completing the reset
+        android.revokePermissionForTree(locationInfo.directory)
+      }
+      // clear out data-location.json
+      await writeFile('data://', 'data-location.json', '')
+      uri = android.getDirectory('data://')
+      showToast(t('Data Settings.Your data directory has been moved successfully'))
+      if (!copyFiles) {
+        // the application must restart in order to refresh the dbs
+        android.restart()
+      }
+    } else {
+      showToast(t('Data Settings.Nothing to change'))
+    }
+  } catch (exception) {
+    showToast(exception)
+  }
+  return uri
+}

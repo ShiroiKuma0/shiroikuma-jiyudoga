@@ -5,8 +5,13 @@ import io.freetubeapp.freetube.MainActivity
 
 class BotGuardJavascriptInterface(main: MainActivity) {
   private var poToken: String? = null
-  private var context: MainActivity = main
   private var tokenListeners: MutableList<(String) -> Unit> = mutableListOf()
+  val pendingRequestBodies: MutableMap<String, String> = mutableMapOf()
+
+  @JavascriptInterface
+  fun queueBody(id: String, body: String) {
+    pendingRequestBodies[id] = body
+  }
 
   @JavascriptInterface
   fun returnToken(token: String) {

@@ -678,16 +678,29 @@ class FreeTubeJavaScriptInterface {
 
   // region Data Extraction
 
+  private fun getBotGuardScript(videoId: String, visitorData: String, sessionContext: String, includeDebugMessage: Boolean = true): String {
+    val script = context.assets.readText("botGuardScript.js")
+    val functionName = script.split("export{")[1].split(" as default};")[0]
+    val exportSection = "export{${functionName} as default};"
+    val then = if (includeDebugMessage) {
+      "(TOKEN_RESULT) => { console.log(`Your potoken is \${JSON.stringify(TOKEN_RESULT)}`); Android.returnToken(JSON.stringify(TOKEN_RESULT)) }"
+    } else {
+      "(TOKEN_RESULT) => { Android.returnToken(TOKEN_RESULT) }"
+    }
+    val bakedScript =
+      script.replace(exportSection, "; ${functionName}(\"$videoId\",\"$visitorData\", $sessionContext).then($then)")
+    return bakedScript
+  }
+
   @JavascriptInterface
-  fun generatePOTokenFromVisitorData(visitorData: String): String {
+  fun generatePOTokens(videoId: String, visitorData: String, sessionContext: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
-      reject ->
-        val bgWv = context.bgWebView
-        val script = context.assets.readText("botGuardScript.js")
+      reject
+      ->
         try {
-          val functionName = script.split("export{")[1].split(" as default};")[0]
-          val exportSection = "export{${functionName} as default};"
+          val bgScript = getBotGuardScript(videoId, visitorData, sessionContext)
+          val bgWv = context.bgWebView
           context.bgJsInterface.onReturnToken {
             run {
               context.runOnUiThread {
@@ -696,12 +709,30 @@ class FreeTubeJavaScriptInterface {
               }
             }
           }
-          val bakedScript =
-            script.replace(exportSection, "; ${functionName}(\"${visitorData}\").then((TOKEN_RESULT) => { console.log(`Your potoken is \${TOKEN_RESULT}`) ; Android.returnToken(TOKEN_RESULT) })")
           context.runOnUiThread {
             bgWv.loadDataWithBaseURL(
-              "https://www.youtube.com",
-              "<script>${bakedScript}</script>",
+              "https://www.youtube.com/",
+              "<script>\n" +
+                "window.ofetch = window.fetch\n" +
+                "window.fetch = async (url, data) => {\n" +
+                "  if (url.startsWith('https://www.google.com/')) {\n" +
+                "    return new Promise((resolve, _) => {" +
+                "    const script = document.createElement('script')\n" +
+                "    script.src = url\n" +
+                "    script.async = true\n" +
+                "    document.body.appendChild(script)\n" +
+                "     script.addEventListener('load', () => {\n" +
+                "       resolve({ text: () => '() => {}' })\n" +
+                "     })\n" +
+                "    })\n" +
+                "  }\n" +
+                "  const id = crypto.randomUUID()\n" +
+                "  if (data && 'body' in data) {" +
+                "    Android.queueBody(id, data.body)\n" +
+                "    data.headers['x-fta-request-id'] = id\n" +
+                "  }" +
+                "  return await window.ofetch(url, data)\n" +
+                "}</script><script>${bgScript}</script>",
               "text/html",
               "utf-8",
               null
