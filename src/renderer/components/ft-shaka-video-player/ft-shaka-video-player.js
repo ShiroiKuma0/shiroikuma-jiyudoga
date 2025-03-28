@@ -70,7 +70,7 @@ export default defineComponent({
     },
     manifestSrc: {
       type: String,
-      required: true
+      default: null
     },
     manifestMimeType: {
       type: String,
