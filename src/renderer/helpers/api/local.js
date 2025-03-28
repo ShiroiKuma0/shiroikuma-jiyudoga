@@ -213,7 +213,15 @@ export async function getLocalVideoInfo(id) {
         webInnertube.session.context.client.visitorData,
         JSON.stringify(webInnertube.session.context)
       ))
+      ({ contentPoToken, sessionPoToken } = await ipcRenderer.invoke(
+        IpcChannels.GENERATE_PO_TOKENS,
+        id,
+        webInnertube.session.context.client.visitorData,
+        JSON.stringify(webInnertube.session.context)
+      ))
 
+      webInnertube.session.po_token = contentPoToken
+      webInnertube.session.player.po_token = sessionPoToken
       webInnertube.session.po_token = contentPoToken
       webInnertube.session.player.po_token = sessionPoToken
     } catch (error) {
@@ -288,32 +296,17 @@ export async function getLocalVideoInfo(id) {
 
   try {
     if (info.streaming_data) {
-    decipherFormats(info.streaming_data.formats, webInnertube.session.player)
-
-    const firstFormat = info.streaming_data.adaptive_formats[0]
-
-    if (firstFormat.url || firstFormat.signature_cipher || firstFormat.cipher) {
+      decipherFormats(info.streaming_data.formats, webInnertube.session.player)
       decipherFormats(info.streaming_data.adaptive_formats, webInnertube.session.player)
-    }
 
       if (info.streaming_data.dash_manifest_url) {
-        let url = info.streaming_data.dash_manifest_url
+      let url = info.streaming_data.dash_manifest_url
 
-<<<<<<< HEAD
         if (url.includes('?')) {
           url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
         } else {
           url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
         }
-=======
-      if (url.includes('?')) {
-        url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
-      } else {
-        url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
-      }
-
-        info.streaming_data.dash_manifest_url = url
->>>>>>> 99fa698e (Merge commit '250ec7c4f50124e7c444f0ffbacb00f85186bd62' into development)
       }
     }
   } catch (ex) {
