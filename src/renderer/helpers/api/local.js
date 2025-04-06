@@ -64,13 +64,14 @@ async function createInnertube({ withPlayer = false, location = undefined, safet
   })
 }
 
+/** @type {Innertube | null} */
 let searchSuggestionsSession = null
 
 export async function getLocalSearchSuggestions(query) {
+  // The search suggestions endpoint does not like search queries larger than SEARCH_CHAR_LIMIT
+  // so return an empty array instead
   if (query.length > SEARCH_CHAR_LIMIT) {
-    // There's an event handler on the search input so avoid displaying an exception
-    console.error(`Query is over ${SEARCH_CHAR_LIMIT} characters`)
-    return
+    return []
   }
 
   // reuse innertube instance to keep the search suggestions snappy
@@ -213,15 +214,7 @@ export async function getLocalVideoInfo(id) {
         webInnertube.session.context.client.visitorData,
         JSON.stringify(webInnertube.session.context)
       ))
-      ({ contentPoToken, sessionPoToken } = await ipcRenderer.invoke(
-        IpcChannels.GENERATE_PO_TOKENS,
-        id,
-        webInnertube.session.context.client.visitorData,
-        JSON.stringify(webInnertube.session.context)
-      ))
 
-      webInnertube.session.po_token = contentPoToken
-      webInnertube.session.player.po_token = sessionPoToken
       webInnertube.session.po_token = contentPoToken
       webInnertube.session.player.po_token = sessionPoToken
     } catch (error) {
@@ -296,17 +289,24 @@ export async function getLocalVideoInfo(id) {
 
   try {
     if (info.streaming_data) {
-      decipherFormats(info.streaming_data.formats, webInnertube.session.player)
+    decipherFormats(info.streaming_data.formats, webInnertube.session.player)
+
+    const firstFormat = info.streaming_data.adaptive_formats[0]
+
+    if (firstFormat.url || firstFormat.signature_cipher || firstFormat.cipher) {
       decipherFormats(info.streaming_data.adaptive_formats, webInnertube.session.player)
+    }
 
       if (info.streaming_data.dash_manifest_url) {
-      let url = info.streaming_data.dash_manifest_url
+        let url = info.streaming_data.dash_manifest_url
 
-        if (url.includes('?')) {
-          url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
-        } else {
-          url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
-        }
+      if (url.includes('?')) {
+        url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
+      } else {
+        url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
+      }
+
+        info.streaming_data.dash_manifest_url = url
       }
     }
   } catch (ex) {
