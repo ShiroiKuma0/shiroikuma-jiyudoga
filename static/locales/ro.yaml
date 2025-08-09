@@ -208,6 +208,8 @@ History:
   Search bar placeholder: Căutare în istoric
   Empty Search Message: Nu există videoclipuri în această listă de redare care să corespundă căutării dvs
   Case Sensitive Search: ­Căutare sensibilă la majuscule
+  DateOldestHistory: Începând cu primul vizionat
+  DateNewestHistory: Începând cu ultimul vizionat
 Settings:
   # On Settings Page
   Settings: 'Setări'
@@ -454,7 +456,6 @@ Settings:
       Tooltip: Automat = Salvează la fiecare ieșire de pe pagina video, când video-ul se termină și când apare o eroare (de exemplu, limitare de viteză sau sesiune de vizionare expirată). Semi-automat = Ca și Automat, cu excepția ieșirii de pe pagina video și permite salvarea progresului manual printr-un buton numit "Salvează progresul vizionat", aflat sub player-ul video.
   Subscription Settings:
     Subscription Settings: 'Abonament'
-    Hide Videos on Watch: 'Ascunde videoclipurile la vizionare'
     Fetch Feeds from RSS: 'Preluare de fluxuri din RSS'
     Fetch Automatically: Preluați feedul automat
     Confirm Before Unsubscribing: Confirmă înainte de dezabonare
@@ -523,6 +524,7 @@ Settings:
     Hide Comments: Ascunde comentariile
     Hide Live Streams: Ascunde stream-urile live
     Hide Sharing Actions: Ascunde butoanele de sharing
+    Hide Videos on Watch: 'Ascunde videoclipurile la vizionare'
     Hide Chapters: Ascundeți capitolele
     Display Titles Without Excessive Capitalisation: Afișați titlurile fără majuscule și semne de punctuație excesive
     Sections:
@@ -596,6 +598,7 @@ Settings:
     Parental Control Settings: Control parental
     Show Family Friendly Only: Arata numai conținut family friendly
     Hide Search Bar: Ascunde bara de căutare
+    Hide Uploader on Watch page: Ascunde autorul pe pagina de vizionare
   Password Dialog:
     Password: Parolă
     Enter Password To Unlock: Introduceți parola pentru a debloca setările
@@ -693,7 +696,7 @@ Channel:
     Videos: 'Videoclipuri'
     This channel does not currently have any videos: 'Acest canal nu are în prezent niciun videoclip'
     Sort Types:
-      Newest: 'Cele mai nou'
+      Newest: 'Cele mai noi'
       Oldest: 'Cele mai vechi'
       Most Popular: 'Cele mai populare'
   Playlists:
@@ -834,7 +837,7 @@ Video:
       CodecsVideoAudioNoItags: 'Codecuri: {videoCodec} / {audioCodec}'
       Stats: Statistici
       Video ID: 'ID videoclip: {videoId}'
-      Media Formats: 'Formate media: {formate}'
+      Media Formats: 'Formate media: {formats}'
       Bitrate: 'Rată de biți: {bitrate} kbps'
       Volume: 'Volum: {volumePercentage}%'
       Bandwidth: 'Lățime de bandă: {bandwidth} kbps'
@@ -918,8 +921,8 @@ Comments:
   There are no comments available for this video: 'Nu există comentarii disponibile pentru acest videoclip'
   Load More Comments: 'Încărcați mai multe comentarii'
   Show More Replies: Afișați mai multe răspunsuri
-  Newest first: Începând cu cele mai noi
-  Top comments: Cele mai bune comentarii
+  Newest first: Cele mai noi primele
+  Top comments: Cele mai bune
   And others: și altele
   From {channelName}: de la {channelName}
   Pinned by: Lipit de
@@ -986,6 +989,7 @@ Tooltips:
     Hide Channels: Introduceți un ID de canal pentru a ascunde toate videoclipurile, listele de redare și canalul însuși de la apariția în căutare, tendințe, cele mai populare și recomandate. ID-ul canalului introdus trebuie să fie o potrivire completă și este sensibil la majuscule și minuscule.
     Hide Subscriptions Live: Această setare este înlocuită de setarea "{appWideSetting}” la nivel de aplicație, în secțiunea „{subsection}” din „{settingsSection}”
     Hide Videos and Playlists Containing Text: Introduceți un cuvânt, un fragment de cuvânt sau o frază (fără a ține cont de majuscule) pentru a ascunde toate videoclipurile și listele de redare ale căror titluri originale conțin acest cuvânt în întregul FreeTube, excluzând doar Istoric, Listele dvs. de redare și videoclipurile din listele de redare.
+    Hide Videos on Watch: Ascunde videoclipurile vizionate din secțiunile Videoclipuri, Shorts și Live de pe paginile Abonamente și Canal. Aceasta nu afectează fila Acasă de pe paginile de canal.
   Experimental Settings:
     Replace HTTP Cache: Dezactivează memoria cache HTTP bazată pe disc Electron și activează un cache de imagini personalizat în memorie. Va duce la o utilizare crescută a memoriei RAM.
   SponsorBlock Settings:
@@ -1093,6 +1097,8 @@ KeyboardShortcutPrompt:
   Volume Down: scăderea volumului
   Home: Treci la începutul videoclipului
   End: Treci la finalul videoclipului
+  Skip to Next Video: Treci la următorul videoclip din playlist sau la următorul videoclip recomandat
+  Skip to Previous Video: Treci la videoclipul anterior din playlist
 Moments Ago: acum câteva momente
 Autoplay Interruption Timer: Redarea automată anulată din cauza a {autoplayInterruptionIntervalHours} ore de inactivitate
 shortcutLabelSeparator: ｜
@@ -1113,7 +1119,7 @@ Keys:
 checkmark: ✓
 Yes, Delete: da, șterge
 Yes, Open Link: Da, Link deschis
-Display Label: '{label}: {valoare}'
+Display Label: '{label}: {value}'
 KeyboardShortcutTemplate: '{label} ({shortcut})'
 Yes, Restart: Da, repornire
 shortcutJoinOperator: +

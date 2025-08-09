@@ -209,6 +209,8 @@ History:
   Search bar placeholder: Otsi ajaloost
   Empty Search Message: Sinu ajaloos pole sinu otsingule vastavaid videosid
   Case Sensitive Search: Tõstutundlik otsing
+  DateOldestHistory: Esmalt varemvaadatu
+  DateNewestHistory: Esmalt hiljemvaadatu
 Settings:
   # On Settings Page
   Settings: 'Seadistused'
@@ -455,7 +457,6 @@ Settings:
       Tooltip: Automaatne = Kui video lõppes või tekkis viga (nt tehnilise piirangu või vaatamissessiooni aegumisel), siis salvesta. Poolautomaatne = Sama, nagu automaatne, välja arvatud videovaatest väljumisel ning lisaks saad käsitsi salvestamiseks kasutada videoesitaja all asuvat nuppu „Salvesta vaatamise järg“.
   Subscription Settings:
     Subscription Settings: 'Tellimused'
-    Hide Videos on Watch: 'Vaatamisel peida videod'
     Fetch Feeds from RSS: 'Laadi RSS-uudisvood'
     Fetch Automatically: Laadi tellimuste voog automaatselt
     Confirm Before Unsubscribing: Väldi ekslikku ja juhuslikku tellimusest loobumist
@@ -513,6 +514,7 @@ Settings:
     Hide Comments: Peida kommentaarid
     Hide Live Streams: Peida otseülekanded
     Hide Sharing Actions: Peida jagamisega seotud toimingud
+    Hide Videos on Watch: 'Vaatamisel peida videod'
     Hide Upcoming Premieres: Peida tulevased esilinastused
     Hide Chapters: Peida peatükid
     Hide Channels: Peida kanalites leiduvad videod
@@ -597,6 +599,7 @@ Settings:
     Hide Unsubscribe Button: Peida tellimuse tühistamise nupp
     Show Family Friendly Only: Näita ainult peresõbralikku sisu
     Hide Search Bar: Peida otsinguriba
+    Hide Uploader on Watch page: Peida üleslaadija videovaate lehelt
   Experimental Settings:
     Experimental Settings: Katsed
     Warning: Tegemist on katseliste seadistustega ja sisselülitamisel võivad põhjustada rakenduse kokkujooksmist. Kindlasti ära unusta oma andmete varundamist. Jätka omal vastutusel!
@@ -847,7 +850,7 @@ Video:
     You appear to be offline: Sa ei tundu olema võrgus.
     Autoplay is off: Automaatne esitamine on kasutusel
     Autoplay is on: Automaatne esitamine pole kasutusel
-  IP block: YouTube on blokeerinud sinu nutiseadme IP-aadressilt videote vaatamise. Palun kasuta mõnda muud VPN-teenust või puhverserverit.
+  IP block: YouTube on blokeerinud sinu nutiseadme IP-aadressilt videote vaatamise. Palun kasuta mõnda muud lahendust, nagu VPN-teenust või puhverserverit.
   MembersOnly: Kuna vajalik on sisselogimine Google'i kontoga ja tasuline liikmelisus üleslaadija kanalis, siis ainult liikmetele mõeldud videoid ei saa FreeTube'is vaadata.
   AgeRestricted: Kuna vajalik on sisselogimine Google'i kontoga, kus vanus on kontrollitud, siis vanusepiiranguga videoid ei saa FreeTube'is vaadata.
   Unlisted: Registriväline
@@ -979,6 +982,7 @@ Tooltips:
     Hide Channels: Sisesta kanali tunnus, et kõik videod, esitusloendid ja kanal ise ei oleks nähtav otsingus, soovitatavate videote, populaarsete videote ja populaarsust koguvate videote vaates. Sisestatud kanali tunnus peab otsingule vastama täpselt ja on tõstutundlik.
     Hide Subscriptions Live: Selle seadistuse tühistab rakenduseülene „{appWideSetting}“ seadistus „{subsection}“/„{settingsSection}“
     Hide Videos and Playlists Containing Text: Sisesta sõna, sõnaosa või fraas (tõstutundetuna), mille alusel peidetakse läbivalt FreeTube'is kõik videod või esitusloendid, kus see leidub algses pealkirjas. Peitmine ei toimi ajaloos, sinu loodud esitusloendites ja esitusloendi sees olevate videote puhul.
+    Hide Videos on Watch: Peidab vaadatud sisu videote, lühivideote ja otseeetri kaartidelt tellimuste ja kanalite lehtedelt. Ei mõjuta avakaarti kanalite lehtedel
   Experimental Settings:
     Replace HTTP Cache: Sellega lülitatakse välja Electron'i standardne kettal paiknev http-puhver ja võetakse kasutusele rakenduse mälupõhine puhver. Üheks tulemuseks saab olema suurem mälukasutus.
   SponsorBlock Settings:
@@ -1116,4 +1120,6 @@ KeyboardShortcutPrompt:
   Small Fast Forward: Keri edasi X sekundit hetkel kasutatava kerimiskiiruse ja taasesituskiiruse alusel
   End: Keri video lõppu
   Home: Keri video algusesse
+  Skip to Next Video: Hüppa esitusloendi järgmise video või järgmise soovituse juurde
+  Skip to Previous Video: Hüppa esitusloendi eelmise video juurde
 shortcutLabelSeparator: ｜

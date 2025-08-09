@@ -181,7 +181,7 @@ User Playlists:
   Add to Playlist: Hozzáadás a lejátszási listához
   Move Video Down: Videó lefelé mozgatása
   Playlist Name: Lejátszási lista neve
-  Remove Watched Videos: Megnézett videók eltávolítása
+  Remove Watched Videos: Megtekintett videók eltávolítása
   Move Video Up: Videó felfelé mozgatása
   Cancel: Mégse
   Delete Playlist: Lejátszási lista törlése
@@ -209,6 +209,8 @@ History:
   Search bar placeholder: Keresés az előzmények között
   Empty Search Message: Nincsenek olyan videók az előzmények között, amelyek megfelelnek a keresésnek
   Case Sensitive Search: Kis- nagybetű érzéken keresés
+  DateNewestHistory: Legutóbb megtekintett elől
+  DateOldestHistory: Legrégebben megtekintett elől
 Settings:
   # On Settings Page
   Settings: 'Beállítások'
@@ -423,7 +425,7 @@ Settings:
     Autoplay Interruption Timer: Automatikus lejátszás megszakításának időköze
     Default Viewing Mode:
       Full Screen: Teljes képernyő
-      Theater: Színház
+      Theater: Szélesvásznú
       Picture in Picture: Kép a képben
       External Player: Külső lejátszó ({externalPlayerName})
       Default Viewing Mode: Alapértelmezett nézetmód
@@ -452,10 +454,9 @@ Settings:
         Semi-auto: Félautomatikus
         Auto: Automatikus
         Never: Soha
-      Tooltip: Automatikus = Mentés minden videóoldal elhagyásakor, a videó befejezésekor és hiba esetén (pl. a megtekintési korlátozás és videólejátszási munkamenet lejártakor). Félautomata = Hasonló az automatikushoz, kivéve a videóoldal elhagyásakor, továbbá a videolejátszó alatt található „Megnézett videó folyamatának mentése” nevű gomb segítségével saját kezűleg is menthető.
+      Tooltip: Automatikus = Mentés minden videóoldal elhagyásakor, a videó befejezésekor és hiba esetén (pl. a megtekintési korlátozás és videólejátszási munkamenet lejártakor). Félautomata = Hasonló az automatikushoz, kivéve a videóoldal elhagyásakor, továbbá a videolejátszó alatt található „Megtekintett videó folyamatának mentése” nevű gomb segítségével saját kezűleg is menthető.
   Subscription Settings:
     Subscription Settings: 'Feliratkozás'
-    Hide Videos on Watch: 'Videók elrejtése megtekintés után'
     Fetch Feeds from RSS: 'RSS-hírcsatornák beolvasása'
     Fetch Automatically: Hírcsatorna automatikus lekérdezése
     Confirm Before Unsubscribing: Megerősítés kérése leíratkozáskor
@@ -514,6 +515,7 @@ Settings:
     Hide Comments: Hozzászólások elrejtése
     Hide Live Streams: Élő közvetítések elrejtése
     Hide Sharing Actions: Megosztási műveletek elrejtése
+    Hide Videos on Watch: 'Videók elrejtése megtekintés után'
     Hide Chapters: Fejezetek elrejtése
     Hide Upcoming Premieres: Közelgő bemutatók elrejtése
     Hide Channels: Videók elrejtése a csatornákból
@@ -525,7 +527,7 @@ Settings:
     Sections:
       Side Bar: Oldalsáv
       Channel Page: Csatornalap
-      Watch Page: Nézőlap
+      Watch Page: Megtekintési lap
       General: Általános
       Subscriptions Page: Feliratkozások oldal
     Hide Channel Podcasts: Csatorna „podcastok” lap elrejtése
@@ -598,6 +600,7 @@ Settings:
     Show Family Friendly Only: Csak a családbarát videók megjelenítése
     Hide Search Bar: Keresősáv elrejtése
     Hide Unsubscribe Button: Leiratkozás gomb elrejtése
+    Hide Uploader on Watch page: Feltöltő nevének elrejtése a megtekintési lapról
   Experimental Settings:
     Replace HTTP Cache: HTTP-gyorsítótár cseréje
     Experimental Settings: Kísérleti
@@ -745,7 +748,7 @@ Channel:
     This channel does not currently have any courses: Ezen a csatornán jelenleg nincsenek tanfolyamok
     Courses: Tanfolyamok
 Video:
-  Mark As Watched: 'Megjelölés megnézettként'
+  Mark As Watched: 'Megjelölés megtekintettként'
   Remove From History: 'Eltávolítás az előzményekből'
   Video has been marked as watched: 'A videó megtekintettnek lett jelölve'
   Video has been removed from your history: 'A videó el lett távolítva az előzményekből'
@@ -821,8 +824,8 @@ Video:
   More Options: További beállítások
   Player:
     Audio Tracks: Hangsávok
-    Exit Theatre Mode: Kilépés a színházmódból
-    Theatre Mode: Színházmód
+    Exit Theatre Mode: Kilépés a szélesvásznú módból
+    Theatre Mode: Szélesvásznú mód
     Full Window: Teljes ablak
     Exit Full Window: Kilépés a teljes ablakból
     Take Screenshot: Képernyőkép készítése
@@ -857,8 +860,8 @@ Video:
     Show Original Details: Eredeti részletek megjelenítése
   DRMProtected: A DRM-védelemmel ellátott videók nem játszhatók le a FreeTube-ban, mivel ezekhez zárt forráskódú, tulajdonosi komponensekre van szükség. Ha meg szeretné nézni ezt a videót, akkor tekintse meg a YouTube hivatalos weboldalán egy DRM-képes böngészőben.
 #& Playlists
-  Save Watched Progress: Megnézett videó folyamatának mentése
-  Watched Progress Saved: Megnézett videó folyamata elmentve
+  Save Watched Progress: Megtekintett videó folyamatának mentése
+  Watched Progress Saved: Megtekintett videó folyamata elmentve
 Playlist:
   #& About
   View Full Playlist: 'Teljes lejátszási lista megtekintése'
@@ -979,6 +982,7 @@ Tooltips:
     Hide Channels: Adjon meg egy csatornaazonosítót, hogy elrejtse az összes videót, lejátszási listát és magát a csatornát a keresési eredményekből, a felkapottak közül, a legnépszerűbbekből és az ajánlottak közül. A megadott csatornaazonosítónak pontosan egyeznie kell, valamint kis- és nagybetűérzékeny.
     Hide Subscriptions Live: Ezt a beállítást felülírja az alkalmazásszintű „{appWideSetting}” beállítás a(z) „{settingsSection}” „{subsection}” szakaszában
     Hide Videos and Playlists Containing Text: Adjon meg egy szót, szótöredéket vagy kifejezést (nem érzékeny a nagy- és kisbetűkre), hogy elrejtse az összes olyan videót és lejátszási listát, amelynek eredeti címe tartalmazza ezt a szót vagy kifejezést a FreeTube egész területén, kivéve az előzményeket, a lejátszási listákat és a lejátszási listákon belüli videókat.
+    Hide Videos on Watch: Elrejti a megtekintett videókat a videók-, rövid videók- és élő lapokról a feliratkozás- és a csatornaoldalon. Ez nem érinti a kezdőoldalon található csatornalapokat
   SponsorBlock Settings:
     UseDeArrowTitles: Cserélje le a videocímeket a DeArrow-ból, felhasználó által beküldött címekre.
     UseDeArrowThumbnails: Videó miniatűr cseréje DeArrow miniatűrrel.
@@ -1082,16 +1086,16 @@ KeyboardShortcutPrompt:
   Navigate to Settings: Ugrás a „Beállítások” oldalra
   Navigate to History: Ugrás az „Előzmények” oldalra
   Focus Secondary Search: A másodlagos keresősávra fókuszálás (ha van ilyen)
-  Fullscreen: Teljes képernyő be- és kikapcsolása
-  Picture in Picture: Kép a képben mód be- és kikapcsolása
-  Play: Lejátszás / Szüneteltetés be- és kikapcsolása
-  Mute: Némítás be- és kikapcsolása
+  Fullscreen: Teljes képernyő be/ki
+  Picture in Picture: Kép a képben mód be/ki
+  Play: Lejátszás / Szüneteltetés be/ki
+  Mute: Némítás be/ki
   Decrease Video Speed: A videó lejátszási sebességének csökkentése a lejátszási sebesség időköze alapján
   Increase Video Speed: A videó lejátszási sebességének növelése a lejátszási sebesség időköze alapján
-  Toggle Developer Tools: Fejlesztői eszközök bekapcsolása
+  Toggle Developer Tools: Fejlesztői eszközök be/ki
   Zoom In: Nagyítás
-  Full Window: Teljes ablak mód be- és kikapcsolása
-  Theatre Mode: Mozimód be- és kikapcsolása
+  Full Window: Teljes ablakmód be/ki
+  Theatre Mode: Szélesvásznú mód be/ki
   Minimize Window: Ablak minimalizálása
   Last Frame: Előző képkocka megjelenítése (szüneteltetés alatt)
   Next Frame: Következő képkocka megjelenítése (szüneteltetés alatt)
@@ -1110,11 +1114,13 @@ KeyboardShortcutPrompt:
   Small Fast Forward: X másodperc előretekerés az előretekerési időköz és a jelenlegi videólejátszási sebesség alapján
   Large Fast Forward: Előretekerés 10 másodperccel / Gyors előretekerés a jelenlegi videólejátszási sebesség alapján
   Refresh: A hírcsatorna frissítése a legújabb tartalommal
-  Captions: Feliratok be- és kikapcsolása
+  Captions: Feliratok be/ki
   Large Rewind: Visszatekerés 10 másodperccel / Visszatekerés a jelenlegi videólejátszási sebesség alapján
   Close Window: Ablak bezárása
   Restart Window: Ablak újraindítása
   Force Restart Window: Ablak kényszerített újraindítása
   Home: Keressen a videó elejére
   End: Keressen a videó végére
+  Skip to Next Video: Ugrás a lejátszási lista következő videójára vagy a következő ajánlott videóra
+  Skip to Previous Video: Ugrás a lejátszási lista előző videójára
 shortcutLabelSeparator: ｜

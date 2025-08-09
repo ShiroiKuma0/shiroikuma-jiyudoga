@@ -196,7 +196,7 @@ User Playlists:
   Are you sure you want to remove {playlistItemCount} watched videos from this playlist? This cannot be undone: Sei sicuro di voler rimuovere 1 video guardato da questa playlist? Questa operazione non può essere annullata. | Vuoi rimuovere {playlistItemCount} video guardati da questa playlist? Questa operazione non può essere annullata.
   Export Playlist: Esporta questa playlist
   The playlist has been successfully exported: La playlist è stata esportata correttamente
-  TotalTimePlaylist: 'Tempo totale: {durata}'
+  TotalTimePlaylist: 'Tempo totale: {duration}'
 History:
   # On History Page
   History: 'Cronologia'
@@ -205,6 +205,8 @@ History:
   Search bar placeholder: Ricerca nella Cronologia
   Empty Search Message: Non ci sono video nella tua Cronologia che corrispondono alla tua ricerca
   Case Sensitive Search: Ricerca con distinzione tra maiuscole e minuscole
+  DateOldestHistory: Prima i guardati più vecchi
+  DateNewestHistory: Prima i guardati più nuovi
 Settings:
   # On Settings Page
   Settings: 'Impostazioni'
@@ -451,7 +453,6 @@ Settings:
         Auto: Automatico
   Subscription Settings:
     Subscription Settings: 'Iscrizioni'
-    Hide Videos on Watch: 'Nascondi i video visualizzati'
     Fetch Feeds from RSS: Scarica gli aggiornamenti dai flussi RSS
     Fetch Automatically: Recupera i feed automaticamente
     Confirm Before Unsubscribing: Evita la cancellazione accidentale dell'iscrizione
@@ -509,6 +510,7 @@ Settings:
     Hide Comments: Nascondi i commenti
     Hide Live Streams: Nascondi i video dal vivo
     Hide Sharing Actions: Nascondi le azioni di condivisione
+    Hide Videos on Watch: 'Nascondi i video visualizzati'
     Hide Video Description: Nascondi la descrizione del video
     Hide Chapters: Nascondi i capitoli
     Hide Upcoming Premieres: Nascondi le prossime Première
@@ -594,6 +596,7 @@ Settings:
     Parental Control Settings: Controllo genitori
     Show Family Friendly Only: Mostra Solo per famiglie
     Hide Search Bar: Nascondi la barra di ricerca
+    Hide Uploader on Watch page: Nascondi l'autore del caricamento dalla Pagina di visualizzazione
   Experimental Settings:
     Replace HTTP Cache: Sostituisci la cache HTTP
     Experimental Settings: Sperimentale
@@ -978,6 +981,7 @@ Tooltips:
     Hide Channels: Inserisci l'ID di un canale per impedire che tutti i video, le playlist e il canale stesso vengano visualizzati nelle ricerche, tendenze, più popolari e consigliati. Il nome del canale inserito deve avere una corrispondenza completa e fa distinzione tra maiuscole e minuscole.
     Hide Subscriptions Live: Questa impostazione è sovrascritta dall'impostazione "{appWideSetting}" a livello di app, nella sezione "{subsection}" di "{settingsSection}"
     Hide Videos and Playlists Containing Text: Inserisci una parola, un frammento di parola o una frase (senza distinzione tra maiuscole e minuscole) per nascondere tutti i video e le playlist i cui titoli originali la contengono in tutto FreeTube, escludendo solo Cronologia, Le tue playlist e i video all'interno delle playlist.
+    Hide Videos on Watch: Nasconde i video guardati dalle schede Video, Video brevi e Dal vivo nelle pagine Iscrizioni e Canali. Questo non influisce sulla scheda Pagina iniziale nelle pagine Canali
   SponsorBlock Settings:
     UseDeArrowTitles: Sostituisci i titoli dei video coi titoli inviati dagli utenti di DeArrow.
     UseDeArrowThumbnails: Sostituisci le miniature dei video con le miniature di DeArrow.
@@ -1116,4 +1120,6 @@ KeyboardShortcutPrompt:
   Volume Down: Diminuisci il volume
   End: Vai alla fine del video
   Home: Vai all'inizio del video
+  Skip to Next Video: Salta al video successivo in una playlist o al video consigliato successivo
+  Skip to Previous Video: Salta al video precedente in una playlist
 shortcutLabelSeparator: ｜

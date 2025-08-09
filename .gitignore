@@ -29,3 +29,4 @@ assets/
 # Lefthook
 lefthook-local.yml
 *.bak
+locale-errors.json
