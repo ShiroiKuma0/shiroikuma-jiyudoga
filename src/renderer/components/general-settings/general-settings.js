@@ -23,6 +23,7 @@ export default defineComponent({
   },
   data: function () {
     return {
+      usingElectron: process.env.IS_ELECTRON,
       backendValues: process.env.SUPPORTS_LOCAL_API
         ? [
             'invidious',
@@ -57,8 +58,8 @@ export default defineComponent({
         'history',
         'settings'
       ],
-      usingBrowser: !process.env.IS_ELECTRON && !process.env.IS_ANDROID,
-      usingElectron: process.env.IS_ELECTRON
+      isMac: process.platform === 'darwin',
+      usingBrowser: !process.env.IS_ELECTRON && !process.env.IS_ANDROID
     }
   },
   computed: {
@@ -205,7 +206,12 @@ export default defineComponent({
 
     openDeepLinksInNewWindow: function () {
       return this.$store.getters.getOpenDeepLinksInNewWindow
-    }
+    },
+
+    hideToTrayOnMinimize: function () {
+      return this.$store.getters.getHideToTrayOnMinimize
+    },
+
   },
   created: function () {
     this.setCurrentInvidiousInstanceBounce =
@@ -275,6 +281,7 @@ export default defineComponent({
       'updateExternalLinkHandling',
       'updateGeneralAutoLoadMorePaginatedItemsEnabled',
       'updateOpenDeepLinksInNewWindow',
+      'updateHideToTrayOnMinimize',
     ])
   }
 })
