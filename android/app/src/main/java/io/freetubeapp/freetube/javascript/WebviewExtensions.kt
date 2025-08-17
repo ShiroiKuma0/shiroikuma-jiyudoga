@@ -1,5 +1,6 @@
 package io.freetubeapp.freetube.javascript
 
+import android.content.Context
 import android.webkit.WebView
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
@@ -85,8 +86,18 @@ fun WebView.consoleWarn(message: String) {
   consoleLog(message, "warn")
 }
 
-fun WebView.setScale(scale: Double) {
+fun WebView.setScale(scale: Double, context: Context) {
   post {
-    setInitialScale((350 * scale).toInt())
+    if (scale == 0.0) {
+      setInitialScale(0)
+    } else {
+
+      val feelsLike =
+        context.resources.displayMetrics.widthPixels / context.resources.displayMetrics.density
+
+      val percentageOfWidth = feelsLike / context.resources.displayMetrics.widthPixels
+
+      setInitialScale(((1 / percentageOfWidth) * (scale * 100)).toInt())
+    }
   }
 }

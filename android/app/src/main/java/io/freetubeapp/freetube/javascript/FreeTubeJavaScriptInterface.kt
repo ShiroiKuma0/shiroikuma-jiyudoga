@@ -704,7 +704,7 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
 
   @JavascriptInterface
   fun setScale(scale: Int) {
-    context.webView.setScale(scale / 100.0)
+    context.webView.setScale(scale / 100.0, context)
   }
 
   // endregion
