@@ -96,6 +96,7 @@ export default defineComponent({
       videoTitle: '',
       videoDescription: '',
       videoDescriptionHtml: '',
+      license: '',
       videoViewCount: 0,
       videoLikeCount: 0,
       videoDislikeCount: 0,
@@ -456,7 +457,10 @@ export default defineComponent({
         this.isFamilyFriendly = result.basic_info.is_family_safe
 
         const recommendedVideos = result.watch_next_feed
-          ?.filter((item) => item.type === 'CompactVideo' || item.type === 'CompactMovie')
+          ?.filter((item) => {
+            return item.type === 'CompactVideo' || item.type === 'CompactMovie' ||
+              (item.type === 'LockupView' && item.content_type === 'VIDEO')
+          })
           .map(parseLocalWatchNextVideo) ?? []
 
         // place watched recommended videos last
@@ -1096,10 +1100,14 @@ export default defineComponent({
     },
 
     /**
-     * @param {string} description
+     * @param {string?} description
      */
     extractChaptersFromDescription: function (description) {
+      if (description == null) { return [] }
+
+      /** @type {{title: string, timestamp: string, startSeconds: number, endSeconds: number}[]} */
       const chapters = []
+
       // HH:MM:SS Text
       // MM:SS Text
       // HH:MM:SS - Text // separator is one of '-', '–', '•', '—'
@@ -1514,8 +1522,10 @@ export default defineComponent({
      * @param {boolean} includeThumbnails
      */
     createLocalDashManifest: async function (videoInfo, includeThumbnails = false) {
-      const xmlData = await videoInfo.toDash(undefined, undefined, {
-        include_thumbnails: includeThumbnails
+      const xmlData = await videoInfo.toDash({
+        manifest_options: {
+          include_thumbnails: includeThumbnails,
+        },
       })
 
       return `data:application/dash+xml;charset=UTF-8,${encodeURIComponent(xmlData)}`
@@ -1676,7 +1686,8 @@ export default defineComponent({
       }
 
       const url = new URL(trackToTranslate.base_url)
-      url.searchParams.set('fmt', 'vtt')
+      // Requesting fmt=vtt with the tlang parameter set returns HTTP 429 errors, but requesting srt instead seems to work
+      url.searchParams.set('fmt', 'srt')
       url.searchParams.set('tlang', translationCode)
 
       const label = this.$t('Video.Player.TranslatedCaptionTemplate', {
@@ -1688,7 +1699,7 @@ export default defineComponent({
         url: url.toString(),
         label,
         language: translationCode,
-        mimeType: 'text/vtt',
+        mimeType: 'text/srt',
         isAutotranslated: true
       }
     },

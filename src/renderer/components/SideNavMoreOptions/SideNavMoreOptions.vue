@@ -136,6 +136,24 @@
           {{ $t("Log Viewer.Console Log") }}
         </p>
       </a>
+      <router-link
+        class="navOption smallMobileOnlyShow"
+        :title="$t('Settings.Settings')"
+        :aria-label="hideLabelsSideBar ? $t('Settings.Settings') : null"
+        to="/settings"
+      >
+        <FontAwesomeIcon
+          :icon="['fas', 'sliders-h']"
+          class="navIcon"
+          :class="applyNavIconExpand"
+        />
+        <p
+          id="settingsNavLabel"
+          class="navLabel"
+        >
+          {{ $t("Settings.Settings") }}
+        </p>
+      </router-link>
     </div>
     <router-link
       class="navOption mobileShow"
