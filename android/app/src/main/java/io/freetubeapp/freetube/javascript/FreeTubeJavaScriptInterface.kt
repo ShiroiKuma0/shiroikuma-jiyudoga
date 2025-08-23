@@ -606,6 +606,12 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   // region System
 
   @JavascriptInterface
+  fun openExternalLink(url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(intent)
+  }
+
+  @JavascriptInterface
   fun getLogs(): String {
     var logs = "["
     for (message in context.consoleMessages) {

@@ -214,7 +214,11 @@ export async function copyToClipboard(content, { messageOnSuccess = null, messag
  * @param {string} url the URL to open
  */
 export async function openExternalLink(url) {
-  window.open(url, '_blank', 'noreferrer')
+  if (process.env.IS_ANDROID) {
+    Android.openExternalLink(url)
+  } else {
+    window.open(url, '_blank', 'noreferrer')
+  }
 }
 
 /**
