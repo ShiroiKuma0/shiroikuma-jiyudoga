@@ -1,27 +1,23 @@
 
-import { readFile, writeFile } from '../src/renderer/helpers/android'
+import { getDataDirectory, readFile, writeFile } from '../src/renderer/helpers/android'
 
 export function createInstance(_kwargs) {
   return {
     async getItem(key) {
-      const dataLocationFile = await readFile('data://data-location.json')
-      if (dataLocationFile !== '') {
-        const locationInfo = JSON.parse(dataLocationFile)
-        const locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
-        if (key in locationMap) {
-          return await readFile(locationMap[key])
+      const dataLocation = await getDataDirectory()
+      if (dataLocation.directory !== 'data://') {
+        if (key in dataLocation.files) {
+          return await readFile(dataLocation.files[key])
         }
       }
       const data = await readFile(`data://${key}`)
       return data
     },
     async setItem(key, value) {
-      const dataLocationFile = await readFile('data://data-location.json')
-      if (dataLocationFile !== '') {
-        const locationInfo = JSON.parse(dataLocationFile)
-        const locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
-        if (key in locationMap) {
-          await writeFile(locationMap[key], value)
+      const dataLocation = await getDataDirectory()
+      if (dataLocation.directory !== 'data://') {
+        if (key in dataLocation.files) {
+          await writeFile(dataLocation.files[key], value)
           return
         }
       }

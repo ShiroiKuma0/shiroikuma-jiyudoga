@@ -114,7 +114,7 @@ import {
 } from '../helpers/utils'
 
 import android from 'android'
-import { handleAmbigiousContent, readFile, selectDataDirectory, resetDataDirectory } from '../helpers/android'
+import { handleAmbigiousContent, readFile, selectDataDirectory, resetDataDirectory, getDataDirectory } from '../helpers/android'
 
 const IMPORT_DIRECTORY_ID = 'data-settings-import'
 const START_IN_DIRECTORY = 'downloads'
@@ -150,9 +150,8 @@ async function resetDirectory() {
 const dataDirectory = ref('')
 if (process.env.IS_ANDROID) {
   dataDirectory.value = android.getDirectory('data://')
-  readFile('data://data-location.json').then((dataLocation) => {
-    if (dataLocation !== '') {
-      const { directory } = JSON.parse(dataLocation)
+  getDataDirectory().then(({directory}) => {
+    if (directory !== 'data://') {
       dataDirectory.value = directory
     }
   })

@@ -304,7 +304,7 @@ export function restoreHandleFromDirectoryUri(uri) {
   }
 }
 
-export const EXPECTED_FILES = ['profiles.db', 'settings.db', 'history.db', 'playlists.db']
+export const EXPECTED_FILES = ['profiles.db', 'settings.db', 'history.db', 'playlists.db', 'search-history.db', 'subscription-cache.db']
 
 /**
  *
@@ -365,32 +365,50 @@ export async function generatePOTokens(videoId, visitorData, sessionContext) {
   return data
 }
 
+export async function getDataDirectory() {
+  const locationData = await readFile('data://data-location.json')
+  if (locationData != '') {
+    try {
+      var data = JSON.parse(locationData)
+      return {
+        directory: data.directory,
+        files: Object.fromEntries(data.files.map((file) => { return [file.fileName, file.uri] }))
+      }
+    } catch (ex) {
+      // handle corruption
+      console.warn('Loaded data was incomplete!')
+      console.error(ex)
+    }
+  }
+  let files = []
+  for (let i = 0; i < EXPECTED_FILES.length; i++) {
+    files.push({ filename: EXPECTED_FILES[i], uri: `data://${EXPECTED_FILES[i]}` })
+  }
+  return {
+    directory: 'data://',
+    files: Object.fromEntries(EXPECTED_FILES.map((file) => { return [file.fileName, file.uri] }))
+  }
+}
+
 export async function selectDataDirectory(copyFiles = false) {
   let uri = null
   try {
     const directory = await requestDirectory()
     const files = await initalizeDatabasesInDirectory(directory)
     if (files.length > 0) {
-      const locationData = await readFile('data://data-location.json')
-      let locationInfo = { directory: 'data://', files: [] }
-      let hasOldLocation = false
-      let locationMap = {}
-      if (locationData !== '') {
-        locationInfo = JSON.parse(locationData)
-        locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
-        hasOldLocation = locationInfo.files.length !== 0
-      }
+      const locationData = await getDataDirectory()
+      let hasOldLocation = locationData.directory !== 'data://'
       if (copyFiles) {
         for (let i = 0; i < files.length; i++) {
           const data = hasOldLocation
-            ? await readFile(locationMap[files[i].fileName])
+            ? await readFile(locationData.files[files[i].fileName])
             : await readFile(`data://${files[i].fileName}`)
-          await writeFile(files[i].uri, '', data)
+          await writeFile(files[i].uri, data)
         }
       }
       if (hasOldLocation) {
         // ?? revoke permission for the old location upon move completion
-        android.revokePermissionForTree(locationInfo.directory)
+        android.revokePermissionForTree(locationData.directory)
       }
       // update the data files
       await writeFile('data://data-location.json', JSON.stringify({
@@ -414,22 +432,16 @@ export async function selectDataDirectory(copyFiles = false) {
 export async function resetDataDirectory(copyFiles = false) {
   let uri = null
   try {
-    const locationData = await readFile('data://data-location.json')
-    let locationInfo = { directory: 'data://', files: [] }
-    let locationMap = []
-    if (locationData !== '') {
-      locationInfo = JSON.parse(locationData)
-      locationMap = locationInfo.files.map((file) => { return [file.fileName, file.uri] })
-    }
-    if (locationMap.length !== 0) {
+    const locationData = await getDataDirectory()
+    if (locationData.directory !== 'data://') {
       if (copyFiles) {
-        for (const [key, value] of locationMap) {
+        for (const [key, value] of Object.entries(locationData.files)) {
           await writeFile(`data://${key}`, await readFile(value))
         }
       }
-      if (locationInfo.files.length !== 0) {
+      if (locationData.files.length !== 0) {
         // ?? revoke permission for the old location upon completing the reset
-        android.revokePermissionForTree(locationInfo.directory)
+        android.revokePermissionForTree(locationData.directory)
       }
       // clear out data-location.json
       await writeFile('data://data-location.json', '')
