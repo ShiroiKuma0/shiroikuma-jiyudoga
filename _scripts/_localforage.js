@@ -4,7 +4,7 @@ import { readFile, writeFile } from '../src/renderer/helpers/android'
 export function createInstance(_kwargs) {
   return {
     async getItem(key) {
-      const dataLocationFile = await readFile('data://', 'data-location.json')
+      const dataLocationFile = await readFile('data://data-location.json')
       if (dataLocationFile !== '') {
         const locationInfo = JSON.parse(dataLocationFile)
         const locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
@@ -12,11 +12,11 @@ export function createInstance(_kwargs) {
           return await readFile(locationMap[key])
         }
       }
-      const data = await readFile('data://', key)
+      const data = await readFile(`data://${key}`)
       return data
     },
     async setItem(key, value) {
-      const dataLocationFile = await readFile('data://', 'data-location.json')
+      const dataLocationFile = await readFile('data://data-location.json')
       if (dataLocationFile !== '') {
         const locationInfo = JSON.parse(dataLocationFile)
         const locationMap = Object.fromEntries(locationInfo.files.map((file) => { return [file.fileName, file.uri] }))
@@ -25,7 +25,7 @@ export function createInstance(_kwargs) {
           return
         }
       }
-      await writeFile('data://', key, value)
+      await writeFile(`data://${key}`, value)
     }
   }
 }

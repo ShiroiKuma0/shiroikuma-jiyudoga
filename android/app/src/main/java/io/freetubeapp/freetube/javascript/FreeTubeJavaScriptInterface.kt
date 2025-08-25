@@ -30,6 +30,7 @@ import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.MainActivity
 import io.freetubeapp.freetube.MediaControlsReceiver
 import io.freetubeapp.freetube.R
+import io.freetubeapp.freetube.helpers.AmbiguousFileUri
 import io.freetubeapp.freetube.helpers.Promise
 import io.freetubeapp.freetube.helpers.hexToColour
 import io.freetubeapp.freetube.helpers.readBytes
@@ -456,22 +457,26 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    * reads a file from storage
    */
   @JavascriptInterface
-  fun readFile(basedir: String, filename: String): String {
+  fun readFile(uri: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
       reject ->
-      try {
-        if (basedir.startsWith("content://")) {
+      AmbiguousFileUri(uri)
+        .ifContentUri {
+          uri ->
           resolve(
             context.contentResolver
-            .readBytes(Uri.parse(basedir))
+                .readBytes(uri)
             .toString(Charset.forName("utf-8"))
           )
-        } else {
-          val path = getDirectory(basedir)
-          resolve(File(path, filename).readText())
         }
-      } catch (ex: Exception) {
+        .ifDataUri {
+          fileName ->
+          val path = getDirectory(DATA_DIRECTORY)
+          resolve(File(path, fileName).readText())
+        }
+        .catch {
+          ex ->
         reject(ex.stackTraceToString())
       }
     }).addJsCommunicator(jsCommunicator)
@@ -482,34 +487,32 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    */
   @OptIn(ExperimentalEncodingApi::class)
   @JavascriptInterface
-  fun writeFile(basedir: String, filename: String, content: String): String {
+  fun writeFile(uri: String, content: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
       reject ->
-      try {
-        if (basedir.startsWith("content://")) {
-          // base64 uri
-          if (content.startsWith("data:")) {
-            val bytes = Base64.decode(content.split("base64,")[1])
-            // urls created by save dialog
+        AmbiguousFileUri(uri)
+          .ifContentUri {
+            uri ->
+              val bytes = if (content.startsWith("data:")) {
+                Base64.decode(content.split("base64,")[1])
+              } else {
+                content.toByteArray()
+              }
             context.contentResolver.writeBytes(
-              Uri.parse(basedir),
+                uri,
               bytes
             )
-          } else {
-            // urls created by save dialog
-            context.contentResolver.writeBytes(
-              Uri.parse(basedir),
-              content.toByteArray()
-            )
-          }
           resolve("true")
-        } else {
-          val path = getDirectory(basedir)
-          File(path, filename).writeText(content)
+          }
+          .ifDataUri {
+            fileName ->
+              val path = getDirectory(DATA_DIRECTORY)
+              File(path, fileName).writeText(content)
           resolve("true")
         }
-      } catch (ex: Exception) {
+          .catch {
+            ex ->
         reject(ex.stackTraceToString())
       }
     }).addJsCommunicator(jsCommunicator)

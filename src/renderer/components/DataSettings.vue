@@ -150,7 +150,7 @@ async function resetDirectory() {
 const dataDirectory = ref('')
 if (process.env.IS_ANDROID) {
   dataDirectory.value = android.getDirectory('data://')
-  readFile('data://', 'data-location.json').then((dataLocation) => {
+  readFile('data://data-location.json').then((dataLocation) => {
     if (dataLocation !== '') {
       const { directory } = JSON.parse(dataLocation)
       dataDirectory.value = directory

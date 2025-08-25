@@ -137,23 +137,12 @@ async function blobToBase64(blob) {
  * @param {string?} arg3 content or undefined
  * @returns {Promise<boolean>} was able to successfully write?
  */
-export async function writeFile(arg1, arg2, arg3 = undefined) {
-  let baseUri, path, content
-  if (arg3 === undefined) {
-    baseUri = arg1
-    path = ''
-    content = arg2
-  } else {
-    baseUri = arg1
-    path = arg2
-    content = arg3
-  }
+export async function writeFile(uri, content) {
   if (content instanceof Blob) {
-    console.log("We have a blob")
     content = await blobToBase64(content)
   }
   try {
-    await awaitAsyncResult(android.writeFile(baseUri, path, content))
+    await awaitAsyncResult(android.writeFile(uri, content))
     return true
   } catch (exception) {
     console.error(exception)
@@ -163,13 +152,12 @@ export async function writeFile(arg1, arg2, arg3 = undefined) {
 
 /**
  * a soft file read which returns '' if the file doesn't exist yet
- * @param {string} baseUri base of the uri
- * @param {string?} path (optional) path on top of base
+ * @param {string} uri uri
  * @returns {Promise<string>} file contents or '' if no file was found
  */
-export async function readFile(baseUri, path = '') {
+export async function readFile(uri) {
   try {
-    return await awaitAsyncResult(android.readFile(baseUri, path))
+    return await awaitAsyncResult(android.readFile(uri))
   } catch (exception) {
     console.warn(exception)
     return ''
@@ -383,7 +371,7 @@ export async function selectDataDirectory(copyFiles = false) {
     const directory = await requestDirectory()
     const files = await initalizeDatabasesInDirectory(directory)
     if (files.length > 0) {
-      const locationData = await readFile('data://', 'data-location.json')
+      const locationData = await readFile('data://data-location.json')
       let locationInfo = { directory: 'data://', files: [] }
       let hasOldLocation = false
       let locationMap = {}
@@ -395,8 +383,8 @@ export async function selectDataDirectory(copyFiles = false) {
       if (copyFiles) {
         for (let i = 0; i < files.length; i++) {
           const data = hasOldLocation
-            ? await readFile(locationMap[files[i].fileName], '')
-            : await readFile('data://', files[i].fileName)
+            ? await readFile(locationMap[files[i].fileName])
+            : await readFile(`data://${files[i].fileName}`)
           await writeFile(files[i].uri, '', data)
         }
       }
@@ -405,7 +393,7 @@ export async function selectDataDirectory(copyFiles = false) {
         android.revokePermissionForTree(locationInfo.directory)
       }
       // update the data files
-      await writeFile('data://', 'data-location.json', JSON.stringify({
+      await writeFile('data://data-location.json', JSON.stringify({
         directory: directory.uri,
         files
       }))
@@ -426,7 +414,7 @@ export async function selectDataDirectory(copyFiles = false) {
 export async function resetDataDirectory(copyFiles = false) {
   let uri = null
   try {
-    const locationData = await readFile('data://', 'data-location.json')
+    const locationData = await readFile('data://data-location.json')
     let locationInfo = { directory: 'data://', files: [] }
     let locationMap = []
     if (locationData !== '') {
@@ -436,7 +424,7 @@ export async function resetDataDirectory(copyFiles = false) {
     if (locationMap.length !== 0) {
       if (copyFiles) {
         for (const [key, value] of locationMap) {
-          await writeFile('data://', key, await readFile(value))
+          await writeFile(`data://${key}`, await readFile(value))
         }
       }
       if (locationInfo.files.length !== 0) {
@@ -444,7 +432,7 @@ export async function resetDataDirectory(copyFiles = false) {
         android.revokePermissionForTree(locationInfo.directory)
       }
       // clear out data-location.json
-      await writeFile('data://', 'data-location.json', '')
+      await writeFile('data://data-location.json', '')
       uri = android.getDirectory('data://')
       showToast(t('Data Settings.Your data directory has been moved successfully'))
       if (!copyFiles) {
