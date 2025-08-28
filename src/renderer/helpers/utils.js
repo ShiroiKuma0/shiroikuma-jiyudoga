@@ -1,7 +1,8 @@
 import i18n from '../i18n/index'
 import router from '../router/index'
 import { nextTick } from 'vue'
-import { readFile, requestOpenDialog, requestSaveDialog, writeFile } from './android'
+import { requestOpenDialog, requestSaveDialog } from './android/dialogs'
+import { writeFile } from './android/storage'
 
 // allowed characters in channel handle: A-Z, a-z, 0-9, -, _, .
 // https://support.google.com/youtube/answer/11585688#change_handle

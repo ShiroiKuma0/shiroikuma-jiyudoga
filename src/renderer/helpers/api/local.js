@@ -11,7 +11,7 @@ import {
   getChannelPlaylistId,
   getRelativeTimeFromDate,
 } from '../utils'
-import { generatePOTokenFromVisitorData, generatePOTokens } from '../android'
+import { generatePOTokens } from '../android/potokens'
 
 const TRACKING_PARAM_NAMES = [
   'utm_source',

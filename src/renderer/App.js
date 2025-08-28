@@ -19,7 +19,7 @@ import { openExternalLink, openInternalPath, showToast } from './helpers/utils'
 import { translateWindowTitle } from './helpers/strings'
 import 'core-js'
 import android from 'android'
-import { updateAndroidTheme } from './helpers/android'
+import { updateAndroidTheme } from './helpers/android/system'
 
 export default defineComponent({
   name: 'App',

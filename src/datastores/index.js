@@ -1,4 +1,5 @@
 import Datastore from '@seald-io/nedb'
+import * as androidStorage from '../renderer/helpers/android/nedb'
 
 let dbPath = null
 
@@ -22,9 +23,14 @@ if (process.env.IS_ELECTRON_MAIN) {
   dbPath = (dbName) => `${dbName}.db`
 }
 
-export const settings = new Datastore({ filename: dbPath('settings'), autoload: !process.env.IS_ELECTRON_MAIN })
-export const profiles = new Datastore({ filename: dbPath('profiles'), autoload: !process.env.IS_ELECTRON_MAIN })
-export const playlists = new Datastore({ filename: dbPath('playlists'), autoload: !process.env.IS_ELECTRON_MAIN })
-export const history = new Datastore({ filename: dbPath('history'), autoload: !process.env.IS_ELECTRON_MAIN })
-export const searchHistory = new Datastore({ filename: dbPath('search-history'), autoload: !process.env.IS_ELECTRON_MAIN })
-export const subscriptionCache = new Datastore({ filename: dbPath('subscription-cache'), autoload: !process.env.IS_ELECTRON_MAIN })
+let storage
+if (process.env.IS_ANDROID) {
+  storage = androidStorage
+}
+
+export const settings = new Datastore({ filename: dbPath('settings'), autoload: !process.env.IS_ELECTRON_MAIN, storage })
+export const profiles = new Datastore({ filename: dbPath('profiles'), autoload: !process.env.IS_ELECTRON_MAIN, storage })
+export const playlists = new Datastore({ filename: dbPath('playlists'), autoload: !process.env.IS_ELECTRON_MAIN, storage })
+export const history = new Datastore({ filename: dbPath('history'), autoload: !process.env.IS_ELECTRON_MAIN, storage })
+export const searchHistory = new Datastore({ filename: dbPath('search-history'), autoload: !process.env.IS_ELECTRON_MAIN, storage })
+export const subscriptionCache = new Datastore({ filename: dbPath('subscription-cache'), autoload: !process.env.IS_ELECTRON_MAIN, storage })

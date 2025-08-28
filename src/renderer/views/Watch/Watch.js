@@ -38,7 +38,7 @@ import {
 } from '../../helpers/api/invidious'
 import {
   createMediaSession
-} from '../../helpers/android'
+} from '../../helpers/android/media-session'
 import android from 'android'
 
 const MANIFEST_TYPE_DASH = 'application/dash+xml'

@@ -26,7 +26,7 @@ import {
   writeFileWithPicker,
   throttle,
 } from '../../helpers/utils'
-import { STATE_PAUSED, STATE_PLAYING, updateMediaSessionState } from '../../helpers/android'
+import { STATE_PAUSED, STATE_PLAYING, updateMediaSessionState } from '../../helpers/android/media-session'
 import android from 'android'
 
 /** @typedef {import('../../helpers/sponsorblock').SponsorBlockCategory} SponsorBlockCategory */

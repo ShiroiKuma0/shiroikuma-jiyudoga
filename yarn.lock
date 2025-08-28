@@ -1510,10 +1510,9 @@
   resolved "https://registry.yarnpkg.com/@seald-io/binary-search-tree/-/binary-search-tree-1.0.3.tgz#165a9a456eaa30d15885b25db83861bcce2c6a74"
   integrity sha512-qv3jnwoakeax2razYaMsGI/luWdliBLHTdC6jU55hQt1hcFqzauH/HsBollQ7IR4ySTtYhT+xyHoijpA16C+tA==
 
-"@seald-io/nedb@^4.1.2":
+"@seald-io/nedb@https://github.com/MarmadileManteater/nedb.git":
   version "4.1.2"
-  resolved "https://registry.yarnpkg.com/@seald-io/nedb/-/nedb-4.1.2.tgz#cacd7253d9826b51495d024ca768dea3fe63e853"
-  integrity sha512-bDr6TqjBVS2rDyYM9CPxAnotj5FuNL9NF8o7h7YyFXM7yruqT4ddr+PkSb2mJvvw991bqdftazkEo38gykvaww==
+  resolved "https://github.com/MarmadileManteater/nedb.git#73f58a88f015365774d045ba5c969ceb0e862b8b"
   dependencies:
     "@seald-io/binary-search-tree" "^1.0.3"
     localforage "^1.10.0"

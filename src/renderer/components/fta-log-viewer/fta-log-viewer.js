@@ -3,8 +3,9 @@ import { mapActions } from 'vuex'
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import FtPrompt from '../FtPrompt/FtPrompt.vue'
 import FtButton from '../FtButton/FtButton.vue'
-import { getConsoleLogs, isColourDark } from '../../helpers/android'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { isColourDark } from '../../helpers/android/utils'
+import { getConsoleLogs } from '../../helpers/android/system'
 
 export default defineComponent({
   name: 'FtaLogViewer',

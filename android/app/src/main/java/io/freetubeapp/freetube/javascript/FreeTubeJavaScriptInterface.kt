@@ -32,6 +32,7 @@ import io.freetubeapp.freetube.MediaControlsReceiver
 import io.freetubeapp.freetube.R
 import io.freetubeapp.freetube.helpers.AmbiguousFileUri
 import io.freetubeapp.freetube.helpers.Promise
+import io.freetubeapp.freetube.helpers.WriteMode
 import io.freetubeapp.freetube.helpers.hexToColour
 import io.freetubeapp.freetube.helpers.readBytes
 import io.freetubeapp.freetube.helpers.readText
@@ -380,7 +381,6 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   // endregion
 
   // region File Helpers
-
   /**
    * @param directory a shortened directory uri
    * @return a full directory uri
@@ -396,7 +396,6 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
     return path
   }
 
-  @JavascriptInterface
   fun getFileNameFromUri(uri: String): String {
     var result: String? = null
     val cursor = context.contentResolver.query(Uri.parse(uri),  null, null, null, null)
@@ -437,22 +436,17 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
     val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
     return directory!!.createFile("*/*", fileName)!!.uri.toString()
   }
-
-  @JavascriptInterface
-  fun createDirectoryInTree(tree: String, fileName: String): String {
-    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
-    return directory!!.createDirectory(fileName)!!.uri.toString()
-  }
-
-  @JavascriptInterface
-  fun deleteFileInTree(fileUri: String): Boolean {
-    val file = DocumentFile.fromTreeUri(context, Uri.parse(fileUri))
-    return file!!.delete()
-  }
-
   // endregion
 
   // region IO
+  @JavascriptInterface
+  fun listFilesInDataDir(): String {
+    return "[${File(getDirectory(DATA_DIRECTORY)).listFiles()?.map {
+      file ->
+      "{ \"uri\": \"${DATA_DIRECTORY}${file.name}\", \"fileName\": \"${file.name}\", \"isFile\": ${file.isFile}, \"isDirectory\": ${file.isDirectory} }"
+    }!!.joinToString(",")}]"
+  }
+
   /**
    * reads a file from storage
    */
@@ -464,11 +458,11 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
       AmbiguousFileUri(uri)
         .ifContentUri {
           uri ->
-          resolve(
-            context.contentResolver
+            resolve(
+              context.contentResolver
                 .readBytes(uri)
-            .toString(Charset.forName("utf-8"))
-          )
+                .toString(Charset.forName("utf-8"))
+            )
         }
         .ifDataUri {
           fileName ->
@@ -477,8 +471,8 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
         }
         .catch {
           ex ->
-        reject(ex.stackTraceToString())
-      }
+            reject(ex.stackTraceToString())
+        }
     }).addJsCommunicator(jsCommunicator)
   }
 
@@ -499,22 +493,56 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
               } else {
                 content.toByteArray()
               }
-            context.contentResolver.writeBytes(
+              context.contentResolver.writeBytes(
                 uri,
-              bytes
-            )
-          resolve("true")
+                bytes
+              )
+              resolve("")
           }
           .ifDataUri {
             fileName ->
               val path = getDirectory(DATA_DIRECTORY)
               File(path, fileName).writeText(content)
-          resolve("true")
-        }
+              resolve("")
+          }
           .catch {
             ex ->
-        reject(ex.stackTraceToString())
-      }
+              reject(ex.stackTraceToString())
+          }
+    }).addJsCommunicator(jsCommunicator)
+  }
+
+  @OptIn(ExperimentalEncodingApi::class)
+  @JavascriptInterface
+  fun appendFile(uri: String, content: String): String {
+    return Promise(context.threadPoolExecutor, {
+      resolve,
+      reject ->
+        AmbiguousFileUri(uri)
+          .ifContentUri {
+              uri ->
+                val bytes = if (content.startsWith("data:")) {
+                  Base64.decode(content.split("base64,")[1])
+                } else {
+                  content.toByteArray()
+                }
+                context.contentResolver.writeBytes(
+                  uri,
+                  bytes,
+                  WriteMode.Append
+                )
+                resolve("")
+          }
+          .ifDataUri {
+              fileName ->
+                val path = getDirectory(DATA_DIRECTORY)
+                File(path, fileName).writeText(content, WriteMode.Append)
+                resolve("")
+          }
+          .catch {
+              ex ->
+                reject(ex.stackTraceToString())
+          }
     }).addJsCommunicator(jsCommunicator)
   }
   // endregion

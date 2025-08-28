@@ -37,6 +37,10 @@
     </h4>
     <FtFlexBox class="dataSettingsBox">
       <FtButton
+        :label="$t('Settings.Data Settings.Import Subscriptions')"
+        @click="importSubscriptions"
+      />
+      <FtButton
 const START_IN_DIRECTORY = 'downloads'
         :label="$t('Settings.Data Settings.Manage Subscriptions')"
         @click="openProfileSettings"
@@ -114,7 +118,8 @@ import {
 } from '../helpers/utils'
 
 import android from 'android'
-import { handleAmbigiousContent, readFile, selectDataDirectory, resetDataDirectory, getDataDirectory } from '../helpers/android'
+import { selectDataDirectory, getCurrentDataDirectory } from '../helpers/android/storage'
+import { handleAmbigiousContent } from '../helpers/android/utils'
 
 const IMPORT_DIRECTORY_ID = 'data-settings-import'
 const START_IN_DIRECTORY = 'downloads'
@@ -141,7 +146,7 @@ async function selectDirectory() {
 }
 
 async function resetDirectory() {
-  const uri = await resetDataDirectory(shouldCopyDataFilesWhenMoving.value)
+  const uri = await selectDataDirectory(shouldCopyDataFilesWhenMoving.value, true)
   if (uri !== null) {
     dataDirectory.value = uri
   }
@@ -150,9 +155,10 @@ async function resetDirectory() {
 const dataDirectory = ref('')
 if (process.env.IS_ANDROID) {
   dataDirectory.value = android.getDirectory('data://')
-  getDataDirectory().then(({directory}) => {
-    if (directory !== 'data://') {
-      dataDirectory.value = directory
+  
+  getCurrentDataDirectory().then(({uri}) => {
+    if (uri !== 'data://') {
+      dataDirectory.value = uri
     }
   })
 }
@@ -496,6 +502,7 @@ function importYouTubeSubscriptions(textDecode) {
  */
 function importOpmlYouTubeSubscriptions(data) {
   let xmlDom
+  const subscriptions = []
   const domParser = new DOMParser()
   try {
     xmlDom = domParser.parseFromString(data, 'application/xml')
