@@ -152,7 +152,7 @@ const defaultSideEffectsTriggerId = settingId =>
 const state = {
   autoplayPlaylists: true,
   autoplayVideos: true,
-  backendFallback: process.env.SUPPORTS_LOCAL_API,
+  backendFallback: false,
   backendPreference: !process.env.SUPPORTS_LOCAL_API ? 'invidious' : 'local',
   barColor: false,
   checkForBlogPosts: false,
@@ -231,6 +231,8 @@ const state = {
   playNextVideo: false,
   proxyHostname: '127.0.0.1',
   proxyPort: '9050',
+  proxyUsername: '',
+  proxyPassword: '',
   proxyProtocol: 'socks5',
   proxyVideos: !process.env.SUPPORTS_LOCAL_API,
   region: 'US',

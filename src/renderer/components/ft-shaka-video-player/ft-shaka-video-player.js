@@ -1,5 +1,4 @@
-
-import { computed, defineComponent, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import shaka from 'shaka-player'
 import { useI18n } from '../../composables/use-i18n-polyfill'
 
@@ -13,6 +12,7 @@ import { StatsButton } from './player-components/StatsButton'
 import { TheatreModeButton } from './player-components/TheatreModeButton'
 import { AutoplayToggle } from './player-components/AutoplayToggle'
 import {
+  deduplicateAudioTracks,
   findMostSimilarAudioBandwidth,
   getSponsorBlockSegments,
   logShakaError,
@@ -25,6 +25,7 @@ import {
   showToast,
   writeFileWithPicker,
   throttle,
+  removeFromArrayIfExists,
 } from '../../helpers/utils'
 import { STATE_PAUSED, STATE_PLAYING, updateMediaSessionState } from '../../helpers/android/media-session'
 import android from 'android'
@@ -186,7 +187,7 @@ export default defineComponent({
     const hasMultipleAudioTracks = ref(false)
     const isLive = ref(false)
 
-    const useOverFlowMenu = ref(false)
+    const onlyUseOverFlowMenu = ref(false)
     const forceAspectRatio = ref(false)
 
     const activeLegacyFormat = shallowRef(null)
@@ -821,7 +822,7 @@ export default defineComponent({
 
         // only set this to label when we actually have labels, so that the warning doesn't show up
         // about it being set to labels, but that the audio tracks don't have labels
-        trackLabelFormat: hasMultipleAudioTracks.value ? TrackLabelFormat.LABEL : TrackLabelFormat.LANGUAGE,
+        trackLabelFormat: hasMultipleAudioTracks.value ? TrackLabelFormat.LABEL : TrackLabelFormat.LANGUAGE_ROLE,
         // Only set it to label if we added the captions ourselves,
         // some live streams come with subtitles in the DASH manifest, but without labels
         textTrackLabelFormat: sortedCaptions.length > 0 ? TrackLabelFormat.LABEL : TrackLabelFormat.LANGUAGE,
@@ -831,79 +832,71 @@ export default defineComponent({
       /** @type {string[]} */
       let elementList = []
 
-      if (useOverFlowMenu.value) {
+      if (onlyUseOverFlowMenu.value) {
         uiConfig.overflowMenuButtons = [
-          'ft_screenshot',
           'ft_autoplay_toggle',
+          props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
           'playback_rate',
-          'loop',
-          'ft_audio_tracks',
           'captions',
+          'ft_audio_tracks',
+          'loop',
+          'ft_screenshot',
           'picture_in_picture',
           'ft_full_window',
-          props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
           'recenter_vr',
           'toggle_stereoscopic',
         ]
 
         elementList = uiConfig.overflowMenuButtons
 
-        uiConfig.controlPanelElements.push('overflow_menu')
+        uiConfig.controlPanelElements.push('overflow_menu', 'fullscreen')
       } else {
         uiConfig.controlPanelElements.push(
-          'recenter_vr',
-          'toggle_stereoscopic',
           'ft_screenshot',
           'ft_autoplay_toggle',
-          'playback_rate',
-          'loop',
-          'ft_audio_tracks',
-          'captions',
+          'overflow_menu',
           'picture_in_picture',
           'ft_theatre_mode',
           'ft_full_window',
-          props.format === 'legacy' ? 'ft_legacy_quality' : 'quality'
+          'fullscreen'
+        )
+
+        uiConfig.overflowMenuButtons.push(
+          'ft_audio_tracks',
+          'captions',
+          'playback_rate',
+          props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
+          'loop',
+          'recenter_vr',
+          'toggle_stereoscopic',
         )
 
         elementList = uiConfig.controlPanelElements
       }
 
-      uiConfig.controlPanelElements.push('fullscreen')
-
       if (!enableScreenshot.value || props.format === 'audio') {
-        const index = elementList.indexOf('ft_screenshot')
-        elementList.splice(index, 1)
+        removeFromArrayIfExists(elementList, 'ft_screenshot')
       }
 
       if (!props.theatrePossible) {
-        const index = elementList.indexOf('ft_theatre_mode')
-        // doesn't exist in overflow menu, as theatre mode only works on wide screens
-        if (index !== -1) {
-          elementList.splice(index, 1)
-        }
+        removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_theatre_mode')
       }
 
       if (!props.autoplayPossible) {
-        const index = elementList.indexOf('ft_autoplay_toggle')
-        elementList.splice(index, 1)
+        removeFromArrayIfExists(elementList, 'ft_autoplay_toggle')
       }
 
       if (props.format === 'audio') {
-        const index = elementList.indexOf('picture_in_picture')
-        elementList.splice(index, 1)
+        removeFromArrayIfExists(elementList, 'picture_in_picture')
       }
 
       if (isLive.value) {
-        const index = elementList.indexOf('loop')
-        elementList.splice(index, 1)
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'loop')
       }
 
       if (!useVrMode.value) {
-        const indexRecenterVr = elementList.indexOf('recenter_vr')
-        elementList.splice(indexRecenterVr, 1)
-
-        const indexToggleStereoscopic = elementList.indexOf('toggle_stereoscopic')
-        elementList.splice(indexToggleStereoscopic, 1)
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'recenter_vr')
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'toggle_stereoscopic')
       }
 
       return uiConfig
@@ -919,6 +912,7 @@ export default defineComponent({
      */
     function configureUI(firstTime = false) {
       if (firstTime) {
+        /** @type {shaka.extern.UIConfiguration} */
         const firstTimeConfig = {
           addSeekBar: seekingIsPossible.value,
           customContextMenu: true,
@@ -927,6 +921,8 @@ export default defineComponent({
           seekBarColors: {
             played: 'var(--primary-color)'
           },
+          showAudioCodec: false,
+          showVideoCodec: false,
           volumeBarColors: {
             level: 'var(--primary-color)'
           },
@@ -966,7 +962,8 @@ export default defineComponent({
         classList.contains('shaka-fast-foward-container') ||
         classList.contains('shaka-rewind-container') ||
         classList.contains('shaka-play-button-container') ||
-        classList.contains('shaka-play-button')) {
+        classList.contains('shaka-play-button') ||
+        classList.contains('shaka-controls-container')) {
         //
 
         if (event.ctrlKey || event.metaKey) {
@@ -1079,7 +1076,7 @@ export default defineComponent({
 
     /** @type {ResizeObserverCallback} */
     function resized(entries) {
-      useOverFlowMenu.value = entries[0].contentBoxSize[0].inlineSize <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
+      onlyUseOverFlowMenu.value = entries[0].contentBoxSize[0].inlineSize <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
     }
 
     // #endregion UI config
@@ -1993,6 +1990,8 @@ export default defineComponent({
         const formattedSeconds = Math.abs(seconds)
         showValueChange(`${formattedSeconds}s`, popUpLayout.icon, popUpLayout.invertContentOrder)
       }
+
+      showOverlayControls()
     }
 
     // #endregion mouse and keyboard helpers
@@ -2240,6 +2239,7 @@ export default defineComponent({
 
             const currentlyVisible = player.isTextTrackVisible()
             player.setTextTrackVisibility(!currentlyVisible)
+            showOverlayControls()
           }
           break
         case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.VOLUME_UP:
@@ -2257,6 +2257,7 @@ export default defineComponent({
           if (canChapterJump(event, 'previous')) {
             // Jump to the previous chapter
             video_.currentTime = props.chapters[props.currentChapterIndex - 1].startSeconds
+            showOverlayControls()
           } else {
             // Rewind by the time-skip interval (in seconds)
             seekBySeconds(-defaultSkipInterval.value * player.getPlaybackRate(), false, true)
@@ -2267,6 +2268,7 @@ export default defineComponent({
           if (canChapterJump(event, 'next')) {
             // Jump to the next chapter
             video_.currentTime = (props.chapters[props.currentChapterIndex + 1].startSeconds)
+            showOverlayControls()
           } else {
             // Fast-Forward by the time-skip interval (in seconds)
             seekBySeconds(defaultSkipInterval.value * player.getPlaybackRate(), false, true)
@@ -2302,6 +2304,7 @@ export default defineComponent({
             const percentage = parseInt(event.key) / 10
 
             video_.currentTime = seekRange.start + (length * percentage)
+            showOverlayControls()
           }
           break
         }
@@ -2333,6 +2336,7 @@ export default defineComponent({
             // use seek range instead of duration so that it works for live streams too
             const seekRange = player.seekRange()
             video_.currentTime = seekRange.start
+            showOverlayControls()
           }
           break
         case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.END:
@@ -2342,6 +2346,7 @@ export default defineComponent({
             // use seek range instead of duration so that it works for live streams too
             const seekRange = player.seekRange()
             video_.currentTime = seekRange.end
+            showOverlayControls()
           }
           break
         case 'escape':
@@ -2503,6 +2508,10 @@ export default defineComponent({
       isOffline.value = true
     }
 
+    function fullscreenChangeHandler() {
+      nextTick(showOverlayControls)
+    }
+
     window.addEventListener('online', onlineHandler)
     window.addEventListener('offline', offlineHandler)
 
@@ -2525,6 +2534,14 @@ export default defineComponent({
     }
 
     onMounted(async () => {
+      watch(() => props.currentPlaybackRate,
+        (newRate) => {
+          if (video.value) {
+            video.value.playbackRate = newRate
+            video.value.defaultPlaybackRate = newRate
+          }
+        }
+      )
       const videoElement = video.value
       if (process.env.IS_ANDROID) {
         window.addEventListener('media-play', mediaPlay)
@@ -2610,9 +2627,9 @@ export default defineComponent({
       registerStatsButton()
 
       if (ui.isMobile()) {
-        useOverFlowMenu.value = true
+        onlyUseOverFlowMenu.value = true
       } else {
-        useOverFlowMenu.value = container.value.getBoundingClientRect().width <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
+        onlyUseOverFlowMenu.value = container.value.getBoundingClientRect().width <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
 
         resizeObserver = new ResizeObserver(resized)
         resizeObserver.observe(container.value)
@@ -2623,6 +2640,7 @@ export default defineComponent({
 
       document.removeEventListener('keydown', keyboardShortcutHandler)
       document.addEventListener('keydown', keyboardShortcutHandler)
+      document.addEventListener('fullscreenchange', fullscreenChangeHandler)
 
       player.addEventListener('loading', () => {
         hasLoaded.value = false
@@ -2632,8 +2650,6 @@ export default defineComponent({
 
       if (props.format !== 'legacy') {
         player.addEventListener('streaming', () => {
-          hasMultipleAudioTracks.value = player.getAudioLanguagesAndRoles().length > 1
-
           if (props.format === 'dash') {
             const firstVariant = player.getVariantTracks()[0]
 
@@ -2705,6 +2721,8 @@ export default defineComponent({
 
       // ideally we would set this in the `streaming` event handler, but for HLS this is only set to true after the loaded event fires.
       isLive.value = player.isLive()
+      // getAudioTracks() returns an empty array when no variant is active, so we can't do this in the `streaming` event
+      hasMultipleAudioTracks.value = deduplicateAudioTracks(player.getAudioTracks()).size > 1
 
       const promises = []
 
@@ -2963,6 +2981,7 @@ export default defineComponent({
       document.body.classList.remove('playerFullWindow')
 
       document.removeEventListener('keydown', keyboardShortcutHandler)
+      document.removeEventListener('fullscreenchange', fullscreenChangeHandler)
 
       if (resizeObserver) {
         resizeObserver.disconnect()
@@ -3073,6 +3092,10 @@ export default defineComponent({
     const invertValueChangeContentOrder = ref(false)
     let valueChangeTimeout = null
 
+    function showOverlayControls() {
+      ui.getControls().showUI()
+    }
+
     /**
      * Shows a popup with a message and an icon on top of the video player.
      * @param {string} message - The message to display.
@@ -3092,6 +3115,8 @@ export default defineComponent({
       valueChangeTimeout = setTimeout(() => {
         showValueChangePopup.value = false
       }, 2000)
+
+      showOverlayControls()
     }
 
     return {

@@ -197,6 +197,7 @@ User Playlists:
   Export Playlist: Esporta questa playlist
   The playlist has been successfully exported: La playlist è stata esportata correttamente
   TotalTimePlaylist: 'Tempo totale: {duration}'
+  Export list of URLs: Esporta l'elenco degli URL
 History:
   # On History Page
   History: 'Cronologia'
@@ -560,6 +561,8 @@ Settings:
     Proxy Port Number: Numero di porta del proxy
     Proxy Host: Host del proxy
     Proxy Warning: FreeTube non ha un proxy integrato ma può connettersi a un proxy esterno, come uno in esecuzione sul tuo computer come Tor o un proxy esterno come un proxy SOCKS5 fornito da alcune VPN. Se abilitato, assicurati che il tuo proxy/Tor sia configurato correttamente, altrimenti FreeTube non sarà in grado di recuperare alcun dato.
+    Proxy Username: Nome utente proxy
+    Proxy Password: Password proxy
   SponsorBlock Settings:
     Notify when sponsor segment is skipped: Notifica quando un segmento sponsor viene saltato
     'SponsorBlock API Url (Default is https://sponsor.ajay.app)': URL dell'API di SponsorBlock (l'impostazione predefinita è https://sponsor.ajay.app)
@@ -625,7 +628,7 @@ About:
   FreeTube Wiki: Wiki FreeTube
   Help: Aiuto
   Downloads / Changelog: Download / Registro delle modifiche
-  GitHub releases: Versioni pubblicate su GitHub
+  GitHub releases: Versioni di GitHub
   these people and projects: queste persone e questi progetti
   FreeTube is made possible by: FreeTube è reso possibile grazie a
   Credits: Crediti
@@ -753,7 +756,7 @@ Video:
       shuffling playlists: riproduzione casuale delle playlist
       reversing playlists: invertire le playlist
       opening specific video in a playlist (falling back to opening the video): apertura di un video specifico in una playlist (in caso di errore vai all'apertura del video)
-      setting a playback rate: impostare una velocità di riproduzione
+      setting a playback rate: impostazione di una velocità di riproduzione
       opening playlists: apertura delle playlist
       starting video at offset: avviare il video da un determinato punto
     UnsupportedActionTemplate: '{externalPlayer} non supporta: {action}'
@@ -1007,7 +1010,7 @@ Channels:
   Title: Elenco canali
   Channels: Canali
   Search bar placeholder: Ricerca canali
-  Count: '{number} canale/i trovato/i.'
+  Count: '{number} canali trovati.'
   Empty: L'elenco dei tuoi canali è attualmente vuoto.
   Unsubscribe Prompt: Sei sicuro di voler annullare l'iscrizione a "{channelName}"?
 Clipboard:
@@ -1015,8 +1018,6 @@ Clipboard:
   Copy failed: Copia negli appunti non riuscita
 Chapters:
   Chapters: Capitoli
-  'Chapters list visible, current chapter: {chapterName}': 'Elenco capitoli visibile, capitolo corrente: {chapterName}'
-  'Chapters list hidden, current chapter: {chapterName}': 'Elenco capitoli nascosto, capitolo corrente: {chapterName}'
   Key Moments: Momenti chiave
 Preferences: Preferenze
 Ok: OK

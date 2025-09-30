@@ -1,3 +1,10 @@
+<p align="center">
+ <img alt="" src="/_icons/logoColor.svg" width=500 align="center">
+</p>
+
+FreeTube is an open source desktop YouTube player built with privacy in mind.
+Use YouTube without advertisements and prevent Google from tracking you with their cookies and JavaScript.
+Available for Windows (10 and later), Mac (macOS 12 and later) & Linux thanks to Electron.
 <p align="center" >
  <img src="https://docs.freetubeapp.io/images/logoColor.png" width=500 align="center" alt="FreeTube Logo">
 </p>
@@ -79,6 +86,59 @@ yarn pack:botGuardScript:android
 yarn pack:android:dev
 ```
 > [!NOTE]
+> These extensions do not work on Linux portable builds!
+>
+> If you have issues with the extension working with FreeTube, please create an issue in this repository instead of the extension repository.
+
+## Download Links
+### Official Downloads
+
+> [!CAUTION]
+> FreeTube is only supported on Windows 10 and later, macOS 12 and above, and various Linux distributions. Installing it on unsupported systems may result in unexpected issues.
+
+* [GitHub Releases](https://github.com/FreeTubeApp/FreeTube/releases)
+
+* [FreeTube Website](https://freetubeapp.io/#download)
+
+* Flatpak on Flathub: [Download](https://flathub.org/apps/details/io.freetubeapp.FreeTube) and [Source Code](https://github.com/flathub/io.freetubeapp.FreeTube)
+
+#### Automated Builds (Nightly / Weekly)
+> [!WARNING]
+> Use these builds at your own risk. These are pre-release versions and are only intended for people that want to test changes early and are willing to accept that things could break from one build to another. 
+
+Builds are automatically created from changes to our development branch via [GitHub Actions](https://github.com/FreeTubeApp/FreeTube/actions?query=workflow%3ABuild).
+
+The first build with a green check mark is the latest build.  
+
+> [!IMPORTANT]
+> You will need to have a GitHub account to download these builds.
+
+### Unofficial Downloads
+> [!WARNING]
+> These builds are maintained by the community. While they should be safe, download at your own risk. There may be issues with using these versus the official builds. Any issues specific with these builds should be sent to their respective maintainer. Make sure u always try an [official download](https://github.com/freetubeapp/freetube/#official-downloads) before reporting your issue to us!
+
+* Arch User Repository (AUR): [Download](https://aur.archlinux.org/packages/freetube-bin/)
+
+* Chocolatey: [Download](https://chocolatey.org/packages/freetube/)
+
+* FreeTubeAndroid (FreeTube port for Android and PWA): [Download](https://github.com/MarmadileManteater/FreeTubeAndroid/releases) and [Source Code](https://github.com/MarmadileManteater/FreeTubeAndroid)
+
+* Homebrew Formulae (Mac only): [Download for Apple Silicon](https://github.com/PikachuEXE/homebrew-FreeTube)
+
+* makedeb Package Repository (MPR): [Download](https://mpr.makedeb.org/packages/freetube-bin)
+
+* Nix Packages: [Download](https://search.nixos.org/packages?query=freetube)
+
+* PortableApps (Windows Only): [Download](https://github.com/rddim/FreeTubePortable/releases) and [Source Code](https://github.com/rddim/FreeTubePortable)
+
+* Scoop (Windows Only): [Usage](https://github.com/ScoopInstaller/Scoop)
+
+* Snap: [Download](https://snapcraft.io/freetube) and [Source Code](https://git.launchpad.net/freetube)
+
+* WAPT: [Download](https://wapt.tranquil.it/store/tis-freetube)
+
+* Windows Package Manager (winget): [Usage](https://docs.microsoft.com/en-us/windows/package-manager/winget/)
+
 > These commands only build the assets necessary for the project located in `android/` to be built. In order to obtain a complete build, you will need to build the project located in `android/` with `gradle`.
 ### Commands for the PWA
 ```bash

@@ -202,6 +202,7 @@ User Playlists:
   Export Playlist: Esportatu erreprodukzio zerrenda hau
   The playlist has been successfully exported: Erreprodukzio zerrenda ongi esportatu da
   TotalTimePlaylist: 'Denbora guztira: {duration}'
+  Export list of URLs: URL-en zerrenda esportatu
 History:
   # On History Page
   History: 'Historikoa'
@@ -564,6 +565,8 @@ Settings:
     City: 'Hiria'
     Error getting network information. Is your proxy configured properly?: 'Errore bat gertatu da sareko informazioa eskuratzean. Zure proxya behar bezala konfiguratuta al dago?'
     Proxy Warning: FreeTube-k ez du proxy-rik, baina kanpoko proxy batera konekta daiteke, adibidez, zure makinan Tor gisa exekutatzen den bat edo kanpoko proxy bat, VPN batzuek emandako proxy bat bezala. Aktibatuta badago, ziurtatu proxy/Tor behar bezala konfiguratuta dagoela, edo FreeTube-k ezingo du daturik lortu.
+    Proxy Username: Proxy-aren erabiltzailea
+    Proxy Password: Proxyaren pasahitza
   External Player Settings:
     Ignore Unsupported Action Warnings: Onartu gabeko ekintzen oharrei ez ikusiarena egin
     External Player Settings: Kanpoko erreproduzitzailea
@@ -622,7 +625,7 @@ About:
   Beta: 'Beta'
   Source code: 'Kode iturria'
   Downloads / Changelog: 'Deskargak / Aldaketen erregistroa'
-  GitHub releases: 'Github argitalpenak'
+  GitHub releases: 'Github Argitalpenak'
   Help: 'Laguntza'
   FreeTube Wiki: 'Freetuberen wikia'
   FAQ: 'Ohiko galderak'
@@ -1026,9 +1029,7 @@ Clipboard:
 Tag already exists: '"{tagName}" etiketa badago jada'
 Trimmed input must be at least N characters long: Moztutako sarrerak karaktere bat izan behar du gutxienez | Moztutako sarrerak gutxienez {length} karaktere izan behar ditu
 Chapters:
-  'Chapters list hidden, current chapter: {chapterName}': 'Kapituluen zerrenda ezkutatuta dago, uneko kapitulua: {chapterName}'
   Chapters: Kapituluak
-  'Chapters list visible, current chapter: {chapterName}': 'Kapituluen zerrenda ikusgai, uneko kapitulua: {chapterName}'
   Key Moments: Une garrantzitsuenak
 Hashtag:
   Hashtag: Traola
