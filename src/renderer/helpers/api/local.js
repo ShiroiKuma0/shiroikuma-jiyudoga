@@ -11,7 +11,7 @@ import {
   getChannelPlaylistId,
   getRelativeTimeFromDate,
 } from '../utils'
-import { generatePOTokenFromVisitorData, generatePOTokens } from '../android'
+import { generatePOTokens, runDecipherScript } from '../android'
 
 const TRACKING_PARAM_NAMES = [
   'utm_source',
@@ -43,24 +43,30 @@ if (process.env.SUPPORTS_LOCAL_API) {
       const messageId = process.env.IS_ELECTRON || crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.floor(Math.random() * 10000)}`
+      
+      if (process.env.IS_ELECTRON) {
+        const iframe = document.getElementById('sigFrame')
 
-      const iframe = document.getElementById('sigFrame')
+        /** @param {MessageEvent} event */
+        const listener = (event) => {
+          if (event.source === iframe.contentWindow && typeof event.data === 'string') {
+            const data = JSON.parse(event.data)
 
-      /** @param {MessageEvent} event */
-      const listener = (event) => {
-        if (event.source === iframe.contentWindow && typeof event.data === 'string') {
-          const data = JSON.parse(event.data)
+            if (data.id === messageId) {
+              window.removeEventListener('message', listener)
 
-          if (data.id === messageId) {
-            window.removeEventListener('message', listener)
-
-            resolve(data.result)
+              resolve(data.result)
+            }
           }
         }
-      }
 
-      window.addEventListener('message', listener)
-      iframe.contentWindow.postMessage(JSON.stringify({ id: messageId, code }), '*')
+        window.addEventListener('message', listener)
+        iframe.contentWindow.postMessage(JSON.stringify({ id: messageId, code }), '*')
+      } else {
+        runDecipherScript(messageId, code).then(result => {
+          resolve(result)
+        })
+      }
     })
   }
 }

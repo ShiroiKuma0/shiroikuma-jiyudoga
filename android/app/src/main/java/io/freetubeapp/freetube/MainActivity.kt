@@ -29,9 +29,11 @@ import io.freetubeapp.freetube.databinding.ActivityMainBinding
 import io.freetubeapp.freetube.helpers.Promise
 import io.freetubeapp.freetube.javascript.BotGuardJavascriptInterface
 import io.freetubeapp.freetube.javascript.FreeTubeJavaScriptInterface
+import io.freetubeapp.freetube.javascript.SigWebViewJavascriptInterface
 import io.freetubeapp.freetube.javascript.dispatchEvent
 import io.freetubeapp.freetube.webviews.BackgroundPlayWebView
 import io.freetubeapp.freetube.webviews.BotGuardWebView
+import io.freetubeapp.freetube.webviews.SigWebView
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -55,12 +57,14 @@ class MainActivity : AppCompatActivity() {
   // region JS interfaces
   private lateinit var jsInterface: FreeTubeJavaScriptInterface
   lateinit var bgJsInterface: BotGuardJavascriptInterface
+  lateinit var sigJsInterface: SigWebViewJavascriptInterface
   // endregion
 
   // region Bindings
   private lateinit var binding: ActivityMainBinding
   lateinit var webView: BackgroundPlayWebView
   lateinit var bgWebView: BotGuardWebView
+  lateinit var sigWebView: SigWebView
   lateinit var content: View
   private var fullscreenView: View? = null
   // endregion
@@ -347,6 +351,28 @@ class MainActivity : AppCompatActivity() {
         return super.onConsoleMessage(consoleMessage);
       }
     }
+
+    sigWebView = binding.sigWebView
+    sigJsInterface = SigWebViewJavascriptInterface(sigWebView, jsInterface.jsCommunicator)
+    sigWebView.addJavascriptInterface(sigJsInterface, "Android")
+    sigWebView.settings.javaScriptEnabled = true
+    sigWebView.webChromeClient = object: WebChromeClient() {
+
+      override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+        val messageData = JSONObject()
+        messageData.put("content", consoleMessage.message())
+        messageData.put("level", consoleMessage.messageLevel())
+        messageData.put("timestamp", System.currentTimeMillis())
+        messageData.put("id", UUID.randomUUID())
+        messageData.put("key", "${messageData["id"]}-${messageData["timestamp"]}")
+        messageData.put("sourceId", consoleMessage.sourceId())
+        messageData.put("lineNumber", consoleMessage.lineNumber())
+        consoleMessages.add(messageData)
+        webView.dispatchEvent("console-message", "data", messageData)
+        return super.onConsoleMessage(consoleMessage)
+      }
+    }
+    sigWebView.loadUrl("file:///android_asset/decipher.html")
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

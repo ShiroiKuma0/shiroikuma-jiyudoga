@@ -443,3 +443,8 @@ export async function resetDataDirectory(copyFiles = false) {
   }
   return uri
 }
+
+
+export async function runDecipherScript(id, code) {
+  return JSON.parse(await awaitAsyncResult(android.runDecipherScript(id, code)))
+}
