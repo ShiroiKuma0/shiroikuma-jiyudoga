@@ -13,7 +13,7 @@ const {
   SHAKA_LOCALES_PREBUNDLED,
   SHAKA_LOCALES_TO_BE_BUNDLED
 } = require('./getShakaLocales')
-const { sigFrameTemplateParameters } = require('./sigFrameConfig')
+const { sigViewTemplateParameters } = require('./sigViewConfig')
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
@@ -144,8 +144,13 @@ const config = {
       excludeChunks: ['processTaskWorker'],
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
-      templateParameters: sigFrameTemplateParameters,
       nodeModules: false,
+    }),
+    new HtmlWebpackPlugin({
+      filename: "decipher.html",
+      inject: false,
+      templateContent: sigViewTemplateParameters.sigViewRaw,
+      nodeModules: false
     }),
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({

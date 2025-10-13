@@ -15,5 +15,10 @@
       android:layout_width="1920px"
       android:layout_height="1080px"
       android:visibility="invisible" />
+  <io.freetubeapp.freetube.webviews.SigWebView
+    android:id="@+id/sig_web_view"
+    android:layout_width="1920px"
+    android:layout_height="1080px"
+    android:visibility="invisible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -54,7 +54,7 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   private var lastState: Int
   private var lastNotification: Notification? = null
   private var keepScreenOn: Boolean = false
-  private val jsCommunicator: AsyncJSCommunicator
+  val jsCommunicator: AsyncJSCommunicator
 
   companion object {
     private const val DATA_DIRECTORY = "data://"
@@ -812,6 +812,15 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
           reject(exception.message!!)
         }
     }).addJsCommunicator(jsCommunicator)
+  }
+
+  @JavascriptInterface
+  fun runDecipherScript(id: String, code: String): String {
+    // pass data to other webview
+    context.sigJsInterface.jsCommunicator.resolve(id, code)
+    // dispatch event to read data
+    context.sigWebView.dispatchEvent("message", "id", id)
+    return id
   }
 
   // endregion
