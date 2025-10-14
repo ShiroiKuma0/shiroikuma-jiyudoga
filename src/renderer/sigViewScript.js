@@ -2,9 +2,17 @@
 window.addEventListener('message', (event) => {
   const id = event.id
   const code = Android.readSync(id)
-  Android.postMessage(
-    id,
-    // eslint-disable-next-line no-new-func
-    JSON.stringify(new Function(code)())
-  )
+  try {
+    const result = new Function(code)()
+    Android.resolve(
+      id,
+      // eslint-disable-next-line no-new-func
+      JSON.stringify(result)
+    )
+  } catch (ex) {
+    Android.reject(
+      id,
+      ex.toString()
+    )
+  }
 })

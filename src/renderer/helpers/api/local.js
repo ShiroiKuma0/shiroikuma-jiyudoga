@@ -23,7 +23,7 @@ const TRACKING_PARAM_NAMES = [
 
 if (process.env.SUPPORTS_LOCAL_API) {
   Platform.shim.eval = (data, env) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const properties = []
 
       if (env.n) {
@@ -63,9 +63,7 @@ if (process.env.SUPPORTS_LOCAL_API) {
         window.addEventListener('message', listener)
         iframe.contentWindow.postMessage(JSON.stringify({ id: messageId, code }), '*')
       } else {
-        runDecipherScript(messageId, code).then(result => {
-          resolve(result)
-        })
+        runDecipherScript(messageId, code).then(resolve).catch(reject)
       }
     })
   }
