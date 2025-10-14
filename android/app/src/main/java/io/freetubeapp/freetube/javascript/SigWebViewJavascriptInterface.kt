@@ -19,7 +19,12 @@ class SigWebViewJavascriptInterface(
   }
 
   @JavascriptInterface
-  fun postMessage(id: String, message: String) {
+  fun resolve(id: String, message: String) {
     remoteJSCommunicator.resolve(id, message)
+  }
+
+  @JavascriptInterface
+  fun reject(id: String, message: String) {
+    remoteJSCommunicator.reject(id, message)
   }
 }
