@@ -23,6 +23,7 @@ import android.view.KeyEvent.KEYCODE_MEDIA_PLAY
 import android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
+import android.webkit.WebView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
@@ -38,6 +39,7 @@ import io.freetubeapp.freetube.helpers.readBytes
 import io.freetubeapp.freetube.helpers.readText
 import io.freetubeapp.freetube.helpers.writeBytes
 import io.freetubeapp.freetube.helpers.writeText
+import io.freetubeapp.freetube.webviews.BotGuardWebView
 import org.json.JSONObject
 import java.io.File
 import java.net.URL
@@ -768,48 +770,50 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
       resolve,
       reject
       ->
-        try {
-          val bgScript = getBotGuardScript(videoId, sessionContext)
-          val bgWv = context.bgWebView
-          context.bgJsInterface.onReturnToken {
-            run {
-              context.runOnUiThread {
-                resolve(it)
-                bgWv.loadUrl("about:blank")
+        context.runOnUiThread {
+          try {
+            val bgScript = getBotGuardScript(videoId, sessionContext)
+            val bgWv = context.generateBgWebview()
+            bgWv.jsInterface.onReturnToken {
+              run {
+                context.runOnUiThread {
+                  resolve(it)
+                  bgWv.destroy()
+                }
               }
             }
+            context.runOnUiThread {
+              bgWv.loadDataWithBaseURL(
+                "https://www.youtube.com/",
+                "<script>\n" +
+                  "window.ofetch = window.fetch\n" +
+                  "window.fetch = async (url, data) => {\n" +
+                  "  if (url.startsWith('https://www.google.com/')) {\n" +
+                  "    return new Promise((resolve, _) => {" +
+                  "    const script = document.createElement('script')\n" +
+                  "    script.src = url\n" +
+                  "    script.async = true\n" +
+                  "    document.body.appendChild(script)\n" +
+                  "     script.addEventListener('load', () => {\n" +
+                  "       resolve({ text: () => '() => {}' })\n" +
+                  "     })\n" +
+                  "    })\n" +
+                  "  }\n" +
+                  "  const id = crypto.randomUUID()\n" +
+                  "  if (data && 'body' in data) {" +
+                  "    Android.queueBody(id, data.body)\n" +
+                  "    data.headers['x-fta-request-id'] = id\n" +
+                  "  }" +
+                  "  return await window.ofetch(url, data)\n" +
+                  "}</script><script>${bgScript}</script>",
+                "text/html",
+                "utf-8",
+                null
+              )
+            }
+          } catch (exception: Exception) {
+            reject(exception.message!!)
           }
-          context.runOnUiThread {
-            bgWv.loadDataWithBaseURL(
-              "https://www.youtube.com/",
-              "<script>\n" +
-                "window.ofetch = window.fetch\n" +
-                "window.fetch = async (url, data) => {\n" +
-                "  if (url.startsWith('https://www.google.com/')) {\n" +
-                "    return new Promise((resolve, _) => {" +
-                "    const script = document.createElement('script')\n" +
-                "    script.src = url\n" +
-                "    script.async = true\n" +
-                "    document.body.appendChild(script)\n" +
-                "     script.addEventListener('load', () => {\n" +
-                "       resolve({ text: () => '() => {}' })\n" +
-                "     })\n" +
-                "    })\n" +
-                "  }\n" +
-                "  const id = crypto.randomUUID()\n" +
-                "  if (data && 'body' in data) {" +
-                "    Android.queueBody(id, data.body)\n" +
-                "    data.headers['x-fta-request-id'] = id\n" +
-                "  }" +
-                "  return await window.ofetch(url, data)\n" +
-                "}</script><script>${bgScript}</script>",
-              "text/html",
-              "utf-8",
-              null
-            )
-          }
-        } catch (exception: Exception) {
-          reject(exception.message!!)
         }
     }).addJsCommunicator(jsCommunicator)
   }
