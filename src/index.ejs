@@ -50,8 +50,7 @@
       style="display: none; pointer-events: none"
       tabindex="-1"
     ></iframe>
-    <% } %>
-    <% if (!process.env.IS_ELECTRON && !process.env.IS_ANDROID) { %>
+    <% } else { %>
     <script>
     // This is the service worker with the Advanced caching
 
