@@ -11,7 +11,7 @@ import {
   getChannelPlaylistId,
   getRelativeTimeFromDate,
 } from '../utils'
-import { generatePOTokens, runDecipherScript } from '../android/potokens'
+import { generatePOToken, runDecipherScript } from '../android/potokens'
 
 const TRACKING_PARAM_NAMES = [
   'utm_source',
@@ -450,11 +450,10 @@ export async function getLocalVideoInfo(id) {
       throw error
     }
   } else if (process.env.IS_ANDROID) {
-    ({ contentPoToken } = await generatePOTokens(
+    contentPoToken = await generatePOToken(
       id,
-      webInnertube.session.context.client.visitorData,
       JSON.stringify(webInnertube.session.context)
-    ))
+    )
     webInnertube.session.player.po_token = contentPoToken
   }
 
