@@ -253,22 +253,5 @@
   }
 }
 
-@media (prefers-reduced-transparency:no-preference) {
-
-  /* stylelint-disable-next-line comment-empty-line-before */
-  /*
-    /* add transparency to big play button *//*
-    :deep(.shaka-controls-container[shown='true'] > .shaka-play-button-container > .shaka-play-button) {
-      opacity: 0.75 !important;
-    }
-  */
-}
-
-@media only screen and (width <= 500px) {
-  :deep(.shaka-overflow-menu) {
-    max-height: 150px;
-  }
-}
-
 /* stylelint-enable liberty/use-logical-spec */
 

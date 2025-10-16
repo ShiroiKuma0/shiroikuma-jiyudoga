@@ -43,7 +43,7 @@ if (process.env.SUPPORTS_LOCAL_API) {
       const messageId = process.env.IS_ELECTRON || crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.floor(Math.random() * 10000)}`
-      
+
       if (process.env.IS_ELECTRON) {
         const iframe = document.getElementById('sigFrame')
 
@@ -55,15 +55,21 @@ if (process.env.SUPPORTS_LOCAL_API) {
             if (data.id === messageId) {
               window.removeEventListener('message', listener)
 
-              resolve(data.result)
+              if (data.error) {
+                reject(data.error)
+              } else {
+                resolve(data.result)
+              }
             }
           }
         }
 
         window.addEventListener('message', listener)
         iframe.contentWindow.postMessage(JSON.stringify({ id: messageId, code }), '*')
-      } else {
+      } else if (process.env.IS_ANDROID) {
         runDecipherScript(messageId, code).then(resolve).catch(reject)
+      } else {
+        reject(new Error('Please setup the eval function for the n/sig deciphering'))
       }
     })
   }
@@ -428,32 +434,28 @@ export async function getLocalSearchContinuation(continuationData) {
 export async function getLocalVideoInfo(id) {
   const webInnertube = await createInnertube({ withPlayer: true, generateSessionLocally: false })
 
-  // based on the videoId (added to the body of the /player request and to caption URLs)
+  // based on the videoId
   let contentPoToken
-  // based on the visitor data (added to the streaming URLs)
-  let sessionPoToken
 
   if (process.env.IS_ELECTRON) {
     try {
-      ({ contentPoToken, sessionPoToken } = await window.ftElectron.generatePoTokens(
+      contentPoToken = await window.ftElectron.generatePoToken(
         id,
-        webInnertube.session.context.client.visitorData,
         JSON.stringify(webInnertube.session.context)
-      ))
+      )
 
-      webInnertube.session.player.po_token = sessionPoToken
+      webInnertube.session.player.po_token = contentPoToken
     } catch (error) {
       console.error('Local API, poToken generation failed', error)
       throw error
     }
   } else if (process.env.IS_ANDROID) {
-    ({ contentPoToken, sessionPoToken } = await generatePOTokens(
+    ({ contentPoToken } = await generatePOTokens(
       id,
       webInnertube.session.context.client.visitorData,
       JSON.stringify(webInnertube.session.context)
     ))
-    webInnertube.session.po_token = contentPoToken
-    webInnertube.session.player.po_token = sessionPoToken
+    webInnertube.session.player.po_token = contentPoToken
   }
 
   let clientName = webInnertube.session.context.client.clientName
@@ -548,11 +550,11 @@ export async function getLocalVideoInfo(id) {
     if (info.streaming_data.dash_manifest_url) {
       let url = info.streaming_data.dash_manifest_url
 
-    if (url.includes('?')) {
-      url += `&pot=${encodeURIComponent(sessionPoToken)}&mpd_version=7`
-    } else {
-      url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(sessionPoToken)}/mpd_version/7`
-    }
+      if (url.includes('?')) {
+        url += `&pot=${encodeURIComponent(contentPoToken)}&mpd_version=7`
+      } else {
+        url += `${url.endsWith('/') ? '' : '/'}pot/${encodeURIComponent(contentPoToken)}/mpd_version/7`
+      }
 
       info.streaming_data.dash_manifest_url = url
     }
