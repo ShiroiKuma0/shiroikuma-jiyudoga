@@ -354,11 +354,9 @@ export function generatePOTokenFromVisitorData(visitorData) {
   return awaitAsyncResult(android.generatePOTokenFromVisitorData(visitorData))
 }
 
-export async function generatePOTokens(videoId, visitorData, sessionContext) {
-  const id = android.generatePOTokens(videoId, visitorData, sessionContext)
-  const data = JSON.parse(await awaitAsyncResult(id))
-  console.log(data)
-  return data
+export async function generatePOToken(videoId, sessionContext) {
+  const id = android.generatePOToken(videoId, sessionContext)
+  return await awaitAsyncResult(id)
 }
 
 export async function selectDataDirectory(copyFiles = false) {

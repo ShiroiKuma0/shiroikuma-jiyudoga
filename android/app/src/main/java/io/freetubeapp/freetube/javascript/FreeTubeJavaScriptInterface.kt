@@ -678,28 +678,28 @@ class FreeTubeJavaScriptInterface {
 
   // region Data Extraction
 
-  private fun getBotGuardScript(videoId: String, visitorData: String, sessionContext: String, includeDebugMessage: Boolean = true): String {
+  private fun getBotGuardScript(videoId: String, sessionContext: String, includeDebugMessage: Boolean = true): String {
     val script = context.assets.readText("botGuardScript.js")
     val functionName = script.split("export{")[1].split(" as default};")[0]
     val exportSection = "export{${functionName} as default};"
     val then = if (includeDebugMessage) {
-      "(TOKEN_RESULT) => { console.log(`Your potoken is \${JSON.stringify(TOKEN_RESULT)}`); Android.returnToken(JSON.stringify(TOKEN_RESULT)) }"
+      "(TOKEN_RESULT) => { console.log(`Your potoken is \${TOKEN_RESULT}`); Android.returnToken(TOKEN_RESULT) }"
     } else {
       "(TOKEN_RESULT) => { Android.returnToken(TOKEN_RESULT) }"
     }
     val bakedScript =
-      script.replace(exportSection, "; ${functionName}(\"$videoId\",\"$visitorData\", $sessionContext).then($then)")
+      script.replace(exportSection, "; ${functionName}(\"$videoId\", $sessionContext).then($then)")
     return bakedScript
   }
 
   @JavascriptInterface
-  fun generatePOTokens(videoId: String, visitorData: String, sessionContext: String): String {
+  fun generatePOToken(videoId: String, sessionContext: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
       reject
       ->
         try {
-          val bgScript = getBotGuardScript(videoId, visitorData, sessionContext)
+          val bgScript = getBotGuardScript(videoId, sessionContext)
           val bgWv = context.bgWebView
           context.bgJsInterface.onReturnToken {
             run {
