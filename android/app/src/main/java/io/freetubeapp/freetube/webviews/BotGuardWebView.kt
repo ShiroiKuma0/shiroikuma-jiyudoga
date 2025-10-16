@@ -17,8 +17,9 @@ class BotGuardWebView @JvmOverloads constructor(
 ) :
 // no need to communicate window visibility to botguard
   BackgroundPlayWebView(context, attrs) {
+    val jsInterface = BotGuardJavascriptInterface(context as MainActivity)
     init {
-      val mainActivity = (context as MainActivity)
+      addJavascriptInterface(jsInterface, "Android")
       webViewClient = object : WebViewClient() {
         override fun shouldInterceptRequest(
           view: WebView?,
@@ -27,8 +28,7 @@ class BotGuardWebView @JvmOverloads constructor(
           if (request!!.url.toString().startsWith("data:text/html") || request!!.url.toString().startsWith("https://www.youtube.com/api/jnn/v1/GenerateIT")) {
             return super.shouldInterceptRequest(view, request)
           }
-          val jsInterface = mainActivity.bgJsInterface
-          with(URL(request!!.url.toString()).openConnection() as HttpURLConnection) {
+          with(URL(request.url.toString()).openConnection() as HttpURLConnection) {
             requestMethod = request.method
             // map headers
             for (header in request!!.requestHeaders) {
