@@ -249,6 +249,7 @@
           <p
             v-if="isOpen"
             class="navLabel"
+            dir="auto"
           >
             {{ channel.name }}
           </p>

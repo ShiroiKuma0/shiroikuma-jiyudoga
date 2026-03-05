@@ -19,12 +19,14 @@
         <h1
           :id="labelId"
           class="changeLogTitle"
+          dir="ltr"
         >
           {{ changeLogTitle }}
         </h1>
       </template>
-      <span
+      <bdo
         class="changeLogText"
+        dir="ltr"
         lang="en"
         v-html="updateChangelog"
       />
