@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue'
 import android from 'android'
 
 import store from '../../store/index'
@@ -108,7 +108,7 @@ const emit = defineEmits(['click'])
 
 const id = useId()
 
-const promptCard = ref(null)
+const promptCard = useTemplateRef('promptCard')
 
 let promptButtons = []
 let lastActiveElement = null

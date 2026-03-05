@@ -1,4 +1,4 @@
-import { ClientType, Innertube, Misc, Parser, Platform, UniversalCache, Utils, YT, YTNodes } from 'youtubei.js'
+import { ClientType, Innertube, Misc, Mixins, Parser, Platform, UniversalCache, Utils, YT, YTNodes } from 'youtubei.js'
 import Autolinker from 'autolinker'
 import { SEARCH_CHAR_LIMIT } from '../../../constants'
 
@@ -364,42 +364,43 @@ export async function untilEndOfLocalPlayList(playlist, callback, options = { ru
 
 /**
  * @param {string} location
- * @param {'default'|'music'|'gaming'|'movies'} tab
- * @param {import('youtubei.js').Mixins.TabbedFeed<import('youtubei.js').IBrowseResponse> | null} instance
+ * @param {'gaming' | 'sports' | 'podcasts'} tab
  */
-export async function getLocalTrending(location, tab, instance) {
-  if (instance === null) {
-    const innertube = await createInnertube({ location })
-    instance = await innertube.getTrending()
-  }
+export async function getLocalTrending(location, tab) {
+  const innertube = await createInnertube({ location })
 
-  // youtubei.js's tab names are localised, so we need to use the index to get tab name that youtubei.js expects
-  const tabIndex = ['default', 'music', 'gaming', 'movies'].indexOf(tab)
-  const resultsInstance = await instance.getTabByName(instance.tabs[tabIndex])
+  let args
 
-  let results
-
-  // the default tab can have duplicate videos so we need to deduplicate them
-  if (tab === 'default') {
-    const alreadySeenIds = []
-    results = []
-
-    resultsInstance.videos.forEach(video => {
-      if (video.type === 'Video' && !alreadySeenIds.includes(video.video_id)) {
-        alreadySeenIds.push(video.video_id)
-        results.push(parseLocalListVideo(video))
+  switch (tab) {
+    case 'gaming':
+      // https://www.youtube.com/gaming/trending
+      args = {
+        browseId: 'UCOpNcN46UbXVtpKMrmU4Abg',
+        params: 'Egh0cmVuZGluZ7gBAJIDAPIGBAoCMgA'
       }
-    })
-  } else {
-    results = resultsInstance.videos
-      .filter((video) => video.type === 'Video')
-      .map(parseLocalListVideo)
+      break
+    case 'sports':
+      // https://www.youtube.com/channel/UCEgdi0XIXXZ-qJOFPf4JSKw/sportstab?ss=CMMG
+      args = {
+        browseId: 'UCEgdi0XIXXZ-qJOFPf4JSKw',
+        params: 'EglzcG9ydHN0YWK4AQCSAwDyBgQKAjIA'
+      }
+      break
+    case 'podcasts':
+      // https://www.youtube.com/podcasts/popularepisodes
+      args = {
+        browseId: 'FEpodcasts_destination',
+        params: 'qgcCCAM%3D'
+      }
+      break
+    default:
+      throw new Error('Unknown trending tab')
   }
 
-  return {
-    results,
-    instance: resultsInstance
-  }
+  const response = await innertube.actions.execute('/browse', args)
+  const feed = new Mixins.Feed(innertube.actions, response)
+
+  return feed.videos.map(video => parseLocalListVideo(video))
 }
 
 /**
@@ -2031,10 +2032,18 @@ function parseLocalCommunityPost(post) {
     replyCount = parseLocalSubscriberCount(post?.action_buttons.reply_button.text)
   }
 
+  const authorThumbnails = post.author.thumbnails
+
+  authorThumbnails.forEach((thumbnail) => {
+    if (thumbnail.url.startsWith('//')) {
+      thumbnail.url = 'https:' + thumbnail.url
+    }
+  })
+
   return {
     postText: post.content.isEmpty() ? '' : Autolinker.link(parseLocalTextRuns(post.content.runs, 16)),
     postId: post.id,
-    authorThumbnails: post.author.thumbnails,
+    authorThumbnails,
     publishedTime: calculatePublishedDate(post.published.text),
     // YouTube hides the vote/like count on posts when it is zero
     voteCount: post.vote_count ? parseLocalSubscriberCount(post.vote_count.text) : 0,

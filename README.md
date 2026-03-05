@@ -48,8 +48,8 @@ The APK uses a built in extractor to grab and serve data / videos, and can optio
 * View and search your local subscriptions, playlists and history
 * Organize your subscriptions into "Profiles" to create a more focused feed
 * Export & import subscriptions
-* Youtube Trending
-* Youtube Chapters
+* YouTube Trending
+* YouTube Chapters
 * Most popular videos page based on the set Invidious instance
 * SponsorBlock 
 * Full Theme support

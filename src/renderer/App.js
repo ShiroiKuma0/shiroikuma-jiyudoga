@@ -692,7 +692,6 @@ export default defineComponent({
           transformed = true
           break
         case 'subscriptions':
-        case 'trending':
         case 'history':
           transformedURL.pathname = `/feed/${pathParts[1]}`
           transformed = true
