@@ -12,8 +12,6 @@ Copy: 'Скопіювати'
 Paste: 'Вставити'
 Delete: 'Видалити'
 Select all: 'Вибрати все'
-Reload: 'Перезавантажити'
-Force Reload: 'Примусове перезавантаження'
 Toggle Developer Tools: 'Перемкнути інструменти розробника'
 Actual size: 'Дійсний розмір'
 Zoom in: 'Збільшити'
@@ -503,8 +501,8 @@ Settings:
     Hide Channels Already Exists: ID каналу вже існує
     Hide Channels API Error: Помилка під час пошуку користувача з наданим ID. Перевірте ще раз, чи правильний ID.
     Hide Channel Home: Сховати вкладку "Головна" каналу
-    Hide Videos and Playlists Containing Text Placeholder: Слово, фрагмент слова або фраза
-    Hide Videos and Playlists Containing Text: Сховати відео та добірки, що містять текст
+    Hide Videos, Playlists and Channels Containing Text Placeholder: Слово, фрагмент слова або фраза
+    Hide Videos, Playlists and Channels Containing Text: Сховати відео та добірки, що містять текст
     Show Added Items: Показати додані елементи
     Hide Channel Courses: Приховати вкладку «Курси» каналу
     Hide Channel Posts: Сховати вкладку "Пости" каналу
@@ -915,15 +913,9 @@ Comments:
   Top comments: 'Найпопулярніші коментарі'
   Newest first: 'Спочатку новіші'
   # Context: View 10 Replies, View 1 Reply
-  View: 'Перегляд'
-  Hide: 'Сховати'
-  Replies: 'Відповіді'
-  Reply: 'Відповідь'
   There are no comments available for this video: 'Немає коментарів до цього відео'
   Load More Comments: 'Завантажити більше коментарів'
   Show More Replies: Показати інші відповіді
-  From {channelName}: від {channelName}
-  And others: та інших
   Pinned by: Закріплено
   Member: Учасник
   Hearted: З сердечком
@@ -964,7 +956,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: Введіть ID, щоб сховати всі відео, добірки та сам канал від появи в пошуку, тренді, найпопулярніших і рекомендованих. Введений ID каналу повинен повністю збігатися і чутливий до регістру.
     Hide Subscriptions Live: Цей параметр перевизначається загальнодоступним налаштуванням "{appWideSetting}" у розділі "{subsection}" "{settingsSection}"
-    Hide Videos and Playlists Containing Text: Введіть слово, фрагмент слова або фразу (незалежно від регістру), щоб приховати всі відео та добірки, у заголовках яких вона міститься, по всьому FreeTube, за винятком Історії, Ваших Добірок і відео в межах добірок.
+    Hide Videos, Playlists and Channels Containing Text: Введіть слово, фрагмент слова або фразу (незалежно від регістру), щоб приховати всі відео та добірки, у заголовках яких вона міститься, по всьому FreeTube, за винятком Історії, Ваших Добірок і відео в межах добірок.
     Hide Videos on Watch: Приховує переглянуті відео з вкладок Відео,Shorts, та Наживо на сторінках підписок та каналу. Це не впливає на Домашню вкладку сторінок каналів
   SponsorBlock Settings:
     UseDeArrowTitles: Замінити назви відео на надіслані користувачем назви з DeArrow.
@@ -1097,8 +1089,6 @@ KeyboardShortcutPrompt:
   Take Screenshot: Зробити скріншот
   Minimize Window: Згорнути вікно
   Close Window: Закрити вікно
-  Restart Window: Перезапустити вікно
-  Force Restart Window: Примусово перезапустити вікно
   Refresh: Оновити стрічку з останнім вмістом
   Large Fast Forward: Перемотати вперед на 10 секунд / Швидка перемотка відео відповідно до поточної швидкості відтворення
   Decrease Video Speed: Зменшити швидкість відео відповідно до інтервалу швидкості відтворення відео

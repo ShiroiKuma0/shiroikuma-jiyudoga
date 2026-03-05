@@ -62,15 +62,15 @@
             <span>{{ (tag.preferredName) ? tag.preferredName : tag.name }}</span>
           </template>
           <span v-else>{{ tag }}</span>
-          <FontAwesomeIcon
+          <button
             v-if="!disabled"
-            :icon="['fas', 'fa-times']"
             class="removeTagButton"
-            tabindex="0"
-            role="button"
             @click="removeTag(tag)"
-            @keydown.enter.prevent="removeTag(tag)"
-          />
+          >
+            <FontAwesomeIcon
+              :icon="['fas', 'fa-times']"
+            />
+          </button>
         </li>
       </ul>
     </div>
@@ -82,7 +82,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, useId } from 'vue'
 import { useI18n } from '../../composables/use-i18n-polyfill'
 
-import FtInput from '../ft-input/ft-input.vue'
+import FtInput from '../FtInput/FtInput.vue'
 
 import { showToast } from '../../helpers/utils'
 
@@ -167,7 +167,7 @@ async function updateTags(text) {
   newList.push(trimmedText)
   emit('change', newList)
   // clear input box
-  tagNameInput.value.handleClearTextClick()
+  tagNameInput.value.clear()
 }
 
 /**
@@ -198,7 +198,7 @@ async function updateChannelTags(text) {
   }
 
   // clear input box
-  tagNameInput.value.handleClearTextClick()
+  tagNameInput.value.clear()
 }
 
 function removeTag(tag) {

@@ -1,5 +1,5 @@
 <template>
-  <portal to="promptPortal">
+  <Teleport to=".app">
     <div
       class="prompt"
       tabindex="-1"
@@ -52,7 +52,7 @@
         </slot>
       </FtCard>
     </div>
-  </portal>
+  </Teleport>
 </template>
 
 <script setup>
@@ -120,6 +120,7 @@ function exitPrompt() {
 onMounted(() => {
   lastActiveElement = document.activeElement
   document.addEventListener('keydown', handleEscape, true)
+  store.commit('addOpenPrompt', id)
 
   nextTick(() => {
     promptButtons = Array.from(promptCard.value.$el.querySelectorAll('.btn.ripple, .iconButton'))
@@ -133,6 +134,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleEscape, true)
+  store.commit('removeOpenPrompt', id)
   nextTick(() => lastActiveElement?.focus())
   if (process.env.IS_ANDROID) {
     android.exitPromptMode()

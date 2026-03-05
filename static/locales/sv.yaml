@@ -12,8 +12,6 @@ Copy: 'Kopiera'
 Paste: 'Klistra In'
 Delete: 'Radera'
 Select all: 'Markera alla'
-Reload: 'Uppdatera'
-Force Reload: 'Framtvinga Uppdatering'
 Toggle Developer Tools: 'Växla utvecklarverktyg'
 Actual size: 'Verklig storlek'
 Zoom in: 'Zooma in'
@@ -542,8 +540,8 @@ Settings:
     Hide Channels Disabled Message: Vissa kanaler blockerades med ID och bearbetades inte. Funktionen är blockerad medan dessa ID:n uppdateras
     Hide Channels Already Exists: Kanal-ID finns redan
     Hide Channels API Error: Fel vid hämtning av användaren med det angivna ID:t. Kontrollera igen om ID:t är korrekt.
-    Hide Videos and Playlists Containing Text: Dölj videor och spellistor som innehåller text
-    Hide Videos and Playlists Containing Text Placeholder: Ord, ordfragment eller fras
+    Hide Videos, Playlists and Channels Containing Text: Dölj videor och spellistor som innehåller text
+    Hide Videos, Playlists and Channels Containing Text Placeholder: Ord, ordfragment eller fras
     Hide Channel Courses: Dölj kanalfliken "Kurser"
     Hide Channel Home: Dölj kanalfliken "Hem"
     Show Added Items: Visa Tillagda Objekt
@@ -919,17 +917,11 @@ Comments:
   There are no more comments for this video: 'Det finns inga fler kommentarer för videon'
   Hide Comments: 'Dölj kommentarer'
   # Context: View 10 Replies, View 1 Reply
-  View: 'Visa'
-  Hide: 'Dölj'
-  Replies: 'Svar'
-  Reply: 'Svara'
   There are no comments available for this video: 'Det finns inga kommentarer tillgängliga för videon'
   Load More Comments: 'Fler kommentarer'
   Newest first: Nyaste först
   Top comments: Toppkommentarer
   Show More Replies: Visa fler svar
-  From {channelName}: från {channelName}
-  And others: och andra
   Member: Medlem
   View {replyCount} replies: Visa {replyCount} repliker
   Pinned by: Nålad av
@@ -983,7 +975,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: Ange ett kanal-ID för att dölja alla videor, spellistor och själva kanalen från att visas i sökningar, trender, mest populära och rekommenderade. Det angivna kanal-ID:t måste vara en fullständig matchning och är skiftlägeskänsligt.
     Hide Subscriptions Live: Den här inställningen åsidosätts av den program omfattande "{appWideSetting}"-inställningen, i avsnittet "{subsection}" i "{settingsSection}"
-    Hide Videos and Playlists Containing Text: Ange ett ord, ordfragment eller en fras (okänsligt för skiftlägen) för att dölja alla videor och spellistor vars originaltitlar innehåller det i hela FreeTube, exklusive endast historik, dina spellistor och videor i spellistor.
+    Hide Videos, Playlists and Channels Containing Text: Ange ett ord, ordfragment eller en fras (okänsligt för skiftlägen) för att dölja alla videor och spellistor vars originaltitlar innehåller det i hela FreeTube, exklusive endast historik, dina spellistor och videor i spellistor.
     Hide Videos on Watch: Döljer visade videor från flikarna videor, shorts och live på sidorna prenumeration och kanal. Detta påverkar inte fliken hem på kanalsidorna
   Experimental Settings:
     Replace HTTP Cache: Inaktiverar Electrons diskbaserade HTTP-cache och aktiverar en anpassad bildcache i minnet. Kommer att leda till ökad RAM-användning.
@@ -1083,8 +1075,6 @@ KeyboardShortcutPrompt:
   Focus Search: Fokusera på sökfältet
   Search in New Window: Sök i ett nytt fönster
   Close Window: Stäng fönstret
-  Restart Window: Starta om fönstret
-  Force Restart Window: Tvinga starta om fönstret
   Next Frame: Nästa bildruta (medan pausad)
   Skip by Tenths: Hoppa igenom videon efter procentandel (3 hopp till 30 % av varaktigheten)
   Keyboard Shortcuts: Tangentbordsgenvägar

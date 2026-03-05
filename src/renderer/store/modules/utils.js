@@ -62,7 +62,8 @@ const state = {
     shorts: false,
     posts: false,
   },
-  appTitle: ''
+  appTitle: '',
+  openPrompts: new Set()
 }
 
 const getters = {
@@ -190,6 +191,9 @@ const getters = {
   },
   getAppTitle (state) {
     return state.appTitle
+  },
+  isAnyPromptOpen(state) {
+    return state.openPrompts.size > 0
   }
 }
 
@@ -1003,6 +1007,14 @@ const mutations = {
   // Use this to set the app title / document.title
   setAppTitle (state, value) {
     state.appTitle = value
+  },
+
+  addOpenPrompt(state, id) {
+    state.openPrompts.add(id)
+  },
+
+  removeOpenPrompt(state, id) {
+    state.openPrompts.delete(id)
   },
 
   setSubscriptionForVideosFirstAutoFetchRun (state) {

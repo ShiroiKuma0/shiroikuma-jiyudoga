@@ -14,8 +14,6 @@ Copy: ''
 Paste: ''
 Delete: ''
 Select all: ''
-Reload: ''
-Force Reload: ''
 Toggle Developer Tools: ''
 Actual size: ''
 Zoom in: ''
@@ -567,8 +565,8 @@ Settings:
     Hide Channel Podcasts: ''
     Hide Channel Releases: ''
     Hide Channel Courses: ''
-    Hide Videos and Playlists Containing Text: ''
-    Hide Videos and Playlists Containing Text Placeholder: ''
+    Hide Videos, Playlists and Channels Containing Text: ''
+    Hide Videos, Playlists and Channels Containing Text Placeholder: ''
     Hide Subscriptions Videos: ''
     Hide Subscriptions Shorts: ''
     Hide Subscriptions Live: ''
@@ -728,8 +726,8 @@ Profile:
   Delete Selected: ''
   Add Selected To Profile: ''
   No channel(s) have been selected: ''
-  ? This is your primary profile.  Are you sure you want to delete the selected 
-    channels?  The same channels will be deleted in any profile they are found 
+  ? This is your primary profile.  Are you sure you want to delete the selected
+    channels?  The same channels will be deleted in any profile they are found
     in.
   : ''
   Are you sure you want to delete the selected channels?  This will not delete the channel from any other profile.: ''
@@ -974,13 +972,7 @@ Comments:
   Newest first: ''
   View {replyCount} replies: ''
   # Context: View 10 Replies, View 1 Reply, View 1 Reply from Owner, View 2 Replies from Owner and others
-  View: ''
-  Hide: ''
-  Replies: ''
   Show More Replies: ''
-  Reply: ''
-  From {channelName}: ''
-  And others: ''
   There are no comments available for this video: ''
   There are no comments available for this post: ''
   Load More Comments: ''
@@ -1019,7 +1011,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: ''
     Hide Subscriptions Live: ''
-    Hide Videos and Playlists Containing Text: ''
+    Hide Videos, Playlists and Channels Containing Text: ''
     Hide Videos on Watch: ''
   Subscription Settings:
     Fetch Feeds from RSS: ''
@@ -1125,8 +1117,6 @@ KeyboardShortcutPrompt:
   Take Screenshot: ''
   Minimize Window: ''
   Close Window: ''
-  Restart Window: ''
-  Force Restart Window: ''
   Toggle Developer Tools: ''
   Reset Zoom: ''
   Zoom In: ''

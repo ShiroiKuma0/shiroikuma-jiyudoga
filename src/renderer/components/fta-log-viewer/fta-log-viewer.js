@@ -53,17 +53,21 @@ export default defineComponent({
     }
   },
   mounted() {
-    window.addEventListener('enabled-light-mode', this.onLightModeEnabled)
-    window.addEventListener('enabled-dark-mode', this.onDarkModeEnabled)
-    // when mounted, backfill the logs so far
-    this.logs.push(...getConsoleLogs())
-    window.addEventListener('console-message', this.onConsoleMessage)
+    if (process.env.IS_ANDROID) {
+      window.addEventListener('enabled-light-mode', this.onLightModeEnabled)
+      window.addEventListener('enabled-dark-mode', this.onDarkModeEnabled)
+      // when mounted, backfill the logs so far
+      this.logs.push(...getConsoleLogs())
+      window.addEventListener('console-message', this.onConsoleMessage)
+    }
   },
   beforeDestroy() {
-    window.removeEventListener('enabled-light-mode', this.onLightModeEnabled)
-    window.removeEventListener('enabled-dark-mode', this.onDarkModeEnabled)
-    this.logs = []
-    window.removeEventListener('console-message', this.onConsoleMessage)
+    if (process.env.IS_ANDROID) {
+      window.removeEventListener('enabled-light-mode', this.onLightModeEnabled)
+      window.removeEventListener('enabled-dark-mode', this.onDarkModeEnabled)
+      this.logs = []
+      window.removeEventListener('console-message', this.onConsoleMessage)
+    }
   },
   methods: {
     getFaIconFromLevel(level) {

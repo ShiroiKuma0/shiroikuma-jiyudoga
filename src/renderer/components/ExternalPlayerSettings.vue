@@ -52,7 +52,9 @@
         :tag-name-placeholder="$t('Settings.External Player Settings.Custom External Player Arguments')"
         :tag-list="externalPlayerCustomArgs"
         :tooltip="externalPlayerCustomArgsTooltip"
+        :show-tags="showAddedExternalPlayerCustomArgs"
         @change="handleExternalPlayerCustomArgs"
+        @toggle-show-tags="handleAddedExternalPayerCustomArgs"
       />
     </FtFlexBox>
   </FtSettingsSection>
@@ -64,7 +66,7 @@ import { useI18n } from '../composables/use-i18n-polyfill'
 
 import FtSettingsSection from './FtSettingsSection/FtSettingsSection.vue'
 import FtSelect from './FtSelect/FtSelect.vue'
-import FtInput from './ft-input/ft-input.vue'
+import FtInput from './FtInput/FtInput.vue'
 import FtToggleSwitch from './FtToggleSwitch/FtToggleSwitch.vue'
 import FtFlexBox from './ft-flex-box/ft-flex-box.vue'
 import FtInputTags from './FtInputTags/FtInputTags.vue'
@@ -149,5 +151,12 @@ function updateExternalPlayerExecutable(value) {
  */
 function handleExternalPlayerCustomArgs(args) {
   store.dispatch('updateExternalPlayerCustomArgs', JSON.stringify(args))
+}
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const showAddedExternalPlayerCustomArgs = computed(() => store.getters.getShowAddedExternalPlayerCustomArgs)
+
+function handleAddedExternalPayerCustomArgs() {
+  store.dispatch('updateShowAddedExternalPlayerCustomArgs', !showAddedExternalPlayerCustomArgs.value)
 }
 </script>

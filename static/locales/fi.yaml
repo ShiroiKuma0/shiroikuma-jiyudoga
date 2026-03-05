@@ -9,8 +9,6 @@ Copy: 'Kopioi'
 Paste: 'Liitä'
 Delete: 'Poista'
 Select all: 'Valitse kaikki'
-Reload: 'Lataa uudelleen'
-Force Reload: 'Pakota uudelleenlataus'
 Toggle Developer Tools: 'Kehittäjän työkalut päällä/pois'
 Actual size: 'Todellinen koko'
 Zoom in: 'Lähennä'
@@ -733,10 +731,6 @@ Comments:
   Getting comment replies, please wait: 'Haetaan vastauksia, odota hetki'
   Hide Comments: 'Piilota kommentit'
   # Context: View 10 Replies, View 1 Reply
-  View: 'Näytä'
-  Hide: 'Piilota'
-  Replies: 'Vastaukset'
-  Reply: 'Vastaa'
   There are no comments available for this video: 'Tähän videoon ei ole yhtään kommenttia'
   Load More Comments: 'Lataa lisää kommentteja'
   There are no more comments for this video: Ei ole enempää kommentteja tälle videolle
@@ -744,8 +738,6 @@ Comments:
   Top comments: Suosituimmat kommentit
   Show More Replies: Näytä enemmän vastauksia
   Pinned by: Kiinnittänyt
-  From {channelName}: kanavalta {channelName}
-  And others: ja muut
   Member: Jäsen
   View {replyCount} replies: Näytä {replyCount} vastausta
   Hearted: Tykätty
@@ -931,8 +923,6 @@ KeyboardShortcutPrompt:
   Theatre Mode: Teatteritila päälle/pois
   Minimize Window: Pienennä ikkuna
   Close Window: Sulje ikkuna
-  Restart Window: Avaa ikkuna uudelleen
-  Force Restart Window: Pakota ikkunan uudelleenavaus
   Search in New Window: Hae uudessa ikkunassa
   Last Frame: Aiempi kuvaruutu (kun pysäytetty)
   Next Frame: Seuraava kuvaruutu (kun pysäytetty)

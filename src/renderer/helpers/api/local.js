@@ -1301,27 +1301,12 @@ export function parseLocalPlaylistVideo(video) {
 
     let viewCount = null
 
-    // the accessiblity label contains the full view count
-    // the video info only contains the short view count
-    if (video_.accessibility_label) {
-      // the `.*\s+` at the start of the regex, ensures we match the last occurence
-      // just in case the video title also contains that pattern
-      const match = video_.accessibility_label.match(/.*\s+([\d,.]+|no)\s+views?/)
+    const viewsText = video_.video_info.runs?.find(run => VIEWS_OR_WATCHING_REGEX.test(run.text))?.text
 
-      if (match) {
-        const count = match[1]
-
-        // as it's rare that a video has no views,
-        // checking the length allows us to avoid running toLowerCase unless we have to
-        if (count.length === 2 && count === 'no') {
-          viewCount = 0
-        } else {
-          const views = extractNumberFromString(count)
-
-          if (!isNaN(views)) {
-            viewCount = views
-          }
-        }
+    if (viewsText) {
+      const views = parseLocalSubscriberCount(viewsText)
+      if (!isNaN(views)) {
+        viewCount = views
       }
     }
 
@@ -1913,8 +1898,33 @@ export function mapLocalLegacyFormat(format) {
 }
 
 /**
+ * The complete Triforce, or one or more components of the Triforce.
+ * @typedef {object} LocalComment
+ * @property {string} id
+ * @property {string} dataType
+ * @property {string} authorLink
+ * @property {string} author
+ * @property {string} authorId
+ * @property {string} authorThumb
+ * @property {boolean} isPinned
+ * @property {boolean} isOwner
+ * @property {boolean} isMember
+ * @property {string} text
+ * @property {boolean} isHearted
+ * @property {boolean} hasOwnerReplied
+ * @property {boolean} hasReplyToken
+ * @property {CommentThread} replyToken
+ * @property {boolean} showReplies
+ * @property {LocalComment[]} replies
+ * @property {string} memberIconUrl
+ * @property {string} time
+ * @property {number} likes
+ * @property {number} numReplies
+ */
+/**
  * @param {import('youtubei.js').YTNodes.CommentView} comment
  * @param {import('youtubei.js').YTNodes.CommentThread} commentThread
+ * @return LocalComment
  */
 export function parseLocalComment(comment, commentThread = undefined) {
   let hasOwnerReplied = false

@@ -12,8 +12,6 @@ Copy: 'نسخ'
 Paste: 'لصق'
 Delete: 'حذف'
 Select all: 'حدد الكل'
-Reload: 'إعادة تحميل'
-Force Reload: 'فرض إعادة التحميل'
 Toggle Developer Tools: 'إظهار/إخفاء أدوات المطوّر'
 Actual size: 'الحجم الأصلي'
 Zoom in: 'تكبير'
@@ -537,8 +535,8 @@ Settings:
     Hide Channels Disabled Message: تم حظر بعض القنوات باستخدام المعرّف ولم تتم معالجتها. يتم حظر الميزة أثناء تحديث هذه المعرفات
     Hide Channels Already Exists: معرف القناة موجود بالفعل
     Hide Channels API Error: ‬حدث خطأ أثناء استرداد المستخدم بالمعرف المدخل. يرجى التحقق مرة أخرى إذا كان المعرف صحيحا.
-    Hide Videos and Playlists Containing Text: إخفاء مقاطع الفيديو وقوائم التشغيل التي تحتوي على نص
-    Hide Videos and Playlists Containing Text Placeholder: كلمة أو جزء كلمة أو عبارة
+    Hide Videos, Playlists and Channels Containing Text: إخفاء مقاطع الفيديو وقوائم التشغيل التي تحتوي على نص
+    Hide Videos, Playlists and Channels Containing Text Placeholder: كلمة أو جزء كلمة أو عبارة
     Hide Channel Home: إخفاء علامة التبويب "الصفحة الرئيسية" للقناة
     Show Added Items: إظهار العناصر المضافة
     Hide Channel Courses: إخفاء علامة التبويب "دورات" القناة
@@ -911,10 +909,6 @@ Comments:
   Getting comment replies, please wait: 'جاري الحصول على ردود التعليق, يرجى الانتظار'
   Hide Comments: 'إخفاء التعليقات'
   # Context: View 10 Replies, View 1 Reply
-  View: 'عرض'
-  Hide: 'إخفاء'
-  Replies: 'رداً'
-  Reply: 'ردّ'
   There are no comments available for this video: 'لا يتوفر تعليقات لهذا الفيديو'
   Load More Comments: 'تحميل المزيد من التعليقات'
   There are no more comments for this video: لا يوجد المزيد من التعليقات لهذا الفيديو
@@ -922,8 +916,6 @@ Comments:
   Top comments: أهم التعليقات
   Show More Replies: إظهار المزيد من الردود
   Pinned by: تم التثبيت بواسطة
-  And others: و اخرين
-  From {channelName}: من {channelName}
   Member: عضو
   View {replyCount} replies: عرض {replyCount} ردود
   Hearted: القلب
@@ -980,7 +972,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: أدخل معرف القناة لإخفاء جميع مقاطع الفيديو وقوائم التشغيل والقناة نفسها من الظهور في نتائج البحث والشائعة والأكثر شهرة والموصى بها. يجب أن يكون معرف القناة الذي تم إدخاله متطابقًا تمامًا وأن يكون حساسًا لحالة الأحرف.
     Hide Subscriptions Live: يتم تجاوز هذا الإعداد من خلال إعداد "{appWideSetting}" على مستوى التطبيق، في قسم "{subsection}" من "{settingsSection}"
-    Hide Videos and Playlists Containing Text: أدخل كلمة أو جزء كلمة أو عبارة (غير حساسة لحالة الأحرف) لإخفاء جميع مقاطع الفيديو وقوائم التشغيل التي تحتوي عناوينها الأصلية عليها في جميع أنحاء FreeTube، باستثناء السجل وقوائم التشغيل الخاصة بك ومقاطع الفيديو الموجودة داخل قوائم التشغيل فقط.
+    Hide Videos, Playlists and Channels Containing Text: أدخل كلمة أو جزء كلمة أو عبارة (غير حساسة لحالة الأحرف) لإخفاء جميع مقاطع الفيديو وقوائم التشغيل التي تحتوي عناوينها الأصلية عليها في جميع أنحاء FreeTube، باستثناء السجل وقوائم التشغيل الخاصة بك ومقاطع الفيديو الموجودة داخل قوائم التشغيل فقط.
     Hide Videos on Watch: إخفاء مقاطع الفيديو التي تمت مشاهدتها من علامات التبويب "مقاطع الفيديو" و "الفيديوهات القصيرة" و "البث المباشر" في صفحتي الاشتراك والقناة. هذا لا يؤثر على علامة التبويب الرئيسية على صفحات القناة
   SponsorBlock Settings:
     UseDeArrowTitles: استبدل عناوين الفيديو بالعناوين التي أرسلها المستخدم من DeArrow.
@@ -1054,7 +1046,6 @@ Search Listing:
     3D: ثلاثي الابعاد
 Right-click or hold to see history: انقر زر الفارة الأيمن أو اضغط مطولا لعرض السجل
 KeyboardShortcutPrompt:
-  Force Restart Window: إجبار إعادة تشغيل النافذة
   Toggle Developer Tools: تبديل أدوات المطور
   Zoom In: تقريب
   Zoom Out: تبعيد
@@ -1087,7 +1078,6 @@ KeyboardShortcutPrompt:
   Last Chapter: الفصل الأخير
   Next Chapter: الفصل التالي
   Decrease Video Speed: تقليل سرعة الفيديو بناء على الفاصل الزمني لمعدل تشغيل الفيديو
-  Restart Window: إعادة تشغيل النافذة
   Increase Video Speed: زيادة سرعة الفيديو استنادا إلى الفاصل الزمني لمعدل تشغيل الفيديو
   Full Window: تبديل النافذة الكاملة
   Theatre Mode: تبديل وضع المسرح

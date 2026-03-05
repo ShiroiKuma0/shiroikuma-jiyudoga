@@ -9,8 +9,6 @@ Copy: 'Копировать'
 Paste: 'Вставить'
 Delete: 'Удалить'
 Select all: 'Выбрать все'
-Reload: 'Перезагрузить'
-Force Reload: 'Принудительно перезагрузить'
 Toggle Developer Tools: 'Показать инструменты для разработчиков'
 Actual size: 'Оригинальный масштаб'
 Zoom in: 'Увеличить'
@@ -277,6 +275,7 @@ Settings:
       Everforest Light Hard: Everforest Светлый Глубокий
       Everforest Light Medium: Everforest Светлый Средний
       Everforest Light Low: Everforest Светлый Лёгкий
+      Catppuccin Latte: Catppuccin Latte
     Main Color Theme:
       Main Color Theme: 'Основной цвет темы'
       Red: 'Красный'
@@ -362,6 +361,8 @@ Settings:
       Everforest Light Aqua: Аква - Everforest Light
       Everforest Light Blue: Синий - Everforest Light
       Everforest Light Purple: Фиолетовый - Everforest Light
+      Catppuccin Latte Mauve: Catppuccin Latte Mauve
+      Catppuccin Latte Red: Catppuccin Latte Red
     Secondary Color Theme: 'Дополнительный цвет темы'
         #* Main Color Theme
     UI Scale: Масштаб интерфейса
@@ -494,6 +495,12 @@ Settings:
     Export Playlists For Older FreeTube Versions:
       Label: Экспортировать подборки для старых выпусков FreeTube
       Tooltip: "Эта настройка экспортирует видео из всех плейлистов в один с названием «Избранное».\nКак экспортировать и импортировать видео в плейлистах для старых версий FreeTube:\n1. Экспортируй свои плейлисты с этой включённой настройкой.\n 2. Удали все свои существующие плейлисты, используя настройку удаления всех плейлистов под разделом Настройки Конфиденциальности.\n3. Запусти старую версию Freetube и импортируй экспортированные ранее плейлисты."
+    Search history file: Файл истории поиска
+    Search history: История поиска
+    Import search history: Импортировать историю поиска
+    Export search history: Экспортировать историю поиска
+    All search history has been successfully imported: Вся история поиска успешно импортирована
+    All search history has been successfully exported: Вся история поиска успешно экспортирована
   Distraction Free Settings:
     Hide Live Chat: Скрыть чат прямой трансляции
     Hide Popular Videos: Скрыть популярные видео
@@ -535,8 +542,8 @@ Settings:
     Hide Channels Disabled Message: Некоторые каналы были заблокированы по ID и не были обработаны. Функция заблокирована, пока эти идентификаторы обновляются
     Hide Channels Already Exists: ID канала уже существует
     Hide Channels API Error: Ошибка при получении пользователя с предоставленным ID. Пожалуйста, проверьте еще раз, правильно ли указан ID.
-    Hide Videos and Playlists Containing Text: Скрыть видео и плейлисты, содержащие текст
-    Hide Videos and Playlists Containing Text Placeholder: Слово, часть слова, или выражение
+    Hide Videos, Playlists and Channels Containing Text: Скрыть видео и плейлисты, содержащие текст
+    Hide Videos, Playlists and Channels Containing Text Placeholder: Слово, часть слова, или выражение
     Hide Channel Home: Скрыть вкладку "Главная" канала
     Show Added Items: Показать добавленные элементы
     Hide Channel Courses: Скрыть вкладку «Курсы» канала
@@ -870,24 +877,21 @@ Comments:
   Getting comment replies, please wait: 'Получение ответов на комментарии, пожалуйста, подождите'
   Hide Comments: 'Скрыть комментарии'
   # Context: View 10 Replies, View 1 Reply
-  View: 'Смотреть'
-  Hide: 'Скрыть'
-  Replies: 'Ответы'
-  Reply: 'Ответ'
   There are no comments available for this video: 'К этому видео нет комментариев'
   Load More Comments: 'Загрузить больше комментариев'
   There are no more comments for this video: К этому видео больше нет комментариев
   Newest first: Новым
   Top comments: Лучшим комментариям
   Show More Replies: Показать больше ответов
-  From {channelName}: от {channelName}
-  And others: и других
   Pinned by: Закреплено
   Member: Участник
-  View {replyCount} replies: Смотреть {replyCount} ответа(ов)
+  View {replyCount} replies: Смотреть 1 ответ | Смотреть {replyCount} ответа(ов)
   Hearted: С сердечком
   Subscribed: Подписан(а)
   There are no comments available for this post: Для этой записи нет доступных комментариев
+  Hide {replyCount} replies: Скрыть 1 ответ | Скрыть {replyCount} ответа(ов)
+  View 1 reply from {channelName}: Смотреть 1 ответ от {channelName}
+  View {replyCount} replies from {channelName} and others: Смотреть {replyCount} ответа(ов) от {channelName} и других
 Up Next: 'Следующий'
 
 # Toast Messages
@@ -982,7 +986,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: Введите ID канала, чтобы скрыть все видео, плейлисты и сам канал от появления в результатах поиска, трендах, самых популярных и рекомендуемых. Введенный ID канала должен полностью совпадать и чувствителен к регистру.
     Hide Subscriptions Live: Эта настройка переопределена общей настройкой «{appWideSetting}», в подразделе «{subsection}» раздела «{settingsSection}»
-    Hide Videos and Playlists Containing Text: 'Вставьте слово, часть слова, или выражение (вне зависимости от регистра), чтобы скрыть все видео и плейлисты, в чьих названиях содержится что-либо вставленное сюда; за исключением только: истории, плейлистов и видео в плейлистах.'
+    Hide Videos, Playlists and Channels Containing Text: 'Вставьте слово, часть слова, или выражение (вне зависимости от регистра), чтобы скрыть все видео и плейлисты, в чьих названиях содержится что-либо вставленное сюда; за исключением только: истории, плейлистов и видео в плейлистах.'
     Hide Videos on Watch: Скрывает просмотренные видео из вкладок Видео, Шортс и Трансляции на страницах подписок и индивидуальных каналов. Это не влияет на Главную вкладку на страницах каналов
   SponsorBlock Settings:
     UseDeArrowTitles: Заменить пользовательски-размещённые заголовки на заголовки, предоставляемые «DeArrow».
@@ -1101,7 +1105,6 @@ KeyboardShortcutPrompt:
   Increase Video Speed: Увеличить скорость воспроизведения видео на основе интервала скорости воспроизведения
   Full Window: Переключить на полноэкранный режим
   Theatre Mode: Переключить Режим Театра
-  Force Restart Window: Принудительно перезапустить окно
   Toggle Developer Tools: Включить/выключить инструменты разработчика
   Reset Zoom: Сбросить уровень масштабирования
   Zoom In: Увеличить масштаб
@@ -1111,7 +1114,6 @@ KeyboardShortcutPrompt:
   Volume Up: Увеличить громкость
   Take Screenshot: Сделать Снимок Экрана
   Minimize Window: Свернуть окно
-  Restart Window: Перезапустить окно
   Search in New Window: Выполнить поиск в отдельном окне
   Skip by Tenths: Пропустить видео на определённый процент (3 пропуска для 30%)
   End: Перейти к концу видео

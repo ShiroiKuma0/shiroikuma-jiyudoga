@@ -12,8 +12,6 @@ Copy: 'Kopiëren'
 Paste: 'Plakken'
 Delete: 'Verwĳderen'
 Select all: 'Alles selecteren'
-Reload: 'Herladen'
-Force Reload: 'Geforceerd herladen'
 Toggle Developer Tools: 'Ontwikkelgereedschap aan/uit'
 Actual size: 'Werkelĳke grootte'
 Zoom in: 'Inzoomen'
@@ -536,8 +534,8 @@ Settings:
     Hide Profile Pictures in Comments: Profielfoto's in opmerkingen verbergen
     Hide Channels Already Exists: Kanaal-id bestaat al
     Hide Channels Invalid: Opgegeven kanaal-id is ongeldig
-    Hide Videos and Playlists Containing Text Placeholder: Woord, woord­fragment of zin
-    Hide Videos and Playlists Containing Text: Video's en afspeel­lijsten die tekst bevatten verbergen
+    Hide Videos, Playlists and Channels Containing Text Placeholder: Woord, woord­fragment of zin
+    Hide Videos, Playlists and Channels Containing Text: Video's en afspeel­lijsten die tekst bevatten verbergen
     Hide Channels API Error: Fout bij het ophalen van de gebruiker met de opgegeven id. Controleer nog­maals of de id correct is.
     Hide Channels Disabled Message: Sommige kanalen zijn geblokkeerd met behulp van ID en zijn niet verwerkt. De functie is geblokkeerd terwijl deze ID's worden bij­gewerkt
     Show Added Items: Toegevoegde Items Weergeven
@@ -874,18 +872,12 @@ Comments:
   Getting comment replies, please wait: 'Reacties worden verzameld, even geduld aub'
   Hide Comments: 'Opmerkingen verbergen'
   # Context: View 10 Replies, View 1 Reply
-  View: 'Bekijken'
-  Hide: 'Verbergen'
-  Replies: 'Reacties'
-  Reply: 'Reactie'
   There are no comments available for this video: 'Er zijn geen reacties beschikbaar voor deze video'
   Load More Comments: 'Meer opmerkingen laden'
   There are no more comments for this video: Er zijn geen verdere reacties op deze video
   Newest first: Nieuwste eerst
   Top comments: Beste opmerkingen
   Show More Replies: Meer reacties tonen
-  From {channelName}: van {channelName}
-  And others: en anderen
   Pinned by: Vastgemaakt door
   Member: Lid
   Hearted: Met hartje
@@ -983,7 +975,7 @@ Tooltips:
   Distraction Free Settings:
     Hide Channels: Voer een kanaal-ID in om alle video's, afspeel­lijsten en het kanaal zelf te verbergen zodat ze niet worden weer­gegeven in zoeken, trending, populairst en aan­bevolen. De ingevoerde kanaal-ID moet volledig overeen­komen en is hoofdletter­gevoelig.
     Hide Subscriptions Live: Deze instelling wordt overschreven door de app-brede instelling ‘{appWideSetting}’, in het gedeelte ‘{subsection}’ van ‘{settingsSection}’
-    Hide Videos and Playlists Containing Text: Voer een woord, woord­fragment of woord­groep in (niet hoofdletter­gevoelig) om alle video's en afspeel­lijsten waarvan de oorspronkelijke titel dit bevat, in heel FreeTube te verbergen, met uit­zondering van alleen geschiedenis, uw afspeel­lijsten en video's in afspeel­lijsten.
+    Hide Videos, Playlists and Channels Containing Text: Voer een woord, woord­fragment of woord­groep in (niet hoofdletter­gevoelig) om alle video's en afspeel­lijsten waarvan de oorspronkelijke titel dit bevat, in heel FreeTube te verbergen, met uit­zondering van alleen geschiedenis, uw afspeel­lijsten en video's in afspeel­lijsten.
     Hide Videos on Watch: Verbergt bekeken video's op de tabbladen Video's, Shorts en Live; op de pagina's Abonnementen en Kanalen. Dit heeft geen invloed op het tabblad Thuis op kanaal­pagina's
   SponsorBlock Settings:
     UseDeArrowTitles: Vervangt videotitels met door gebruikers ingediende titels van DeArrow.
@@ -1104,8 +1096,6 @@ KeyboardShortcutPrompt:
   Large Rewind: 10 seconden terugspoelen/ Video terugspoelen op basis van de huidige Afspeelsnelheid
   Full Window: Volledig venster wisselen
   Reset Zoom: Reset zoom niveau / UI groote
-  Restart Window: Venster opnieuw opstarten
-  Force Restart Window: Venster geforceerd opnieuw opstarten
   Close Window: Venster sluiten
   Zoom Out: Uitzoomen
   Decrease Video Speed: Videosnelheid verminderen op basis van Afspeelsnelheid

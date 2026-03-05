@@ -57,13 +57,13 @@ const DBActions = {
     UPSERT: 2,
     DELETE: 3,
     DELETE_MULTIPLE: 4,
-    DELETE_ALL: 5
+    DELETE_ALL: 5,
+    OVERWRITE: 6
   },
 
   HISTORY: {
-    OVERWRITE: 20,
-    UPDATE_WATCH_PROGRESS: 21,
-    UPDATE_PLAYLIST: 22,
+    UPDATE_WATCH_PROGRESS: 20,
+    UPDATE_PLAYLIST: 21,
   },
 
   PROFILES: {
@@ -97,13 +97,13 @@ const SyncEvents = {
     UPSERT: 1,
     DELETE: 2,
     DELETE_MULTIPLE: 3,
-    DELETE_ALL: 4
+    DELETE_ALL: 4,
+    OVERWRITE: 5,
   },
 
   HISTORY: {
-    OVERWRITE: 20,
-    UPDATE_WATCH_PROGRESS: 21,
-    UPDATE_PLAYLIST: 22,
+    UPDATE_WATCH_PROGRESS: 20,
+    UPDATE_PLAYLIST: 21,
   },
 
   PROFILES: {
@@ -152,8 +152,6 @@ const KeyboardShortcuts = {
       NEW_WINDOW: 'ctrl+N',
       MINIMIZE_WINDOW: 'ctrl+M',
       CLOSE_WINDOW: 'ctrl+W',
-      RESTART_WINDOW: 'ctrl+R',
-      FORCE_RESTART_WINDOW: 'ctrl+shift+R',
       TOGGLE_DEVTOOLS: 'ctrl+shift+I',
       FOCUS_SEARCH: 'alt+D',
       SEARCH_IN_NEW_WINDOW: 'shift+enter',
