@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const JsonMinimizerPlugin = require('json-minimizer-webpack-plugin')
@@ -46,7 +46,7 @@ const config = {
         loader: 'vue-loader',
         options: {
           compilerOptions: {
-            whitespace: 'condense',
+            isCustomElement: (tag) => tag === 'swiper-container' || tag === 'swiper-slide',
           }
         }
       },
@@ -131,7 +131,14 @@ const config = {
       'process.env.SUPPORTS_LOCAL_API': false,
       'process.env.SWIPER_VERSION': `'${swiperVersion}'`,
       'process.env.IS_ANDROID': false,
-      'process.env.IS_RELEASE': !isDevMode
+      'process.env.IS_RELEASE': !isDevMode,
+      __VUE_OPTIONS_API__: 'true',
+      __VUE_PROD_DEVTOOLS__: 'false',
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
+      __VUE_I18N_LEGACY_API__: 'true',
+      __VUE_I18N_FULL_INSTALL__: 'false',
+      __INTLIFY_PROD_DEVTOOLS__: 'false',
+      'process.env.SWIPER_VERSION': `'${swiperVersion}'`
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser'
@@ -161,9 +168,6 @@ const config = {
   ],
   resolve: {
     alias: {
-      vue$: 'vue/dist/vue.runtime.esm.js',
-      'portal-vue$': 'portal-vue/dist/portal-vue.esm.js',
-
       DB_HANDLERS_ELECTRON_RENDERER_OR_WEB$: path.resolve(__dirname, '../src/datastores/handlers/web.js'),
 
       // change to "shaka-player.ui.debug.js" to get debug logs (update jsconfig to get updated types)
