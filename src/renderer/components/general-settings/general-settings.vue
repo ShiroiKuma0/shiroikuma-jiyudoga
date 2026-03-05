@@ -11,6 +11,7 @@
           @change="updateCheckForUpdates"
         />
         <ft-toggle-switch
+          v-if="supportsLocalAPI"
           :label="$t('Settings.General Settings.Fallback to Non-Preferred Backend on Failure')"
           :default-value="backendFallback"
           :compact="true"

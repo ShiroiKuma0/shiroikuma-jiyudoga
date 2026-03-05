@@ -2534,14 +2534,6 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      watch(() => props.currentPlaybackRate,
-        (newRate) => {
-          if (video.value) {
-            video.value.playbackRate = newRate
-            video.value.defaultPlaybackRate = newRate
-          }
-        }
-      )
       const videoElement = video.value
       if (process.env.IS_ANDROID) {
         window.addEventListener('media-play', mediaPlay)
