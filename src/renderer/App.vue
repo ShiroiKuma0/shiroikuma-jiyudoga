@@ -143,7 +143,6 @@ import { loadLocale } from './i18n/index'
 import 'core-js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
-import { versionNumberGt } from './helpers/android/utils'
 
 const route = useRoute()
 const router = useRouter()
