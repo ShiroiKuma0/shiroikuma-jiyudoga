@@ -106,7 +106,6 @@ export async function appendFileAsync(filename, toAppend, options) {
  * @async
  */
 export async function readFileAsync(filename, options) {
-  console.warn(filename)
   try {
     let uri = await getFullUri(filename)
     if (uri === null) {
