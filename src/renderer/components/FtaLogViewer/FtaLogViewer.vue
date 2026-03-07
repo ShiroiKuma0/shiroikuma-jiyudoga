@@ -9,7 +9,7 @@
     >
       <div
         class="logs-wrapper"
-        :data-theme="theme.value"
+        :data-theme="theme"
       >
         <div class="logs">
           <div
