@@ -105,7 +105,7 @@
     <FtCreatePlaylistPrompt
       v-if="showCreatePlaylistPrompt"
     />
-    <fta-log-viewer />
+    <FtaLogViewer />
     <ft-toast />
     <ft-progress-bar
       v-if="showProgressBar"
@@ -131,7 +131,7 @@ import FtPlaylistAddVideoPrompt from './components/FtPlaylistAddVideoPrompt/FtPl
 import FtCreatePlaylistPrompt from './components/FtCreatePlaylistPrompt/FtCreatePlaylistPrompt.vue'
 import FtKeyboardShortcutPrompt from './components/FtKeyboardShortcutPrompt/FtKeyboardShortcutPrompt.vue'
 import FtSearchFilters from './components/FtSearchFilters/FtSearchFilters.vue'
-import FtaLogViewer from './components/fta-log-viewer/fta-log-viewer.vue'
+import FtaLogViewer from './components/FtaLogViewer/FtaLogViewer.vue'
 
 import store from './store/index'
 
