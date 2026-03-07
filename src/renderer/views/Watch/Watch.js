@@ -350,7 +350,7 @@ export default defineComponent({
     window.addEventListener('media-seek', this.mediaSeek)
     this.onMountedDependOnLocalStateLoading()
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (process.env.IS_ANDROID) {
       window.removeEventListener('media-next', this.mediaNext)
       window.removeEventListener('media-previous', this.mediaPrevious)

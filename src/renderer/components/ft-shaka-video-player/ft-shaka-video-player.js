@@ -3348,7 +3348,7 @@ export default defineComponent({
       invertValueChangeContentOrder,
     }
   },
-  destroyed: function () {
+  unmounted: function () {
     window.removeEventListener('app-pause', onAppPause)
     window.removeEventListener('app-resume', onAppResume)
   }
