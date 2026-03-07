@@ -94,3 +94,28 @@ export function reverseObject(object) {
         })
       )
 }
+
+export function versionNumberGt(versionA, versionB) {
+  const partsA = `${versionA}`.split('.')
+  const partsB = `${versionB}`.split('.')
+  if (partsA.length > partsB.length) {
+    return true
+  } else if (partsB.length > partsA.length) {
+    return false
+  } else {
+    const partComparisons = partsA.map(a => false)
+    let oneLeftmostLt = false
+    let oneGt = false
+    for (let i = 0; i < partsA.length; i++) {
+      partComparisons[i] = parseInt(partsA[i]) === parseInt(partsB[i]) ? 'eq' : parseInt(partsA[i]) > parseInt(partsB[i]) ? 'gt' : 'lt'
+      if (partComparisons[i] === 'gt') {
+        oneGt = true
+      }
+      if (partComparisons[i] === 'lt' && !oneGt) {
+        oneLeftmostLt = true
+      }
+    }
+    const thereIsAGtBeforeALt = !oneLeftmostLt
+    return oneGt && thereIsAGtBeforeALt
+  }
+}
