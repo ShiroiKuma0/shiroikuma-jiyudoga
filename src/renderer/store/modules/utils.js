@@ -528,7 +528,7 @@ const actions = {
           throw new Error('Channel: could not extract id')
         }
 
-        let subPath = null
+        let subPath
         switch (match.groups.tab) {
           case 'shorts':
             subPath = 'shorts'
