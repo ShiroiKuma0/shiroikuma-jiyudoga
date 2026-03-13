@@ -9,6 +9,8 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.Intent.EXTRA_KEY_EVENT
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
@@ -26,6 +28,8 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.MainActivity
@@ -713,6 +717,13 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
       context.window.navigationBarColor = navigationHex.hexToColour()
       context.window.statusBarColor = statusHex.hexToColour()
     }
+
+    val bitmap = createBitmap(24, 24)
+    bitmap.eraseColor(navigationHex.hexToColour())
+    val canvas = Canvas(bitmap)
+    canvas.drawColor(navigationHex.hexToColour())
+    val bitmapDrawable = bitmap.toDrawable(context.resources)
+    context.window.setBackgroundDrawable(bitmapDrawable)
   }
 
   @JavascriptInterface

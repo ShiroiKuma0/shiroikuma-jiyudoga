@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -24,7 +25,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import io.freetubeapp.freetube.databinding.ActivityMainBinding
 import io.freetubeapp.freetube.helpers.Promise
-import io.freetubeapp.freetube.javascript.BotGuardJavascriptInterface
 import io.freetubeapp.freetube.javascript.FreeTubeJavaScriptInterface
 import io.freetubeapp.freetube.javascript.SigWebViewJavascriptInterface
 import io.freetubeapp.freetube.javascript.dispatchEvent
@@ -101,6 +101,8 @@ class MainActivity : AppCompatActivity() {
   @Suppress("DEPRECATION")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // allow fullscreen shaka player to use whole window width
+    window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
       Configuration.UI_MODE_NIGHT_NO -> {
         darkMode = false
