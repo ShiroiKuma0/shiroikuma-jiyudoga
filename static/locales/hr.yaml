@@ -45,15 +45,11 @@ Search / Go to URL: 'Pretraži / Idi na URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Filtri pretrage'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Najrelevantniji'
-    Rating: 'Ocjena'
-    Upload Date: 'Datum prijenosa'
-    View Count: 'Broj gledanja'
   Time:
     Time: 'Vrijeme'
     Any Time: 'Bilo kada'
-    Last Hour: 'Zadnji sat'
     Today: 'Danas'
     This Week: 'Ovaj tjedan'
     This Month: 'Ovaj mjesec'
@@ -68,10 +64,9 @@ Search Filters:
   Duration:
     Duration: 'Trajanje'
     All Durations: 'Sva trajanja'
-    Short (< 4 minutes): 'Kratko (< 4 min)'
-    Long (> 20 minutes): 'Dugo (> 20 min)'
-  # On Search Page
-    Medium (4 - 20 minutes): Srednje (4 do 20 minuta)
+    '< 3 minutes': '< 3 min'
+    '> 20 minutes': '> 20 min'
+    '3 - 20 minutes': 3 do 20 minuta
   Search Results: 'Rezultati pretrage'
   Fetching results. Please wait: 'Rezultati se dohvaćaju. Pričekaj'
   Fetch more results: 'Dohvati još rezultata'
@@ -230,7 +225,6 @@ Settings:
       Blur: Neoštro
     Region for Trending: 'Regija za videa u trendu'
         #! List countries
-    Check for Latest Blog Posts: Traži najnovije objave na blogu
     Check for Updates: Traži nove verzije
     View all Invidious instance information: Pogledaj podatke svih Invidious instanci
     System Default: Standard sustava
@@ -616,7 +610,6 @@ About:
   About: 'Informacije'
   #& About
   Website: Web-stranica
-  Blog: Blog
   Credits: Zasluge
   FAQ: Često postavljena pitanja
   Email: E-adresa
@@ -946,7 +939,6 @@ Canceled next video autoplay: 'Automatska reprodukcija sljedećeg videa je preki
 Yes: 'Da'
 No: 'Ne'
 The playlist has been reversed: Redoslijed zbirke je obrnut
-A new blog is now available, {blogTitle}. Click to view more: Dostupan je novi blog, {blogTitle}. Pritisni za prikaz detalja
 Download From Site: Preuzmi s web-stranice
 Version {versionNumber} is now available!  Click for more details: Dostupna je verzija {versionNumber}! Pritisni za prikaz detalja
 This video is unavailable because of missing formats. This can happen due to country unavailability.: Ovaj video nije dostupan zbog nedostajućih formata. Uzrok tome može biti nedostupnost u zemlji.

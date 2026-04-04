@@ -25,22 +25,17 @@ Forward: 'সামনে'
 
 Version {versionNumber} is now available!  Click for more details: 'সংস্করণ {versionNumber} এসে গেছে!  আরো জানতে টিপ দাও'
 Download From Site: 'সাইট থেকে ডাউনলোড করো'
-A new blog is now available, {blogTitle}. Click to view more: 'নতুন ব্লগ আছে, {blogTitle}. আরো দেখতে টিপ দাও'
 
 # Search Bar
 Search / Go to URL: 'অনুসন্ধান / ইউআরএলে যাও'
   # In Filter Button
 Search Filters:
   Search Filters: 'অনুসন্ধান ছাঁকনি'
-  Sort By:
+  Prioritize:
     Most Relevant: 'সবচেয়ে প্রাসঙ্গিক'
-    Rating: 'তারকা'
-    Upload Date: 'ছাপানোর তারিখ'
-    View Count: 'দৃশ্য সংখ্যা'
   Time:
     Time: 'সময়'
     Any Time: 'যেকোনো সময়'
-    Last Hour: 'শেষ ঘণ্টা'
     Today: 'আজকে'
     This Week: 'এই সপ্তাহে'
     This Month: 'এই মাসে'
@@ -55,10 +50,6 @@ Search Filters:
   Duration:
     Duration: 'সময়কাল'
     All Durations: 'সকল দৈর্ঘ্যের'
-    Short (< 4 minutes): 'ছোট (<৪ মিনিট)'
-    Long (> 20 minutes): 'লম্বা (> ২০ মিনিট)'
-  # On Search Page
-    Medium (4 - 20 minutes): মধ্যম (৪ - ২০ মিনিট)
   Search Results: 'অনুসন্ধান ফলাফল'
   Fetching results. Please wait: 'ফলাফল আনা হচ্ছে, একটু অপেক্ষা করো'
   Fetch more results: 'আরো ফলাফল আনো'

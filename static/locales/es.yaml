@@ -45,15 +45,11 @@ Search / Go to URL: 'Buscar / Ir a la URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Filtros de búsqueda'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Más relevantes'
-    Rating: 'Mejor valorados'
-    Upload Date: 'Fecha de publicación'
-    View Count: 'Número de visitas'
   Time:
     Time: 'Publicado en'
     Any Time: 'Cualquier momento'
-    Last Hour: 'En la última hora'
     Today: 'Hoy'
     This Week: 'Esta semana'
     This Month: 'Este mes'
@@ -68,10 +64,9 @@ Search Filters:
   Duration:
     Duration: 'Duración'
     All Durations: 'Cualquier duración'
-    Short (< 4 minutes): 'Corta (< 4 minutos)'
-    Long (> 20 minutes): 'Larga (> 20 minutos)'
-  # On Search Page
-    Medium (4 - 20 minutes): Media (4 - 20 minutos)
+    '< 3 minutes': '< 3 minutos'
+    '> 20 minutes': '> 20 minutos'
+    '3 - 20 minutes': 3 - 20 minutos
   Search Results: 'Resultados de la búsqueda'
   Fetching results. Please wait: 'Obteniendo resultados. Por favor, espere'
   Fetch more results: 'Obtener más resultados'
@@ -230,7 +225,6 @@ Settings:
       Blur: Difuminar
     Region for Trending: 'Región de las tendencias'
         #! List countries
-    Check for Latest Blog Posts: Buscar últimas publicaciones del blog
     Check for Updates: Buscar actualizaciones
     View all Invidious instance information: Ver toda la información sobre la instancia de Invidious
     System Default: Predeterminado del sistema
@@ -623,7 +617,6 @@ About:
   Chat on Matrix: Chat en Matrix
   Mastodon: Mastodon (red social)
   Email: Correo electrónico
-  Blog: Blog
   Website: Sitio web
   Please check for duplicates before posting: Por favor, antes de publicar asegúrate de no duplicar temas
   GitHub issues: Sugerencias en GitHub
@@ -945,7 +938,6 @@ Canceled next video autoplay: 'La reproducción del vídeo siguiente se ha cance
 
 Yes: 'Sí'
 No: 'No'
-A new blog is now available, {blogTitle}. Click to view more: 'Nueva publicación del blog disponible, {blogTitle}. Haga clic para saber más'
 Download From Site: Descargar desde el sitio web
 Version {versionNumber} is now available!  Click for more details: ¡La versión {versionNumber} está disponible! Haz clic para saber más
 The playlist has been reversed: Orden de lista de reproducción invertido

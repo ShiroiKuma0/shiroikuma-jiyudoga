@@ -41,23 +41,20 @@ Global:
     Like Count: 1 líkaði | {count} líkaði
     Comment Count: 1 athugasemd | {count} athugasemdir
 Version {versionNumber} is now available!  Click for more details: 'Útgáfa {versionNumber} er tiltæk!  Smelltu til að skoða nánar'
-Download From Site: 'Sækja af vefsvæði'
-A new blog is now available, {blogTitle}. Click to view more: 'Ný bloggfærsla er núna er tiltæk, {blogTitle}. Smelltu til að skoða nánar'
+Download From Site: 'Sækja af vefsvæði Smelltu til að sjá meira'
 
 # Search Bar
 Search / Go to URL: 'Leita / Fara á slóð'
   # In Filter Button
 Search Filters:
   Search Filters: 'Leitarsíur'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Mest viðeigandi'
-    Rating: 'Einkunn'
-    Upload Date: 'Dags. innsendingar'
-    View Count: 'Fjöldi áhorfa'
+    Prioritize: Forgangur
+    Popularity: Vinsældir
   Time:
     Time: 'Tími'
     Any Time: 'Hvenær sem er'
-    Last Hour: 'Síðustu klukkustund'
     Today: 'Í dag'
     This Week: 'Í þessari viku'
     This Month: 'Í þessum mánuði'
@@ -72,10 +69,9 @@ Search Filters:
   Duration:
     Duration: 'Tímalengd'
     All Durations: 'Allar tímalengdir'
-    Short (< 4 minutes): 'Stutt (< 4 mínútur)'
-    Long (> 20 minutes): 'Langt (> 20 mínútur)'
-  # On Search Page
-    Medium (4 - 20 minutes): Miðlungs (4 - 20 mínútur)
+    '< 3 minutes': '< 3 mínútur'
+    '> 20 minutes': '> 20 mínútur'
+    '3 - 20 minutes': 3 - 20 mínútur
   Search Results: 'Leitarniðurstöður'
   Fetching results. Please wait: 'Sæki niðurstöður. Hinkraðu aðeins'
   Fetch more results: 'Sækja fleiri niðurstöður'
@@ -215,7 +211,6 @@ Settings:
   General Settings:
     General Settings: 'Almennt'
     Check for Updates: 'Athuga með uppfærslur'
-    Check for Latest Blog Posts: 'Athuga með nýjustu bloggfærslur'
     Fallback to Non-Preferred Backend on Failure: 'Nota varaleið um ekki-forgangsbakenda þegar villa kemur upp'
     Enable Search Suggestions: 'Virkja tillögur í leit'
     Default Landing Page: 'Sjálfgefin upphafssíða'
@@ -629,7 +624,6 @@ About:
   GitHub issues: 'GitHub verkbeiðnir'
   Please check for duplicates before posting: 'Athugaðu hvort fyrir séu eins fyrirspurnir áður en þú sendir nýja'
   Website: 'Vefsvæði'
-  Blog: 'Blogg'
   Email: 'Tölvupóstur'
   Mastodon: 'Mastodon'
   Chat on Matrix: 'Spjall á Matrix'

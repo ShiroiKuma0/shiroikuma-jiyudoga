@@ -28,7 +28,6 @@ Open New Window: ''
 
 Version {versionNumber} is now available!  Click for more details: ''
 Download From Site: ''
-A new blog is now available, {blogTitle}. Click to view more: ''
 Are you sure you want to open this link?: ''
 
 # Global
@@ -52,15 +51,11 @@ Search Bar:
   # In Filter Button
 Search Filters:
   Search Filters: ''
-  Sort By:
+  Prioritize:
     Most Relevant: ''
-    Rating: ''
-    Upload Date: ''
-    View Count: ''
   Time:
     Time: ''
     Any Time: ''
-    Last Hour: ''
     Today: ''
     This Week: ''
     This Month: ''
@@ -75,9 +70,6 @@ Search Filters:
   Duration:
     Duration: ''
     All Durations: ''
-    Short (< 4 minutes): ''
-    Medium (4 - 20 minutes): ''
-    Long (> 20 minutes): ''
   # On Search Page
   Search Results: ''
   Fetching results. Please wait: ''
@@ -130,7 +122,6 @@ Settings:
   General Settings:
     General Settings: ''
     Check for Updates: ''
-    Check for Latest Blog Posts: ''
     Fallback to Non-Preferred Backend on Failure: ''
     Enable Search Suggestions: ''
     Default Landing Page: ''
@@ -429,7 +420,6 @@ About:
   GitHub issues: ''
   Please check for duplicates before posting: ''
   Website: ''
-  Blog: ''
   Email: ''
   Mastodon: ''
   Chat on Matrix: ''

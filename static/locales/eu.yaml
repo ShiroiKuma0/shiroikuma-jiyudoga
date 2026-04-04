@@ -41,23 +41,20 @@ Global:
   Posts: Argitalpenak
   Sort By: Ordenatu honen arabera
 Version {versionNumber} is now available!  Click for more details: '{versionNumber} bertsioa erabilgarri! Klikatu azalpen gehiagorako'
-Download From Site: 'Jaitsi webgunetik'
-A new blog is now available, {blogTitle}. Click to view more: 'Blog berri bat erabilgarri dago, {blogTitle}. Klikatu gehiagorako'
+Download From Site: 'Jaitsi webgunetik Egin klik gehiago ikusteko'
 
 # Search Bar
 Search / Go to URL: 'Bilatu / Joan URLra'
   # In Filter Button
 Search Filters:
   Search Filters: 'Bilaketa iragazkiak'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Garrantzitsuenak'
-    Rating: 'Balorazioa'
-    Upload Date: 'Igoera-data'
-    View Count: 'Ikustaldi kopurua'
+    Prioritize: Lehentasuna eman
+    Popularity: Ospea
   Time:
     Time: 'Denbora'
     Any Time: 'Edozein unekoa'
-    Last Hour: 'Azken ordukoa'
     Today: 'Gaur'
     This Week: 'Aste honetan'
     This Month: 'Hilabete honetan'
@@ -72,10 +69,9 @@ Search Filters:
   Duration:
     Duration: 'Iraupena'
     All Durations: 'Edozein iraupen'
-    Short (< 4 minutes): 'Laburra (<4 minutu)'
-    Long (> 20 minutes): 'Luzea (> 20 minutu)'
-  # On Search Page
-    Medium (4 - 20 minutes): Tartekoa (4 - 20 minutu)
+    '< 3 minutes': '<3 minutu'
+    '> 20 minutes': '> 20 minutu'
+    '3 - 20 minutes': '3 - 20 minutu'
   Search Results: 'Bilaketa-emaitzak'
   Fetching results. Please wait: 'Emaitzak ekartzen. Itxaron faborez'
   Fetch more results: 'Ekarri emaitza gehiago'
@@ -215,7 +211,6 @@ Settings:
   General Settings:
     General Settings: 'Orokorra'
     Check for Updates: 'Bilatu eguneraketak'
-    Check for Latest Blog Posts: 'Egiaztatu blogeko azken argitalpenak'
     Fallback to Non-Preferred Backend on Failure: 'Hutsegitean, joan hobetsi gabeko motorrera'
     Enable Search Suggestions: 'Gaitu bilaketa-iradokizunak'
     Default Landing Page: 'Lehenetsitako hasierako orria'
@@ -629,7 +624,6 @@ About:
   GitHub issues: 'Github-en gaiak'
   Please check for duplicates before posting: 'Mesedez, egiaztatu bikoiztutakoak ote dauden argitaratu aurretik'
   Website: 'Webgunea'
-  Blog: 'Bloga'
   Email: 'Posta elektronikoa'
   Mastodon: 'Mastodon'
   Chat on Matrix: 'Matrix-en txata'

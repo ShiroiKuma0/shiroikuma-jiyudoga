@@ -25,7 +25,6 @@ Forward: 'आगे जाएँ'
 
 Version {versionNumber} is now available!  Click for more details: 'संस्करण {versionNumber} अब उपलब्ध है! अधिक विवरण के लिए क्लिक करें'
 Download From Site: 'साइट से डाउनलोड करें'
-A new blog is now available, {blogTitle}. Click to view more: 'एक नया ब्लॉग अब उपलब्ध है, {blogTitle}। अधिक देखने के लिए क्लिक करें'
 
 Global:
   Sort By: 'इसके अनुसार क्रमबद्ध करें'
@@ -38,15 +37,11 @@ Search / Go to URL: 'खोज / यूआरएल पर जाएं'
   # In Filter Button
 Search Filters:
   Search Filters: 'खोज फ़िल्टर'
-  Sort By:
+  Prioritize:
     Most Relevant: 'सबसे प्रासंगिक'
-    Rating: 'मूल्यांकन'
-    Upload Date: 'अपलोड की तारीख़'
-    View Count: 'दृश्य गणना'
   Time:
     Time: 'समय'
     Any Time: 'किसी भी समय'
-    Last Hour: 'पिछले घंटे'
     Today: 'आज'
     This Week: 'इस हफ़्ते'
     This Month: 'इस महीने'
@@ -61,10 +56,10 @@ Search Filters:
   Duration:
     Duration: 'अवधि'
     All Durations: 'सभी अवधियाँ'
-    Short (< 4 minutes): 'छोटे (<4 मिनट)'
-    Long (> 20 minutes): 'बड़े (>20 मिनट)'
+    '< 3 minutes': '<3 मिनट'
+    '> 20 minutes': '>20 मिनट'
   # On Search Page
-    Medium (4 - 20 minutes): माध्यम (4 - 20 minutes)
+    '3 - 20 minutes': 3 - 20 minutes
   Search Results: 'खोज के परिणाम'
   Fetching results. Please wait: 'परिणाम ला रहे है। कृपया प्रतीक्षा करे'
   Fetch more results: 'ज़्यादा परिणाम लाए'
@@ -112,7 +107,6 @@ Settings:
   General Settings:
     General Settings: 'जनरल सेटिंग्स'
     Check for Updates: 'अपडेट के लिए जाँच शुरु करें'
-    Check for Latest Blog Posts: 'नवीनतम ब्लॉग पोस्ट के लिए जाँच करें'
     Fallback to Non-Preferred Backend on Failure: 'विफलता पर गैर-पसंदीदा बैकएंड पर फ़ॉलबैक'
     Enable Search Suggestions: 'खोज सुझाव सक्षम करें'
     Default Landing Page: 'डिफ़ॉल्ट लैंडिंग पृष्ठ'

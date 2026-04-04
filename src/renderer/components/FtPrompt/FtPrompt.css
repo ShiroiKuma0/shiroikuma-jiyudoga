@@ -74,7 +74,6 @@
 @media only screen and (width <= 420px) {
   .promptCard.fullscreen {
     max-block-size: 100%;
-    block-size: 100vh;
     max-inline-size: 100%;
     inline-size: 100vw;
     inset-inline-start: 0;

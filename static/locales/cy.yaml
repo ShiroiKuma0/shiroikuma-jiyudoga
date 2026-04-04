@@ -29,7 +29,6 @@ Go to page: 'Mynd i {page}'
 
 Version {versionNumber} is now available!  Click for more details: 'Mae Fersiwn {versionNumber} bellach ar gael!  Cliciwch am fwy o manylion'
 Download From Site: 'Llwytho i lawr o''r Wefan'
-A new blog is now available, {blogTitle}. Click to view more: 'Mae blogiad newydd bellach ar gael, {blogTitle}. Cliciwch i weld mwy'
 Are you sure you want to open this link?: 'Ydych chi wir eisiau agor y ddolen hon?'
 
 # Global
@@ -57,15 +56,11 @@ Search Bar:
   Remove: Tynnu
 Search Filters:
   Search Filters: 'Hidlyddion Chwilio'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Mwyaf Perthnasol'
-    Rating: 'Sgôr'
-    Upload Date: 'Dyddiad Llwytho i Fyny'
-    View Count: 'Cyfrif Golygon'
   Time:
     Time: 'Amser'
     Any Time: 'Unrhyw Bryd'
-    Last Hour: 'Yr Awr Diwethaf'
     Today: 'Heddiw'
     This Week: 'Wythnos Yma'
     This Month: 'Mis Yma'
@@ -80,9 +75,9 @@ Search Filters:
   Duration:
     Duration: 'Hyd'
     All Durations: 'Pob Hyd'
-    Short (< 4 minutes): 'Byr (< 4 munud)'
-    Medium (4 - 20 minutes): 'Canolig (4 - 20 munud)'
-    Long (> 20 minutes): 'Hir (> 20 munud)'
+    '< 3 minutes': '< 3 munud'
+    '3 - 20 minutes': '3 - 20 munud'
+    '> 20 minutes': '> 20 munud'
   # On Search Page
   Search Results: 'Canlyniadau Chwilio'
   Fetching results. Please wait: 'Wrthi''n nôl canlyniadau. Arhoswch os gwelwch yn dda'
@@ -231,7 +226,6 @@ Settings:
   General Settings:
     General Settings: 'Cyffredinol'
     Check for Updates: 'Chwilio am Ddiweddariadau'
-    Check for Latest Blog Posts: 'Gwirio am y Postiadau Blog Diweddaraf'
     Fallback to Non-Preferred Backend on Failure: 'Nôl i''r Cefn Diddewis ar Fethiant'
     Enable Search Suggestions: 'Galluogi Awgrymiadau Chwilio'
     Default Landing Page: 'Tudalen Glanio Ragosodedig'
@@ -646,7 +640,6 @@ About:
   GitHub issues: 'Materion GitHub'
   Please check for duplicates before posting: 'Gwirio am ddyblygiadau cyn postio'
   Website: 'Gwefan'
-  Blog: 'Blog'
   Email: 'E-bost'
   Mastodon: 'Mastodon'
   Chat on Matrix: 'Sgwrsio ar Matrix'

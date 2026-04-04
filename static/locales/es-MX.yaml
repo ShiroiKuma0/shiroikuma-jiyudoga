@@ -42,15 +42,11 @@ Search / Go to URL: 'Buscar / Ir a la URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Filtros de búsqueda'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Más relevante'
-    Rating: 'Clasificación'
-    Upload Date: 'Fecha de carga'
-    View Count: 'Recuento de vistas'
   Time:
     Time: 'Tiempo'
     Any Time: 'Cualquier momento'
-    Last Hour: 'Última hora'
     Today: 'Hoy'
     This Week: 'Esta semana'
     This Month: 'Este mes'
@@ -65,10 +61,9 @@ Search Filters:
   Duration:
     Duration: 'Duración'
     All Durations: 'Todas las duraciones'
-    Short (< 4 minutes): 'Corto (< 4 minutos)'
-    Long (> 20 minutes): 'Largo (> 20 minutos)'
-  # On Search Page
-    Medium (4 - 20 minutes): Medio (4 - 20 minutos)
+    '< 3 minutes': '< 3 minutos'
+    '> 20 minutes': '> 20 minutos'
+    '3 - 20 minutes': 3 - 20 minutos
   Search Results: 'Resultados de búsqueda'
   Fetching results. Please wait: 'Obteniendo más resultados. Por favor espere'
   Fetch more results: 'Obtener más resultados'
@@ -214,7 +209,6 @@ Settings:
     Region for Trending: 'Tendencia por región'
         #! List countries
     Check for Updates: Buscar actualizaciones
-    Check for Latest Blog Posts: Compruebe las últimas publicaciones del blog
     Current instance will be randomized on startup: La dirección actual será aleatorizada al iniciar la app
     System Default: Por defecto
     Current Invidious Instance: 'Dirección de Invidious actual:'
@@ -438,7 +432,6 @@ About:
   About: 'Acerca de'
   #& About
 #On Channel Page
-  Blog: Blog
   Website: Sitio web
   Email: Correo electrónico
   Mastodon: Mastodon
@@ -649,7 +642,6 @@ Profile:
   Profile Filter: Filtro de Perfil
   Profile Settings: Configuración de perfil
 The playlist has been reversed: La lista de reproducción ha sido invertida
-A new blog is now available, {blogTitle}. Click to view more: Un nuevo blog ya está disponible, {blogTitle}. Presione para ver más
 Download From Site: Descargar desde el sitio
 Version {versionNumber} is now available!  Click for more details: Versión {versionNumber} ya está disponible! Presione para más detalles
 Open New Window: Abrir nueva ventana

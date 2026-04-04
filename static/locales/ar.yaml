@@ -45,15 +45,13 @@ Search / Go to URL: 'ابحث / اذهب إلى رابط'
   # In Filter Button
 Search Filters:
   Search Filters: 'فلاتر البحث'
-  Sort By:
+  Prioritize:
     Most Relevant: 'الأكثر صلة'
-    Rating: 'التقييم'
-    Upload Date: 'تاريخ الرفع'
-    View Count: 'عدد المشاهدات'
+    Prioritize: رتب حسب الأهمية
+    Popularity: الشهرة
   Time:
     Time: 'الوقت'
     Any Time: 'أي وقت'
-    Last Hour: 'آخر ساعة'
     Today: 'اليوم'
     This Week: 'هذا الأسبوع'
     This Month: 'هذا الشهر'
@@ -68,10 +66,7 @@ Search Filters:
   Duration:
     Duration: 'المدة'
     All Durations: 'كل الآوقات'
-    Short (< 4 minutes): 'قصير (< 4 دقائق)'
-    Long (> 20 minutes): 'طويل (> 20 دقيقة)'
-  # On Search Page
-    Medium (4 - 20 minutes): متوسط (4 - 20 دقيقة)
+    '< 3 minutes': أقل من 3 دقائق
   Search Results: 'نتائج البحث'
   Fetching results. Please wait: 'جاري إحضار النتائج. الرجاء الانتظار'
   Fetch more results: 'إحضار المزيد من النتائج'
@@ -229,7 +224,6 @@ Settings:
       Blur: الضبابية
     Region for Trending: 'المنطقة للأكثر شيوعاً'
         #! List countries
-    Check for Latest Blog Posts: تحقق من أحدث منشورات المدونة
     Check for Updates: تحقّق من وجود تحديثات
     View all Invidious instance information: عرض جميع نماذج Invidious
     System Default: افتراضي النظام
@@ -608,7 +602,6 @@ About:
   Chat on Matrix: الدردشة على ماتريكس
   Mastodon: ماستدون
   Email: البريد الإلكتروني
-  Blog: المدوّنة
   Website: موقع الويب
   Report a problem: الإبلاغ عن مشكلة
   FAQ: الأسئلة المتداولة
@@ -923,7 +916,6 @@ Canceled next video autoplay: 'تم إلغاء التشغيل التلقائي �
 Yes: 'نعم'
 No: 'لا'
 The playlist has been reversed: تم عكس قائمة التشغيل
-A new blog is now available, {blogTitle}. Click to view more: 'هناك مدونة جديدة متاحة الآن ، {blogTitle}. انقر لعرض المزيد'
 Download From Site: تنزيل من الموقع
 Version {versionNumber} is now available!  Click for more details: 'الإصدار {versionNumber} متاح الآن!  انقر لمزيد من التفاصيل'
 Tooltips:
@@ -1092,3 +1084,5 @@ Autoplay Interruption Timer: تم إلغاء التشغيل التلقائي ب�
 shortcutJoinOperator: +
 shortcutLabelSeparator: '{''|''}'
 KeyboardShortcutTemplate: '{label} ({shortcut})'
+Compact side navigation: قائمة جانبية مُختصرة
+Expand side navigation: عرض تفاصيل القائمة

@@ -45,15 +45,11 @@ Search / Go to URL: 'Αναζήτηση/Μετάβαση σε URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Φίλτρα αναζήτησης'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Πιο σχετικά'
-    Rating: 'Αξιολόγηση'
-    Upload Date: 'Ημερομηνία μεταφόρτωσης'
-    View Count: 'Πλήθος Προβολών'
   Time:
     Time: 'Ώρα'
     Any Time: 'Οποτεδήποτε'
-    Last Hour: 'Τελευταίας ώρας'
     Today: 'Σήμερα'
     This Week: 'Τρέχουσα Εβδομάδα'
     This Month: 'Τρέχων μήνα'
@@ -68,10 +64,9 @@ Search Filters:
   Duration:
     Duration: 'Διάρκεια'
     All Durations: 'Οποιασδήποτε Διάρκειας'
-    Short (< 4 minutes): 'Μικρό(<4 λεπτών)'
-    Long (> 20 minutes): 'Μεγάλο (>20 λεπτών)'
-  # On Search Page
-    Medium (4 - 20 minutes): Μεσαίο (4 - 20 λεπτά)
+    '< 3 minutes': '<3 λεπτών'
+    '> 20 minutes': '>20 λεπτών'
+    '3 - 20 minutes': 3 - 20 λεπτά
   Search Results: 'Αποτελέσματα αναζήτησης'
   Fetching results. Please wait: 'Aνάκτηση αποτελεσμάτων. Παρακαλώ περιμένετε'
   Fetch more results: 'Λήψη περισσότερων αποτελεσμάτων'
@@ -226,7 +221,6 @@ Settings:
       Blur: 'Θάμπωμα'
     Region for Trending: 'Περιοχή που καθορίζει την καρτέλα των τάσεων'
         #! List countries
-    Check for Latest Blog Posts: Ελέγξτε για τις τελευταίες δημοσιεύσεις ιστολογίου (Blogposts)
     Check for Updates: Έλεγχος για ενημερώσεις
     View all Invidious instance information: Δείτε όλες τις πληροφορίες προσβλητικών περιπτώσεων
     System Default: Προεπιλογή συστήματος
@@ -606,7 +600,6 @@ About:
   Chat on Matrix: Συνομιλία στο Matrix
   Mastodon: Μάστοντον
   Email: Ηλεκτρονικό ταχυδρομείο
-  Blog: Ιστολόγιο
   Website: Ιστότοπος
   Please check for duplicates before posting: Παρακαλώ ελέγξτε για διπλότυπα πριν δημοσιεύσετε
   GitHub issues: Προβλήματα GitHub
@@ -918,7 +911,6 @@ Canceled next video autoplay: 'Η αναπαραγωγή του επόμενου
 
 Yes: 'Ναι'
 No: 'Όχι'
-A new blog is now available, {blogTitle}. Click to view more: Ένα καινούριο ιστολόγιο είναι πλέον διαθέσιμο, {blogTitle}. Για περισσότερες λεπτομέρειες κάντε κλικ εδώ
 Download From Site: Κάντε λήψη από την Ιστοσελίδα
 Version {versionNumber} is now available!  Click for more details: Η έκδοση {versionNumber} είναι πλέον διαθέσιμη. Κάντε κλικ για περισσότερες λεπτομέρειες
 This video is unavailable because of missing formats. This can happen due to country unavailability.: Αυτό το βίντεο δεν είναι διαθέσιμο λόγω έλλειψης μορφών. Αυτό μπορεί να συμβαίνει λόγω μη διαθεσιμότητας του βίντεο στη χώρα σας.

@@ -45,15 +45,13 @@ Search / Go to URL: 'Søk / gå til nettadresse'
   # In Filter Button
 Search Filters:
   Search Filters: 'Søkefiltre'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Mest relevant'
-    Rating: 'Vurdering'
-    Upload Date: 'Opplastingsdato'
-    View Count: 'Visninger'
+    Prioritize: Prioriter
+    Popularity: Popularitet
   Time:
     Time: 'Tid'
     Any Time: 'Når som helst'
-    Last Hour: 'Den siste timen'
     Today: 'I dag'
     This Week: 'Denne uken'
     This Month: 'Denne måneden'
@@ -68,10 +66,9 @@ Search Filters:
   Duration:
     Duration: 'Varighet'
     All Durations: 'Alle varigheter'
-    Short (< 4 minutes): 'Kort (< 4 minutter)'
-    Long (> 20 minutes): 'Lang (> 20 minutter)'
-  # On Search Page
-    Medium (4 - 20 minutes): Middels (4–20 minutter)
+    '< 3 minutes': '< 3 minutter'
+    '> 20 minutes': '> 20 minutter'
+    '3 - 20 minutes': 3–20 minutter
   Search Results: 'Søkeresultater'
   Fetching results. Please wait: 'Henter resultater. Vennligst vent'
   Fetch more results: 'Hent flere resultater'
@@ -232,7 +229,6 @@ Settings:
         #! List countries
     Check for Updates: Se etter oppdateringer
     View all Invidious instance information: Vis informasjon om alle Invidious-instanser
-    Check for Latest Blog Posts: Vis nye blogginnlegg
     System Default: Standardinnstillinger
     Clear Default Instance: Fjern standardinstans
     Set Current Instance as Default: Bruk den gjeldende instansen som standard
@@ -625,7 +621,6 @@ About:
   Source code: Kildekode
   Mastodon: Mastodon
   Email: E-post
-  Blog: Blogg
   Translate: Oversett
   Please check for duplicates before posting: Vennligst sjekk om problemet ditt allerede har blitt sendt inn før du sender inn en melding
   these people and projects: disse folkene og prosjektene
@@ -980,7 +975,6 @@ Tooltips:
   SponsorBlock Settings:
     UseDeArrowTitles: Erstatt videonavn med brukerinnsendte navn fra DeArrow.
     UseDeArrowThumbnails: Erstatt miniatyrbilder på videoer med bilder fra DeArrow.
-A new blog is now available, {blogTitle}. Click to view more: Et nytt blogginnlegg er tilgjengelig, {blogTitle}. Klikk her for å se mer
 The playlist has been reversed: Spillelisten har blitt snudd
 Download From Site: Last ned fra nettside
 Version {versionNumber} is now available!  Click for more details: Versjon {versionNumber} er nå tilgjengelig! Klikk her for detaljer

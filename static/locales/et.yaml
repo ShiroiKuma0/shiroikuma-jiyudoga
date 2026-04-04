@@ -42,22 +42,19 @@ Global:
     Comment Count: 1 kommentaar | {count} kommentaari
 Version {versionNumber} is now available!  Click for more details: 'Versioon {versionNumber} in nüüd saadaval! Lisateavet leiad siit'
 Download From Site: 'Laadi veebisaidist alla'
-A new blog is now available, {blogTitle}. Click to view more: 'Uus blogiartikkel on saadaval. Loe siit {blogTitle}'
 
 # Search Bar
 Search / Go to URL: 'Otsi aadressi või ava see'
   # In Filter Button
 Search Filters:
   Search Filters: 'Otsingufiltrid'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Kõige asjakohasemad'
-    Rating: 'Hinnagud'
-    Upload Date: 'Üleslaadimise kuupäev'
-    View Count: 'Vaatamiste arv'
+    Prioritize: Sea tähtsuse järjekorda
+    Popularity: Populaarsus
   Time:
     Time: 'Aeg'
     Any Time: 'Millal iganes'
-    Last Hour: 'Viimase tunni kestel'
     Today: 'Täna'
     This Week: 'Sel nädalal'
     This Month: 'Sel kuul'
@@ -72,10 +69,9 @@ Search Filters:
   Duration:
     Duration: 'Kestus'
     All Durations: 'Kõik kestused'
-    Short (< 4 minutes): 'Lühikesed (alla 4 minuti)'
-    Long (> 20 minutes): 'Pikad (üle 20 minuti)'
-  # On Search Page
-    Medium (4 - 20 minutes): Keskmine (4 - 20 minutit)
+    '< 3 minutes': 'alla 3 minuti'
+    '> 20 minutes': 'üle 20 minuti'
+    '3 - 20 minutes': 3 - 20 minutit
   Search Results: 'Otsingutulemused'
   Fetching results. Please wait: 'Laadin tulemusi. Palun oota üks hetk'
   Fetch more results: 'Laadi veel andmeid'
@@ -213,7 +209,6 @@ Settings:
   General Settings:
     General Settings: 'Üldist'
     Check for Updates: 'Kontrolli uuendusi'
-    Check for Latest Blog Posts: 'Vaata viimaseid blogipostitusi'
     Fallback to Non-Preferred Backend on Failure: 'Luba vigade korral kasutada teist taustateenust'
     Enable Search Suggestions: 'Kasuta otsingusoovitusi'
     Default Landing Page: 'Vaikimisi avaleht'
@@ -626,7 +621,6 @@ About:
   room rules: jututoa reeglitega
   Chat on Matrix: Vestle meiega Matrixi võrgus
   Mastodon: Mikroblogiteenus Mastodon
-  Blog: Blogi
   Website: Veebisait
   Please check for duplicates before posting: Enne uue veateate tegemist palun kontrolli, kas sellest on juba meile teada antud
   GitHub issues: Teata vigadest GitHub'i vahendusel

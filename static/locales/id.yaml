@@ -42,22 +42,17 @@ Global:
   Sort By: Urut Menurut
 Version {versionNumber} is now available!  Click for more details: 'Versi {versionNumber} sekarang tersedia!  Klik untuk detail lebih lanjut'
 Download From Site: 'Unduh dari Situs'
-A new blog is now available, {blogTitle}. Click to view more: 'Pos blog baru tersedia, {blogTitle}. Klik untuk lihat lebih lanjut'
 
 # Search Bar
 Search / Go to URL: 'Cari / Pergi ke URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Filter Pencarian'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Paling Relevan'
-    Rating: 'Peringkat'
-    Upload Date: 'Tanggal Diunggah'
-    View Count: 'Jumlah Tontonan'
   Time:
     Time: 'Durasi'
     Any Time: 'Kapan Saja'
-    Last Hour: 'Sejam Terakhir'
     Today: 'Hari ini'
     This Week: 'Minggu ini'
     This Month: 'Bulan ini'
@@ -72,10 +67,9 @@ Search Filters:
   Duration:
     Duration: 'Durasi'
     All Durations: 'Semua Durasi'
-    Short (< 4 minutes): 'Pendek (< 4 menit)'
-    Long (> 20 minutes): 'Panjang (> 20 menit)'
-  # On Search Page
-    Medium (4 - 20 minutes): Sedang (4 - 20 menit)
+    '< 3 minutes': '< 3 menit'
+    '> 20 minutes': '> 20 menit'
+    '3 - 20 minutes': 3 - 20 menit
   Search Results: 'Hasil Pencarian'
   Fetching results. Please wait: 'Mengambil hasil. Silakan tunggu'
   Fetch more results: 'Ambil lebih banyak hasil'
@@ -213,7 +207,6 @@ Settings:
   General Settings:
     General Settings: 'Umum'
     Check for Updates: 'Cek Pembaruan'
-    Check for Latest Blog Posts: 'Cek Kiriman Blog Terbaru'
     Fallback to Non-Preferred Backend on Failure: 'Beralih ke Layanan Cadangan saat terjadi Kegagalan'
     Enable Search Suggestions: 'Aktifkan Saran Pencarian'
     Default Landing Page: 'Halaman Awal Baku'
@@ -627,7 +620,6 @@ About:
   Chat on Matrix: Mengobrol di Matrix
   Mastodon: mastodon
   Email: Surel
-  Blog: Blog
   Website: Situs web
   Please check for duplicates before posting: Silakan periksa duplikat sebelum melaporkan
   GitHub issues: Isu GitHub

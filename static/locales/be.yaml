@@ -28,7 +28,6 @@ Open New Window: 'Адкрыць новае акно'
 
 Version {versionNumber} is now available!  Click for more details: 'Даступна версія {versionNumber}!  Націсніце, каб даведацца больш'
 Download From Site: 'Спампаваць з сайта'
-A new blog is now available, {blogTitle}. Click to view more: 'Даступны новы блог, {blogTitle}. Націсніце, каб паглядзець больш'
 Are you sure you want to open this link?: 'Сапраўды хочаце адкрыць гэтую спасылку?'
 
 # Global
@@ -56,15 +55,11 @@ Search Bar:
   Remove: Выдаліць
 Search Filters:
   Search Filters: 'Фільтры пошуку'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Найбольш рэлевантныя'
-    Rating: 'Рэйтынг'
-    Upload Date: 'Дата запампоўвання'
-    View Count: 'Колькасць праглядаў'
   Time:
     Time: 'Час'
     Any Time: 'За ўвесь час'
-    Last Hour: 'За апошнюю гадзіну'
     Today: 'Сёння'
     This Week: 'За гэты тыдзень'
     This Month: 'За гэты месяц'
@@ -79,9 +74,9 @@ Search Filters:
   Duration:
     Duration: 'Працягласць'
     All Durations: 'Любая працягласць'
-    Short (< 4 minutes): 'Кароткія (< 4 хвілін)'
-    Medium (4 - 20 minutes): 'Сярэднія (4-20 хвілін)'
-    Long (> 20 minutes): 'Доўгія (> 20 хвілін)'
+    '< 3 minutes': '< 3 хвілін'
+    '3 - 20 minutes': '3-20 хвілін'
+    '> 20 minutes': '> 20 хвілін'
   # On Search Page
   Search Results: 'Вынікі пошуку'
   Fetching results. Please wait: 'Атрыманне вынікаў. Калі ласка, пачакайце'
@@ -227,7 +222,6 @@ Settings:
   General Settings:
     General Settings: 'Агульныя'
     Check for Updates: 'Правяраць наяўнасць абнаўленняў'
-    Check for Latest Blog Posts: 'Правяраць апошнія паведамленні ў блогу'
     Fallback to Non-Preferred Backend on Failure: 'Вяртанне да непераважнага бэкэнда ў выпадку няўдачы'
     Enable Search Suggestions: 'Уключыць прапановы пошуку'
     Default Landing Page: 'Хатняя старонка'
@@ -629,7 +623,6 @@ About:
   GitHub issues: 'Праблемы на GitHub'
   Please check for duplicates before posting: 'Перад публікацыяй праверце наяўнасць дублікатаў'
   Website: 'Вэб-сайт'
-  Blog: 'Блог'
   Email: 'Электронная пошта'
   Mastodon: 'Mastodon'
   Chat on Matrix: 'Чат у Matrix'

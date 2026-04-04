@@ -42,15 +42,13 @@ Search / Go to URL: '搜索 / 前往URL'
   # In Filter Button
 Search Filters:
   Search Filters: '搜索过滤'
-  Sort By:
+  Prioritize:
     Most Relevant: '最相关'
-    Rating: '评分'
-    Upload Date: '上传日期'
-    View Count: '观看数量'
+    Prioritize: 优先
+    Popularity: 流行度
   Time:
     Time: '发布时间'
     Any Time: '任何时间'
-    Last Hour: '一小时内'
     Today: '今天'
     This Week: '本周'
     This Month: '本月'
@@ -65,10 +63,9 @@ Search Filters:
   Duration:
     Duration: '时长'
     All Durations: '所有时长'
-    Short (< 4 minutes): '短（< 4分钟）'
-    Long (> 20 minutes): '长（> 20分钟）'
-  # On Search Page
-    Medium (4 - 20 minutes): 中等（4-20 分钟）
+    '< 3 minutes': '< 3分钟'
+    '> 20 minutes': '> 20分钟'
+    '3 - 20 minutes': 3-20 分钟
   Search Results: '搜索结果'
   Fetching results. Please wait: '摘取结果中。请稍候'
   Fetch more results: '摘取更多结果'
@@ -228,7 +225,6 @@ Settings:
     Region for Trending: '热门区域'
         #! List countries
     Check for Updates: 检查更新
-    Check for Latest Blog Posts: 检查最新的博客贴
     View all Invidious instance information: 浏览所有Invidious实例
     System Default: 系统默认
     The currently set default instance is {instance}: 当前设置的默认实例是 {instance}
@@ -619,7 +615,6 @@ About:
   Source code: 源代码
   Beta: 测试版
   Website: 网站
-  Blog: 博客
   Email: 电子邮件
   Donate: 捐款
   Credits: 贡献者
@@ -947,8 +942,7 @@ Profile:
   Edit Profile Name: 编辑配置文件名
   Create Profile Name: 创建配置文件名
 The playlist has been reversed: 播放列表已反转
-A new blog is now available, {blogTitle}. Click to view more: 已有新的博客，{blogTitle}。点击以查看更多
-Download From Site: 从网站下载
+Download From Site: 从网站下载 单击查看更多
 Version {versionNumber} is now available!  Click for more details: 版本{versionNumber}已可使用！  点击以取得更多信息
 This video is unavailable because of missing formats. This can happen due to country unavailability.: 没有这个视频因为缺少格式。这个可能发生由于国家不可用。
 Tooltips:

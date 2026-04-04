@@ -27,7 +27,6 @@ Open New Window: 'ახალი ფანჯრის გახსნა'
 
 Version {versionNumber} is now available!  Click for more details: 'ხელმისაწვდომია {versionNumber} ვერსია!  დააჭირეთ დამატებითი ინფორმაციისთვის'
 Download From Site: 'საიტიდან ჩამოტვირთვა'
-A new blog is now available, {blogTitle}. Click to view more: 'ხელმისაწვდომია ახალი ბლოგი, {blogTitle}. დააჭირეთ დამატებითი ინფორმაციისთვის'
 Are you sure you want to open this link?: 'დარწმუნებული ხართ, რომ გსურთ ამ ბმულის გახსნა?'
 
 Global:
@@ -53,15 +52,11 @@ Search Bar:
   Remove: წაშლა
 Search Filters:
   Search Filters: 'ძიების ფილტრები'
-  Sort By:
+  Prioritize:
     Most Relevant: 'ყველაზე შესაბამისი'
-    Rating: 'რეიტინგის მიხედვით'
-    Upload Date: 'ატვირთვის თარიღით'
-    View Count: 'ნახვების რაოდენობით'
   Time:
     Time: 'დრო'
     Any Time: 'ნებისმიერი დრო'
-    Last Hour: 'ბოლო საათი'
     Today: 'დღეს'
     This Week: 'ამ კვირაში'
     This Month: 'ამ თვეში'
@@ -75,8 +70,8 @@ Search Filters:
   Duration:
     Duration: 'ხანგრძლივობა'
     All Durations: 'ნებისმიერი ხანგრძლივობის'
-    Short (< 4 minutes): 'მოკლე (< 4 წუთი)'
-    Long (> 20 minutes): 'გრძელი (> 20 წუთი)'
+    '< 3 minutes': '< 3 წუთი'
+    '> 20 minutes': '> 20 წუთი'
   # On Search Page
   Search Results: 'ძიების შედეგი'
   Fetching results. Please wait: 'მიმდინარეობს შედეგების მიღება. გთხოვთ, დაელოდოთ'
@@ -124,7 +119,6 @@ Settings:
   General Settings:
     General Settings: 'ზოგადი'
     Check for Updates: 'განახლებების შემოწმება'
-    Check for Latest Blog Posts: 'უახლესი ბლოგპოსტების შემოწმება'
     Fallback to Non-Preferred Backend on Failure: 'შეფერხების შემთხვევაში არაუპირატეს ძრავაზე დაბრუნება'
     Enable Search Suggestions: 'ძიების შემოთავაზებების ჩართვა'
     Default Landing Page: 'შესვლის სტანდარტული გვერდი'

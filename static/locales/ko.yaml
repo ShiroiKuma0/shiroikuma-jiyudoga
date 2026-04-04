@@ -42,22 +42,17 @@ Global:
     Like Count: 1개 좋아요 | {count}개 좋아요
 Version {versionNumber} is now available!  Click for more details: '{versionNumber} 버전이 사용가능합니다! 클릭하여 자세한 정보를 확인하세요'
 Download From Site: '사이트로부터 다운로드'
-A new blog is now available, {blogTitle}. Click to view more: '새로운 블로그가 업로드되었습니다, {blogTitle}. 클릭하여 확인하세요'
 
 # Search Bar
 Search / Go to URL: '검색 / URL로 이동'
   # In Filter Button
 Search Filters:
   Search Filters: '검색필터'
-  Sort By:
+  Prioritize:
     Most Relevant: '관련성'
-    Rating: '평가순'
-    Upload Date: '업로드일자'
-    View Count: '조회수'
   Time:
     Time: '시간'
     Any Time: '모든시간'
-    Last Hour: '1시간 이내'
     Today: '오늘'
     This Week: '이번주'
     This Month: '이번달'
@@ -72,10 +67,9 @@ Search Filters:
   Duration:
     Duration: '영상길이'
     All Durations: '모두'
-    Short (< 4 minutes): '짧음(4분이내)'
-    Long (> 20 minutes): '긴(20분)'
-  # On Search Page
-    Medium (4 - 20 minutes): 4~20분
+    '< 3 minutes': '3분이내'
+    '> 20 minutes': '20분'
+    '3 - 20 minutes': 3~20분
   Search Results: '검색 결과'
   Fetching results. Please wait: '결과를 불러오는 중입니다. 잠시만 기다려 주세요'
   Fetch more results: '검색 결과 더 보기'
@@ -136,7 +130,6 @@ Settings:
   General Settings:
     General Settings: '일반 설정'
     Check for Updates: '업데이트 확인하기'
-    Check for Latest Blog Posts: '최신 블로그포스트 확인하기'
     Fallback to Non-Preferred Backend on Failure: '실패시 선호되지않는 백엔드로 대체하기'
     Enable Search Suggestions: '검색추천 허용'
     Default Landing Page: '기본 페이지'
@@ -409,7 +402,6 @@ About:
   Chat on Matrix: 매트릭스 채팅
   Mastodon: 마스토돈
   Email: 이메일
-  Blog: 블로그
   Website: 웹사이트
   Please check for duplicates before posting: 게시하기 전에 중복 항목을 확인하십시오
   GitHub issues: GitHub 이슈

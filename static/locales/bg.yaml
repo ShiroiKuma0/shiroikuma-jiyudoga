@@ -42,22 +42,17 @@ Global:
     Comment Count: 1 коментар | {count} коментара
 Version {versionNumber} is now available!  Click for more details: 'Версия {versionNumber} е вече налична! Щракнете за повече детайли'
 Download From Site: 'Сваляне от сайта'
-A new blog is now available, {blogTitle}. Click to view more: 'Нова публикация в блога, {blogTitle}. Щракнете за преглед'
 
 # Search Bar
 Search / Go to URL: 'Търсене / Отиване на адрес'
   # In Filter Button
 Search Filters:
   Search Filters: 'Филтри за търсене'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Най-уместно'
-    Rating: 'Оценка'
-    Upload Date: 'Дата на качване'
-    View Count: 'Брой показвания'
   Time:
     Time: 'Време'
     Any Time: 'Независимо кога'
-    Last Hour: 'Последния час'
     Today: 'Днес'
     This Week: 'Тази седмица'
     This Month: 'Този месец'
@@ -72,10 +67,9 @@ Search Filters:
   Duration:
     Duration: 'Продължителност'
     All Durations: 'Всички продължителности'
-    Short (< 4 minutes): 'Кратки (< 4 минути)'
-    Long (> 20 minutes): 'Дълги (> 20 минути)'
-  # On Search Page
-    Medium (4 - 20 minutes): Средни (4 - 20 минути)
+    '< 3 minutes': '< 3 минути'
+    '> 20 minutes': '> 20 минути'
+    '3 - 20 minutes': 3 - 20 минути
   Search Results: 'Резултати от търсенето'
   Fetching results. Please wait: 'Събиране на резултати. Моля, изчакайте'
   Fetch more results: 'Намиране на още резултати'
@@ -213,7 +207,6 @@ Settings:
   General Settings:
     General Settings: 'Общи'
     Check for Updates: 'Проверка за актуализации'
-    Check for Latest Blog Posts: 'Проверка за нови публикации в блога'
     Fallback to Non-Preferred Backend on Failure: 'При грешка, връщане към непредпочитан интерфейс'
     Enable Search Suggestions: 'Активиране на препоръките при търсене'
     Default Landing Page: 'Страница по подразбиране'
@@ -626,7 +619,6 @@ About:
   Chat on Matrix: Чат в Matrix
   Mastodon: Mastodon
   Email: Електронна поща
-  Blog: Блог
   Website: Уебсайт
   Please check for duplicates before posting: Моля, проверете за дубликати преди публикуване
   GitHub issues: GitHub проблеми
@@ -641,6 +633,9 @@ About:
   Credits: Заслуги
   Discussions: Дискусии
   AGPLv3: AGPLv3
+  Licensed under the {licenseLink}: Лицензирано под {licenseLink}
+  Please read the {roomRulesLink}: Моля, прочетете {roomRulesLink}
+  FreeTube is made possible by {creditsPageLink}: FreeTube е възможен, благодарение на {creditsPageLink}
 Profile:
   Profile Select: 'Избор на профил'
   All Channels: 'Всички канали'
@@ -856,6 +851,10 @@ Video:
 #& Playlists
   Watched Progress Saved: Напредъка на гледането е запазен
   Save Watched Progress: Запазване на напредъка
+  Popout Live Chat: Изскачащ чат
+  Watch:
+    'Remaining preroll-ad time: {remindingTimeSeconds}s': 'Оставащо време за реклама преди видеото: {remindingTimeSeconds} сек'
+    'Remaining SABR backoff time: {remindingTimeSeconds}s': 'Оставащо време за отлагане на SABR: {remindingTimeSeconds} сек'
 Playlist:
   #& About
   View Full Playlist: 'Преглед на пълен плейлист'

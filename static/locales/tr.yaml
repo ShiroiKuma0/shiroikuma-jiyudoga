@@ -42,22 +42,19 @@ Global:
     Comment Count: 1 yorum | {count} yorum
 Version {versionNumber} is now available!  Click for more details: '{versionNumber} sürümü çıktı!  Daha fazla ayrıntı için tıklayın'
 Download From Site: 'Siteden indir'
-A new blog is now available, {blogTitle}. Click to view more: 'Yeni blog gönderisi var, {blogTitle}. Daha fazlasını görüntülemek için tıklayın'
 
 # Search Bar
 Search / Go to URL: 'Ara / URL''ye git'
   # In Filter Button
 Search Filters:
   Search Filters: 'Arama Süzgeçleri'
-  Sort By:
+  Prioritize:
     Most Relevant: 'En Uygun'
-    Rating: 'Derecelendirme'
-    Upload Date: 'Yükleme Tarihi'
-    View Count: 'İzlenme Sayısı'
+    Prioritize: Öncelik Ver
+    Popularity: Popülerlik
   Time:
     Time: 'Zaman'
     Any Time: 'Herhangi Bir Zaman'
-    Last Hour: 'Son Bir Saat'
     Today: 'Bugün'
     This Week: 'Bu Hafta'
     This Month: 'Bu Ay'
@@ -72,10 +69,9 @@ Search Filters:
   Duration:
     Duration: 'Süre'
     All Durations: 'Tüm Süreler'
-    Short (< 4 minutes): 'Kısa (4 dakikadan az)'
-    Long (> 20 minutes): 'Uzun (20 dakikadan fazla)'
-  # On Search Page
-    Medium (4 - 20 minutes): Orta (4 - 20 dakika)
+    '< 3 minutes': '3 dakikadan az'
+    '> 20 minutes': '20 dakikadan fazla'
+    '3 - 20 minutes': 3 - 20 dakika
   Search Results: 'Arama Sonuçları'
   Fetching results. Please wait: 'Sonuçlar getiriliyor. Lütfen bekleyin'
   Fetch more results: 'Daha fazla sonuç getir'
@@ -213,7 +209,6 @@ Settings:
   General Settings:
     General Settings: 'Genel'
     Check for Updates: 'Güncellemeleri Denetle'
-    Check for Latest Blog Posts: 'En Yeni Blog Gönderilerini Denetle'
     Fallback to Non-Preferred Backend on Failure: 'Hata Durumunda Tercih Edilmeyen Arka Uca Geç'
     Enable Search Suggestions: 'Arama Önerilerini Etkinleştir'
     Default Landing Page: 'Öntanımlı Açılış Ekranı'
@@ -623,7 +618,6 @@ About:
   About: 'Hakkında'
   #& About
   Website: Web sitesi
-  Blog: Blog
   Credits: Katkıda Bulunanlar
   FAQ: SSS
   Email: E-posta

@@ -29,15 +29,11 @@ Search / Go to URL: 'جست و جو / برو به لینک'
   # In Filter Button
 Search Filters:
   Search Filters: 'فیلترهای جست و جو'
-  Sort By:
+  Prioritize:
     Most Relevant: 'مرتبط ترین'
-    Rating: 'امتیاز'
-    Upload Date: 'زمان بارگذاری'
-    View Count: 'تعداد بازدید'
   Time:
     Time: 'زمان'
     Any Time: 'هر زمانی'
-    Last Hour: 'یک ساعت قبل'
     Today: 'امروز'
     This Week: 'این هفته'
     This Month: 'این ماه'
@@ -52,10 +48,6 @@ Search Filters:
   Duration:
     Duration: 'طول مدت'
     All Durations: 'طول مدت همه'
-    Short (< 4 minutes): 'کوتاه(>۴ دقیقه)'
-    Long (> 20 minutes): 'طولانی(<۲۰ دقیقه)'
-  # On Search Page
-    Medium (4 - 20 minutes): متوسط (۴ تا ۲۰ دقیقه)
   Search Results: 'نتایج جست و جو'
   Fetching results. Please wait: 'دریافت نتایج.لطفا صبر کنید'
   Fetch more results: 'دریافت نتایج بیشتر'
@@ -195,7 +187,6 @@ Settings:
   General Settings:
     General Settings: 'عمومی'
     Check for Updates: 'بررسی برای به روزرسانی ها'
-    Check for Latest Blog Posts: 'بررسی آخرین مطالب وبلاگ'
     Fallback to Non-Preferred Backend on Failure: 'بازگشت به Backend غیر ترجیحی در صورت شکست'
     Enable Search Suggestions: 'فعال کردن پیشنهادات جستجو'
     Default Landing Page: 'صفحه اول پیشفرض'
@@ -810,7 +801,6 @@ About:
   FAQ: پرسش و پاسخ
   room rules: قوانین اتاق
   Translate: ترجمه
-  Blog: وبلاگ
   Chat on Matrix: چت در ماتریکس
   these people and projects: این افراد و پروژه ها
   Report a problem: گزارش یک مشکل
@@ -822,7 +812,6 @@ About:
 New Window: پنجره جدید
 Preferences: تنظیمات
 Version {versionNumber} is now available!  Click for more details: نسخه {versionNumber} در دسترس است!  برای مشاهده جزئیات کلیک کنید
-A new blog is now available, {blogTitle}. Click to view more: یک مطلب جدید در دسترس است, {blogTitle}. برای مشاهده بیشتر کلیک کنید
 Channels:
   Channels: کانال ها
   Unsubscribe Prompt: آیا مطمئنید که می‌خواهید اشتراک «{channelName}» را لغو کنید؟

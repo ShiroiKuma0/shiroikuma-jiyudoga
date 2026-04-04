@@ -40,22 +40,17 @@ Global:
   Sort By: 'Sorter etter'
 Version {versionNumber} is now available!  Click for more details: 'Versjon {versionNumber} er no tilgjengeleg! Klikk for meir informasjon'
 Download From Site: 'Last ned frå nettstaden'
-A new blog is now available, {blogTitle}. Click to view more: 'Eit nytt blogginnlegg er tilgjengeleg, {blogTitle}. Klikk her for å sjå meir'
 
 # Search Bar
 Search / Go to URL: 'Søk/gå til nettadresse'
   # In Filter Button
 Search Filters:
   Search Filters: 'Søkefilter'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Mest relevant'
-    Rating: 'Vurdering'
-    Upload Date: 'Opplastingsdato'
-    View Count: 'Sjåartal'
   Time:
     Time: 'Tid'
     Any Time: 'Når som helst'
-    Last Hour: 'Den siste timen'
     Today: 'I dag'
     This Week: 'Denne veka'
     This Month: 'Denne månaden'
@@ -69,8 +64,8 @@ Search Filters:
   Duration:
     Duration: 'Varigheit'
     All Durations: 'Alle varigheitene'
-    Short (< 4 minutes): 'Kort (< 4 minutt)'
-    Long (> 20 minutes): 'Lang (> 20 minutt)'
+    '< 3 minutes': '< 3 minutt'
+    '> 20 minutes': '> 20 minutt'
   # On Search Page
   Search Results: 'Søkeresultat'
   Fetching results. Please wait: 'Henter resultat. Ver venleg og vent'
@@ -111,7 +106,6 @@ Settings:
   General Settings:
     General Settings: 'Generelle innstillingar'
     Check for Updates: 'Sjå etter oppdateringar'
-    Check for Latest Blog Posts: 'Sjå etter nye blogginnlegg'
     Fallback to Non-Preferred Backend on Failure: 'Tilbakefall til ikkje-føretrekte backend ved feil'
     Enable Search Suggestions: 'Slå på søkeforslag'
     Default Landing Page: 'Standardlandingside'
@@ -386,7 +380,6 @@ About:
   GitHub issues: 'GitHub-problemsporar'
   Please check for duplicates before posting: 'Ver venleg og sjå etter duplikat før du poster noko'
   Website: 'Nettstad'
-  Blog: 'Blogg'
   Email: 'E-post'
   Mastodon: 'Mastodon'
   Chat on Matrix: 'Snakk med oss på Matrix'

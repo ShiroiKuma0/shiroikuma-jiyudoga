@@ -42,22 +42,19 @@ Global:
     Comment Count: 1 komentář | {count} komentářů
 Version {versionNumber} is now available!  Click for more details: 'Je k dispozici verze {versionNumber}! Klikněte pro více informací'
 Download From Site: 'Stáhnout ze stránky'
-A new blog is now available, {blogTitle}. Click to view more: 'Je dostupný nový článek na blogu: {blogTitle}. Kliknutím zobrazíte více'
 
 # Search Bar
 Search / Go to URL: 'Hledat / Přejít na URL'
   # In Filter Button
 Search Filters:
   Search Filters: 'Vyhledávací filtry'
-  Sort By:
+  Prioritize:
     Most Relevant: 'Nejrelevantnější'
-    Rating: 'Hodnocení'
-    Upload Date: 'Datum nahrání'
-    View Count: 'Počet zhlédnutí'
+    Prioritize: Prioritizace
+    Popularity: Popularita
   Time:
     Time: 'Čas'
     Any Time: 'Kdykoliv'
-    Last Hour: 'Poslední hodina'
     Today: 'Dnes'
     This Week: 'Tento týden'
     This Month: 'Tento měsíc'
@@ -72,10 +69,9 @@ Search Filters:
   Duration:
     Duration: 'Trvání'
     All Durations: 'Všechny trvání'
-    Short (< 4 minutes): 'Krátké (< 4 minuty)'
-    Long (> 20 minutes): 'Dlouhé (> 20 minut)'
-  # On Search Page
-    Medium (4 - 20 minutes): Střední (4 - 20 minut)
+    '< 3 minutes': '< 3 minuty'
+    '> 20 minutes': '> 20 minut'
+    '3 - 20 minutes': 3 - 20 minut
   Search Results: 'Výsledky hledání'
   Fetching results. Please wait: 'Načítání výsledků. Prosím, čekejte'
   Fetch more results: 'Načíst více výsledků'
@@ -214,7 +210,6 @@ Settings:
   General Settings:
     General Settings: 'Obecné'
     Check for Updates: 'Kontrolovat aktualizace'
-    Check for Latest Blog Posts: 'Kontrolovat nejnovější příspěvky na blogu'
     Fallback to Non-Preferred Backend on Failure: 'Při chybě přepnout na nepreferovaný backend'
     Enable Search Suggestions: 'Zapnout návrhy vyhledávání'
     Default Landing Page: 'Výchozí vstupní stránka'
@@ -630,7 +625,6 @@ About:
   Chat on Matrix: Chat na síti Matrix
   Mastodon: Mastodon
   Email: E-mail
-  Blog: Blog
   Website: Webové stránky
   FAQ: Často kladené dotazy
   FreeTube Wiki: Wiki FreeTube

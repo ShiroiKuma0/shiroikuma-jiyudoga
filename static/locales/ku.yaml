@@ -25,7 +25,6 @@ Forward: 'چونەپێشەوە'
 
 Version {versionNumber} is now available!  Click for more details: 'ئێستا وەشانی {versionNumber} بەردەستە..بۆ زانیاری زۆرتر کرتە بکە'
 Download From Site: 'لە وێبگەوە دایگرە'
-A new blog is now available, {blogTitle}. Click to view more: 'بڵۆگێکی نوێ بەردەستە، {blogTitle}. کلیک بکە بۆ بینینی زیاتر'
 
 Global:
   Sort By: 'بگەڕی بە'
@@ -47,15 +46,11 @@ Search / Go to URL: 'گەڕان / بڕۆ بۆ لینک'
   # In Filter Button
 Search Filters:
   Search Filters: 'فیلتەری گەڕان'
-  Sort By:
+  Prioritize:
     Most Relevant: 'گرنگترین'
-    Rating: 'ڕەیتینگ'
-    Upload Date: 'کاتی بڵاوکردنەوە'
-    View Count: 'ژماری بینراو'
   Time:
     Time: 'کات'
     Any Time: 'هەرکاتێک'
-    Last Hour: 'کاتژمێری پێشوو'
     Today: 'ئەمڕۆ'
     This Week: 'ئەم هەفتەیە'
     This Month: 'ئەم مانگە'
@@ -70,10 +65,6 @@ Search Filters:
   Duration:
     Duration: 'ماوە'
     All Durations: 'گشت ماوەکان'
-    Short (< 4 minutes): 'کورت (< ٤ خولەک)'
-    Long (> 20 minutes): 'درێژ (> ٢٠ خولەک)'
-  # On Search Page
-    Medium (4 - 20 minutes): مامناوەند (٤ - ٢٠ خولەک)
   Search Results: 'ئەنجامی گەڕان'
   Fetching results. Please wait: 'هێنانی ئەنجامەکان. تکایە چاوەڕێکە'
   Fetch more results: 'ئەنجامی زیاتر بێنە'
@@ -206,7 +197,6 @@ Settings:
   General Settings:
     General Settings: 'دەستکاریکردنی گشتی'
     Check for Updates: 'بزانە تازەکاری هاتووە'
-    Check for Latest Blog Posts: 'چێکی تازەترین بلۆگ بکە'
     Fallback to Non-Preferred Backend on Failure: 'گەڕانەوە بۆ سیستەمە ناخوازراوەکە لەکاتی فەشەلدا'
     Enable Search Suggestions: 'پێشنیارکردن بەکاربخە لەکاتی گەڕاندا'
     Locale Preference: پەسەندکردنی ناوچەیی
@@ -342,7 +332,6 @@ About:
   Chat on Matrix: Matrix موناقەشە کە لە
   Mastodon: ماستۆدۆن
   Email: نامەی ئەلکترۆنی
-  Blog: بلۆگ
   Website: وێبسایت
   Please check for duplicates before posting: تکایە چێک بکە بۆ دووبارە پێش پۆستکردن
   GitHub issues: GitHub کێشاکانی
