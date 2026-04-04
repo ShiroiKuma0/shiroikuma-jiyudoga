@@ -4,14 +4,14 @@ import io.freetubeapp.freetube.javascript.AsyncJSCommunicator
 import java.util.UUID.randomUUID
 import java.util.concurrent.ThreadPoolExecutor
 
-class Promise<T, G> {
+class Promise<T, G>(executor: ThreadPoolExecutor, runnable: ((T) -> Unit, (G) -> Unit) -> Unit) {
   private val successListeners: MutableList<(T) -> Unit> = mutableListOf()
   private var successResult: T? = null
   private val errorListeners: MutableList<(G) -> Unit> = mutableListOf()
   private var errorResult: G? = null
   private val id = "${randomUUID()}"
 
-  constructor(executor: ThreadPoolExecutor, runnable: ((T) -> Unit, (G) -> Unit) -> Unit) {
+  init {
     executor.run {
       runnable.invoke({
         result ->
@@ -33,7 +33,7 @@ class Promise<T, G> {
     return id
   }
 
-  fun notifySuccess(result: T) {
+  private fun notifySuccess(result: T) {
     successResult = result
     successListeners.forEach {
       listener ->
@@ -41,7 +41,7 @@ class Promise<T, G> {
     }
   }
 
-  fun notifyError(result: G) {
+  private fun notifyError(result: G) {
     errorResult = result
     errorListeners.forEach {
       listener ->
@@ -59,6 +59,7 @@ class Promise<T, G> {
     return this
   }
 
+  @SuppressWarnings // will complain that it could be private, but it is public on purpose
   fun catch(listener: (G) -> Unit): Promise<T, G> {
     if (errorResult != null) {
       // assume success result won't be unset

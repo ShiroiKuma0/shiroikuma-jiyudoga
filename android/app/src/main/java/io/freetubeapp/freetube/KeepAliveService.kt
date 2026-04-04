@@ -14,7 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 
 class KeepAliveService : Service() {
   companion object {
-    private val CHANNEL_ID = "keep_alive"
+    private const val CHANNEL_ID = "keep_alive"
   }
   override fun onBind(intent: Intent?): IBinder? {
     TODO("Not yet implemented")

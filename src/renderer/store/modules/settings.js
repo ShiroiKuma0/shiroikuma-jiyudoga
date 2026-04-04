@@ -1,6 +1,6 @@
 import i18n, { loadLocale } from '../../i18n/index'
 import allLocales from '../../../../static/locales/activeLocales.json'
-import { MAIN_PROFILE_ID, IpcChannels, SyncEvents } from '../../../constants'
+import { MAIN_PROFILE_ID, SyncEvents } from '../../../constants'
 import { DBSettingHandlers } from '../../../datastores/handlers/index'
 import { getSystemLocale, showToast } from '../../helpers/utils'
 import android from 'android'
@@ -152,10 +152,9 @@ const defaultSideEffectsTriggerId = settingId =>
 const state = {
   autoplayPlaylists: true,
   autoplayVideos: true,
-  backendFallback: process.env.SUPPORTS_LOCAL_API,
+  backendFallback: false,
   backendPreference: !process.env.SUPPORTS_LOCAL_API ? 'invidious' : 'local',
   barColor: false,
-  checkForBlogPosts: true,
   checkForUpdates: true,
   baseTheme: 'system',
   mainColor: 'Red',
@@ -180,6 +179,7 @@ const state = {
   externalPlayerIgnoreWarnings: false,
   externalPlayerIgnoreDefaultArgs: false,
   externalPlayerCustomArgs: '[]',
+  showAddedExternalPlayerCustomArgs: true,
   expandSideBar: false,
   hideActiveSubscriptions: false,
   hideChannelCommunity: false,
@@ -187,6 +187,7 @@ const state = {
   hideChannelPlaylists: false,
   hideChannelReleases: false,
   hideChannelPodcasts: false,
+  hideChannelCourses: false,
   hideChannelShorts: false,
   hideChannelSubscriptions: false,
   hideCommentLikes: false,
@@ -216,6 +217,7 @@ const state = {
   hideVideoLikesAndDislikes: false,
   hideVideoViews: false,
   hideWatchedSubs: false,
+  hideUploader: false,
   unsubscriptionPopupStatus: false,
   hideLabelsSideBar: false,
   hideChapters: false,
@@ -229,12 +231,15 @@ const state = {
   playNextVideo: false,
   proxyHostname: '127.0.0.1',
   proxyPort: '9050',
+  proxyUsername: '',
+  proxyPassword: '',
   proxyProtocol: 'socks5',
   proxyVideos: !process.env.SUPPORTS_LOCAL_API,
   region: 'US',
   rememberHistory: true,
   rememberSearchHistory: true,
-  saveWatchedProgress: true,
+  // 'auto', 'semi-auto', 'never'
+  watchedProgressSavingMode: 'auto',
   saveVideoHistoryWithLastViewedPlaylist: true,
   showFamilyFriendlyOnly: false,
   sponsorBlockShowSkippedToast: true,
@@ -271,6 +276,7 @@ const state = {
     color: 'Purple',
     skip: 'doNothing'
   },
+  tapHighlight: true,
   thumbnailPreference: '',
   blurThumbnails: false,
   useProxy: false,
@@ -281,9 +287,6 @@ const state = {
   videoPlaybackRateMouseScroll: false,
   videoSkipMouseScroll: false,
   videoPlaybackRateInterval: 0.25,
-  downloadAskPath: true,
-  downloadFolderPath: '',
-  downloadBehavior: 'open',
   enableScreenshot: false,
   screenshotFormat: 'png',
   screenshotQuality: 95,
@@ -300,6 +303,7 @@ const state = {
   // If the playlist is removed quick bookmark is disabled
   quickBookmarkTargetPlaylistId: 'favorites',
   generalAutoLoadMorePaginatedItemsEnabled: false,
+  hideToTrayOnMinimize: false,
 
   // The settings below have side effects
   currentLocale: 'system',
@@ -307,7 +311,9 @@ const state = {
   defaultVolume: 1,
   uiScale: 100,
   uiScaleAndroid: 100,
-  useUiScale: false
+  useUiScale: false,
+  userPlaylistsSortBy: 'latest_played_first',
+  userHistorySortBy: 'latest_played_first',
 }
 
 const sideEffectHandlers = {
@@ -353,13 +359,6 @@ const sideEffectHandlers = {
 
     const loadPromises = []
 
-    if (targetLocale !== fallbackLocale) {
-      // "en-US" is used as a fallback for missing strings in other locales
-      loadPromises.push(
-        loadLocale(fallbackLocale)
-      )
-    }
-
     // "es" is used as a fallback for "es-AR" and "es-MX"
     if (targetLocale === 'es-AR' || targetLocale === 'es-MX') {
       loadPromises.push(
@@ -380,7 +379,7 @@ const sideEffectHandlers = {
 
     await Promise.allSettled(loadPromises)
 
-    i18n.locale = targetLocale
+    i18n.global.locale = targetLocale
     await dispatch('getRegionData', targetLocale)
     if (process.env.IS_ANDROID) {
       android.hideSplashScreen()
@@ -401,8 +400,21 @@ const sideEffectHandlers = {
 
   uiScale: (_, value) => {
     if (process.env.IS_ELECTRON) {
-      const { webFrame } = require('electron')
-      webFrame.setZoomFactor(value / 100)
+      window.ftElectron.setZoomFactor(value / 100)
+    }
+  },
+
+  maxVideoPlaybackRate: ({ dispatch, state }, value) => {
+    if (state.defaultPlayback > value) {
+      dispatch('updateDefaultPlayback', value)
+    }
+  },
+
+  videoPlaybackRateInterval: ({ dispatch, state }, value) => {
+    const correctedDefaultPlaybackRate = value * Math.round(state.defaultPlayback / value)
+
+    if (state.defaultPlayback !== correctedDefaultPlaybackRate) {
+      dispatch('updateDefaultPlayback', correctedDefaultPlaybackRate)
     }
   },
 
@@ -468,9 +480,7 @@ const customActions = {
   // Should be a root action, but we'll tolerate
   setupListenersToSyncWindows: ({ commit, dispatch }) => {
     if (process.env.IS_ELECTRON) {
-      const { ipcRenderer } = require('electron')
-
-      ipcRenderer.on(IpcChannels.SYNC_SETTINGS, (_, { event, data }) => {
+      window.ftElectron.handleSyncSettings((event, data) => {
         switch (event) {
           case SyncEvents.GENERAL.UPSERT:
             if (settingsWithSideEffects.includes(data._id)) {
@@ -485,13 +495,13 @@ const customActions = {
         }
       })
 
-      ipcRenderer.on(IpcChannels.SYNC_HISTORY, (_, { event, data }) => {
+      window.ftElectron.handleSyncHistory((event, data) => {
         switch (event) {
           case SyncEvents.GENERAL.UPSERT:
             commit('upsertToHistoryCache', data)
             break
 
-          case SyncEvents.HISTORY.OVERWRITE: {
+          case SyncEvents.GENERAL.OVERWRITE: {
             const byId = {}
             data.forEach(video => {
               byId[video.videoId] = video
@@ -525,10 +535,15 @@ const customActions = {
         }
       })
 
-      ipcRenderer.on(IpcChannels.SYNC_SEARCH_HISTORY, (_, { event, data }) => {
+      window.ftElectron.handleSyncSearchHistory((event, data) => {
         switch (event) {
           case SyncEvents.GENERAL.UPSERT:
             commit('upsertSearchHistoryEntryToList', data)
+            break
+
+          case SyncEvents.GENERAL.OVERWRITE:
+            // It comes pre-sorted, so we don't have to sort it here
+            commit('setSearchHistoryEntries', data)
             break
 
           case SyncEvents.GENERAL.DELETE:
@@ -544,7 +559,7 @@ const customActions = {
         }
       })
 
-      ipcRenderer.on(IpcChannels.SYNC_PROFILES, (_, { event, data }) => {
+      window.ftElectron.handleSyncProfiles((event, data) => {
         switch (event) {
           case SyncEvents.GENERAL.CREATE:
             commit('addProfileToList', data)
@@ -571,7 +586,7 @@ const customActions = {
         }
       })
 
-      ipcRenderer.on(IpcChannels.SYNC_PLAYLISTS, (_, { event, data }) => {
+      window.ftElectron.handleSyncPlaylists((event, data) => {
         switch (event) {
           case SyncEvents.GENERAL.CREATE:
             commit('addPlaylists', data)
@@ -606,7 +621,7 @@ const customActions = {
         }
       })
 
-      ipcRenderer.on(IpcChannels.SYNC_SUBSCRIPTION_CACHE, (_, { event, data }) => {
+      window.ftElectron.handleSyncSubscriptionCache((event, data) => {
         switch (event) {
           case SyncEvents.SUBSCRIPTION_CACHE.UPDATE_VIDEOS_BY_CHANNEL:
             commit('updateVideoCacheByChannel', data)

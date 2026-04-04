@@ -7,7 +7,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.Intent.EXTRA_KEY_EVENT
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.media.MediaMetadata
 import android.media.session.MediaSession
@@ -16,18 +18,26 @@ import android.media.session.PlaybackState.STATE_PAUSED
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import android.view.KeyEvent
+import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
+import android.view.KeyEvent.KEYCODE_MEDIA_PAUSE
+import android.view.KeyEvent.KEYCODE_MEDIA_PLAY
+import android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
-import androidx.activity.result.ActivityResult
 import android.webkit.WebView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.MainActivity
 import io.freetubeapp.freetube.MediaControlsReceiver
 import io.freetubeapp.freetube.R
+import io.freetubeapp.freetube.helpers.AmbiguousFileUri
 import io.freetubeapp.freetube.helpers.Promise
+import io.freetubeapp.freetube.helpers.WriteMode
 import io.freetubeapp.freetube.helpers.hexToColour
 import io.freetubeapp.freetube.helpers.readBytes
 import io.freetubeapp.freetube.helpers.readText
@@ -36,15 +46,15 @@ import io.freetubeapp.freetube.helpers.writeText
 import io.freetubeapp.freetube.webviews.BotGuardWebView
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
 import java.net.URL
-import java.net.URLDecoder
 import java.nio.charset.Charset
 import java.util.UUID.*
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 
-class FreeTubeJavaScriptInterface {
-  private var context: MainActivity
+class FreeTubeJavaScriptInterface(main: MainActivity) {
+  private var context: MainActivity = main
   private var mediaSession: MediaSession?
   private var lastPosition: Long
   private var lastState: Int
@@ -59,8 +69,7 @@ class FreeTubeJavaScriptInterface {
     private val NOTIFICATION_TAG = String.format("%s", randomUUID())
   }
 
-  constructor(main: MainActivity)  {
-    context = main
+  init {
     mediaSession = null
     lastPosition = 0
     lastState = PlaybackState.STATE_PLAYING
@@ -76,7 +85,7 @@ class FreeTubeJavaScriptInterface {
   private fun getActions(state: Int = lastState): Array<Notification.Action> {
     var neutralAction = arrayOf("Pause", "pause")
     var neutralIcon = androidx.media3.ui.R.drawable.exo_icon_pause
-    if (state == PlaybackState.STATE_PAUSED) {
+    if (state == STATE_PAUSED) {
       neutralAction = arrayOf("Play", "play")
       neutralIcon = androidx.media3.ui.R.drawable.exo_icon_play
     }
@@ -103,11 +112,11 @@ class FreeTubeJavaScriptInterface {
    * retrieves the media style for the media controls notification
    */
   private fun getMediaStyle(): Notification.MediaStyle? {
-    if (mediaSession != null) {
-      return Notification.MediaStyle()
+    return if (mediaSession != null) {
+      Notification.MediaStyle()
         .setMediaSession(mediaSession!!.sessionToken).setShowActionsInCompactView(0, 1, 2)
     } else {
-      return null
+      null
     }
   }
 
@@ -184,18 +193,13 @@ class FreeTubeJavaScriptInterface {
     if (state != lastState) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
         // need to reissue a notification if we want to update the actions
-        var actions = getActions(state)
+        val actions = getActions(state)
         val notification = getMediaControlsNotification(actions)
         pushNotification(notification!!)
       }
     }
     lastState = state
-    var statePosition: Long
-    if (position == null) {
-      statePosition = lastPosition
-    } else {
-      statePosition = position
-    }
+    val statePosition: Long = position ?: lastPosition
     session.setPlaybackState(
       PlaybackState.Builder()
         .setState(state, statePosition, 0.0f)
@@ -267,7 +271,7 @@ class FreeTubeJavaScriptInterface {
       ?: NotificationChannel(CHANNEL_ID, "Media Controls", NotificationManager.IMPORTANCE_MIN)
 
     channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-    var session: MediaSession
+    val session: MediaSession
 
     // don't create multiple sessions or multiple channels
     if (mediaSession == null) {
@@ -277,7 +281,32 @@ class FreeTubeJavaScriptInterface {
       session = MediaSession(context, CHANNEL_ID)
       session.isActive = true
       mediaSession = session
+
       session.setCallback(object : MediaSession.Callback() {
+        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+        override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
+          val keyEvent = mediaButtonIntent.extras!!.getParcelable(EXTRA_KEY_EVENT, KeyEvent::class.java)
+          return if (keyEvent == null) {
+            super.onMediaButtonEvent(mediaButtonIntent)
+          } else {
+            when (keyEvent.keyCode) {
+              KEYCODE_MEDIA_PLAY -> {
+                context.webView.dispatchEvent("media-play")
+              }
+              KEYCODE_MEDIA_PAUSE -> {
+                context.webView.dispatchEvent("media-pause")
+              }
+              KEYCODE_MEDIA_NEXT -> {
+                context.webView.dispatchEvent("media-next")
+              }
+              KEYCODE_MEDIA_PREVIOUS -> {
+                context.webView.dispatchEvent("media-previous")
+              }
+            }
+            false
+          }
+        }
+
         override fun onSkipToNext() {
           super.onSkipToNext()
           context.webView.dispatchEvent("media-next")
@@ -326,10 +355,9 @@ class FreeTubeJavaScriptInterface {
     var givenState = state?.toInt()
     if (state == null) {
       givenState = lastState
-    } else {
     }
     if (position != null) {
-      lastPosition = position.toLong()!!
+      lastPosition = position.toLong()
     }
     setState(mediaSession!!, givenState!!, position?.toLong())
   }
@@ -359,7 +387,6 @@ class FreeTubeJavaScriptInterface {
   // endregion
 
   // region File Helpers
-
   /**
    * @param directory a shortened directory uri
    * @return a full directory uri
@@ -375,7 +402,6 @@ class FreeTubeJavaScriptInterface {
     return path
   }
 
-  @JavascriptInterface
   fun getFileNameFromUri(uri: String): String {
     var result: String? = null
     val cursor = context.contentResolver.query(Uri.parse(uri),  null, null, null, null)
@@ -416,71 +442,113 @@ class FreeTubeJavaScriptInterface {
     val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
     return directory!!.createFile("*/*", fileName)!!.uri.toString()
   }
-
-  @JavascriptInterface
-  fun createDirectoryInTree(tree: String, fileName: String): String {
-    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
-    return directory!!.createDirectory(fileName)!!.uri.toString()
-  }
-
-  @JavascriptInterface
-  fun deleteFileInTree(fileUri: String): Boolean {
-    val file = DocumentFile.fromTreeUri(context, Uri.parse(fileUri))
-    return file!!.delete()
-  }
-
   // endregion
 
   // region IO
+  @JavascriptInterface
+  fun listFilesInDataDir(): String {
+    return "[${File(getDirectory(DATA_DIRECTORY)).listFiles()?.map {
+      file ->
+      "{ \"uri\": \"${DATA_DIRECTORY}${file.name}\", \"fileName\": \"${file.name}\", \"isFile\": ${file.isFile}, \"isDirectory\": ${file.isDirectory} }"
+    }!!.joinToString(",")}]"
+  }
+
   /**
    * reads a file from storage
    */
   @JavascriptInterface
-  fun readFile(basedir: String, filename: String): String {
+  fun readFile(uri: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
       reject ->
-      try {
-        if (basedir.startsWith("content://")) {
-          resolve(
-            context.contentResolver
-            .readBytes(Uri.parse(basedir))
-            .toString(Charset.forName("utf-8"))
-          )
-        } else {
-          val path = getDirectory(basedir)
-          resolve(File(path, filename).readText())
+      AmbiguousFileUri(uri)
+        .ifContentUri {
+          uri ->
+            resolve(
+              context.contentResolver
+                .readBytes(uri)
+                .toString(Charset.forName("utf-8"))
+            )
         }
-      } catch (ex: Exception) {
-        reject(ex.stackTraceToString())
-      }
+        .ifDataUri {
+          fileName ->
+          val path = getDirectory(DATA_DIRECTORY)
+          resolve(File(path, fileName).readText())
+        }
+        .catch {
+          ex ->
+            reject(ex.stackTraceToString())
+        }
     }).addJsCommunicator(jsCommunicator)
   }
 
   /**
    * writes a file to storage
    */
+  @OptIn(ExperimentalEncodingApi::class)
   @JavascriptInterface
-  fun writeFile(basedir: String, filename: String, content: String): String {
+  fun writeFile(uri: String, content: String): String {
     return Promise(context.threadPoolExecutor, {
       resolve,
       reject ->
-      try {
-        if (basedir.startsWith("content://")) {
-          // urls created by save dialog
-          context.contentResolver.writeBytes(
-            Uri.parse(basedir),
-            content.toByteArray()
-          )
-          resolve("true")
-        } else {
-          val path = getDirectory(basedir)
-          File(path, filename).writeText(content)
-          resolve("true")
-        }
-      } catch (ex: Exception) {
-        reject(ex.stackTraceToString())
-      }
+        AmbiguousFileUri(uri)
+          .ifContentUri {
+            uri ->
+              val bytes = if (content.startsWith("data:")) {
+                Base64.decode(content.split("base64,")[1])
+              } else {
+                content.toByteArray()
+              }
+              context.contentResolver.writeBytes(
+                uri,
+                bytes
+              )
+              resolve("")
+          }
+          .ifDataUri {
+            fileName ->
+              val path = getDirectory(DATA_DIRECTORY)
+              File(path, fileName).writeText(content)
+              resolve("")
+          }
+          .catch {
+            ex ->
+              reject(ex.stackTraceToString())
+          }
+    }).addJsCommunicator(jsCommunicator)
+  }
+
+  @OptIn(ExperimentalEncodingApi::class)
+  @JavascriptInterface
+  fun appendFile(uri: String, content: String): String {
+    return Promise(context.threadPoolExecutor, {
+      resolve,
+      reject ->
+        AmbiguousFileUri(uri)
+          .ifContentUri {
+              uri ->
+                val bytes = if (content.startsWith("data:")) {
+                  Base64.decode(content.split("base64,")[1])
+                } else {
+                  content.toByteArray()
+                }
+                context.contentResolver.writeBytes(
+                  uri,
+                  bytes,
+                  WriteMode.Append
+                )
+                resolve("")
+          }
+          .ifDataUri {
+              fileName ->
+                val path = getDirectory(DATA_DIRECTORY)
+                File(path, fileName).writeText(content, WriteMode.Append)
+                resolve("")
+          }
+          .catch {
+              ex ->
+                reject(ex.stackTraceToString())
+          }
     }).addJsCommunicator(jsCommunicator)
   }
   // endregion
@@ -575,6 +643,12 @@ class FreeTubeJavaScriptInterface {
   // region System
 
   @JavascriptInterface
+  fun openExternalLink(url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(intent)
+  }
+
+  @JavascriptInterface
   fun getLogs(): String {
     var logs = "["
     for (message in context.consoleMessages) {
@@ -643,14 +717,21 @@ class FreeTubeJavaScriptInterface {
       context.window.navigationBarColor = navigationHex.hexToColour()
       context.window.statusBarColor = statusHex.hexToColour()
     }
+
+    val bitmap = createBitmap(24, 24)
+    bitmap.eraseColor(navigationHex.hexToColour())
+    val canvas = Canvas(bitmap)
+    canvas.drawColor(navigationHex.hexToColour())
+    val bitmapDrawable = bitmap.toDrawable(context.resources)
+    context.window.setBackgroundDrawable(bitmapDrawable)
   }
 
   @JavascriptInterface
   fun getSystemTheme(): String {
-    if (context.darkMode) {
-      return "dark"
+    return if (context.darkMode) {
+      "dark"
     } else {
-      return "light"
+      "light"
     }
   }
 
@@ -673,7 +754,7 @@ class FreeTubeJavaScriptInterface {
 
   @JavascriptInterface
   fun setScale(scale: Int) {
-    context.webView.setScale(scale / 100.0)
+    context.webView.setScale(scale / 100.0, context)
   }
 
   // endregion
@@ -758,13 +839,4 @@ class FreeTubeJavaScriptInterface {
   }
 
   // endregion
-
-  /**
-  @JavascriptInterface
-  fun queueFetchBody(id: String, body: String) {
-    if (body != "undefined") {
-      context.pendingRequestBodies[id] = body
-    }
-  }
-  */
 }

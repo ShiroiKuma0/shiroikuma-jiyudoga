@@ -1,4 +1,5 @@
 import Datastore from '@seald-io/nedb'
+import * as androidStorage from '../renderer/helpers/android/nedb'
 
 let dbPath = null
 
@@ -22,9 +23,26 @@ if (process.env.IS_ELECTRON_MAIN) {
   dbPath = (dbName) => `${dbName}.db`
 }
 
-export const settings = new Datastore({ filename: dbPath('settings'), autoload: true })
-export const profiles = new Datastore({ filename: dbPath('profiles'), autoload: true })
-export const playlists = new Datastore({ filename: dbPath('playlists'), autoload: true })
-export const history = new Datastore({ filename: dbPath('history'), autoload: true })
-export const searchHistory = new Datastore({ filename: dbPath('search-history'), autoload: true })
-export const subscriptionCache = new Datastore({ filename: dbPath('subscription-cache'), autoload: true })
+/**
+ * @param {string} name
+ */
+function createDatastore(name) {
+  let storage
+  if (process.env.IS_ANDROID) {
+    storage = androidStorage
+  }
+  return new Datastore({
+    filename: dbPath(name),
+    autoload: !process.env.IS_ELECTRON_MAIN,
+    // Automatically clean up corrupted data, instead of crashing
+    corruptAlertThreshold: 1,
+    storage
+  })
+}
+
+export const settings = createDatastore('settings')
+export const profiles = createDatastore('profiles')
+export const playlists = createDatastore('playlists')
+export const history = createDatastore('history')
+export const searchHistory = createDatastore('search-history')
+export const subscriptionCache = createDatastore('subscription-cache')

@@ -17,7 +17,7 @@ An open source YouTube player built with privacy in mind.
 </a>
 </p>
 <hr>
-<p align="center"><a href="#screenshots">Screenshots</a> &bull; <a href="#how-does-it-work">How does it work?</a> &bull; <a href="#features">Features</a> &bull; <a href="#how-to-build-and-test">Building and testing</a> &bull; <a href="#contributing">Contributing</a> &bull; <a href="#localization">Localization</a> &bull; <a href="#contact">Contact</a> &bull; <a href="#upstream-donations">Donate</a> &bull; <a href="#license">License</a></p>
+<p align="center"><a href="#screenshots">Screenshots</a> &bull; <a href="#how-does-it-work">How does it work?</a> &bull; <a href="#features">Features</a> &bull; <a href="#how-to-build-and-test">Building and testing</a> &bull; <a href="#contributing">Contributing</a> &bull; <a href="#localization">Localization</a> &bull; <a href="#contact">Contact</a> &bull; <a href="#donations">Donate</a> &bull; <a href="#license">License</a></p>
 <p align="center"><a href="https://freetubeapp.io/">Website</a> &bull; <a href="https://blog.freetubeapp.io/">Blog</a> &bull; <a href="https://docs.freetubeapp.io/">Documentation</a> &bull; <a href="https://docs.freetubeapp.io/faq/">FAQ</a> &bull; <a href="https://github.com/FreeTubeApp/FreeTube/discussions">Discussions</a></p>
 <hr>
 
@@ -45,11 +45,11 @@ The APK uses a built in extractor to grab and serve data / videos, and can optio
 * Use YouTube without Google tracking you using cookies and JavaScript
 * Subscribe to channels without an account
 * Connect to an externally setup proxy such as Tor
-* View and search your local subscriptions, history, and saved videos
+* View and search your local subscriptions, playlists and history
 * Organize your subscriptions into "Profiles" to create a more focused feed
 * Export & import subscriptions
-* Youtube Trending
-* Youtube Chapters
+* YouTube Trending
+* YouTube Chapters
 * Most popular videos page based on the set Invidious instance
 * SponsorBlock 
 * Full Theme support
@@ -78,7 +78,7 @@ yarn pack:botGuardScript:android
 # 🚧 for development
 yarn pack:android:dev
 ```
-> [!NOTE]
+
 > These commands only build the assets necessary for the project located in `android/` to be built. In order to obtain a complete build, you will need to build the project located in `android/` with `gradle`.
 ### Commands for the PWA
 ```bash
@@ -127,12 +127,12 @@ If you'd like to localize FreeTube Android, please send submissions to [FreeTube
 ## Contact
 If you ever have any questions, feel free to make an issue here on GitHub. 
 
-## Upstream Donations
-If you enjoy using FreeTube Android, you're welcome to leave a donation using the following methods to support upstream development and maintenance.  
+## Donations
+If you enjoy using FreeTube Android, you're welcome to leave a donation using the following methods to support development and maintenance.  
+* [Liberapay](https://liberapay.com/MarmadileManteater) _(goes to creator of FreeTubeAndroid)_
+* Bitcoin Address: `1Lih7Ho5gnxb1CwPD4o59ss78pwo2T91eS` _(goes to upstream maintainers)_
 
-* Bitcoin Address: `1Lih7Ho5gnxb1CwPD4o59ss78pwo2T91eS`
-
-While your donations are much appreciated, only donate if you really want to.  Donations are used for keeping the website up and running and eventual code signing costs.
+While your donations are much appreciated, only donate if you really want to. Donations are no strings attached and do not come with the expectation of having your requests fulfilled.
 
 ## License
 [![GNU AGPLv3 Image](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.html)  

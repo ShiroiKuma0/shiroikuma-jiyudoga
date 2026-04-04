@@ -4,6 +4,7 @@
 name: Build Android
 
 on:
+  workflow_dispatch:
   push:
     branches: [ development ]
 
@@ -17,7 +18,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 20.x
+        node-version: 22.x
         cache: "yarn"
     - name: 🧶 Yarn install
       run: yarn ci

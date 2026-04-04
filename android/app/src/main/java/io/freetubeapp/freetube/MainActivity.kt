@@ -1,7 +1,6 @@
 package io.freetubeapp.freetube
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
@@ -9,10 +8,10 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -21,13 +20,11 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import io.freetubeapp.freetube.databinding.ActivityMainBinding
 import io.freetubeapp.freetube.helpers.Promise
-import io.freetubeapp.freetube.javascript.BotGuardJavascriptInterface
 import io.freetubeapp.freetube.javascript.FreeTubeJavaScriptInterface
 import io.freetubeapp.freetube.javascript.SigWebViewJavascriptInterface
 import io.freetubeapp.freetube.javascript.dispatchEvent
@@ -35,10 +32,6 @@ import io.freetubeapp.freetube.webviews.BackgroundPlayWebView
 import io.freetubeapp.freetube.webviews.BotGuardWebView
 import io.freetubeapp.freetube.webviews.SigWebView
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 import java.util.UUID
 import java.util.concurrent.BlockingQueue
@@ -108,6 +101,8 @@ class MainActivity : AppCompatActivity() {
   @Suppress("DEPRECATION")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // allow fullscreen shaka player to use whole window width
+    window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
       Configuration.UI_MODE_NIGHT_NO -> {
         darkMode = false
@@ -203,7 +198,7 @@ class MainActivity : AppCompatActivity() {
         messageData.put("lineNumber", consoleMessage.lineNumber())
         consoleMessages.add(messageData)
         webView.dispatchEvent("console-message", "data", messageData)
-        return super.onConsoleMessage(consoleMessage);
+        return super.onConsoleMessage(consoleMessage)
       }
 
       override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
@@ -226,77 +221,6 @@ class MainActivity : AppCompatActivity() {
       }
     }
     webView.webViewClient = object: WebViewClient() {
-
-      override fun shouldInterceptRequest(
-        view: WebView?,
-        request: WebResourceRequest?
-      ): WebResourceResponse? {
-        // TODO refactor this to work for video streaming
-        /*
-        // LEFTOVER iOS WORKAROUND CODE
-        if (request!!.requestHeaders.containsKey("x-user-agent")) {
-          with (URL(request!!.url.toString()).openConnection() as HttpURLConnection) {
-            requestMethod = request.method
-            val isClient5 = request.requestHeaders.containsKey("x-youtube-client-name") && request.requestHeaders["x-youtube-client-name"] == "5"
-            // map headers
-            for (header in request!!.requestHeaders) {
-              fun getReal(key: String, value: String): Array<String>? {
-                if (key == "x-user-agent") {
-                  return arrayOf("User-Agent", value)
-                }
-                if (key == "User-Agent") {
-                  return null
-                }
-                if (key == "x-fta-request-id") {
-                  return null
-                }
-                if (isClient5) {
-                  if (key == "referrer") {
-                    return null
-                  }
-                  if (key == "origin") {
-                    return null
-                  }
-                  if (key == "Sec-Fetch-Site") {
-                    return null
-                  }
-                  if (key == "Sec-Fetch-Mode") {
-                    return null
-                  }
-                  if (key == "Sec-Fetch-Dest") {
-                    return null
-                  }
-                  if (key == "sec-ch-ua") {
-                    return null
-                  }
-                  if (key == "sec-ch-ua-mobile") {
-                    return null
-                  }
-                  if (key == "sec-ch-ua-platform") {
-                    return null
-                  }
-                }
-                return arrayOf(key, value)
-              }
-              val real = getReal(header.key, header.value)
-              if (real !== null) {
-                setRequestProperty(real[0], real[1])
-              }
-            }
-            if (request.requestHeaders.containsKey("x-fta-request-id")) {
-              if (pendingRequestBodies.containsKey(request.requestHeaders["x-fta-request-id"])) {
-                val body = pendingRequestBodies[request.requestHeaders["x-fta-request-id"]]
-                pendingRequestBodies.remove(request.requestHeaders["x-fta-request-id"])
-                outputStream.write(body!!.toByteArray())
-              }
-            }
-            // 🧝‍♀️ magic
-            return WebResourceResponse(this.contentType, this.contentEncoding, inputStream!!)
-          }
-        }
-        */
-        return super.shouldInterceptRequest(view, request)
-      }
       override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
         if (request!!.url!!.scheme == "file") {
           // don't send file url requests to a web browser (it will crash the app)
@@ -304,12 +228,12 @@ class MainActivity : AppCompatActivity() {
         }
         val regex = """^https?:\/\/((www\.)?youtube\.com(\/embed)?|youtu\.be)\/.*$"""
 
-        if (Regex(regex).containsMatchIn(request!!.url!!.toString())) {
-          webView.dispatchEvent("youtube-link", "link", request!!.url!!.toString())
+        if (Regex(regex).containsMatchIn(request.url!!.toString())) {
+          webView.dispatchEvent("youtube-link", "link", request.url!!.toString())
           return true
         }
         // send all requests to a real web browser
-        val intent = Intent(Intent.ACTION_VIEW, request!!.url)
+        val intent = Intent(Intent.ACTION_VIEW, request.url)
         this@MainActivity.startActivity(intent)
         return true
       }
@@ -374,7 +298,7 @@ class MainActivity : AppCompatActivity() {
     if (intent!!.data !== null) {
       val uri = intent!!.data
       val isYT =
-        uri!!.host!! == "www.youtube.com" || uri!!.host!! == "youtube.com" || uri!!.host!! == "m.youtube.com" || uri!!.host!! == "youtu.be"
+        uri!!.host!! == "www.youtube.com" || uri.host!! == "youtube.com" || uri.host!! == "m.youtube.com" || uri.host!! == "youtu.be"
       val url = if (!isYT) {
         uri.toString().replace(uri.host.toString(), "www.youtube.com")
       } else {

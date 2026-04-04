@@ -3,6 +3,10 @@
   src: url('assets/font/Roboto-Regular.ttf');
 }
 
+.noTapHighlight {
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);	
+}
+
 .app {
   display: flex;
   flex-wrap: wrap;
@@ -56,8 +60,8 @@
   transition: opacity 0.15s;
 }
 
-.fade-enter,
-.fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 

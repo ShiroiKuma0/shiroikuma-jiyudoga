@@ -1,5 +1,5 @@
 <template>
-  <portal to="promptPortal">
+  <Teleport to=".app">
     <div
       class="prompt"
       tabindex="-1"
@@ -52,19 +52,18 @@
         </slot>
       </FtCard>
     </div>
-  </portal>
+  </Teleport>
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useId } from '../../composables/use-id-polyfill'
+import { nextTick, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue'
 import android from 'android'
 
 import store from '../../store/index'
 
 import FtCard from '../ft-card/ft-card.vue'
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
-import FtButton from '../ft-button/ft-button.vue'
+import FtButton from '../FtButton/FtButton.vue'
 
 const props = defineProps({
   label: {
@@ -109,7 +108,7 @@ const emit = defineEmits(['click'])
 
 const id = useId()
 
-const promptCard = ref(null)
+const promptCard = useTemplateRef('promptCard')
 
 let promptButtons = []
 let lastActiveElement = null
@@ -121,6 +120,7 @@ function exitPrompt() {
 onMounted(() => {
   lastActiveElement = document.activeElement
   document.addEventListener('keydown', handleEscape, true)
+  store.commit('addOpenPrompt', id)
 
   nextTick(() => {
     promptButtons = Array.from(promptCard.value.$el.querySelectorAll('.btn.ripple, .iconButton'))
@@ -134,6 +134,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleEscape, true)
+  store.commit('removeOpenPrompt', id)
   nextTick(() => lastActiveElement?.focus())
   if (process.env.IS_ANDROID) {
     android.exitPromptMode()

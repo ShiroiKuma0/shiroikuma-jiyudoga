@@ -11,12 +11,16 @@ fun ContentResolver.readBytes(uri: Uri): ByteArray {
 }
 
 fun ContentResolver.writeBytes(uri: Uri, bytes: ByteArray, writeMode: WriteMode = WriteMode.Truncate) {
-  val mode = if (writeMode == WriteMode.Truncate) {
-    "wt"
-  } else if (writeMode == WriteMode.Append) {
-    "wa"
-  } else {
-    "w"
+  val mode = when (writeMode) {
+      WriteMode.Truncate -> {
+        "wt"
+      }
+      WriteMode.Append -> {
+        "wa"
+      }
+      else -> {
+        "w"
+      }
   }
   val stream = openOutputStream(uri, mode)
   stream!!.write(bytes)
