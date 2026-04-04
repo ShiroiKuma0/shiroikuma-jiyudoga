@@ -3,6 +3,10 @@
   src: url('assets/font/Roboto-Regular.ttf');
 }
 
+.noTapHighlight {
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);	
+}
+
 .app {
   display: flex;
   flex-wrap: wrap;

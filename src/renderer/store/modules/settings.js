@@ -276,6 +276,7 @@ const state = {
     color: 'Purple',
     skip: 'doNothing'
   },
+  tapHighlight: true,
   thumbnailPreference: '',
   blurThumbnails: false,
   useProxy: false,

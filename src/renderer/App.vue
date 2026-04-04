@@ -6,7 +6,8 @@
       hideOutlines: outlinesHidden,
       isLocaleRightToLeft: isLocaleRightToLeft,
       isSideNavOpen: isSideNavOpen,
-      hideLabelsSideBar: hideLabelsSideBar && !isSideNavOpen
+      hideLabelsSideBar: hideLabelsSideBar && !isSideNavOpen,
+      noTapHighlight: !tapHighlight
     }"
   >
     <TopNav
@@ -141,6 +142,8 @@ import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 const route = useRoute()
 const router = useRouter()
 const { locale, t } = useI18n()
+
+const tapHighlight = computed(() => store.getters.getTapHighlight)
 
 /** @type {import('vue').ComputedRef<boolean>} */
 const isSideNavOpen = computed(() => store.getters.getIsSideNavOpen)
