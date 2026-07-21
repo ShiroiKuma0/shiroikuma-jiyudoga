@@ -40,6 +40,7 @@ its mandatory ⛔ proceed gate).
 | Desktop-build repairs for the android layer | `android$` stub alias + `IS_ANDROID:false` defines (main/renderer/web webpack configs), guarded require in `src/datastores/index.js`, `_scripts/android-stub.js` | `_scripts/` |
 | Android-layer 0.25 adaptations | `useI18n` from `vue-i18n` (the fork's `use-i18n-polyfill` was deleted upstream); dead `showSaveDialog` removed from `helpers/utils.js`; `pack:android` uses `pnpm run` not `run-s` | those files |
 | Original-language video titles (no auto-translation) | every tile resolves its title via YouTube oEmbed (cached, max 6 concurrent, fires only for visible tiles); watch page prefers `basic_info.title` (player videoDetails = untranslated) over `primary_info` (next endpoint = auto-translated); Invidious watch path also restored via oEmbed | `src/renderer/helpers/originalTitles.js`, `FtListVideo.vue` setup, `views/Watch/Watch.js` |
+| Full-width unframed content views | `inline-size: 85%` caps removed from the browsing views' `.card` (+ mobile 90% overrides); skui border rule no longer frames `.card` (settings sections keep it) | those views' css, `helpers/skui.js` |
 
 ### Build commands
 ```bash

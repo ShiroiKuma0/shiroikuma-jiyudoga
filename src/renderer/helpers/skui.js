@@ -279,7 +279,8 @@ export function applySkuiTheme(theme, customFonts = []) {
     ? `border: ${dims.borderWidth}px solid ${c('border')} !important;`
     : 'border: none !important;'
   rules.push(
-    `.card, .settingsSection { ${borderCss} border-radius: ${dims.roundness}px !important; }`,
+    // content cards fill the window unframed; only settings sections keep the border
+    `.settingsSection { ${borderCss} border-radius: ${dims.roundness}px !important; }`,
     `.btn, .ft-input-component .ft-input, .select { border-radius: ${dims.roundness}px !important; }`,
     `.topNav { background-color: ${c('topBarBg')} !important; }`,
     `.topNav .navIcon, .topNav .navFilterIcon { color: ${c('topBarText')} !important; }`,
