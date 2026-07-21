@@ -247,7 +247,7 @@ Settings:
     Auto Load Next Page:
       Tooltip: Ladda ytterligare sidor och kommentarer automatiskt.
       Label: Ladda nästa sida automatiskt
-    Open Deep Links In New Window: Öppna URL:er som skickats till FreeTube i ett nytt fönster
+    Open Deep Links In New Window: Öppna URL:er som skickats till 白い熊 自由動画 i ett nytt fönster
     Minimize to system tray: Minimera till systemfältet
   Theme Settings:
     Theme Settings: 'Tema'
@@ -368,7 +368,7 @@ Settings:
     Expand Side Bar by Default: Expandera sidpanelen som standard
     Disable Smooth Scrolling: Inaktivera mjuk rullning
     Hide Side Bar Labels: Dölj etiketter i sidpanelen
-    Hide FreeTube Header Logo: Dölj FreeTube-sidhuvudlogotypen
+    Hide FreeTube Header Logo: Dölj 白い熊 自由動画-sidhuvudlogotypen
   Player Settings:
     Player Settings: 'Spelare'
     Play Next Video: 'Spela upp rekommenderade videor automatiskt'
@@ -466,7 +466,7 @@ Settings:
     Select Export Type: 'Välj exporttyp'
     Import Subscriptions: 'Importera prenumerationer'
     Export Subscriptions: 'Exportera prenumerationer'
-    Export FreeTube: 'Exportera FreeTube'
+    Export FreeTube: 'Exportera 白い熊 自由動画'
     Export YouTube: 'Exportera YouTube'
     Export NewPipe: 'Exportera NewPipe'
     Import History: 'Importera historik'
@@ -494,9 +494,9 @@ Settings:
     Import Playlists: Importera spellistor
     Playlist insufficient data: Otillräckliga data för spellistan "{playlist}", hoppar över objekt
 
-    Export Playlists For Older FreeTube Versions:
-      Label: Exportera spellistor för äldre versioner av FreeTube
-      Tooltip: "Det här alternativet exporterar videor från alla spellistor till en spellista med namnet \"Favoriter\".\nSå här exporterar och importerar du videor i spellistor för en äldre version av FreeTube:\n1. Exportera dina spellistor med det här alternativet aktiverat.\n2. Ta bort alla dina befintliga spellistor med alternativet Ta bort alla spellistor under Sekretessinställningar.\n3. Starta den äldre versionen av FreeTube och importera de exporterade spellistorna.\""
+    Export Playlists For Older 白い熊 自由動画 Versions:
+      Label: Exportera spellistor för äldre versioner av 白い熊 自由動画
+      Tooltip: "Det här alternativet exporterar videor från alla spellistor till en spellista med namnet \"Favoriter\".\nSå här exporterar och importerar du videor i spellistor för en äldre version av 白い熊 自由動画:\n1. Exportera dina spellistor med det här alternativet aktiverat.\n2. Ta bort alla dina befintliga spellistor med alternativet Ta bort alla spellistor under Sekretessinställningar.\n3. Starta den äldre versionen av 白い熊 自由動画 och importera de exporterade spellistorna.\""
     Search history file: Sökhistorikfil
     Search history: Sökhistorik
     Import search history: Importera sökhistorik
@@ -566,7 +566,7 @@ Settings:
     Proxy Protocol: Proxy-protokoll
     Enable Tor / Proxy: Aktivera Tor / Proxy
     Proxy Settings: Proxy
-    Proxy Warning: FreeTube har ingen inbyggd proxy men kan ansluta till en extern proxy, till exempel en som körs på din maskin som Tor eller en extern proxy, såsom en SOCKS5-proxy som tillhandahålls av vissa VPN. Om den är aktiverad, se till att din proxy/Tor är korrekt konfigurerad, annars kommer FreeTube inte att kunna hämta någon data.
+    Proxy Warning: 白い熊 自由動画 har ingen inbyggd proxy men kan ansluta till en extern proxy, till exempel en som körs på din maskin som Tor eller en extern proxy, såsom en SOCKS5-proxy som tillhandahålls av vissa VPN. Om den är aktiverad, se till att din proxy/Tor är korrekt konfigurerad, annars kommer 白い熊 自由動画 inte att kunna hämta någon data.
     Proxy Username: Proxy-användarnamn
     Proxy Password: Proxy-lösenord
   SponsorBlock Settings:
@@ -632,7 +632,7 @@ About:
   GitHub issues: GitHub-ärenden
   Report a problem: Rapportera ett problem
   FAQ: Frågor och svar
-  FreeTube Wiki: FreeTube Wiki
+  FreeTube Wiki: 白い熊 自由動画 Wiki
   Help: Hjälp
   GitHub releases: GitHub-utgåvor
   Downloads / Changelog: Nedladdningar / Ändringslogg
@@ -642,7 +642,7 @@ About:
   AGPLv3: AGPLv3
   Licensed under the {licenseLink}: Licensierad under {licenseLink}
   Please read the {roomRulesLink}: Läs {roomRulesLink}
-  FreeTube is made possible by {creditsPageLink}: FreeTube är möjligt tack vare {creditsPageLink}
+  FreeTube is made possible by {creditsPageLink}: 白い熊 自由動画 är möjligt tack vare {creditsPageLink}
 Profile:
   Profile Select: 'Välj profil'
   All Channels: 'Alla kanaler'
@@ -719,7 +719,7 @@ Channel:
     Location: Plats
   This channel does not exist: Den här kanalen finns inte
   This channel does not allow searching: Den här kanalen tillåter inte sökning
-  This channel is age-restricted and currently cannot be viewed in FreeTube.: Den här kanalen är åldersbegränsad och kan inte ses i FreeTube.
+  This channel is age-restricted and currently cannot be viewed in FreeTube.: Den här kanalen är åldersbegränsad och kan inte ses i 白い熊 自由動画.
   Channel Tabs: Kanalflikar
   Posts:
     This channel currently does not have any posts: Den här kanalen har för närvarande inga inlägg
@@ -727,7 +727,7 @@ Channel:
     Reveal Answers: Avslöja svar
     Hide Answers: Dölj svar
     View Full Post: Visa hela inlägget
-    Video hidden by FreeTube: Video dold av FreeTube
+    Video hidden by FreeTube: Video dold av 白い熊 自由動画
     Viewing Posts Only Supported By Invidious: Visa Inlägg stöds endast av Invidious. Gå till en kanals community-flik för att se innehåll där utan Invidious.
   Shorts:
     This channel does not currently have any shorts: Den här kanalen har för närvarande inga shorts
@@ -848,21 +848,21 @@ Video:
     Show Stats: Visa statistik
     TranslatedCaptionTemplate: '{language} (översatt från "{originalLanguage}")'
   More Options: Fler alternativ
-  AgeRestricted: Åldersbegränsade videor kan inte ses med FreeTube eftersom de kräver Google-inloggning och användning av ett åldersverifierat YouTube-konto.
+  AgeRestricted: Åldersbegränsade videor kan inte ses med 白い熊 自由動画 eftersom de kräver Google-inloggning och användning av ett åldersverifierat YouTube-konto.
   IP block: YouTube har blockerat din IP-adress från att titta på videor. Försök att byta till en annan VPN eller proxy.
-  DRMProtected: DRM-skyddade videor kan inte spelas upp i FreeTube, eftersom de kräver proprietära komponenter med sluten källkod. Om du vill titta på den här videon, se den på den officiella YouTube-webbplatsen i en DRM-aktiverad webbläsare.
+  DRMProtected: DRM-skyddade videor kan inte spelas upp i 白い熊 自由動画, eftersom de kräver proprietära komponenter med sluten källkod. Om du vill titta på den här videon, se den på den officiella YouTube-webbplatsen i en DRM-aktiverad webbläsare.
   DeArrow:
     Show Original Details: Visa originaldetaljer
     Show Modified Details: Visa ändrade detaljer
   Unlisted: Olistade
-  MembersOnly: Videor endast för medlemmar kan inte ses med FreeTube eftersom de kräver Google-inloggning och betalt medlemskap på uppladdarens kanal.
+  MembersOnly: Videor endast för medlemmar kan inte ses med 白い熊 自由動画 eftersom de kräver Google-inloggning och betalt medlemskap på uppladdarens kanal.
   Watched Progress Saved: Visningsframsteg sparade
   Save Watched Progress: Spara visningsframsteg
   Popout Live Chat: Öppna chatt i eget fönster
   Watch:
     'Remaining preroll-ad time: {remindingTimeSeconds}s': 'Återstående tid före annonsstart: {remindingTimeSeconds}s'
     'Remaining SABR backoff time: {remindingTimeSeconds}s': 'Återstående SABR-återställningstid: {remindingTimeSeconds}s'
-  Private: Privata videor kan inte ses i FreeTube eftersom de kräver Google-inloggning och äganderätt till videon.
+  Private: Privata videor kan inte ses i 白い熊 自由動画 eftersom de kräver Google-inloggning och äganderätt till videon.
 Playlist:
   #& About
   View Full Playlist: 'Visa hela spellistan'
@@ -953,8 +953,8 @@ Yes: 'Ja'
 No: 'Nej'
 Tooltips:
   Subscription Settings:
-    Fetch Feeds from RSS: När det är aktiverat använder FreeTube RSS i stället för standardmetoden för att hämta ditt prenumerationsflöde. RSS är snabbare och förhindrar IP-blockering, men ger inte all information som videolängd, livestatus eller inlägg
-    Fetch Automatically: När det är aktiverat hämtar FreeTube automatiskt ditt prenumerationsflöde vid start och när ett nytt fönster öppnas.
+    Fetch Feeds from RSS: När det är aktiverat använder 白い熊 自由動画 RSS i stället för standardmetoden för att hämta ditt prenumerationsflöde. RSS är snabbare och förhindrar IP-blockering, men ger inte all information som videolängd, livestatus eller inlägg
+    Fetch Automatically: När det är aktiverat hämtar 白い熊 自由動画 automatiskt ditt prenumerationsflöde vid start och när ett nytt fönster öppnas.
   Player Settings:
     Default Video Format: Ställ in de format som används när en video spelas upp. DASH-format kan spela upp högre kvaliteter. Äldre format är begränsade till max 360p men använder mindre bandbredd. Ljudformat är endast ljudströmningar.
     Proxy Videos Through Invidious: Ansluter till Invidious för att visa videor i stället för att skapa en direktanslutning till YouTube.
@@ -962,23 +962,23 @@ Tooltips:
     Scroll Playback Rate Over Video Player: Medan markören är över videon, håll ner Ctrl-tangenten (Kommandotangenten på Mac) och skrolla mushjulet framåt eller bakåt för att styra uppspelningshastigheten. Håll ner Ctrl-tangenten (Kommandotangenten på Mac) och vänsterklicka med musen för att snabbt återgå till standarduppspelningshastigheten (1x om den inte har ändrats i inställningarna).
   General Settings:
     Region for Trending: Med regionen för trender kan du välja vilket lands populära videor som ska visas.
-    Invidious Instance: Invidious-instansen som FreeTube kommer att ansluta till för API-anrop.
-    Thumbnail Preference: Alla miniatyrbilder på FreeTube kommer att ersättas med en bildruta från videon, suddig eller dold i stället för standardminiatyrbilden.
-    Fallback to Non-Preferred Backend on Failure: När ditt föredragna API har ett problem, kommer FreeTube automatiskt att försöka använda ditt icke-föredragna API som reservmetod när det är aktiverat.
-    Preferred API Backend: Välj vilken datakälla FreeTube ska använda för att hämta data. Det lokala API:et är en inbyggd utdragare. Invidious API kräver en Invidious-server att ansluta till.
-    External Link Handling: "Välj standardbeteende när man klickar på en länk som inte kan öppnas i FreeTube.\nSom standard öppnar FreeTube den klickade länken i din standardwebbläsare.\n"
-    Open Deep Links In New Window: URL:er som skickas till FreeTube, till exempel via omdirigering av webbläsartillägg eller kommandoradsargument, öppnas i ett nytt fönster.
+    Invidious Instance: Invidious-instansen som 白い熊 自由動画 kommer att ansluta till för API-anrop.
+    Thumbnail Preference: Alla miniatyrbilder på 白い熊 自由動画 kommer att ersättas med en bildruta från videon, suddig eller dold i stället för standardminiatyrbilden.
+    Fallback to Non-Preferred Backend on Failure: När ditt föredragna API har ett problem, kommer 白い熊 自由動画 automatiskt att försöka använda ditt icke-föredragna API som reservmetod när det är aktiverat.
+    Preferred API Backend: Välj vilken datakälla 白い熊 自由動画 ska använda för att hämta data. Det lokala API:et är en inbyggd utdragare. Invidious API kräver en Invidious-server att ansluta till.
+    External Link Handling: "Välj standardbeteende när man klickar på en länk som inte kan öppnas i 白い熊 自由動画.\nSom standard öppnar 白い熊 自由動画 den klickade länken i din standardwebbläsare.\n"
+    Open Deep Links In New Window: URL:er som skickas till 白い熊 自由動画, till exempel via omdirigering av webbläsartillägg eller kommandoradsargument, öppnas i ett nytt fönster.
   External Player Settings:
     Custom External Player Arguments: Alla anpassade kommandoradsargument ska skickas till den externa spelaren.
     Ignore Warnings: Dämpa varningar för när den aktuella externa spelaren inte stöder den aktuella åtgärden (t.ex. vändning av spellistor, etc.).
-    Custom External Player Executable: Som standard antar FreeTube att den valda externa spelaren kan hittas via PATH-miljövariabeln. Om det behövs kan en anpassad sökväg ställas in här.
+    Custom External Player Executable: Som standard antar 白い熊 自由動画 att den valda externa spelaren kan hittas via PATH-miljövariabeln. Om det behövs kan en anpassad sökväg ställas in här.
     External Player: Om du väljer en extern spelare visas en ikon på miniatyrbilden för att öppna videon, eller spellistan om det stöds, i den externa spelaren. Varning, Invidious-inställningar påverkar inte externa videospelare.
     DefaultCustomArgumentsTemplate: "(Standard: '{defaultCustomArguments}')"
     Ignore Default Arguments: Skicka inga standardargument till den externa spelaren förutom videons URL (t.ex. uppspelningshastighet, spelliste-URL, etc.). Anpassade argument kommer fortfarande att föras vidare.
   Distraction Free Settings:
     Hide Channels: Ange ett kanal-ID för att dölja alla videor, spellistor och själva kanalen från att visas i sökningar, trender, mest populära och rekommenderade. Det angivna kanal-ID:t måste vara en fullständig matchning och är skiftlägeskänsligt.
     Hide Subscriptions Live: Den här inställningen åsidosätts av den programövergripande "{appWideSetting}"-inställningen, i avsnittet "{subsection}" i "{settingsSection}"
-    Hide Videos, Playlists and Channels Containing Text: Ange ett ord, ordfragment eller en fras (okänsligt för skiftlägen) för att dölja alla videor, spellistor och kanaler vars originaltitlar innehåller det i hela FreeTube, exklusive endast historik, dina spellistor och videor i spellistor.
+    Hide Videos, Playlists and Channels Containing Text: Ange ett ord, ordfragment eller en fras (okänsligt för skiftlägen) för att dölja alla videor, spellistor och kanaler vars originaltitlar innehåller det i hela 白い熊 自由動画, exklusive endast historik, dina spellistor och videor i spellistor.
     Hide Videos on Watch: Döljer sedda videor från flikarna videor, shorts och live på prenumerations- och kanalsidorna. Detta påverkar inte hemfliken på kanalsidorna
   Experimental Settings:
     Replace HTTP Cache: Inaktiverar Electrons diskbaserade HTTP-cache och aktiverar en anpassad bildcache i minnet. Kommer att leda till ökad RAM-användning.

@@ -231,7 +231,7 @@ Settings:
       Blur: Zamućenje
     Region for Trending: 'Regija za trendove'
         #! List countries
-    Open Deep Links In New Window: Otvori URL-ove proslijeđene FreeTube-u u novom prozoru
+    Open Deep Links In New Window: Otvori URL-ove proslijeđene 白い熊 自由動画-u u novom prozoru
     Minimize to system tray: Minimiziraj u sistemsku traku
     Auto Load Next Page:
       Label: Automatsko učitavanje sljedeće stranice
@@ -256,7 +256,7 @@ Settings:
     Disable Smooth Scrolling: Onemogući glatko skrolovanje
     UI Scale: UI Skala
     Hide Side Bar Labels: Sakrij oznake bočne trake
-    Hide FreeTube Header Logo: Sakrij logotip zaglavlja FreeTube-a
+    Hide FreeTube Header Logo: Sakrij logotip zaglavlja 白い熊 自由動画-a
     Base Theme:
       Base Theme: Osnovna tema
       Black: Crno
@@ -521,7 +521,7 @@ Settings:
     Playlist File: Datoteka popisa za reprodukciju
     Search history file: Datoteka historije pretraživanja
     Export Subscriptions: Izvoz pretplata
-    Export FreeTube: Izvoz FreeTube-a
+    Export FreeTube: Izvoz 白い熊 自由動画-a
     Export YouTube: Izvoz s YouTubea
     Export NewPipe: Izvoz NewPipe
     Import History: Historija uvoza

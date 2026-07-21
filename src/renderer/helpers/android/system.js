@@ -1,4 +1,3 @@
-
 import android from 'android'
 import { isColourDark, versionNumberGt } from './utils'
 import packageDetails from '../../../../package.json'
@@ -17,20 +16,20 @@ export function getConsoleLogs() {
   return JSON.parse(android.getLogs())
 }
 
-const REPO_ID = "MarmadileManteater/FreetubeAndroid"
+const REPO_ID = 'ShiroiKuma0/shiroikuma-jiyudoga'
 
 /**
  * @typedef ChangeLog
- * @property {String} title
- * @property {String} body
+ * @property {string} title
+ * @property {string} body
  */
 
 /**
  * @typedef UpdateInfo
  * @property {true} updateAvailable
- * @property {String} version
+ * @property {string} version
  * @property {ChangeLog} changeLog
- * @property {String} downloadLink
+ * @property {string} downloadLink
  */
 
 /**
@@ -39,16 +38,16 @@ const REPO_ID = "MarmadileManteater/FreetubeAndroid"
  */
 
 /**
- * 
+ *
  * @returns {Promise<UpdateInfo|NoUpdateInfo>}
  */
 export async function getUpdateInfo() {
   try {
     const isNightly = packageDetails.version.indexOf('nightly') !== -1
 
-    const updateUrl = isNightly 
-                        ? `https://api.github.com/repos/${REPO_ID}/actions/runs`
-                          : `https://api.github.com/repos/${REPO_ID}/releases?per_page=1`
+    const updateUrl = isNightly
+      ? `https://api.github.com/repos/${REPO_ID}/actions/runs`
+      : `https://api.github.com/repos/${REPO_ID}/releases?per_page=1`
 
     const response = await fetch(updateUrl)
     const updatesJSON = await response.json()
@@ -62,14 +61,14 @@ export async function getUpdateInfo() {
     if (!isNightly) {
       const latestRelease = updatesJSON[0]
       const tagName = latestRelease.tag_name
-      currentVersion = packageDetails.version
+      currentVersion = process.env.FORK_VERSION || packageDetails.version
       latestVersion = tagName
       changelogTitle = latestRelease.name
       changelogBody = latestRelease.body
         // Link usernames to their GitHub profiles
         .replaceAll(/@(\S+)\b/g, '[@$1](https://github.com/$1)')
         // Shorten pull request links to #1234
-        .replaceAll(/https:\/\/github\.com\/FreeTubeApp\/FreeTube\/pull\/(\d+)/g, '[#$1]($&)')
+        .replaceAll(/https:\/\/github\.com\/ShiroiKuma0\/shiroikuma-jiyudoga\/pull\/(\d+)/g, '[#$1]($&)')
       // Add the title
       changelogBody = `${changelogBody}`
       changelogBody = marked.parse(changelogBody)

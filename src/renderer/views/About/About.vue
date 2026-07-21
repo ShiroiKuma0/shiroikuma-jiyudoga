@@ -46,84 +46,27 @@ import FtCard from '../../components/ft-card/ft-card.vue'
 import FtLogoFull from '../../components/FtLogoFull/FtLogoFull.vue'
 import { vSaferHtml } from '../../directives/vSaferHtml.js'
 
-import { ABOUT_BITCOIN_ADDRESS } from '../../../constants'
 import packageDetails from '../../../../package.json'
 
 const { t } = useI18n()
 
-const versionNumber = `v${packageDetails.version}`
+const versionNumber = `v${process.env.FORK_VERSION || packageDetails.version}`
 
 const chunks = computed(() => [
   {
     icon: ['fab', 'github'],
     title: t('About.Source code'),
-    content: `<a href="https://github.com/MarmadileManteater/FreeTubeCordova">GitHub: FreeTubeAndroid</a><br>${t('About.Licensed under the')} <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">${t('About.AGPLv3')}</a>.<br/> This is a fork of the official <a href="https://github.com/FreeTubeApp/FreeTube">FreeTube</a> repository with modifications to work better in a browser and on phones.`
+    content: `<a href="https://github.com/ShiroiKuma0/shiroikuma-jiyudoga">GitHub: shiroikuma-jiyudoga</a><br>${t('About.Licensed under the {licenseLink}', { licenseLink: `<a href="https://www.gnu.org/licenses/agpl-3.0.en.html">${t('About.AGPLv3')}</a>` })}.<br/>白い熊 自由動画 — 白い熊's fork of FreeTube with the FreeTubeAndroid layer grafted on, built for GNU/Linux (amd64 .deb) and Android (arm64-v8a APK).`
   },
   {
     icon: ['fas', 'file-download'],
     title: t('About.Downloads / Changelog'),
-    content: `<a href="https://github.com/MarmadileManteater/FreeTubeCordova/releases">${t('About.GitHub releases')}</a>`
-  },
-  {
-    icon: ['fas', 'question-circle'],
-    title: t('About.Help'),
-    content: [
-      `<a href="https://docs.freetubeapp.io/">${t('About.FreeTube Wiki')}</a>`,
-      `<a href="https://docs.freetubeapp.io/faq/">${t('About.FAQ')}</a>`,
-      `<a href="https://github.com/FreeTubeApp/FreeTube/discussions/">${t('About.Discussions')}</a>`
-    ].join(' / '),
+    content: `<a href="https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases">${t('About.GitHub releases')}</a>`
   },
   {
     icon: ['fas', 'exclamation-circle'],
     title: t('About.Report a problem'),
-    content: `<a href="https://github.com/MarmadileManteater/FreeTubeAndroid/issues">${t('About.GitHub issues')}</a><br>${t('About.Please check for duplicates before posting')}`
-  },
-  {
-    icon: ['fas', 'globe'],
-    title: t('About.Website'),
-    content: '<a href="https://freetubeapp.io/">https://freetubeapp.io/</a>',
-  },
-  {
-    icon: ['fas', 'envelope'],
-    title: t('About.Email'),
-    content: '<a href="mailto:FreeTubeApp@protonmail.com">FreeTubeApp@protonmail.com</a>',
-  },
-  {
-    icon: ['fab', 'mastodon'],
-    title: t('About.Mastodon'),
-    content: '<a href="https://fosstodon.org/@FreeTube">@FreeTube@fosstodon.org</a>',
-  },
-  {
-    icon: ['fab', 'matrix'],
-    title: t('About.Chat on Matrix'),
-    content: [
-      '<a href="https://matrix.to/#/#freetube:matrix.org">#freetube:matrix.org</a>',
-      t('About.Please read the {roomRulesLink}', {
-        roomRulesLink: `<a href="https://docs.freetubeapp.io/community/matrix/">${t('About.room rules')}</a>`,
-      }),
-    ].join('<br>'),
-  },
-  {
-    icon: ['fas', 'language'],
-    title: t('About.Translate'),
-    content: '<a href="https://hosted.weblate.org/engage/free-tube/">https://hosted.weblate.org/engage/free-tube/</a>',
-  },
-  {
-    icon: ['fas', 'users'],
-    title: t('About.Credits'),
-    content: t('About.FreeTube is made possible by {creditsPageLink}', {
-      creditsPageLink: `<a href="https://docs.freetubeapp.io/credits/">${t('About.these people and projects')}</a>`,
-    }),
-  },
-  {
-    icon: ['fas', 'money-check-dollar'],
-    title: `${t('About.Donate')}`,
-    content: `<a href="https://liberapay.com/MarmadileManteater/">Liberapay</a>`
-  },
-  {
-    icon: ['fab', 'bitcoin'],
-    title: `${t('About FTA.Donate Upstream')} - BTC`,
-    content: `<a href="bitcoin:${ABOUT_BITCOIN_ADDRESS}">${ABOUT_BITCOIN_ADDRESS}</a>`
+    content: `<a href="https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/issues">${t('About.GitHub issues')}</a><br>${t('About.Please check for duplicates before posting')}`
   }
 ])
 </script>

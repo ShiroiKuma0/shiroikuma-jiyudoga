@@ -1,5 +1,3 @@
-
-
 /**
  * @param {string} filePath
  * @param {string} newFileType
@@ -88,34 +86,25 @@ export function isColourDark(colour) {
 
 export function reverseObject(object) {
   return Object.fromEntries(
-      Object.entries(object)
-        .map(([key, value]) => {
-          return [value, key]
-        })
-      )
+    Object.entries(object)
+      .map(([key, value]) => {
+        return [value, key]
+      })
+  )
 }
 
 export function versionNumberGt(versionA, versionB) {
-  const partsA = `${versionA}`.split('.')
-  const partsB = `${versionB}`.split('.')
-  if (partsA.length > partsB.length) {
-    return true
-  } else if (partsB.length > partsA.length) {
-    return false
-  } else {
-    const partComparisons = partsA.map(a => false)
-    let oneLeftmostLt = false
-    let oneGt = false
-    for (let i = 0; i < partsA.length; i++) {
-      partComparisons[i] = parseInt(partsA[i]) === parseInt(partsB[i]) ? 'eq' : parseInt(partsA[i]) > parseInt(partsB[i]) ? 'gt' : 'lt'
-      if (partComparisons[i] === 'gt') {
-        oneGt = true
-      }
-      if (partComparisons[i] === 'lt' && !oneGt) {
-        oneLeftmostLt = true
-      }
-    }
-    const thereIsAGtBeforeALt = !oneLeftmostLt
-    return oneGt && thereIsAGtBeforeALt
+  // Compare dotted (and `+build`-suffixed) version numbers numerically,
+  // segment by segment; missing segments count as 0. `0.24.1.1` must NOT
+  // beat `0.25.1` just because it has more segments.
+  const partsA = `${versionA}`.split(/[.+-]/).map(part => parseInt(part) || 0)
+  const partsB = `${versionB}`.split(/[.+-]/).map(part => parseInt(part) || 0)
+  const length = Math.max(partsA.length, partsB.length)
+  for (let i = 0; i < length; i++) {
+    const a = partsA[i] ?? 0
+    const b = partsB[i] ?? 0
+    if (a > b) { return true }
+    if (a < b) { return false }
   }
+  return false
 }

@@ -1,22 +1,22 @@
 {
   "name": "freetube",
-  "productName": "FreeTube",
+  "productName": "白い熊 自由動画",
   "description": "A private YouTube client",
   "version": "0.25.1",
   "license": "AGPL-3.0-or-later",
   "main": "./dist/main.js",
   "private": true,
   "author": {
-    "name": "FreeTube Team",
-    "email": "FreeTubeApp@protonmail.com",
-    "url": "https://github.com/FreeTubeApp/FreeTube"
+    "name": "白い熊",
+    "email": "claude.ai@sumou.com",
+    "url": "https://github.com/ShiroiKuma0/shiroikuma-jiyudoga"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FreeTubeApp/FreeTube.git"
+    "url": "git+https://github.com/ShiroiKuma0/shiroikuma-jiyudoga.git"
   },
   "bugs": {
-    "url": "https://github.com/FreeTubeApp/FreeTube/issues"
+    "url": "https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/issues"
   },
   "scripts": {
     "build": "pnpm run pack && pnpm run build-release",

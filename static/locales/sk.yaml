@@ -241,7 +241,7 @@ Settings:
     Auto Load Next Page:
       Tooltip: Automaticky načíta ďalšie stránky a komentáre.
       Label: Automaticky načítať ďalšiu stránku
-    Open Deep Links In New Window: Otvoriť adresy URL odoslané do FreeTube v novom okne
+    Open Deep Links In New Window: Otvoriť adresy URL odoslané do 白い熊 自由動画 v novom okne
     Minimize to system tray: Minimalizovať do systémovej lišty
   Theme Settings:
     Theme Settings: 'Téma'
@@ -362,7 +362,7 @@ Settings:
     Disable Smooth Scrolling: Vypnúť plynulé posúvanie
     Expand Side Bar by Default: Predvolene rozbaliť bočnú lištu
     Hide Side Bar Labels: Skryť označenia bočnej lišty
-    Hide FreeTube Header Logo: Skryť logo hlavičky FreeTube
+    Hide FreeTube Header Logo: Skryť logo hlavičky 白い熊 自由動画
   Player Settings:
     Player Settings: 'Prehrávač'
     Play Next Video: 'Automaticky prehrávať odporúčané videá'
@@ -448,7 +448,7 @@ Settings:
     Import History: Importovať históriu
     Export NewPipe: Exportovať dáta vo formáte NewPipe
     Export YouTube: Exportovať dáta vo formáte Youtube
-    Export FreeTube: Exportovať dáta vo formáte FreeTube
+    Export FreeTube: Exportovať dáta vo formáte 白い熊 自由動画
     Export Subscriptions: Exportovať odbery
     Import Subscriptions: Importovať odbery
     Select Export Type: Vybrať typ exportu
@@ -559,7 +559,7 @@ Settings:
     Proxy Settings: Proxy
     Proxy Password: Heslo proxy
     Proxy Username: Používateľský názov proxy
-    Proxy Warning: FreeTube nemá vstavaný proxy server, ale môže sa pripojiť k externému proxy serveru, napríklad k serveru bežiacemu na vašom počítači, ako je Tor, alebo k externému proxy serveru, ako je SOCKS5 proxy server poskytovaný niektorými VPN. Ak je táto funkcia povolená, uistite sa, že je váš proxy server/Tor správne nakonfigurovaný, inak FreeTube nebude môcť načítať žiadne údaje.
+    Proxy Warning: 白い熊 自由動画 nemá vstavaný proxy server, ale môže sa pripojiť k externému proxy serveru, napríklad k serveru bežiacemu na vašom počítači, ako je Tor, alebo k externému proxy serveru, ako je SOCKS5 proxy server poskytovaný niektorými VPN. Ak je táto funkcia povolená, uistite sa, že je váš proxy server/Tor správne nakonfigurovaný, inak 白い熊 自由動画 nebude môcť načítať žiadne údaje.
   SponsorBlock Settings:
     Notify when sponsor segment is skipped: Upozorniť, keď bude segment sponzora preskočený
     'SponsorBlock API Url (Default is https://sponsor.ajay.app)': URL API SponsorBlock (predvolená adresa je https://sponsor.ajay.app)
@@ -609,10 +609,10 @@ Settings:
 
 About:
   #On About page
-  About: 'O FreeTube'
+  About: 'O 白い熊 自由動画'
   #& About
 #On Channel Page
-  FreeTube Wiki: Wiki FreeTube
+  FreeTube Wiki: Wiki 白い熊 自由動画
   Help: Pomoc
   GitHub releases: Vydania na GitHube
   Downloads / Changelog: Súbory na stiahnutie / Zoznam zmien
@@ -635,7 +635,7 @@ About:
   AGPLv3: AGPLv3
   Licensed under the {licenseLink}: Licencované pod {licenseLink}
   Please read the {roomRulesLink}: Prečítajte si prosím {roomRulesLink}
-  FreeTube is made possible by {creditsPageLink}: FreeTube existuje vďaka {creditsPageLink}
+  FreeTube is made possible by {creditsPageLink}: 白い熊 自由動画 existuje vďaka {creditsPageLink}
 Channel:
   Subscribe: 'Odoberať'
   Unsubscribe: 'Odhlásiť odber'
@@ -670,7 +670,7 @@ Channel:
   Removed subscription from {count} other channel(s): Odstránený odber z {count} iných kanálov
   This channel does not allow searching: Tento kanál neumožňuje vyhľadávanie
   Posts:
-    Video hidden by FreeTube: Video skryté FreeTube
+    Video hidden by FreeTube: Video skryté 白い熊 自由動画
     Hide Answers: Skryť odpovede
     Reveal Answers: Ukázať odpovede
     View Full Post: Zobraziť celý príspevok
@@ -694,7 +694,7 @@ Channel:
   Shorts:
     This channel does not currently have any shorts: Tento kanál momentálne nemá žiadne krátke videá
   Channel Tabs: Karty kanálov
-  This channel is age-restricted and currently cannot be viewed in FreeTube.: Tento kanál je obmedzený vekom a momentálne nemôže byť pozeraný vo FreeTube.
+  This channel is age-restricted and currently cannot be viewed in FreeTube.: Tento kanál je obmedzený vekom a momentálne nemôže byť pozeraný vo 白い熊 自由動画.
   This channel does not exist: Tento kanál neexistuje
 Video:
   Mark As Watched: 'Označiť ako pozerané'
@@ -803,16 +803,16 @@ Video:
   Watched Progress Saved: Postup pozerania uložený
   Save Watched Progress: Uložiť postup pozerania
   More Options: Viac možností
-  DRMProtected: Videá chránené DRM nemôžu byť prehrávané vo FreeTube, pretože vyžadujú proprietárne, uzavreté zdrojové komponenty. Ak chcete pozerať toto video, prosím pozrite si ho na oficiálnej stránke YouTube vo webovom prehliadači s povoleným DRM.
-  AgeRestricted: Videá obmedzené vekom nemôžu byť pozerané vo FreeTube, pretože vyžadujú prihlásenie Google a použitie vekovo overeného účtu YouTube.
-  MembersOnly: Videá len pre členov nemôžu byť pozerané vo FreeTube, pretože vyžadujú prihlásenie Google a platené členstvo v kanáli nahrávača.
+  DRMProtected: Videá chránené DRM nemôžu byť prehrávané vo 白い熊 自由動画, pretože vyžadujú proprietárne, uzavreté zdrojové komponenty. Ak chcete pozerať toto video, prosím pozrite si ho na oficiálnej stránke YouTube vo webovom prehliadači s povoleným DRM.
+  AgeRestricted: Videá obmedzené vekom nemôžu byť pozerané vo 白い熊 自由動画, pretože vyžadujú prihlásenie Google a použitie vekovo overeného účtu YouTube.
+  MembersOnly: Videá len pre členov nemôžu byť pozerané vo 白い熊 自由動画, pretože vyžadujú prihlásenie Google a platené členstvo v kanáli nahrávača.
   IP block: YouTube zablokoval pozeranie videa z vašej IP adresy. Prosím skúste prepnúť na inú VPN alebo proxy.
   Scroll to Bottom: Posunúť na koniec
   Watch:
     'Remaining preroll-ad time: {remindingTimeSeconds}s': 'Zostávajúci čas prvotnej reklamy: {remindingTimeSeconds}s'
     'Remaining SABR backoff time: {remindingTimeSeconds}s': 'Zostávajúci čas pauzy SABR: {remindingTimeSeconds} s'
   Popout Live Chat: Popout Chat
-  Private: Súkromné videá nie je možné pozerať vo FreeTube, pretože si vyžadujú prihlásenie cez Google a vlastníctvo daného videa.
+  Private: Súkromné videá nie je možné pozerať vo 白い熊 自由動画, pretože si vyžadujú prihlásenie cez Google a vlastníctvo daného videa.
 Playlist:
   #& About
   View Full Playlist: 'Zobraziť celý playlist'
@@ -903,8 +903,8 @@ This video is unavailable because of missing formats. This can happen due to cou
 The playlist has been reversed: Playlist bol obrátený
 Tooltips:
   Subscription Settings:
-    Fetch Feeds from RSS: Keď je zapnuté, FreeTube použije RSS namiesto predvolenej metódy na získanie vášho odoberaného kanála. RSS je rýchlejší a zabraňuje blokovaniu IP, ale neposkytuje určité informácie ako trvanie videa, stav naživo alebo príspevky
-    Fetch Automatically: Keď je zapnuté, FreeTube automaticky načíta váš odoberaný kanál pri spustení a keď je otvorené nové okno.
+    Fetch Feeds from RSS: Keď je zapnuté, 白い熊 自由動画 použije RSS namiesto predvolenej metódy na získanie vášho odoberaného kanála. RSS je rýchlejší a zabraňuje blokovaniu IP, ale neposkytuje určité informácie ako trvanie videa, stav naživo alebo príspevky
+    Fetch Automatically: Keď je zapnuté, 白い熊 自由動画 automaticky načíta váš odoberaný kanál pri spustení a keď je otvorené nové okno.
   Player Settings:
     Default Video Format: Nastavte formáty používané pri prehrávaní videa. Formáty DASH umožňujú prehrávanie vo vyššej kvalite. Staršie formáty sú obmedzené na maximálne rozlíšenie 360p, ale využívajú menšiu šírku pásma. Formáty zvuku sú iba audio streamy.
     Proxy Videos Through Invidious: Pripojí sa k Invidious na poskytovanie videí namiesto priameho pripojenia k YouTube.
@@ -912,23 +912,23 @@ Tooltips:
     Skip by Scrolling Over Video Player: Použite koliesko myši na preskakovanie cez video v štýle MPV.
   General Settings:
     Region for Trending: Región trendov vám umožňuje zvoliť si krajinu pre trendové videá, ktoré chcete zobraziť.
-    Invidious Instance: Inštancia Invidious, ku ktorej sa FreeTube pripojí pre volania API.
-    Thumbnail Preference: Všetky náhľady vo FreeTube budú nahradené snímkou z videa, ktorá bude rozmazaná alebo skrytá namiesto východzieho náhľadu.
-    Fallback to Non-Preferred Backend on Failure: Keď má vaše preferované API problém, FreeTube sa automaticky pokúsi použiť vaše nepreferované API ako náhradnú metódu, ak je táto funkcia zapnutá.
-    Preferred API Backend: Vyberte backend, ktorý FreeTube používa na získavanie údajov. Lokálne API je vstavaný extraktor. API Invidious vyžaduje pripojenie k serveru Invidious.
-    External Link Handling: "Vyberte predvolené správanie pri kliknutí na odkaz, ktorý nemožno otvoriť vo FreeTube.\nV predvolenom nastavení FreeTube otvorí odkaz, na ktorý ste klikli, vo vašom predvolenom prehliadači.\n"
-    Open Deep Links In New Window: URL adresy odovzdané do FreeTube, napríklad presmerovaním rozšírení prehliadača alebo cez argumenty príkazového riadku, sa otvoria v novom okne.
+    Invidious Instance: Inštancia Invidious, ku ktorej sa 白い熊 自由動画 pripojí pre volania API.
+    Thumbnail Preference: Všetky náhľady vo 白い熊 自由動画 budú nahradené snímkou z videa, ktorá bude rozmazaná alebo skrytá namiesto východzieho náhľadu.
+    Fallback to Non-Preferred Backend on Failure: Keď má vaše preferované API problém, 白い熊 自由動画 sa automaticky pokúsi použiť vaše nepreferované API ako náhradnú metódu, ak je táto funkcia zapnutá.
+    Preferred API Backend: Vyberte backend, ktorý 白い熊 自由動画 používa na získavanie údajov. Lokálne API je vstavaný extraktor. API Invidious vyžaduje pripojenie k serveru Invidious.
+    External Link Handling: "Vyberte predvolené správanie pri kliknutí na odkaz, ktorý nemožno otvoriť vo 白い熊 自由動画.\nV predvolenom nastavení 白い熊 自由動画 otvorí odkaz, na ktorý ste klikli, vo vašom predvolenom prehliadači.\n"
+    Open Deep Links In New Window: URL adresy odovzdané do 白い熊 自由動画, napríklad presmerovaním rozšírení prehliadača alebo cez argumenty príkazového riadku, sa otvoria v novom okne.
   External Player Settings:
     DefaultCustomArgumentsTemplate: "(Predvolené: '{defaultCustomArguments}')"
     External Player: Pri výbere externého prehrávača sa na náhľade zobrazí ikona na otvorenie videa (playlistu, ak je podporovaný) v externom prehrávači. Pozor, nastavenia Invidious nemajú vplyv na externé prehrávače.
-    Custom External Player Executable: Predvolene FreeTube predpokladá, že zvolený externý prehrávač je možné nájsť prostredníctvom premennej prostredia PATH. V prípade potreby je možné tu nastaviť vlastnú cestu.
+    Custom External Player Executable: Predvolene 白い熊 自由動画 predpokladá, že zvolený externý prehrávač je možné nájsť prostredníctvom premennej prostredia PATH. V prípade potreby je možné tu nastaviť vlastnú cestu.
     Ignore Warnings: Zakážte upozornenia, keď aktuálny externý prehrávač nepodporuje aktuálnu akciu (napr. obrátenie playlistov atď.).
     Custom External Player Arguments: Akékoľvek vlastné argumenty príkazového riadka, ktoré chcete odovzdať externému prehrávaču.
     Ignore Default Arguments: Okrem URL videa neposielajte externému prehrávaču žiadne predvolené argumenty (napr. rýchlosť prehrávania, URL playlistu atď.). Vlastné argumenty budú naďalej odovzdávané.
   Distraction Free Settings:
     Hide Channels: Zadajte ID kanála, aby sa všetky videá, playlisty a samotný kanál nezobrazovali vo vyhľadávaní, trendoch, najobľúbenejších a odporúčaných položkách. Zadaný ID kanála musí byť úplne zhodný a rozlišujú sa veľké a malé písmená.
     Hide Videos on Watch: Skryje pozerané videá z kariet Videá, Krátke a Naživo na stránkach Odber a Kanál. Toto neovplyvní kartu Domov na stránkach Kanál
-    Hide Videos, Playlists and Channels Containing Text: Zadajte slovo, fragment slova alebo frázu (necitlivé na veľkosť písmen) na skrytie všetkých videí, playlistov a kanálov, ktorých originálne názvy ho obsahujú v celom FreeTube, okrem kariet História, Vaše playlisty a videí vnútri playlistov.
+    Hide Videos, Playlists and Channels Containing Text: Zadajte slovo, fragment slova alebo frázu (necitlivé na veľkosť písmen) na skrytie všetkých videí, playlistov a kanálov, ktorých originálne názvy ho obsahujú v celom 白い熊 自由動画, okrem kariet História, Vaše playlisty a videí vnútri playlistov.
     Hide Subscriptions Live: Toto nastavenie je prepísané nastavením celej aplikácie "{appWideSetting}", v časti "{subsection}" sekcie "{settingsSection}"
   SponsorBlock Settings:
     UseDeArrowThumbnails: Nahradí náhľady videí náhľadmi z DeArrow.

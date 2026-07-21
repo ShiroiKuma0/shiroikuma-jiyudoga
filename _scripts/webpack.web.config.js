@@ -16,6 +16,9 @@ const {
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
+const forkBuildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(fs.readFileSync(path.join(__dirname, '../android/gradle.properties'), 'utf8'))[1]
+const forkVersion = `${JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version}+${forkBuildNumber}`
+
 const { version: swiperVersion } = JSON.parse(fs.readFileSync(path.join(__dirname, '../node_modules/swiper/package.json')))
 
 /** @type {import('webpack').Configuration} */
@@ -138,6 +141,7 @@ const config = {
       'process.env.SUPPORTS_LOCAL_API': false,
       'process.env.SWIPER_VERSION': `'${swiperVersion}'`,
       'process.env.IS_ANDROID': false,
+      'process.env.FORK_VERSION': `'${forkVersion}'`,
       'process.env.IS_RELEASE': !isDevMode,
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',

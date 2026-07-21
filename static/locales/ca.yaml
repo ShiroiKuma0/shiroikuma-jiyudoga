@@ -232,7 +232,7 @@ Settings:
     Select Export Type: 'Selecciona tipus d''exportació'
     Import Subscriptions: 'Importa les subscripcions'
     Export Subscriptions: 'Exporta subscripcions'
-    Export FreeTube: 'Exporta FreeTube'
+    Export FreeTube: 'Exporta 白い熊 自由動画'
     Export YouTube: 'Exporta YouTube'
     Export NewPipe: 'Exporta NewPipe'
     Import History: 'Importa l''historial'
@@ -318,7 +318,7 @@ About:
   Donate: Dona
   Translate: Tradueix
   GitHub releases: Llançaments del GitHub
-  FreeTube Wiki: FreeTube Wiki
+  FreeTube Wiki: 白い熊 自由動画 Wiki
 Profile:
   Profile Select: 'Selecciona perfil'
   All Channels: 'Tots els canals'

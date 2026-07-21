@@ -1,6 +1,6 @@
 # Put the name of your locale in the same language
 Locale Name: 'Azərbaycanca'
-FreeTube: 'FreeTube'
+FreeTube: '白い熊 自由動画'
 
 # Webkit Menu Bar
 File: 'Fayl'
@@ -289,7 +289,7 @@ Settings:
     Hide Side Bar Labels: Kənar Hissə Etiketlərini Gizlət
     Theme Settings: Tema
     Expand Side Bar by Default: Kənar Hissəni İlkin Olaraq Genişləndir
-    Hide FreeTube Header Logo: FreeTube Başlıq Simvolunu Gizlət
+    Hide FreeTube Header Logo: 白い熊 自由動画 Başlıq Simvolunu Gizlət
   Player Settings:
     Screenshot: {}
   SponsorBlock Settings: {}

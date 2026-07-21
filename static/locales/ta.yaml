@@ -585,7 +585,7 @@ Settings:
     Export History: 'ஏற்றுமதி வரலாறு'
     Import Playlists: 'பிளேலிச்ட்களை இறக்குமதி செய்யுங்கள்'
     Export Playlists: 'பிளேலிச்ட்கள் ஏற்றுமதி'
-    Export Playlists For Older FreeTube Versions:
+    Export Playlists For Older 白い熊 自由動画 Versions:
       Label: 'பழைய ஃப்ரீட்யூப் பதிப்புகளுக்கான பிளேலிச்ட்களை ஏற்றுமதி செய்யுங்கள்'
       # |- = Keep newlines, No newline at end
       Tooltip: |-
@@ -694,7 +694,7 @@ About:
 
   Licensed under the {licenseLink}: '{licenseLink} இன் கீழ் உரிமம் பெற்றது'
   Please read the {roomRulesLink}: '{roomRulesLink} ஐப் படிக்கவும்'
-  FreeTube is made possible by {creditsPageLink}: FreeTube ஆனது {creditsPageLink} மூலம் சாத்தியமானது
+  FreeTube is made possible by {creditsPageLink}: 白い熊 自由動画 ஆனது {creditsPageLink} மூலம் சாத்தியமானது
 Profile:
   Profile Settings: 'சுயவிவரம்'
   Toggle Profile List: 'சுயவிவர பட்டியலை மாற்றவும்'

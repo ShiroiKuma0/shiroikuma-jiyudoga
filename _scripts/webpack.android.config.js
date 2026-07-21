@@ -17,6 +17,9 @@ const { sigViewTemplateParameters } = require('./sigViewConfig')
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
+const forkBuildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(fs.readFileSync(path.join(__dirname, '../android/gradle.properties'), 'utf8'))[1]
+const forkVersion = `${JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version}+${forkBuildNumber}`
+
 const { version: swiperVersion } = JSON.parse(fs.readFileSync(path.join(__dirname, '../node_modules/swiper/package.json')))
 
 const config = {
@@ -128,6 +131,7 @@ const config = {
       'process.env.IS_ELECTRON': false,
       'process.env.IS_ELECTRON_MAIN': false,
       'process.env.IS_ANDROID': true,
+      'process.env.FORK_VERSION': `'${forkVersion}'`,
       'process.env.IS_RELEASE': !isDevMode,
       'process.env.SUPPORTS_LOCAL_API': true,
       __VUE_OPTIONS_API__: 'true',
@@ -148,7 +152,7 @@ const config = {
       nodeModules: false,
     }),
     new HtmlWebpackPlugin({
-      filename: "decipher.html",
+      filename: 'decipher.html',
       inject: false,
       templateContent: sigViewTemplateParameters.sigViewRaw,
       nodeModules: false
@@ -175,7 +179,7 @@ const config = {
     alias: {
 
       DB_HANDLERS_ELECTRON_RENDERER_OR_WEB$: path.resolve(__dirname, '../src/datastores/handlers/web.js'),
-      
+
       // change to "shaka-player.ui-es2021.debug.js" to get debug logs (update jsconfig to get updated types)
       'shaka-player$': 'shaka-player/dist/shaka-player.ui-es2021.js',
     },
@@ -228,6 +232,5 @@ config.plugins.push(
     ]
   })
 )
-
 
 module.exports = config

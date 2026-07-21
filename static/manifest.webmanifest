@@ -1,6 +1,6 @@
 {
-  "name": "FreeTube",
-  "short_name": "FreeTube",
+  "name": "白い熊 自由動画",
+  "short_name": "白い熊 自由動画",
   "start_url": "../index.html",
   "categories": [
     "multimedia",

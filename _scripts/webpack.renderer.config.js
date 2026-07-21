@@ -16,6 +16,9 @@ const { sigFrameTemplateParameters } = require('./sigFrameConfig')
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
+const forkBuildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(readFileSync(path.join(__dirname, '../android/gradle.properties'), 'utf8'))[1]
+const forkVersion = `${JSON.parse(readFileSync(path.join(__dirname, '../package.json'))).version}+${forkBuildNumber}`
+
 const { version: swiperVersion } = JSON.parse(readFileSync(path.join(__dirname, '../node_modules/swiper/package.json')))
 
 const processLocalesPlugin = new ProcessLocalesPlugin({
@@ -139,6 +142,8 @@ const config = {
       'process.env.IS_ELECTRON': true,
       'process.env.IS_ELECTRON_MAIN': false,
       'process.env.IS_ANDROID': false,
+      'process.env.IS_RELEASE': !isDevMode,
+      'process.env.FORK_VERSION': `'${forkVersion}'`,
       'process.env.SUPPORTS_LOCAL_API': true,
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',

@@ -1053,7 +1053,7 @@ function runApp() {
           tray = new Tray(icon)
 
           tray.setIgnoreDoubleClickEvents(true)
-          tray.setToolTip('FreeTube')
+          tray.setToolTip('白い熊 自由動画')
 
           trayWindows = [window]
           createTrayContextMenu()
