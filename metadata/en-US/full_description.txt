@@ -1,0 +1,18 @@
+FreeTube Android (formerly FreeTubeCordova) is a YouTube client that uses uses a built in extractor to grab and serve data / videos from YouTube. The Invidious API can also be optionally used.
+No official YouTube APIs are used to obtain data.
+Your subscriptions and history are stored locally on your device and are never sent out.
+
+Features:
+
+- Watch videos without ads
+- Use YouTube without Google tracking you using cookies and JavaScript
+- Organize your subscriptions into Profiles to create a more focused feed
+- Export and import subscriptions from a variety of sources (Ex: YouTube, NewPipe, Invidious)
+- Support for SponsorBlock
+- Support for Comments and Replies
+- Support for YouTube Chapters
+- Option to password protect settings
+- Parental controls
+- Subscribe to channels without an account
+
+FreeTube Android is currently in Beta. While it should work well for most users, there are still bugs and missing features that need to be addressed.

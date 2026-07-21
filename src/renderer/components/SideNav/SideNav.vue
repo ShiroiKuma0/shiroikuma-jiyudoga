@@ -181,6 +181,32 @@
           {{ $t("About.About") }}
         </p>
       </router-link>
+      <a
+        v-if="usingAndroid && !usingRelease"
+        class="navOption mobileHidden"
+        :title="$t('Log Viewer.Console Log')"
+        :aria-label="hideText ? $t('Log Viewer.Console Log') : null"
+        @keydown="showLogViewer"
+        @click="showLogViewer"
+      >
+        <div
+          class="thumbnailContainer"
+        >
+          <font-awesome-icon
+            :icon="['fas', 'terminal']"
+            class="navIcon"
+            :class="applyNavIconExpand"
+            fixed-width
+          />
+        </div>
+        <p
+          v-if="!hideText"
+          id="channelLabel"
+          class="navLabel"
+        >
+          {{ $t("Log Viewer.Console Log") }}
+        </p>
+      </a>
       <hr>
       <div
         v-if="!hideActiveSubscriptions"
@@ -348,6 +374,13 @@ const settingsTitle = computed(() => {
     KeyboardShortcuts.APP.GENERAL.NAVIGATE_TO_SETTINGS
   )
 })
+
+const usingAndroid = process.env.IS_ANDROID
+const usingRelease = process.env.IS_RELEASE
+
+const showLogViewer = () => {
+  store.dispatch('showLogViewer')
+}
 </script>
 
 <style scoped src="./SideNav.css" />

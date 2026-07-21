@@ -6,7 +6,8 @@
       hideOutlines: outlinesHidden,
       isLocaleRightToLeft: isLocaleRightToLeft,
       isSideNavOpen: isSideNavOpen,
-      hideLabelsSideBar: hideLabelsSideBar && !isSideNavOpen
+      hideLabelsSideBar: hideLabelsSideBar && !isSideNavOpen,
+      noTapHighlight: !tapHighlight
     }"
   >
     <TopNav
@@ -47,6 +48,7 @@
     <FtPrompt
       v-if="showReleaseNotes"
       theme="readable-width"
+      :fullscreen="true"
       @click="toggleShowReleaseNotes"
     >
       <template #label="{ labelId }">
@@ -97,8 +99,9 @@
     <FtCreatePlaylistPrompt
       v-if="showCreatePlaylistPrompt"
     />
-    <FtToast />
-    <FtProgressBar
+    <FtaLogViewer />
+    <ft-toast />
+    <ft-progress-bar
       v-if="showProgressBar"
     />
   </div>
@@ -122,6 +125,7 @@ import FtPlaylistAddVideoPrompt from './components/FtPlaylistAddVideoPrompt/FtPl
 import FtCreatePlaylistPrompt from './components/FtCreatePlaylistPrompt/FtCreatePlaylistPrompt.vue'
 import FtKeyboardShortcutPrompt from './components/FtKeyboardShortcutPrompt/FtKeyboardShortcutPrompt.vue'
 import FtSearchFilters from './components/FtSearchFilters/FtSearchFilters.vue'
+import FtaLogViewer from './components/FtaLogViewer/FtaLogViewer.vue'
 import { vSaferHtml } from './directives/vSaferHtml.js'
 
 import store from './store/index'
@@ -131,9 +135,15 @@ import { openExternalLink, openInternalPath, showToast } from './helpers/utils'
 import { translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 
+import 'core-js'
+import android from 'android'
+import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
+
 const route = useRoute()
 const router = useRouter()
 const { locale, t } = useI18n()
+
+const tapHighlight = computed(() => store.getters.getTapHighlight)
 
 /** @type {import('vue').ComputedRef<boolean>} */
 const isSideNavOpen = computed(() => store.getters.getIsSideNavOpen)
@@ -170,7 +180,7 @@ onMounted(async () => {
   await store.dispatch('grabUserSettings')
 
   updateTheme()
-
+  
   await store.dispatch('fetchInvidiousInstancesFromFile')
   if (defaultInvidiousInstance.value === '') {
     await store.dispatch('setRandomCurrentInvidiousInstance')
@@ -196,8 +206,21 @@ onMounted(async () => {
       store.dispatch('getExternalPlayerCmdArgumentsData')
     }
 
-    dataReady.value = true
+    if (process.env.IS_ANDROID) {
+      window.addEventListener('youtube-link', ({ link }) => {
+        handleYoutubeLink(link)
+      })
+      if (location.search.indexOf('?intent=') !== -1) {
+        const intent = location.search.split('?intent=')[1]
+        const uri = decodeURIComponent(intent)
+        handleYoutubeLink(uri)
+      }
+      window.addEventListener('enabled-light-mode', updateTheme)
+      window.addEventListener('enabled-dark-mode', updateTheme)
+    }
 
+    dataReady.value = true
+    
     setTimeout(() => {
       checkForNewUpdates()
     }, 500)
@@ -238,6 +261,23 @@ const secColor = computed(() => store.getters.getSecColor)
 watch(secColor, updateTheme)
 
 function updateTheme() {
+
+  if (process.env.IS_ANDROID) {
+    const theme = {
+      baseTheme: baseTheme.value || 'dark',
+      mainColor: mainColor.value || 'mainRed',
+      secColor: secColor.value || 'secBlue'
+    }
+    if (theme.baseTheme === 'system') {
+      // get a more precise theme with this
+      theme.baseTheme = android.getSystemTheme()
+    }
+    setTimeout(() => {
+      // 0 ms timeout to allow the css to update
+      updateAndroidTheme(store.getters.getBarColor)
+    })
+  }
+
   document.body.className = `${baseTheme.value || 'system'} main${mainColor.value || 'Red'} sec${secColor.value || 'Blue'}`
   document.body.dataset.systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
@@ -260,42 +300,18 @@ const updateBannerMessage = computed(() => {
 })
 
 async function checkForNewUpdates() {
+  
   if (!checkForUpdates.value) {
     return
   }
-
-  try {
-    const response = await fetch('https://api.github.com/repos/freetubeapp/freetube/releases?per_page=1')
-    const json = await response.json()
-
-    const tagName = json[0].tag_name
-    const versionNumber = tagName.replace('v', '').replace('-beta', '')
-
-    let changelog = json[0].body
-      // Link usernames to their GitHub profiles
-      .replaceAll(/@(\S+)\b/g, '[@$1](https://github.com/$1)')
-      // Shorten pull request links to #1234
-      .replaceAll(/https:\/\/github\.com\/FreeTubeApp\/FreeTube\/pull\/(\d+)/g, '[#$1]($&)')
-
-    // Add the title
-    changelog = `${changelog}`
-
-    updateChangelog.value = marked.parse(changelog)
-    changeLogTitle.value = json[0].name
-    latestVersionNumber.value = versionNumber
-
-    const appVersion = packageDetails.version.split('.')
-    const latestVersion = versionNumber.split('.')
-
-    if (parseInt(appVersion[0]) < parseInt(latestVersion[0])) {
-      showUpdatesBanner.value = true
-    } else if (parseInt(appVersion[1]) < parseInt(latestVersion[1])) {
-      showUpdatesBanner.value = true
-    } else if (parseInt(appVersion[2]) < parseInt(latestVersion[2]) && parseInt(appVersion[1]) <= parseInt(latestVersion[1])) {
-      showUpdatesBanner.value = true
-    }
-  } catch (error) {
-    console.error('errored while checking for updates', 'https://api.github.com/repos/freetubeapp/freetube/releases?per_page=1', error)
+  
+  const info = await getUpdateInfo()
+  if (info.updateAvailable) {
+    updateChangelog.value = info.changeLog.body
+    changeLogTitle.value = info.changeLog.title
+    latestVersionNumber.value = info.version
+    showUpdatesBanner.value = true
+    updateLink.value = info.downloadLink
   }
 }
 
@@ -315,7 +331,8 @@ function handleUpdateBannerClick(response) {
 }
 
 function openDownloadsPage() {
-  openExternalLink('https://freetubeapp.io#download')
+  const url = updateLink.value
+  openExternalLink(url)
   showReleaseNotes.value = false
   showUpdatesBanner.value = false
 }
@@ -349,6 +366,8 @@ const externalLinkOpeningPromptNames = computed(() => [
   t('Yes, Open Link'),
   t('No')
 ])
+
+const updateLink = ref('')
 
 /** @type {import('vue').ComputedRef<'' | 'openLinkAfterPrompt' | 'doNothing'>} */
 const externalLinkHandling = computed(() => store.getters.getExternalLinkHandling)

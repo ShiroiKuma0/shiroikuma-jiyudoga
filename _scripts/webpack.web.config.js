@@ -31,6 +31,7 @@ const config = {
     filename: '[name].js',
   },
   externals: {
+    android: '{}',
     'youtubei.js': '{}',
     googlevideo: '{}'
   },
@@ -135,6 +136,9 @@ const config = {
       'process.env.IS_ELECTRON': false,
       'process.env.IS_ELECTRON_MAIN': false,
       'process.env.SUPPORTS_LOCAL_API': false,
+      'process.env.SWIPER_VERSION': `'${swiperVersion}'`,
+      'process.env.IS_ANDROID': false,
+      'process.env.IS_RELEASE': !isDevMode,
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
@@ -200,11 +204,19 @@ config.plugins.push(
     'process.env.SHAKA_LOCALES_PREBUNDLED': JSON.stringify(SHAKA_LOCALES_PREBUNDLED)
   }),
   new CopyWebpackPlugin({
-    patterns: [
-      {
-        from: path.join(__dirname, '../static/pwabuilder-sw.js'),
-        to: path.join(__dirname, '../dist/web/pwabuilder-sw.js'),
-      },
+      patterns: [
+        {
+          from: path.join(__dirname, '../_icons/192x192.png'),
+          to: path.join(__dirname, '../dist/web/static/_icons/192x192.png'),
+        },
+        {
+          from: path.join(__dirname, '../_icons/512x512.png'),
+          to: path.join(__dirname, '../dist/web/static/_icons/512x512.png'),
+        },
+        {
+          from: path.join(__dirname, '../static/pwabuilder-sw.js'),
+          to: path.join(__dirname, '../dist/web/pwabuilder-sw.js'),
+        },
       {
         from: path.join(__dirname, '../static'),
         to: path.join(__dirname, '../dist/web/static'),
