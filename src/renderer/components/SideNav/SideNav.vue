@@ -144,6 +144,12 @@
         role="button"
         to="/settings"
         :title="settingsTitle"
+        @pointerdown="settingsPressStart"
+        @pointerup="settingsPressEnd"
+        @pointerleave="settingsPressEnd"
+        @pointercancel="settingsPressEnd"
+        @click.capture="settingsClickCapture"
+        @contextmenu.prevent
       >
         <div
           class="thumbnailContainer"
@@ -255,6 +261,7 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import SideNavMoreOptions from '../SideNavMoreOptions/SideNavMoreOptions.vue'
@@ -377,6 +384,44 @@ const settingsTitle = computed(() => {
 
 const usingAndroid = process.env.IS_ANDROID
 const usingRelease = process.env.IS_RELEASE
+
+// Long-press on the Settings entry opens the 白い熊 自由動画 UI section
+// directly (sister-repo convention: an instant path to the UI theming page).
+const router = useRouter()
+const SKUI_DEEP_LINK = '#/settings#shiroikuma-ui'
+const SETTINGS_LONG_PRESS_MS = 550
+
+let settingsPressTimer = null
+let settingsLongPressed = false
+
+function settingsPressStart(event) {
+  if (event.button !== undefined && event.button !== 0) { return }
+  settingsLongPressed = false
+  clearTimeout(settingsPressTimer)
+  settingsPressTimer = setTimeout(async () => {
+    settingsLongPressed = true
+    if (router.currentRoute.value.path !== '/settings') {
+      await router.push('/settings')
+    }
+    if (window.location.hash !== SKUI_DEEP_LINK) {
+      history.pushState({}, null, SKUI_DEEP_LINK)
+    }
+    // Settings.vue listens for popstate and scrolls to the section
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, SETTINGS_LONG_PRESS_MS)
+}
+
+function settingsPressEnd() {
+  clearTimeout(settingsPressTimer)
+}
+
+function settingsClickCapture(event) {
+  if (settingsLongPressed) {
+    event.preventDefault()
+    event.stopPropagation()
+    settingsLongPressed = false
+  }
+}
 
 const showLogViewer = () => {
   store.dispatch('showLogViewer')

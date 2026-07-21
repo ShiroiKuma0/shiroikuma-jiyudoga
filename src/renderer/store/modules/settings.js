@@ -306,6 +306,11 @@ const state = {
   settingsSectionSortEnabled: false,
   fetchSubscriptionsAutomatically: true,
   settingsPassword: '',
+  // 白い熊 自由動画 UI (skui): theme overrides JSON, shared recent picker
+  // colors (max 5), imported external fonts [{name, data(base64), format}]
+  skuiTheme: '{}',
+  skuiRecentColors: '[]',
+  skuiCustomFonts: '[]',
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',

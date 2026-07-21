@@ -1,0 +1,167 @@
+/* Shared row styles for the 白い熊 自由動画 UI settings — tight vertical
+   rhythm: rows have no extra padding; only sections separate visually. */
+
+.skuiRow {
+  margin: 0;
+  padding: 0;
+}
+
+.skuiRowHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  inline-size: 100%;
+  background: none;
+  border: 0;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding-block: 0.1em;
+  padding-inline: 0;
+  text-align: start;
+}
+
+.skuiRowLabel {
+  flex: 0 1 auto;
+}
+
+.skuiOverriddenMark {
+  color: var(--primary-color);
+  font-size: 0.6em;
+}
+
+/* checkerboard behind swatches so alpha is visible */
+.skuiSwatchFrame {
+  background-image:
+    linear-gradient(45deg, #999 25%, transparent 25%, transparent 75%, #999 75%),
+    linear-gradient(45deg, #999 25%, #666 25%, #666 75%, #999 75%);
+  background-position: 0 0, 6px 6px;
+  background-size: 12px 12px;
+  block-size: 1.1em;
+  border: 1px solid var(--secondary-text-color);
+  display: inline-block;
+  inline-size: 2.4em;
+  margin-inline-start: auto;
+  padding: 0;
+}
+
+.skuiSwatch {
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.skuiColorEditor,
+.skuiFontEditor {
+  margin-inline-start: 1.5em;
+  padding-block: 0.15em 0.3em;
+  padding-inline: 0;
+}
+
+.skuiRecentRow {
+  display: flex;
+  gap: 0.4em;
+  margin-block-end: 0.25em;
+}
+
+.skuiRecentSwatch {
+  cursor: pointer;
+  margin-inline-start: 0;
+  inline-size: 1.8em;
+}
+
+.skuiPreviewPair {
+  display: flex;
+  inline-size: 14em;
+  margin-block-end: 0.25em;
+}
+
+.skuiPreviewHalf {
+  flex: 1;
+  font-size: 0.75em;
+  padding-block: 0.35em;
+  padding-inline: 0.5em;
+  text-align: center;
+}
+
+.skuiSliderLine {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding-block: 0.05em;
+  padding-inline: 0;
+}
+
+.skuiChannelLabel {
+  font-weight: 700;
+  inline-size: 1em;
+}
+
+.skuiRange {
+  accent-color: var(--primary-color);
+  flex: 1;
+  margin: 0;
+  max-inline-size: 16em;
+}
+
+.skuiChannelValue {
+  font-variant-numeric: tabular-nums;
+  inline-size: 3.5em;
+  text-align: end;
+}
+
+.skuiResetButton {
+  background: none;
+  border: 1px solid var(--secondary-text-color);
+  border-radius: 3px;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-block-start: 0.2em;
+  padding-block: 0.1em;
+  padding-inline: 0.6em;
+}
+
+.skuiFontCurrent {
+  margin-inline-start: auto;
+}
+
+.skuiFontList {
+  display: flex;
+  flex-direction: column;
+  margin-block-end: 0.25em;
+}
+
+.skuiFontOption {
+  background: none;
+  border: 0;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font-size: 1.05em;
+  padding-block: 0.12em;
+  padding-inline: 0.3em;
+  text-align: start;
+}
+
+.skuiFontOption:hover {
+  background-color: var(--side-nav-hover-color);
+}
+
+.skuiFontSelected {
+  outline: 1px solid var(--primary-color);
+}
+
+.skuiFontImport {
+  color: var(--primary-color);
+}
+
+.skuiFontSample {
+  font-size: 1.15em;
+  margin-block: 0.25em 0;
+  margin-inline: 0;
+}
+
+.skuiOverriddenMark::before {
+  content: '●';
+}

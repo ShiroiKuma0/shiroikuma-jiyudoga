@@ -1,0 +1,44 @@
+/*
+ * 白い熊 自由動画 UI settings page layout — sister-repo conventions:
+ * big bold underlined section headings (full-width accent rule), bold
+ * subgroup headings with a text-width underline, deep indent steps per
+ * level, and TIGHT rows: no vertical padding between sibling rows,
+ * breathing room only between top-level sections.
+ */
+
+.skuiPage {
+  --skui-indent-step: 3em;
+
+  line-height: 1.35;
+}
+
+.skuiSection {
+  margin-block-end: 1.4em;
+}
+
+.skuiSectionTitle {
+  border-block-end: 2px solid var(--primary-color);
+  font-size: 1.3em;
+  font-weight: 700;
+  margin-block: 0 0.2em;
+  margin-inline: 0;
+  padding-block-end: 0.15em;
+  text-decoration: underline;
+}
+
+.skuiGroupTitle {
+  display: inline-block;
+  border-block-end: 2px solid var(--primary-color);
+  font-size: 1.1em;
+  font-weight: 700;
+  margin-block: 0.3em 0.1em;
+  margin-inline: 0;
+}
+
+.skuiIndent1 {
+  margin-inline-start: var(--skui-indent-step);
+}
+
+.skuiIndent2 {
+  margin-inline-start: calc(var(--skui-indent-step) * 2);
+}

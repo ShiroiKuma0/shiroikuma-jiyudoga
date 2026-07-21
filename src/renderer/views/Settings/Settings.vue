@@ -52,6 +52,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } f
 import { useI18n } from 'vue-i18n'
 
 import GeneralSettings from '../../components/GeneralSettings/GeneralSettings.vue'
+import SkuiSettings from '../../components/SkuiSettings/SkuiSettings.vue'
 import ThemeSettings from '../../components/ThemeSettings.vue'
 import PlayerSettings from '../../components/PlayerSettings/PlayerSettings.vue'
 import ExternalPlayerSettings from '../../components/ExternalPlayerSettings.vue'
@@ -85,6 +86,12 @@ const settingsSectionSortEnabled = computed(() => store.getters.getSettingsSecti
 
 const settingsComponentsData = computed(() => {
   return [
+    {
+      type: 'shiroikuma-ui',
+      title: t('SKUI.Title'),
+      icon: ['fas', 'palette'],
+      component: SkuiSettings
+    },
     {
       type: 'theme',
       title: t('Settings.Theme Settings.Theme Settings'),

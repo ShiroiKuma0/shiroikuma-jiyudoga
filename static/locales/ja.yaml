@@ -1116,3 +1116,48 @@ Compact side navigation: サイドナビゲーションを折りたたむ
 Expand side navigation: サイドナビゲーションを展開
 Screenshot Clipboard Success: スクリーンショットをクリップボードに保存しました
 Screenshot Clipboard Error: スクリーンショットのクリップボードへのコピーに失敗しました
+SKUI:
+  Title: 白い熊 自由動画 UI
+  Sections:
+    Foundation: 基礎
+    Typography: 文字
+    Top bar: トップバー
+    Side nav: サイドバー
+    Cards & links: カードとリンク
+    Shape & lines: 形と線
+  Groups:
+    Bar: バー
+    Search bar: 検索バー
+  Slots:
+    background: 背景
+    text: 文字色
+    secondaryText: 補助文字色
+    accent: プライマリ／アクセント
+    border: 枠線
+    topBarBg: トップバー背景
+    topBarText: トップバーのアイコンと文字
+    searchFill: 検索バー背景
+    searchText: 検索バー文字
+    searchBorder: 検索バー枠線
+    sideNavBg: サイドバー背景
+    sideNavText: サイドバー文字
+    sideNavHover: ホバー強調
+    sideNavActive: 選択強調
+    cardBg: カード背景
+    secondaryCardBg: 補助カード背景
+    linkColor: リンク色
+    borderWidth: 枠線の太さ
+    roundness: 角の丸み
+    dividerWidth: 区切り線の太さ
+  Recent color: 最近の色
+  Old: 旧
+  New: 新
+  Reset to default: 既定に戻す
+  Font family: フォント
+  Default: 既定
+  Monospace: 等幅
+  Import font file: フォントファイルを取り込む…
+  Font weight: フォントの太さ
+  Font & UI size: フォントとUIの大きさ
+  Font file: フォントファイル
+  Only ttf and otf fonts are supported: ttf と otf のフォントのみ対応しています

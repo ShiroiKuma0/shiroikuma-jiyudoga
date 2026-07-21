@@ -483,6 +483,34 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   }
 
   /**
+   * Reads a file as raw bytes and returns them base64-encoded.
+   * Needed for binary content (e.g. imported fonts for the 白い熊 UI layer),
+   * which readFile would corrupt by decoding as UTF-8.
+   */
+  @OptIn(ExperimentalEncodingApi::class)
+  @JavascriptInterface
+  fun readFileBase64(uri: String): String {
+    return Promise(context.threadPoolExecutor, {
+      resolve,
+      reject ->
+      AmbiguousFileUri(uri)
+        .ifContentUri {
+          uri ->
+            resolve(Base64.encode(context.contentResolver.readBytes(uri)))
+        }
+        .ifDataUri {
+          fileName ->
+          val path = getDirectory(DATA_DIRECTORY)
+          resolve(Base64.encode(File(path, fileName).readBytes()))
+        }
+        .catch {
+          ex ->
+            reject(ex.stackTraceToString())
+        }
+    }).addJsCommunicator(jsCommunicator)
+  }
+
+  /**
    * writes a file to storage
    */
   @OptIn(ExperimentalEncodingApi::class)

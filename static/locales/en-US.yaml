@@ -1226,3 +1226,48 @@ KeyboardShortcutPrompt:
   End: Seek to the end of the video
   Skip to Next Video: Skip to the next video in a playlist or next recommended video
   Skip to Previous Video: Skip to the previous video in a playlist
+SKUI:
+  Title: 白い熊 自由動画 UI
+  Sections:
+    Foundation: Foundation
+    Typography: Typography
+    Top bar: Top bar
+    Side nav: Side nav
+    Cards & links: Cards & links
+    Shape & lines: Shape & lines
+  Groups:
+    Bar: Bar
+    Search bar: Search bar
+  Slots:
+    background: Background
+    text: Text
+    secondaryText: Secondary text
+    accent: Primary / accent
+    border: Border
+    topBarBg: Top bar background
+    topBarText: Top bar icons & text
+    searchFill: Search bar fill
+    searchText: Search bar text
+    searchBorder: Search bar border
+    sideNavBg: Side nav background
+    sideNavText: Side nav text
+    sideNavHover: Hover highlight
+    sideNavActive: Active highlight
+    cardBg: Card background
+    secondaryCardBg: Secondary card background
+    linkColor: Link color
+    borderWidth: Border thickness
+    roundness: Corner roundness
+    dividerWidth: Divider thickness
+  Recent color: Recent color
+  Old: Old
+  New: New
+  Reset to default: Reset to default
+  Font family: Font family
+  Default: Default
+  Monospace: Monospace
+  Import font file: Import font file…
+  Font weight: Font weight
+  Font & UI size: Font & UI size
+  Font file: Font file
+  Only ttf and otf fonts are supported: Only ttf and otf fonts are supported

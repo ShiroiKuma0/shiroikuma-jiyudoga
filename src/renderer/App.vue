@@ -138,6 +138,7 @@ import { loadLocale } from './i18n/index'
 import 'core-js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
+import { applySkuiTheme, parseTheme } from './helpers/skui'
 
 const route = useRoute()
 const router = useRouter()
@@ -180,7 +181,8 @@ onMounted(async () => {
   await store.dispatch('grabUserSettings')
 
   updateTheme()
-  
+  updateSkui()
+
   await store.dispatch('fetchInvidiousInstancesFromFile')
   if (defaultInvidiousInstance.value === '') {
     await store.dispatch('setRandomCurrentInvidiousInstance')
@@ -220,7 +222,7 @@ onMounted(async () => {
     }
 
     dataReady.value = true
-    
+
     setTimeout(() => {
       checkForNewUpdates()
     }, 500)
@@ -250,6 +252,22 @@ const baseTheme = computed(() => store.getters.getBaseTheme)
 
 watch(baseTheme, updateTheme)
 
+// 白い熊 自由動画 UI: restyle the whole app live on every skui change
+const skuiThemeJson = computed(() => store.getters.getSkuiTheme)
+const skuiCustomFontsJson = computed(() => store.getters.getSkuiCustomFonts)
+
+function updateSkui() {
+  let customFonts = []
+  try {
+    const parsed = JSON.parse(skuiCustomFontsJson.value)
+    if (Array.isArray(parsed)) { customFonts = parsed }
+  } catch { }
+  applySkuiTheme(parseTheme(skuiThemeJson.value), customFonts)
+}
+
+watch(skuiThemeJson, updateSkui)
+watch(skuiCustomFontsJson, updateSkui)
+
 /** @type {import('vue').ComputedRef<string>} */
 const mainColor = computed(() => store.getters.getMainColor)
 
@@ -261,7 +279,6 @@ const secColor = computed(() => store.getters.getSecColor)
 watch(secColor, updateTheme)
 
 function updateTheme() {
-
   if (process.env.IS_ANDROID) {
     const theme = {
       baseTheme: baseTheme.value || 'dark',
@@ -300,11 +317,10 @@ const updateBannerMessage = computed(() => {
 })
 
 async function checkForNewUpdates() {
-  
   if (!checkForUpdates.value) {
     return
   }
-  
+
   const info = await getUpdateInfo()
   if (info.updateAvailable) {
     updateChangelog.value = info.changeLog.body
