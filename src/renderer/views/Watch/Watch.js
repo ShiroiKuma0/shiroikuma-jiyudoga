@@ -38,6 +38,7 @@ import {
   mapInvidiousLegacyFormat,
   youtubeImageUrlToInvidious
 } from '../../helpers/api/invidious'
+import { getOriginalTitle } from '../../helpers/originalTitles'
 import { sortCaptions } from '../../helpers/player/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
 import { useI18n } from 'vue-i18n'
@@ -597,8 +598,9 @@ export default defineComponent({
           return
         }
 
-        // extract localised title first and fall back to the not localised one
-        this.videoTitle = result.primary_info?.title.text?.trim() ?? result.basic_info.title?.trim()
+        // basic_info (player videoDetails) always carries the original untranslated title,
+        // whereas primary_info (next endpoint) carries YouTube's auto-translation
+        this.videoTitle = result.basic_info.title?.trim() || result.primary_info?.title.text?.trim()
         this.videoViewCount = result.basic_info.view_count ?? (result.primary_info.view_count ? extractNumberFromString(result.primary_info.view_count.text) : null)
         this.license = result.secondary_info.metadata.rows.find(element => element.title?.text === 'License')?.contents[0]?.text
 
@@ -1037,6 +1039,13 @@ export default defineComponent({
           }
 
           this.videoTitle = result.title
+          // Invidious returns titles in the instance's language; restore the original
+          const oembedVideoId = this.videoId
+          getOriginalTitle(oembedVideoId).then((originalTitle) => {
+            if (originalTitle && this.videoId === oembedVideoId) {
+              this.videoTitle = originalTitle
+            }
+          })
           this.videoViewCount = result.viewCount
 
           const subCount = parseLocalSubscriberCount(result.subCountText)

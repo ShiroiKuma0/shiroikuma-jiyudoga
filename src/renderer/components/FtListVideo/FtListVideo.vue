@@ -296,6 +296,7 @@ import {
   debounce
 } from '../../helpers/utils.js'
 import { deArrowData, deArrowThumbnail } from '../../helpers/sponsorblock.js'
+import { getOriginalTitle } from '../../helpers/originalTitles.js'
 import thumbnailPlaceholder from '../../assets/img/thumbnail_placeholder.svg'
 
 const props = defineProps({
@@ -1162,6 +1163,12 @@ function onDragStart(event) {
 }
 
 parseVideoData()
+
+getOriginalTitle(id.value).then((originalTitle) => {
+  if (originalTitle) {
+    title.value = originalTitle
+  }
+})
 
 showDeArrowTitle.value = useDeArrowTitles.value
 showDeArrowThumbnail.value = useDeArrowThumbnails.value
