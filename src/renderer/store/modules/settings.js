@@ -311,6 +311,8 @@ const state = {
   skuiTheme: '{}',
   skuiRecentColors: '[]',
   skuiCustomFonts: '[]',
+  // grid zoom factor: Ctrl+wheel (desktop) / two-finger pinch (Android)
+  skuiGridScale: 1,
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',

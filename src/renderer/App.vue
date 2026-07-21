@@ -131,7 +131,7 @@ import { vSaferHtml } from './directives/vSaferHtml.js'
 import store from './store/index'
 
 import packageDetails from '../../package.json'
-import { openExternalLink, openInternalPath, showToast } from './helpers/utils'
+import { debounce, openExternalLink, openInternalPath, showToast } from './helpers/utils'
 import { translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 
@@ -182,6 +182,7 @@ onMounted(async () => {
 
   updateTheme()
   updateSkui()
+  applyGridScale()
 
   await store.dispatch('fetchInvidiousInstancesFromFile')
   if (defaultInvidiousInstance.value === '') {
@@ -237,6 +238,12 @@ onMounted(async () => {
   document.addEventListener('keydown', handleKeyboardShortcuts)
   document.addEventListener('mousedown', handleMouseDown)
   document.addEventListener('dragstart', handleDragStart)
+
+  window.addEventListener('wheel', handleGridScaleWheel, { passive: false })
+  window.addEventListener('touchstart', handleGridScaleTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleGridScaleTouchMove, { passive: false })
+  window.addEventListener('touchend', handleGridScaleTouchEnd, { passive: true })
+  window.addEventListener('touchcancel', handleGridScaleTouchEnd, { passive: true })
 })
 
 onBeforeUnmount(() => {
@@ -245,6 +252,12 @@ onBeforeUnmount(() => {
   document.removeEventListener('dragstart', handleDragStart)
   document.removeEventListener('click', handleClick)
   document.removeEventListener('auxclick', handleAuxClick)
+
+  window.removeEventListener('wheel', handleGridScaleWheel)
+  window.removeEventListener('touchstart', handleGridScaleTouchStart)
+  window.removeEventListener('touchmove', handleGridScaleTouchMove)
+  window.removeEventListener('touchend', handleGridScaleTouchEnd)
+  window.removeEventListener('touchcancel', handleGridScaleTouchEnd)
 })
 
 /** @type {import('vue').ComputedRef<string>} */
@@ -267,6 +280,66 @@ function updateSkui() {
 
 watch(skuiThemeJson, updateSkui)
 watch(skuiCustomFontsJson, updateSkui)
+
+// 白い熊 自由動画 UI: live grid zoom — Ctrl+wheel (desktop, also touchpad pinch,
+// which Chromium reports as a ctrlKey wheel) and two-finger pinch (Android)
+const GRID_SCALE_MIN = 0.4
+const GRID_SCALE_MAX = 3
+
+const skuiGridScale = computed(() => store.getters.getSkuiGridScale)
+
+function applyGridScale() {
+  document.body.style.setProperty('--sk-grid-scale', skuiGridScale.value)
+}
+
+watch(skuiGridScale, applyGridScale)
+
+// commit instantly for a smooth gesture, persist to the DB only once it settles
+const persistGridScale = debounce((value) => store.dispatch('updateSkuiGridScale', value), 500)
+
+function setGridScale(scale) {
+  const clamped = Math.round(Math.min(GRID_SCALE_MAX, Math.max(GRID_SCALE_MIN, scale)) * 100) / 100
+  store.commit('setSkuiGridScale', clamped)
+  persistGridScale(clamped)
+}
+
+function handleGridScaleWheel(event) {
+  if (!event.ctrlKey) { return }
+  // the player claims Ctrl+wheel for its playback-rate control
+  if (event.target instanceof Element && event.target.closest('.ftVideoPlayer')) { return }
+  event.preventDefault()
+  setGridScale(skuiGridScale.value * (event.deltaY < 0 ? 1.05 : 1 / 1.05))
+}
+
+let pinchStartDistance = 0
+let pinchStartScale = 1
+
+/**
+ * @param {TouchList} touches
+ */
+function touchDistance(touches) {
+  return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
+}
+
+function handleGridScaleTouchStart(event) {
+  if (event.touches.length === 2) {
+    pinchStartDistance = touchDistance(event.touches)
+    pinchStartScale = skuiGridScale.value
+  }
+}
+
+function handleGridScaleTouchMove(event) {
+  if (event.touches.length === 2 && pinchStartDistance > 0) {
+    event.preventDefault()
+    setGridScale(pinchStartScale * (touchDistance(event.touches) / pinchStartDistance))
+  }
+}
+
+function handleGridScaleTouchEnd(event) {
+  if (event.touches.length < 2) {
+    pinchStartDistance = 0
+  }
+}
 
 /** @type {import('vue').ComputedRef<string>} */
 const mainColor = computed(() => store.getters.getMainColor)

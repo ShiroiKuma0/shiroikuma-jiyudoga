@@ -359,7 +359,7 @@ $watched-transition-duration: 0.5s;
   &.grid {
     display: flex;
     flex-direction: column;
-    min-block-size: 230px;
+    min-block-size: calc(230px * var(--sk-grid-scale, 1));
     padding-block-end: 20px;
     box-sizing: border-box;
     block-size: 100%;
@@ -384,11 +384,11 @@ $watched-transition-duration: 0.5s;
     }
 
     .title {
-      font-size: 18px;
+      font-size: calc(18px * var(--sk-grid-scale, 1));
     }
 
     .infoLine {
-      font-size: 13px;
+      font-size: calc(13px * var(--sk-grid-scale, 1));
       margin-block-start: 8px;
     }
 
