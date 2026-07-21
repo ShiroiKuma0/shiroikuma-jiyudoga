@@ -30,3 +30,9 @@ assets/
 lefthook-local.yml
 *.bak
 locale-errors.json
+
+# Fork: local signing config
+keystore.properties
+
+# Claude Code: track .claude/ except local settings
+.claude/settings.local.json

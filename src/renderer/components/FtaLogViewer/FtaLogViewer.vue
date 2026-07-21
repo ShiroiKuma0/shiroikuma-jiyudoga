@@ -22,10 +22,12 @@
               class="level"
               :icon="['fas', getFaIconFromLevel(log.level)]"
             />
+            <!-- eslint-disable vue/no-v-html -->
             <span
               class="content"
               v-html="log.content"
             />
+            <!-- eslint-enable vue/no-v-html -->
             <span class="source">{{ `${removeQueryString(log.sourceId)}:${log.lineNumber}` }}</span>
             <span class="timestamp">{{ new Date(log.timestamp).toISOString() }}</span>
           </div>
@@ -54,7 +56,7 @@ import FtButton from '../FtButton/FtButton.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { isColourDark } from '../../helpers/android/utils'
 import { getConsoleLogs } from '../../helpers/android/system'
-import { useI18n } from '../../composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 

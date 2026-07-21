@@ -1,5 +1,12 @@
 import Datastore from '@seald-io/nedb'
-import * as androidStorage from '../renderer/helpers/android/nedb'
+
+// Guarded require instead of a static import: with `process.env.IS_ANDROID`
+// statically false, webpack prunes the whole android helper chain from the
+// electron-main bundle, which has no loaders for the .vue files it reaches.
+let androidStorage = null
+if (process.env.IS_ANDROID) {
+  androidStorage = require('../renderer/helpers/android/nedb')
+}
 
 let dbPath = null
 

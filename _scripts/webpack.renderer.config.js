@@ -138,6 +138,7 @@ const config = {
       'process.platform': `'${process.platform}'`,
       'process.env.IS_ELECTRON': true,
       'process.env.IS_ELECTRON_MAIN': false,
+      'process.env.IS_ANDROID': false,
       'process.env.SUPPORTS_LOCAL_API': true,
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',
@@ -193,6 +194,9 @@ const config = {
   resolve: {
     alias: {
       DB_HANDLERS_ELECTRON_RENDERER_OR_WEB$: path.resolve(__dirname, '../src/datastores/handlers/electron.js'),
+
+      // The Android build maps `android` to the WebView's injected JS interface
+      android$: path.resolve(__dirname, 'android-stub.js'),
 
       'youtubei.js$': 'youtubei.js/web',
 

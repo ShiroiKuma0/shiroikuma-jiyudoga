@@ -35,7 +35,10 @@ const config = {
       // Which results in quite a significant reduction in file size.
       //
       // Only the extensions field is needed, see: https://github.com/kevva/ext-list/blob/v2.2.2/index.js
-      'mime-db$': path.join(__dirname, 'image-extensions-only-mime-db.json')
+      'mime-db$': path.join(__dirname, 'image-extensions-only-mime-db.json'),
+
+      // The Android build maps `android` to the WebView's injected JS interface
+      android$: path.join(__dirname, 'android-stub.js')
     }
   },
   // webpack defaults to only optimising the production builds, so having this here is fine
@@ -54,7 +57,8 @@ const config = {
   plugins: [
     new webpack.DefinePlugin({
       'process.platform': `'${process.platform}'`,
-      'process.env.IS_ELECTRON_MAIN': true
+      'process.env.IS_ELECTRON_MAIN': true,
+      'process.env.IS_ANDROID': false
     })
   ],
   output: {

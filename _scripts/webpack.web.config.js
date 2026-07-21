@@ -144,8 +144,7 @@ const config = {
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
       __VUE_I18N_LEGACY_API__: 'false',
       __VUE_I18N_FULL_INSTALL__: 'false',
-      __INTLIFY_PROD_DEVTOOLS__: 'false',
-      'process.env.SWIPER_VERSION': `'${swiperVersion}'`
+      __INTLIFY_PROD_DEVTOOLS__: 'false'
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser.js'
@@ -204,19 +203,19 @@ config.plugins.push(
     'process.env.SHAKA_LOCALES_PREBUNDLED': JSON.stringify(SHAKA_LOCALES_PREBUNDLED)
   }),
   new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: path.join(__dirname, '../_icons/192x192.png'),
-          to: path.join(__dirname, '../dist/web/static/_icons/192x192.png'),
-        },
-        {
-          from: path.join(__dirname, '../_icons/512x512.png'),
-          to: path.join(__dirname, '../dist/web/static/_icons/512x512.png'),
-        },
-        {
-          from: path.join(__dirname, '../static/pwabuilder-sw.js'),
-          to: path.join(__dirname, '../dist/web/pwabuilder-sw.js'),
-        },
+    patterns: [
+      {
+        from: path.join(__dirname, '../_icons/192x192.png'),
+        to: path.join(__dirname, '../dist/web/static/_icons/192x192.png'),
+      },
+      {
+        from: path.join(__dirname, '../_icons/512x512.png'),
+        to: path.join(__dirname, '../dist/web/static/_icons/512x512.png'),
+      },
+      {
+        from: path.join(__dirname, '../static/pwabuilder-sw.js'),
+        to: path.join(__dirname, '../dist/web/pwabuilder-sw.js'),
+      },
       {
         from: path.join(__dirname, '../static'),
         to: path.join(__dirname, '../dist/web/static'),
