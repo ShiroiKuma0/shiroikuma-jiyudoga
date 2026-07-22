@@ -191,14 +191,15 @@
     @include theatre-mode-template;
   }
 
-  @media only screen and (width >= 1051px) {
-    &.useTheatreMode {
-      @include theatre-mode-template;
-    }
-  }
-
   @media only screen and (width <= 1050px) {
     @include single-column-template;
+  }
+
+  // Theatre mode works at EVERY width (upstream gated it to >=1051px, which
+  // silently no-opped on the Android WebView's scaled viewport): the video
+  // takes the full row and Up Next moves below, beside the description.
+  &.useTheatreMode {
+    @include theatre-mode-template;
   }
 
   @media only screen and (width >= 1051px) {

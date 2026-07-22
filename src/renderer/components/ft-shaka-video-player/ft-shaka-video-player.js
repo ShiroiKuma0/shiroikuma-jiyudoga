@@ -307,7 +307,7 @@ export default defineComponent({
     onAppPause = () => {
       try {
         document.exitFullscreen()
-      } catch (_ex) {
+      } catch {
         // pass
       }
       ui.configure({
@@ -858,7 +858,10 @@ export default defineComponent({
 
         elementList = uiConfig.overflowMenuButtons
 
-        uiConfig.controlPanelElements.push('overflow_menu', 'fullscreen')
+        // theatre mode stays in the bottom row even in the compact layout
+        // (白い熊 2026-07-22); full window lives in the overflow menu — on
+        // Android it is redundant with fullscreen anyway
+        uiConfig.controlPanelElements.push('overflow_menu', 'ft_theatre_mode', 'fullscreen')
       } else {
         uiConfig.controlPanelElements.push(
           'ft_screenshot',
@@ -890,6 +893,7 @@ export default defineComponent({
 
       if (!props.theatrePossible) {
         removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_theatre_mode')
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'ft_theatre_mode')
       }
 
       if (!props.autoplayPossible) {
@@ -2845,14 +2849,13 @@ export default defineComponent({
       registerStatsButton()
       registerSkipButtons()
 
-      if (ui.isMobile()) {
-        onlyUseOverFlowMenu.value = true
-      } else {
-        onlyUseOverFlowMenu.value = container.value.getBoundingClientRect().width <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
+      // Decide by width on every platform: upstream forced the reduced
+      // overflow-only layout on all touch devices, hiding theatre mode and
+      // full window on Android even on tablet-wide screens
+      onlyUseOverFlowMenu.value = container.value.getBoundingClientRect().width <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
 
-        containerResizeObserver = new ResizeObserver(resized)
-        containerResizeObserver.observe(container.value)
-      }
+      containerResizeObserver = new ResizeObserver(resized)
+      containerResizeObserver.observe(container.value)
 
       controls.addEventListener('uiupdated', addUICustomizations)
       configureUI(true)
