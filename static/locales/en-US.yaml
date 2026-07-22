@@ -55,6 +55,12 @@ Global:
     Comment Count: 1 comment | {count} comments
     Watching Count: 1 watching | {count} watching
 
+Skui Grid:
+  Adjust Grid: Adjust grid
+  Thumbnail Width: Thumbnail width
+  Title Font Size: Title font size
+  Title Max Lines: Title max lines
+  Profile Row Padding: Profile list padding
 
 # Search Bar
 Search / Go to URL: Search / Go to URL

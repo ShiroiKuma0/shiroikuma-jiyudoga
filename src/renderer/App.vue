@@ -287,12 +287,21 @@ const GRID_SCALE_MIN = 0.4
 const GRID_SCALE_MAX = 3
 
 const skuiGridScale = computed(() => store.getters.getSkuiGridScale)
+const skuiGridThumbWidth = computed(() => store.getters.getSkuiGridThumbWidth)
+const skuiGridTitleSize = computed(() => store.getters.getSkuiGridTitleSize)
+const skuiGridTitleLines = computed(() => store.getters.getSkuiGridTitleLines)
+const skuiProfileRowPadding = computed(() => store.getters.getSkuiProfileRowPadding)
 
 function applyGridScale() {
-  document.body.style.setProperty('--sk-grid-scale', skuiGridScale.value)
+  const style = document.body.style
+  style.setProperty('--sk-grid-scale', skuiGridScale.value)
+  style.setProperty('--sk-grid-thumb-base', `${skuiGridThumbWidth.value}px`)
+  style.setProperty('--sk-grid-title-base', `${skuiGridTitleSize.value}px`)
+  style.setProperty('--sk-grid-title-lines', skuiGridTitleLines.value)
+  style.setProperty('--sk-profile-row-pad', `${skuiProfileRowPadding.value}px`)
 }
 
-watch(skuiGridScale, applyGridScale)
+watch([skuiGridScale, skuiGridThumbWidth, skuiGridTitleSize, skuiGridTitleLines, skuiProfileRowPadding], applyGridScale)
 
 // commit instantly for a smooth gesture, persist to the DB only once it settles
 const persistGridScale = debounce((value) => store.dispatch('updateSkuiGridScale', value), 500)

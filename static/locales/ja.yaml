@@ -40,6 +40,12 @@ Global:
     Channel Count: 1 チャンネル | {count} チャンネル
     Comment Count: 1 コメント｜{count} コメント
     Like Count: 1 いいね｜{count} いいね
+Skui Grid:
+  Adjust Grid: グリッド調整
+  Thumbnail Width: サムネイル幅
+  Title Font Size: タイトル文字サイズ
+  Title Max Lines: タイトル最大行数
+  Profile Row Padding: プロファイル行余白
 Search / Go to URL: '検索 / URL に移動'
   # In Filter Button
 Search Filters:

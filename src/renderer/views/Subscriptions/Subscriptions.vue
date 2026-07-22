@@ -7,6 +7,7 @@
           class="subscriptionIcon"
         />
         {{ $t("Subscriptions.Subscriptions") }}
+        <SkuiGridControls />
       </h2>
       <FtFlexBox
         class="tabs"
@@ -178,6 +179,7 @@ import { computed, ref, useTemplateRef, watch } from 'vue'
 
 import FtCard from '../../components/ft-card/ft-card.vue'
 import FtFlexBox from '../../components/ft-flex-box/ft-flex-box.vue'
+import SkuiGridControls from '../../components/SkuiGridControls.vue'
 import SubscriptionsVideos from '../../components/SubscriptionsVideos.vue'
 import SubscriptionsLive from '../../components/SubscriptionsLive.vue'
 import SubscriptionsShorts from '../../components/SubscriptionsShorts.vue'

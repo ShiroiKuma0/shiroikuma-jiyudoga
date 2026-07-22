@@ -313,6 +313,13 @@ const state = {
   skuiCustomFonts: '[]',
   // grid zoom factor: Ctrl+wheel (desktop) / two-finger pinch (Android)
   skuiGridScale: 1,
+  // grid tuning (sliders popup next to the Subscriptions heading):
+  // base tile width in px, title font size in px, max title lines
+  skuiGridThumbWidth: 262,
+  skuiGridTitleSize: 18,
+  skuiGridTitleLines: 3,
+  // vertical padding of the Profile Select dropdown rows, px
+  skuiProfileRowPadding: 2,
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   useDeArrowTitles: false,

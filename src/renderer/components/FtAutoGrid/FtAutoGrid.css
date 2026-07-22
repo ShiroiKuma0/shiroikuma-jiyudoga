@@ -4,7 +4,7 @@
 
   /* --sk-grid-scale: live grid zoom (Ctrl+wheel / pinch); min() keeps scaled-up
      columns from overflowing narrow windows */
-  grid-template-columns: repeat(auto-fill, minmax(min(calc(262px * var(--sk-grid-scale, 1)), 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(calc(var(--sk-grid-thumb-base, 262px) * var(--sk-grid-scale, 1)), 100%), 1fr));
   justify-content: space-evenly;
 }
 

@@ -54,7 +54,9 @@ Height adjust for profile list so it won't cover navbar.  */
 
 .profile {
   cursor: pointer;
-  block-size: 50px;
+  display: flex;
+  align-items: center;
+  padding-block: var(--sk-profile-row-pad, 2px);
   transition: background 0.2s ease-out;
 }
 
@@ -65,17 +67,18 @@ Height adjust for profile list so it won't cover navbar.  */
 }
 
 .profile .colorOption {
-  float: inline-start;
-  position: relative;
-  inset-block-end: 5px;
-  margin: 10px;
+  flex-shrink: 0;
+  margin-block: 0;
+  margin-inline: 10px;
 }
 
 .profileName {
-  display: flex;
-  align-items: center;
-  block-size: 50px;
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
   padding-inline-end: 10px;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 }
 
 .profileListTitle {
@@ -89,4 +92,17 @@ Height adjust for profile list so it won't cover navbar.  */
   position: absolute;
   inset-block-start: 10px;
   inset-inline-end: 5px;
+}
+
+.profilePaddingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 6px;
+  padding-inline: 10px;
+}
+
+.profilePaddingRow input[type='range'] {
+  flex: 1;
+  accent-color: var(--primary-color);
 }

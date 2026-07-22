@@ -78,6 +78,22 @@
           </p>
         </div>
       </div>
+      <div class="profilePaddingRow">
+        <FontAwesomeIcon
+          :icon="['fas', 'sliders-h']"
+          class="profilePaddingIcon"
+        />
+        <input
+          type="range"
+          min="0"
+          max="24"
+          step="1"
+          :value="profileRowPadding"
+          :aria-label="t('Skui Grid.Profile Row Padding')"
+          :title="t('Skui Grid.Profile Row Padding')"
+          @input="setProfileRowPadding($event.target.value)"
+        >
+      </div>
     </FtCard>
   </div>
 </template>
@@ -92,7 +108,7 @@ import FtIconButton from '../FtIconButton/FtIconButton.vue'
 
 import store from '../../store/index'
 
-import { showToast } from '../../helpers/utils'
+import { debounce, showToast } from '../../helpers/utils'
 import { MAIN_PROFILE_ID } from '../../../constants'
 import { getFirstCharacter } from '../../helpers/strings'
 
@@ -114,6 +130,19 @@ const id = useId()
 
 const profileListShown = ref(false)
 let mouseDownOnIcon = false
+
+// row-padding slider: live in-memory commit, persisted once it settles
+const profileRowPadding = computed(() => store.getters.getSkuiProfileRowPadding)
+const persistProfileRowPadding = debounce((value) => store.dispatch('updateSkuiProfileRowPadding', value), 500)
+
+/**
+ * @param {string} rawValue
+ */
+function setProfileRowPadding(rawValue) {
+  const value = Number(rawValue)
+  store.commit('setSkuiProfileRowPadding', value)
+  persistProfileRowPadding(value)
+}
 
 /** @type {import('vue').ComputedRef<Profile[]>} */
 const profileList = computed(() => store.getters.getProfileList)
