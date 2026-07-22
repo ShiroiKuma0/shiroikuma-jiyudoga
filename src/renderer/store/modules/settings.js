@@ -322,6 +322,8 @@ const state = {
   skuiProfileRowPadding: 2,
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
+  // study-export folder on desktop (set only via the main-process folder picker)
+  studyFolderPath: '',
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',
@@ -466,6 +468,9 @@ const sideEffectHandlers = {
 const settingsWithSideEffects = Object.keys(sideEffectHandlers)
 
 export const NON_TRANSFERABLE_SETTINGS = new Set([
+  // study-export folders are machine/device specific
+  'studyDirectoryTree',
+  'studyFolderPath',
   /* Depends on process.env.IS_ELECTRON */
   // ProxySettings
   'useProxy',

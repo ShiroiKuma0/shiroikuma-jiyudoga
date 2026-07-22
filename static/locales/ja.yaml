@@ -712,6 +712,7 @@ Video:
   Star Video: スターを付ける
   Unstar Video: スターを外す
   Study in jisho: 辞書で勉強
+  Study in yosuga: よすがで勉強
   Study Export:
     Preparing: 勉強用字幕を準備中…
     Done Aligned: 辞書に送信しました — 概要欄の書き起こしに合わせた字幕付き
@@ -724,6 +725,7 @@ Video:
     No Format: この動画にはダウンロード可能なフォーマットがありません
     Download Failed: 動画のダウンロードに失敗しました — 後でもう一度お試しください
     Too Large: この動画は勉強用エクスポートには大きすぎます
+    Yosuga Missing: shiroikuma-yosuga を起動できませんでした
   Open in YouTube: 'YouTube で表示'
   Copy YouTube Link: 'YouTube リンクのコピー'
   Open YouTube Embedded Player: 'YouTube 埋め込みプレーヤーで表示'

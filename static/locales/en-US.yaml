@@ -862,6 +862,7 @@ Video:
   Star Video: Star Video
   Unstar Video: Unstar Video
   Study in jisho: Study in jisho
+  Study in yosuga: Study in yosuga
   Study Export:
     Preparing: Preparing study subtitles…
     Done Aligned: Sent to jisho — subtitles aligned with the description transcript
@@ -874,6 +875,7 @@ Video:
     No Format: No downloadable video format available for this video
     Download Failed: Video download failed — try again later
     Too Large: This video is too large for the study export
+    Yosuga Missing: shiroikuma-yosuga could not be launched
   Mark As Watched: Mark As Watched
   Remove From History: Remove From History
   Video has been marked as watched: Video has been marked as watched

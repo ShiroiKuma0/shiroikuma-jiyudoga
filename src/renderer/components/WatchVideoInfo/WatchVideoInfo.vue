@@ -113,8 +113,8 @@
         </span>
         <span class="videoOptionsMobileRow">
           <FtIconButton
-            v-if="USING_ANDROID"
-            :title="t('Video.Study in jisho')"
+            v-if="USING_ANDROID || USING_ELECTRON"
+            :title="USING_ANDROID ? t('Video.Study in jisho') : t('Video.Study in yosuga')"
             :icon="['fas', 'graduation-cap']"
             theme="secondary"
             @click="$emit('study-export')"

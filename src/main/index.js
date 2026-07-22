@@ -1359,10 +1359,11 @@ function runApp() {
   /**
    * @param {import('electron').WebContents} webContents
    * @param {string | undefined} [currentPath]
+   * @param {'screenshotFolderPath' | 'studyFolderPath'} [settingId]
    */
-  async function chooseDefaultFolder(webContents, currentPath) {
+  async function chooseDefaultFolder(webContents, currentPath, settingId = 'screenshotFolderPath') {
     if (typeof currentPath !== 'string' || currentPath.length === 0) {
-      currentPath = app.getPath('pictures')
+      currentPath = app.getPath(settingId === 'studyFolderPath' ? 'videos' : 'pictures')
     }
 
     const dialogOptions = {
@@ -1382,8 +1383,6 @@ function runApp() {
     if (result.canceled) {
       return
     }
-
-    const settingId = 'screenshotFolderPath'
 
     await baseHandlers.settings.upsert(settingId, result.filePaths[0])
 
@@ -1466,6 +1465,88 @@ function runApp() {
     }
 
     return true
+  })
+
+  // Study export (shiroikuma-yosuga hand-off): mirrors WRITE_TO_DEFAULT_FOLDER
+  // but with its own folder setting and returns the absolute file path so the
+  // renderer can ask for it to be opened in yosuga afterwards.
+  ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {
+    if (
+      !isFreeTubeUrl(event.senderFrame.url) ||
+      typeof filename !== 'string' ||
+      !(arrayBuffer instanceof ArrayBuffer)) {
+      return null
+    }
+
+    const folderPath = (await baseHandlers.settings._findOne('studyFolderPath'))?.value
+
+    let directory
+    if (typeof folderPath === 'string' && folderPath.length > 0) {
+      try {
+        await asyncFs.access(path.normalize(folderPath), fsConstants.W_OK)
+        directory = folderPath
+      } catch {}
+    }
+
+    // one-time ask: prompt for the study folder on first use (or when access was lost)
+    if (directory === undefined) {
+      directory = await chooseDefaultFolder(event.sender, undefined, 'studyFolderPath')
+
+      if (typeof directory !== 'string' || directory.length === 0) {
+        return null
+      }
+    }
+
+    directory = path.normalize(directory)
+
+    const filePath = path.resolve(directory, filename)
+
+    // Ensure that we are only writing inside of the expected directory
+    if (path.dirname(filePath) !== directory.replace(/\/$/, '')) {
+      throw new Error('Invalid save location')
+    }
+
+    try {
+      await asyncFs.mkdir(directory, { recursive: true })
+
+      await asyncFs.writeFile(filePath, new DataView(arrayBuffer))
+    } catch (error) {
+      console.error('WRITE_TO_STUDY_FOLDER failed', error)
+      // throw a new error so that we don't expose the real error to the renderer
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error('Failed to save')
+    }
+
+    return filePath
+  })
+
+  ipcMain.handle(IpcChannels.OPEN_IN_YOSUGA, async (event, filePath) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof filePath !== 'string') {
+      return false
+    }
+
+    // only files inside the configured study folder may be opened
+    const folderPath = (await baseHandlers.settings._findOne('studyFolderPath'))?.value
+    if (typeof folderPath !== 'string' || folderPath.length === 0) {
+      return false
+    }
+
+    const resolved = path.resolve(filePath)
+    if (path.dirname(resolved) !== path.normalize(folderPath).replace(/\/$/, '')) {
+      return false
+    }
+
+    return await new Promise((resolve) => {
+      const child = cp.spawn('shiroikuma-yosuga', [resolved], { detached: true, stdio: 'ignore' })
+      child.once('spawn', () => {
+        child.unref()
+        resolve(true)
+      })
+      child.once('error', (error) => {
+        console.error('OPEN_IN_YOSUGA failed', error)
+        resolve(false)
+      })
+    })
   })
 
   /** @type {Map<number, number>} */
@@ -1639,9 +1720,9 @@ function runApp() {
           return await baseHandlers.settings.find()
 
         case DBActions.GENERAL.UPSERT:
-          // This one is only allowed to be changed by the CHOOSE_DEFAULT_FOLDER IPC action
-          // to avoid the "write to default folder" IPC calls being abused to write to arbitrary locations
-          if (data._id === 'screenshotFolderPath') {
+          // These are only allowed to be changed by the folder-picker IPC actions
+          // to avoid the "write to folder" IPC calls being abused to write to arbitrary locations
+          if (data._id === 'screenshotFolderPath' || data._id === 'studyFolderPath') {
             return null
           }
 

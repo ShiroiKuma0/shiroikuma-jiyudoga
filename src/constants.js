@@ -46,6 +46,9 @@ const IpcChannels = {
   CHOOSE_DEFAULT_FOLDER: 'choose-default-folder',
   WRITE_TO_DEFAULT_FOLDER: 'write-to-default-folder',
 
+  WRITE_TO_STUDY_FOLDER: 'write-to-study-folder',
+  OPEN_IN_YOSUGA: 'open-in-yosuga',
+
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
   OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result'
 }

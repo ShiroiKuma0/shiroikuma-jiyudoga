@@ -1975,11 +1975,13 @@ export default defineComponent({
     },
 
     handleStudyExport: async function () {
-      if (!process.env.IS_ANDROID || this.studyExportRunning) { return }
+      if ((!process.env.IS_ANDROID && !process.env.IS_ELECTRON) || this.studyExportRunning) { return }
       this.studyExportRunning = true
 
       try {
-        const { exportForStudy } = await import('../../helpers/android/study-export')
+        const exportForStudy = process.env.IS_ANDROID
+          ? (await import('../../helpers/android/study-export')).exportForStudy
+          : (await import('../../helpers/study-export-desktop')).exportForStudyDesktop
 
         showToast(this.t('Video.Study Export.Preparing'))
         this.$store.commit('setShowProgressBar', true)
@@ -2011,7 +2013,8 @@ export default defineComponent({
             'captions-fetch-failed': this.t('Video.Study Export.Captions Failed'),
             'no-format': this.t('Video.Study Export.No Format'),
             'download-failed': this.t('Video.Study Export.Download Failed'),
-            'video-too-large': this.t('Video.Study Export.Too Large')
+            'video-too-large': this.t('Video.Study Export.Too Large'),
+            'yosuga-failed': this.t('Video.Study Export.Yosuga Missing')
           }
           showToast(messages[error?.code] ?? this.t('Video.Study Export.Failed'))
         }

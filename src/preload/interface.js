@@ -138,6 +138,25 @@ export default {
     return await ipcRenderer.invoke(IpcChannels.WRITE_TO_DEFAULT_FOLDER, filename, contents)
   },
 
+  /**
+   * Writes a study-export file into the (once-asked) study folder.
+   * @param {string} filename
+   * @param {ArrayBuffer} contents
+   * @returns {Promise<string | null>} the absolute file path, null when the folder prompt was cancelled
+   */
+  writeToStudyFolder: async (filename, contents) => {
+    return await ipcRenderer.invoke(IpcChannels.WRITE_TO_STUDY_FOLDER, filename, contents)
+  },
+
+  /**
+   * Opens a study-folder file in shiroikuma-yosuga.
+   * @param {string} filePath
+   * @returns {Promise<boolean>}
+   */
+  openInYosuga: async (filePath) => {
+    return await ipcRenderer.invoke(IpcChannels.OPEN_IN_YOSUGA, filePath)
+  },
+
   relaunch: () => {
     ipcRenderer.send(IpcChannels.RELAUNCH_REQUEST)
   },
