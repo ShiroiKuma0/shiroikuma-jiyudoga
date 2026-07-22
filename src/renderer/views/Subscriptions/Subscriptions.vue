@@ -55,6 +55,44 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/interactive-supports-focus -->
         <div
+          ref="similarTab"
+          class="tab"
+          role="tab"
+          :aria-selected="currentTab === 'similar'"
+          aria-controls="subscriptionsPanel"
+          :tabindex="currentTab === 'similar' ? 0 : -1"
+          :class="{ selectedTab: currentTab === 'similar' }"
+          @click="changeTab('similar')"
+          @keydown.space.enter.prevent="changeTab('similar')"
+          @keydown.left.right="focusTab($event, 'similar')"
+        >
+          <FontAwesomeIcon
+            :icon="['fa', 'compass']"
+            class="subscriptionIcon"
+          />
+          {{ $t("Global.Similar") }}
+        </div>
+        <!-- eslint-disable-next-line vuejs-accessibility/interactive-supports-focus -->
+        <div
+          ref="starredTab"
+          class="tab"
+          role="tab"
+          :aria-selected="currentTab === 'starred'"
+          aria-controls="subscriptionsPanel"
+          :tabindex="currentTab === 'starred' ? 0 : -1"
+          :class="{ selectedTab: currentTab === 'starred' }"
+          @click="changeTab('starred')"
+          @keydown.space.enter.prevent="changeTab('starred')"
+          @keydown.left.right="focusTab($event, 'starred')"
+        >
+          <FontAwesomeIcon
+            :icon="['fa', 'star']"
+            class="subscriptionIcon"
+          />
+          {{ $t("Global.Starred") }}
+        </div>
+        <!-- eslint-disable-next-line vuejs-accessibility/interactive-supports-focus -->
+        <div
           v-if="!hideSubscriptionsLive"
           ref="liveTab"
           class="tab"
@@ -104,6 +142,16 @@
         id="subscriptionsPanel"
         role="tabpanel"
       />
+      <SubscriptionsSimilar
+        v-else-if="currentTab === 'similar'"
+        id="subscriptionsPanel"
+        role="tabpanel"
+      />
+      <SubscriptionsStarred
+        v-else-if="currentTab === 'starred'"
+        id="subscriptionsPanel"
+        role="tabpanel"
+      />
       <SubscriptionsLive
         v-else-if="currentTab === 'live'"
         id="subscriptionsPanel"
@@ -133,6 +181,8 @@ import FtFlexBox from '../../components/ft-flex-box/ft-flex-box.vue'
 import SubscriptionsVideos from '../../components/SubscriptionsVideos.vue'
 import SubscriptionsLive from '../../components/SubscriptionsLive.vue'
 import SubscriptionsShorts from '../../components/SubscriptionsShorts.vue'
+import SubscriptionsSimilar from '../../components/SubscriptionsSimilar.vue'
+import SubscriptionsStarred from '../../components/SubscriptionsStarred.vue'
 import SubscriptionsPosts from '../../components/SubscriptionsPosts.vue'
 
 import store from '../../store/index'
@@ -162,7 +212,7 @@ const useRssFeeds = computed(() => {
   return store.getters.getUseRssFeeds
 })
 
-/** @type {import('vue').Ref<'videos' | 'shorts' | 'live' | 'community' | null>} */
+/** @type {import('vue').Ref<'videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community' | null>} */
 const currentTab = ref('videos')
 
 watch(currentTab, (value) => {
@@ -175,7 +225,7 @@ watch(currentTab, (value) => {
 })
 
 const visibleTabs = computed(() => {
-  /** @type {('videos' | 'shorts' | 'live' | 'community')[]} */
+  /** @type {('videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community')[]} */
   const tabs = []
 
   if (!hideSubscriptionsVideos.value) {
@@ -185,6 +235,8 @@ const visibleTabs = computed(() => {
   if (!hideSubscriptionsShorts.value) {
     tabs.push('shorts')
   }
+
+  tabs.push('similar', 'starred')
 
   if (!hideSubscriptionsLive.value) {
     tabs.push('live')
@@ -219,7 +271,7 @@ if (visibleTabs.value.length === 0) {
 }
 
 /**
- * @param {'videos' | 'shorts' | 'live' | 'community'} tab
+ * @param {'videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community'} tab
  */
 function changeTab(tab) {
   if (tab === currentTab.value) {
@@ -237,11 +289,13 @@ function changeTab(tab) {
 const videosTab = useTemplateRef('videosTab')
 const liveTab = useTemplateRef('liveTab')
 const shortsTab = useTemplateRef('shortsTab')
+const similarTab = useTemplateRef('similarTab')
+const starredTab = useTemplateRef('starredTab')
 const communityTab = useTemplateRef('communityTab')
 
 /**
  * @param {KeyboardEvent} event
- * @param {'videos' | 'shorts' | 'live' | 'community'} focusedTab
+ * @param {'videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community'} focusedTab
  */
 function focusTab(event, focusedTab) {
   if (event.altKey) {
@@ -280,6 +334,12 @@ function focusTab(event, focusedTab) {
       break
     case 'shorts':
       shortsTab.value?.focus()
+      break
+    case 'similar':
+      similarTab.value?.focus()
+      break
+    case 'starred':
+      starredTab.value?.focus()
       break
     case 'community':
       communityTab.value?.focus()

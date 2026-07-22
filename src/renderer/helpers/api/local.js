@@ -697,6 +697,26 @@ export async function getLocalChannelId(url, doLogError = false) {
 }
 
 /**
+ * Fetches only the "watch next" recommendations for a video, without the
+ * player setup and poToken generation that `getLocalVideoInfo` performs.
+ * Used by the Similar subscriptions tab to discover related channels.
+ * @param {string} videoId
+ */
+export async function getLocalVideoRecommendations(videoId) {
+  const innertube = await createInnertube()
+
+  const info = await innertube.getInfo(videoId)
+
+  return info.watch_next_feed
+    ?.filter((item) => {
+      return item.type === 'CompactVideo' || item.type === 'CompactMovie' ||
+        (item.type === 'LockupView' && item.content_type === 'VIDEO')
+    })
+    .map(parseLocalWatchNextVideo)
+    .filter(_ => _) ?? []
+}
+
+/**
  * Returns the channel or the channel termination reason
  * @param {string} id
  */

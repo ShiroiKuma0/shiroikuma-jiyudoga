@@ -79,6 +79,7 @@ $watched-transition-duration: 0.5s;
     .thumbnailLink,
     .videoWatched,
     .videoDuration,
+    .starredBadge,
     .externalPlayerIcon,
     .playlistIcons,
     .watchedProgressBar,
@@ -136,6 +137,21 @@ $watched-transition-duration: 0.5s;
       &.live {
         background-color: #f22;
         color: #fff;
+      }
+    }
+
+    .starredBadge {
+      place-self: flex-end start;
+      color: #fc0;
+      font-size: 16px;
+      line-height: 1;
+      margin-block: 0 6px;
+      margin-inline: 6px 0;
+      pointer-events: none;
+      filter: drop-shadow(0 0 2px rgb(0 0 0 / 70%));
+
+      @include is-watch-playlist-item {
+        font-size: 12px;
       }
     }
 

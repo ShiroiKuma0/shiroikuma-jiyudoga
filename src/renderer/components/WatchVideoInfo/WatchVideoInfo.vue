@@ -79,6 +79,14 @@
       <div class="videoOptions">
         <span class="videoOptionsMobileRow">
           <FtIconButton
+            :title="isStarred ? t('Video.Unstar Video') : t('Video.Star Video')"
+            :icon="isStarred ? ['fas', 'star'] : ['far', 'star']"
+            class="starVideoIcon"
+            :class="{ starred: isStarred }"
+            theme="base"
+            @click="toggleStarred"
+          />
+          <FtIconButton
             v-if="showPlaylists && !isUpcoming"
             :title="t('User Playlists.Add to Playlist')"
             :icon="['fas', 'plus']"
@@ -500,6 +508,25 @@ function removeFromQuickBookmarkPlaylist() {
 }
 
 const enableChannelLinks = computed(() => !store.getters.getDisableChannelLinks)
+
+const isStarred = computed(() => store.getters.getStarredVideoIdSet.has(props.id))
+
+function toggleStarred() {
+  if (isStarred.value) {
+    store.dispatch('unstarVideo', props.id)
+  } else {
+    store.dispatch('starVideo', {
+      type: 'video',
+      videoId: props.id,
+      title: props.title,
+      author: props.channelName,
+      authorId: props.channelId,
+      published: props.published,
+      viewCount: props.viewCount,
+      lengthSeconds: props.lengthSeconds
+    })
+  }
+}
 </script>
 
 <style scoped src="./WatchVideoInfo.css" />

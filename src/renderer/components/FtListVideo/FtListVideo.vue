@@ -44,6 +44,12 @@
       >
         {{ isLive ? t("Video.Live") : (isUpcoming ? t("Video.Upcoming") : displayDuration) }}
       </div>
+      <div
+        v-if="isStarred"
+        class="starredBadge"
+      >
+        <FontAwesomeIcon :icon="['fas', 'star']" />
+      </div>
       <FtIconButton
         v-if="externalPlayer !== '' && !externalPlayerIsDefaultViewingMode"
         :title="t('Video.External Player.OpenInTemplate', { externalPlayer })"
@@ -406,6 +412,8 @@ const showDeArrowTitle = ref(false)
 const showDeArrowThumbnail = ref(false)
 
 const historyEntry = computed(() => store.getters.getHistoryCacheById[id.value])
+
+const isStarred = computed(() => store.getters.getStarredVideoIdSet.has(id.value))
 
 const historyEntryExists = computed(() => historyEntry.value !== undefined)
 

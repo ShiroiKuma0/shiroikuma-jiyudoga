@@ -27,6 +27,8 @@ Global:
   Shorts: ショート動画
   Live: ライブ配信
   Posts: 投稿
+  Similar: 類似
+  Starred: スター付き
   Sort By: 並び替え
 
 # Search Bar
@@ -97,6 +99,8 @@ Subscriptions:
   All Subscription Tabs Hidden: 全ての登録チャンネル タブが非表示になっています。こちらのコンテンツをご覧いただくには、"{settingsSection}" 内の "{subsection}" 項目でいくつかのタブの非表示を解除してください。
   Load More Posts: もっと見る
   Empty Posts: 現在、登録しているチャンネルには動画はありません。
+  Empty Starred: このプロファイルにはまだスター付き動画がありません。視聴ページのスターボタンで動画にスターを付けると、ここに集まります。
+  Similar Needs Videos: 類似動画は登録チャンネルの最近の動画から発見されます。先に「動画」タブを更新してから、ここに戻ってください。
 Trending:
   Trending: '急上昇'
   Trending Tabs: 急上昇のタブ
@@ -699,6 +703,8 @@ Channel:
     Courses: コース
     This channel does not currently have any courses: このチャンネルには現在コースはありません
 Video:
+  Star Video: スターを付ける
+  Unstar Video: スターを外す
   Open in YouTube: 'YouTube で表示'
   Copy YouTube Link: 'YouTube リンクのコピー'
   Open YouTube Embedded Player: 'YouTube 埋め込みプレーヤーで表示'

@@ -40,6 +40,7 @@ import {
   faClockRotateLeft,
   faClone,
   faComment,
+  faCompass,
   faCopy,
   faDatabase,
   faDisplay,
@@ -104,6 +105,7 @@ import {
   faSortAlphaDown,
   faSortAlphaDownAlt,
   faSortDown,
+  faStar,
   faStepBackward,
   faStepForward,
   faSync,
@@ -130,7 +132,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import {
   faBookmark as farBookmark,
-  faDotCircle as farDotCircle
+  faDotCircle as farDotCircle,
+  faStar as farStar
 } from '@fortawesome/free-regular-svg-icons'
 import {
   faBitcoin,
@@ -169,6 +172,7 @@ library.add(
   faClockRotateLeft,
   faClone,
   faComment,
+  faCompass,
   faCopy,
   faDatabase,
   faDisplay,
@@ -234,6 +238,7 @@ library.add(
   faSortAlphaDown,
   faSortAlphaDownAlt,
   faSortDown,
+  faStar,
   faStepBackward,
   faStepForward,
   faSync,
@@ -261,6 +266,7 @@ library.add(
   // solid icons
   farBookmark,
   farDotCircle,
+  farStar,
 
   // brand icons
   faGithub,

@@ -36,6 +36,18 @@ const getters = {
 
     return mainProfile.subscriptions.reduce((set, channel) => set.add(channel.id), new Set())
   },
+
+  getActiveProfileSubscribedChannelIdSet: (_state, getters) => {
+    return getters.getActiveProfile.subscriptions.reduce((set, channel) => set.add(channel.id), new Set())
+  },
+
+  getActiveProfileStarredVideos: (_state, getters) => {
+    return getters.getActiveProfile?.starredVideos ?? []
+  },
+
+  getStarredVideoIdSet: (_state, getters) => {
+    return getters.getActiveProfileStarredVideos.reduce((set, video) => set.add(video.videoId), new Set())
+  },
 }
 
 const collator = new Intl.Collator(undefined, {
@@ -257,6 +269,42 @@ const actions = {
 
   updateActiveProfile({ commit }, id) {
     commit('setActiveProfile', id)
+  },
+
+  // Mirrors the subscription semantics: starring adds the video to the active
+  // profile and to the "All Channels" profile, unstarring removes it from the
+  // active profile only, unless the active profile is "All Channels", in which
+  // case it is removed everywhere.
+  async starVideo({ dispatch, state }, videoData) {
+    const entry = { ...videoData, timeStarred: Date.now() }
+
+    for (const profile of state.profileList) {
+      if (profile._id !== state.activeProfile && profile._id !== MAIN_PROFILE_ID) { continue }
+
+      const starredVideos = profile.starredVideos ?? []
+
+      if (starredVideos.some((video) => video.videoId === entry.videoId)) { continue }
+
+      const profileCopy = deepCopy(profile)
+      profileCopy.starredVideos = [...starredVideos, entry]
+      await dispatch('updateProfile', profileCopy)
+    }
+  },
+
+  async unstarVideo({ dispatch, state }, videoId) {
+    const activeProfileIsMain = state.activeProfile === MAIN_PROFILE_ID
+
+    for (const profile of state.profileList) {
+      if (!activeProfileIsMain && profile._id !== state.activeProfile) { continue }
+
+      const starredVideos = profile.starredVideos ?? []
+
+      if (!starredVideos.some((video) => video.videoId === videoId)) { continue }
+
+      const profileCopy = deepCopy(profile)
+      profileCopy.starredVideos = starredVideos.filter((video) => video.videoId !== videoId)
+      await dispatch('updateProfile', profileCopy)
+    }
   }
 }
 

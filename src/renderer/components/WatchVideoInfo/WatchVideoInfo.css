@@ -139,3 +139,7 @@
     inset-inline: 0 auto;
   }
 }
+
+.starVideoIcon.starred :deep(.iconButton) {
+  color: #fc0;
+}

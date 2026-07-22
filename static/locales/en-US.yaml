@@ -43,6 +43,8 @@ Global:
   Shorts: Shorts
   Live: Live
   Posts: Posts
+  Similar: Similar
+  Starred: Starred
   Sort By: Sort By
   Counts:
     Video Count: 1 video | {count} videos
@@ -127,6 +129,8 @@ Subscriptions:
   Disabled Automatic Fetching: You have disabled automatic subscription fetching. Refresh subscriptions to see them here.
   Empty Channels: Your subscribed channels currently does not have any videos.
   Empty Posts: Your subscribed channels currently do not have any posts.
+  Empty Starred: You have not starred any videos in this profile yet. Star videos with the star button on the watch page to collect them here.
+  Similar Needs Videos: Similar videos are discovered from the recent videos of your subscriptions. Refresh the Videos tab first, then come back here.
   Load More Videos: Load More Videos
   Load More Posts: Load More Posts
   Subscriptions Tabs: Subscriptions Tabs
@@ -848,6 +852,8 @@ Video:
   DRMProtected: DRM protected videos cannot be played in 白い熊 自由動画, as they require proprietary, closed source components. If you want to watch this video please watch it on the official YouTube website in a DRM enabled web browser.
   Private: Private videos cannot be watched in 白い熊 自由動画 as they require Google login and ownership of the video.
   More Options: More Options
+  Star Video: Star Video
+  Unstar Video: Unstar Video
   Mark As Watched: Mark As Watched
   Remove From History: Remove From History
   Video has been marked as watched: Video has been marked as watched
