@@ -629,7 +629,18 @@ export default defineComponent({
           this.videoPublished = Date.parse(result.primary_info.published)
         }
 
-        if (result.secondary_info?.description.runs) {
+        // When YouTube auto-translates the metadata, the next endpoint
+        // (primary_info/secondary_info) carries the translated title AND
+        // description, while the player data (basic_info) stays in the
+        // original language. A title mismatch therefore signals that the
+        // secondary_info description is a translation too — in that case use
+        // the original plain-text description from the player data (it loses
+        // channel/hashtag links, but URLs and timestamps stay clickable).
+        const metadataIsTranslated = !!result.basic_info.title?.trim() &&
+          !!result.primary_info?.title.text?.trim() &&
+          result.basic_info.title.trim() !== result.primary_info.title.text.trim()
+
+        if (result.secondary_info?.description.runs && !metadataIsTranslated) {
           try {
             this.videoDescription = parseLocalTextRuns(result.secondary_info.description.runs)
           } catch (error) {
@@ -637,7 +648,7 @@ export default defineComponent({
             this.videoDescription = result.basic_info.short_description
           }
         } else {
-          this.videoDescription = result.basic_info.short_description
+          this.videoDescription = result.basic_info.short_description ?? ''
         }
 
         switch (this.thumbnailPreference) {
