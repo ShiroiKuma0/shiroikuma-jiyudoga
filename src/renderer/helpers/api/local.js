@@ -3,6 +3,7 @@ import Autolinker from 'autolinker'
 import { SEARCH_CHAR_LIMIT } from '../../../constants'
 
 import { PlayerCache } from './PlayerCache'
+import { generatePOToken, runDecipherScript } from '../android/potokens'
 import {
   CHANNEL_HANDLE_REGEX,
   calculatePublishedDate,
@@ -52,6 +53,10 @@ if (process.env.SUPPORTS_LOCAL_API) {
 
         window.addEventListener('message', listener)
         iframe.contentWindow.postMessage(JSON.stringify({ id: messageId, code }), '*')
+      } else if (process.env.IS_ANDROID) {
+        // the Android layer evaluates the code in the dedicated sig WebView
+        // (decipher.html / SigWebViewJavascriptInterface)
+        runDecipherScript(messageId, code).then(resolve).catch(reject)
       } else {
         reject(new Error('Please setup the eval function for the n/sig deciphering'))
       }
@@ -455,6 +460,19 @@ export async function getLocalVideoInfo(id) {
       console.error('Local API, poToken generation failed', error)
       throw error
     }
+  } else if (process.env.IS_ANDROID) {
+    // restored from the FreeTubeAndroid layer (lost in the 0.25 merge):
+    // the BotGuard WebView generates the content poToken on Android
+    try {
+      contentPoToken = await generatePOToken(
+        id,
+        JSON.stringify(webInnertube.session.context)
+      )
+      webInnertube.session.player.po_token = contentPoToken
+    } catch (error) {
+      // non-fatal: keep the previous (tokenless) behavior on failure
+      console.error('Local API, Android poToken generation failed', error)
+    }
   }
 
   const info = await webInnertube.getInfo(id, { po_token: contentPoToken })
@@ -561,8 +579,12 @@ export async function getLocalVideoInfo(id) {
     for (const captionTrack of info.captions.caption_tracks) {
       const url = new URL(captionTrack.base_url)
 
-      url.searchParams.set('potc', '1')
-      url.searchParams.set('pot', contentPoToken)
+      // only claim a proof-of-origin token when we actually have one —
+      // potc=1 with pot=undefined (the Android case) poisons the URL
+      if (contentPoToken) {
+        url.searchParams.set('potc', '1')
+        url.searchParams.set('pot', contentPoToken)
+      }
       url.searchParams.set('c', clientName)
 
       // Remove &xosf=1 as it adds `position:63% line:0%` to the subtitle lines
@@ -1632,8 +1654,8 @@ function parseLockupView(lockupView, channelId = undefined, channelName = undefi
       let isUpcoming = false
       let premiereDate
 
-      const isMemberOnly = lockupView.metadata.metadata?.metadata_rows.some(row => {
-        return row.badges.some(badge => badge.style === 'BADGE_MEMBERS_ONLY')
+      const isMemberOnly = lockupView.metadata.metadata?.metadata_rows?.some(row => {
+        return row.badges?.some(badge => badge.style === 'BADGE_MEMBERS_ONLY')
       })
       if (isMemberOnly) {
         return null
@@ -1696,7 +1718,7 @@ function parseLockupView(lockupView, channelId = undefined, channelName = undefi
         }
       }
 
-      const maybeAuthorText = lockupView.metadata.metadata?.metadata_rows[0].metadata_parts?.[0].text?.text
+      const maybeAuthorText = lockupView.metadata.metadata?.metadata_rows?.[0]?.metadata_parts?.[0]?.text?.text
       let author = channelName
       if (maybeAuthorText && !isViewCountText(maybeAuthorText) && !isPremieresTimeText(maybeAuthorText)) {
         author = maybeAuthorText
