@@ -9,28 +9,46 @@
 白い熊's fork of [FreeTube](https://github.com/FreeTubeApp/FreeTube) (AGPL-3.0) with the
 Android layer of [FreeTubeAndroid](https://github.com/MarmadileManteater/FreeTubeAndroid)
 grafted on and maintained against the current FreeTube development tip, plus **major
-additions**: original-language video titles, live grid zoom, full-width views, and a
-sister-repo-style UI theming layer. Every release builds **both** artifacts:
+additions**: original-language titles & descriptions, a channel-discovery **Similar** tab,
+per-profile video **starring**, live grid zoom, full-width views, and a sister-repo-style
+UI theming layer. Every release builds **both** artifacts:
 
 - **GNU/Linux amd64 `.deb`** (Electron; installable on Tuxedo OS / Ubuntu / Debian)
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1+7`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1+9`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
 ---
 
-## 🈶 Original-language video titles
+## 🈶 Original-language titles & descriptions
 
-YouTube silently translates video titles server-side into the request language — a Japanese
-or Russian video shows up with a machine-translated English title. This fork restores the
-**original title everywhere**: every visible video tile resolves its untranslated title
-through YouTube's oEmbed endpoint (cached, throttled, zero extra requests for tiles you
-never scroll to), and the watch page reads the player response, which always carries the
-original. Watch a trilingual feed — 日本語, русский, English — and every title is the one
-its creator wrote.
+YouTube silently translates video titles — and descriptions — server-side into the request
+language: a Japanese or Russian video shows up with a machine-translated English title and
+description. This fork restores the **original text everywhere**: every visible video tile
+resolves its untranslated title through YouTube's oEmbed endpoint (cached, throttled, zero
+extra requests for tiles you never scroll to), and the watch page reads the player
+response, which always carries the original — title *and* description (links and
+timestamps stay clickable). Watch a trilingual feed — 日本語, русский, English — and every
+word is the one its creator wrote.
+
+## 🧭 Similar tab — discover channels per topic
+
+Every profile groups subscriptions by topic; the new **Similar** tab in Subscriptions turns
+that into a discovery engine. It takes the newest videos across the profile's channels,
+collects YouTube's "watch next" recommendations for them, throws away everything you're
+already subscribed to, and shows the rest as a date-ordered grid — related videos from
+**channels you don't know yet**, matched to the profile's topic. Visit one, like it,
+subscribe it into the profile.
+
+## ⭐ Star videos, per profile
+
+A star button on the watch page (in front of "+") marks any video or short as starred in
+the active profile. Starred videos carry a gold star on their tile thumbnails, and the
+**Starred** tab collects them per profile, newest-starred first — a lightweight favorites
+layer that travels with your profiles on export and sync.
 
 ## 🔍 Live grid zoom
 
@@ -67,7 +85,7 @@ new fork builds — never a stale upstream version.
   by this fork (including keeping the desktop Electron build alive, which the Android fork
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
-- Versioning: `<upstream version>+<build>` (e.g. `0.25.1+7`); Android
+- Versioning: `<upstream version>+<build>` (e.g. `0.25.1+9`); Android
   `versionCode = (maj*10000 + min*100 + patch) * 10000 + build`.
 
 ## Branch model
