@@ -125,6 +125,9 @@ export default defineComponent({
       videoTitle: '',
       videoDescription: '',
       videoDescriptionHtml: '',
+      // raw plain description (basic_info/Invidious) for the jisho study export
+      plainVideoDescription: '',
+      studyExportRunning: false,
       license: '',
       videoViewCount: 0,
       videoLikeCount: 0,
@@ -629,6 +632,8 @@ export default defineComponent({
           this.videoPublished = Date.parse(result.primary_info.published)
         }
 
+        this.plainVideoDescription = result.basic_info.short_description ?? ''
+
         // When YouTube auto-translates the metadata, the next endpoint
         // (primary_info/secondary_info) carries the translated title AND
         // description, while the player data (basic_info) stays in the
@@ -1088,6 +1093,7 @@ export default defineComponent({
 
           this.videoPublished = result.published * 1000
           this.videoDescriptionHtml = result.descriptionHtml
+          this.plainVideoDescription = result.description ?? ''
           const recommendedVideos = result.recommendedVideos
 
           // The recommended videos currently use yyyy-mm-ddThh:mm:ss for the published timestamp
@@ -1965,6 +1971,53 @@ export default defineComponent({
 
       if (player && !player.isPaused()) {
         player.pause()
+      }
+    },
+
+    handleStudyExport: async function () {
+      if (!process.env.IS_ANDROID || this.studyExportRunning) { return }
+      this.studyExportRunning = true
+
+      try {
+        const { exportForStudy } = await import('../../helpers/android/study-export')
+
+        showToast(this.t('Video.Study Export.Preparing'))
+        this.$store.commit('setShowProgressBar', true)
+        this.$store.commit('setProgressBarPercentage', 0)
+
+        const { aligned } = await exportForStudy({
+          captions: this.captions,
+          legacyFormats: this.legacyFormats,
+          description: this.plainVideoDescription,
+          videoId: this.videoId,
+          title: this.videoTitle,
+          published: this.videoPublished,
+          onProgress: (fraction) => {
+            this.$store.commit('setProgressBarPercentage', Math.min(100, fraction * 100))
+          }
+        })
+
+        showToast(aligned
+          ? this.t('Video.Study Export.Done Aligned')
+          : this.t('Video.Study Export.Done ASR'))
+      } catch (error) {
+        console.error('study export failed', error)
+
+        if (error?.code !== 'canceled') {
+          const messages = {
+            'jisho-not-installed': this.t('Video.Study Export.Jisho Missing'),
+            'no-study-dir': this.t('Video.Study Export.Bad Directory'),
+            'no-captions': this.t('Video.Study Export.No Captions'),
+            'captions-fetch-failed': this.t('Video.Study Export.Captions Failed'),
+            'no-format': this.t('Video.Study Export.No Format'),
+            'download-failed': this.t('Video.Study Export.Download Failed'),
+            'video-too-large': this.t('Video.Study Export.Too Large')
+          }
+          showToast(messages[error?.code] ?? this.t('Video.Study Export.Failed'))
+        }
+      } finally {
+        this.$store.commit('setShowProgressBar', false)
+        this.studyExportRunning = false
       }
     },
 

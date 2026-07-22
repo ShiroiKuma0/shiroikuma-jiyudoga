@@ -55,6 +55,7 @@ Global:
     Comment Count: 1 comment | {count} comments
     Watching Count: 1 watching | {count} watching
 
+
 # Search Bar
 Search / Go to URL: Search / Go to URL
 Search Bar:
@@ -854,6 +855,19 @@ Video:
   More Options: More Options
   Star Video: Star Video
   Unstar Video: Unstar Video
+  Study in jisho: Study in jisho
+  Study Export:
+    Preparing: Preparing study subtitles…
+    Done Aligned: Sent to jisho — subtitles aligned with the description transcript
+    Done ASR: Sent to jisho — auto-generated subtitles
+    Failed: Study export failed
+    Jisho Missing: shiroikuma-jisho is not installed
+    Bad Directory: The study folder must be on device storage — please pick it again
+    No Captions: This video has no captions to build study subtitles from
+    Captions Failed: Could not download the captions — try again later
+    No Format: No downloadable video format available for this video
+    Download Failed: Video download failed — try again later
+    Too Large: This video is too large for the study export
   Mark As Watched: Mark As Watched
   Remove From History: Remove From History
   Video has been marked as watched: Video has been marked as watched

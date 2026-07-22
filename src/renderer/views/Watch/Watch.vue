@@ -157,6 +157,7 @@
         @change-format="handleFormatChange"
         @pause-player="pausePlayer"
         @save-watched-progress="handleWatchProgressManualSave"
+        @study-export="handleStudyExport"
       />
       <watch-video-chapters
         v-if="!hideChapters && !isLoading && videoChapters.length > 0"

@@ -22,6 +22,14 @@ class AsyncJSCommunicator(givenWebView: WebView) {
     webView.dispatchEvent("$id-reject")
   }
 
+  /**
+   * emits a progress update for a pending js promise; the latest message wins
+   */
+  fun progress(id: String, message: String) {
+    syncMessages["$id-progress"] = message
+    webView.dispatchEvent("$id-progress")
+  }
+
   fun getSyncMessage(promise: String): String {
     val value = syncMessages[promise]
     syncMessages.remove(promise)

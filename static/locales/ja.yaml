@@ -705,6 +705,19 @@ Channel:
 Video:
   Star Video: スターを付ける
   Unstar Video: スターを外す
+  Study in jisho: 辞書で勉強
+  Study Export:
+    Preparing: 勉強用字幕を準備中…
+    Done Aligned: 辞書に送信しました — 概要欄の書き起こしに合わせた字幕付き
+    Done ASR: 辞書に送信しました — 自動生成字幕付き
+    Failed: 勉強用エクスポートに失敗しました
+    Jisho Missing: 白い熊の辞書がインストールされていません
+    Bad Directory: 勉強用フォルダは端末ストレージ上に必要です — もう一度選択してください
+    No Captions: この動画には字幕がないため、勉強用字幕を作成できません
+    Captions Failed: 字幕のダウンロードに失敗しました — 後でもう一度お試しください
+    No Format: この動画にはダウンロード可能なフォーマットがありません
+    Download Failed: 動画のダウンロードに失敗しました — 後でもう一度お試しください
+    Too Large: この動画は勉強用エクスポートには大きすぎます
   Open in YouTube: 'YouTube で表示'
   Copy YouTube Link: 'YouTube リンクのコピー'
   Open YouTube Embedded Player: 'YouTube 埋め込みプレーヤーで表示'

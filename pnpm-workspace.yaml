@@ -15,3 +15,6 @@ overrides:
 
 minimumReleaseAgeExclude:
   - "youtubei.js"
+
+patchedDependencies:
+  mediabunny: patches/mediabunny.patch

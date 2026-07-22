@@ -113,6 +113,13 @@
         </span>
         <span class="videoOptionsMobileRow">
           <FtIconButton
+            v-if="USING_ANDROID"
+            :title="t('Video.Study in jisho')"
+            :icon="['fas', 'graduation-cap']"
+            theme="secondary"
+            @click="$emit('study-export')"
+          />
+          <FtIconButton
             v-if="USING_ELECTRON && externalPlayer !== ''"
             :title="t('Video.External Player.OpenInTemplate', { externalPlayer })"
             :icon="['fas', 'external-link-alt']"
@@ -249,9 +256,11 @@ const emit = defineEmits([
   'change-format',
   'pause-player',
   'save-watched-progress',
+  'study-export',
 ])
 
 const USING_ELECTRON = process.env.IS_ELECTRON
+const USING_ANDROID = process.env.IS_ANDROID
 
 const { locale, t } = useI18n()
 

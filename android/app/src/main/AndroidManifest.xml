@@ -7,6 +7,11 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
+  <!-- package visibility (Android 11+) for the shiroikuma-jisho study hand-off -->
+  <queries>
+    <package android:name="shiroikuma.jisho" />
+  </queries>
+
   <supports-screens
     android:anyDensity="true"
     android:smallScreens="true"

@@ -313,6 +313,8 @@ const state = {
   skuiCustomFonts: '[]',
   // grid zoom factor: Ctrl+wheel (desktop) / two-finger pinch (Android)
   skuiGridScale: 1,
+  // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
+  studyDirectoryTree: '',
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',

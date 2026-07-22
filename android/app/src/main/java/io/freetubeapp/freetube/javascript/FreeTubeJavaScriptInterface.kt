@@ -17,6 +17,7 @@ import android.media.session.PlaybackState
 import android.media.session.PlaybackState.STATE_PAUSED
 import android.net.Uri
 import android.os.Build
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
@@ -46,6 +47,7 @@ import io.freetubeapp.freetube.helpers.writeText
 import io.freetubeapp.freetube.webviews.BotGuardWebView
 import org.json.JSONObject
 import java.io.File
+import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
 import java.util.UUID.*
@@ -65,6 +67,8 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   companion object {
     private const val DATA_DIRECTORY = "data://"
     private const val CHANNEL_ID = "media_controls"
+    private const val JISHO_PACKAGE = "shiroikuma.jisho"
+    private const val DOWNLOAD_USER_AGENT = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
     private val NOTIFICATION_ID = (2..1000).random()
     private val NOTIFICATION_TAG = String.format("%s", randomUUID())
   }
@@ -442,6 +446,43 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
     val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
     return directory!!.createFile("*/*", fileName)!!.uri.toString()
   }
+
+  /**
+   * Creates a file in a SAF tree, deleting any existing file with the same
+   * name first. Plain createFile would silently rename to "name (1)", which
+   * breaks the video/SRT same-basename pairing of the jisho study export.
+   */
+  @JavascriptInterface
+  fun createOrReplaceFileInTree(tree: String, fileName: String): String {
+    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))!!
+    directory.findFile(fileName)?.delete()
+    return directory.createFile("*/*", fileName)!!.uri.toString()
+  }
+
+  @JavascriptInterface
+  fun deleteFileInTree(tree: String, fileName: String): Boolean {
+    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree)) ?: return false
+    return directory.findFile(fileName)?.delete() ?: false
+  }
+
+  /**
+   * Derives the absolute filesystem path of an ExternalStorageProvider tree
+   * uri (the study handover passes plain paths to jisho, which holds
+   * MANAGE_EXTERNAL_STORAGE). Returns "" for non-device providers.
+   */
+  @JavascriptInterface
+  fun treeUriToPath(tree: String): String {
+    val uri = Uri.parse(tree)
+    if (uri.authority != "com.android.externalstorage.documents") {
+      return ""
+    }
+    val documentId = DocumentsContract.getTreeDocumentId(uri)
+    val parts = documentId.split(":", limit = 2)
+    val volume = parts[0]
+    val relativePath = if (parts.size > 1) parts[1] else ""
+    val root = if (volume == "primary") "/storage/emulated/0" else "/storage/$volume"
+    return if (relativePath.isEmpty()) root else "$root/${relativePath.trimEnd('/')}"
+  }
   // endregion
 
   // region IO
@@ -664,6 +705,132 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
           }
         }
     }).addJsCommunicator(jsCommunicator)
+  }
+
+  // endregion
+
+  // region Study export (jisho hand-off)
+
+  /**
+   * Streams a URL into a content uri on a background thread, with progress
+   * events. Uses chunked Range requests (googlevideo throttles single long
+   * GETs) and returns a promise id resolving to the number of bytes written.
+   */
+  @JavascriptInterface
+  fun downloadToUri(url: String, uri: String): String {
+    val id = "${randomUUID()}"
+    context.threadPoolExecutor.execute {
+      try {
+        var totalBytes = -1L
+        var written = 0L
+        var lastReportedBytes = 0L
+        val chunkSize = 9L * 1024L * 1024L
+        var singleRequest = false
+
+        context.contentResolver.openOutputStream(Uri.parse(uri), "wt")!!.use { output ->
+          while (totalBytes < 0 || written < totalBytes) {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.instanceFollowRedirects = true
+            connection.setRequestProperty("User-Agent", DOWNLOAD_USER_AGENT)
+            if (!singleRequest) {
+              connection.setRequestProperty("Range", "bytes=$written-${written + chunkSize - 1}")
+            }
+            connection.connect()
+
+            val code = connection.responseCode
+            if (code == 200) {
+              // server ignored the Range header, read everything in one go
+              singleRequest = true
+            } else if (code != 206) {
+              connection.disconnect()
+              throw Exception("HTTP $code while downloading")
+            }
+
+            if (totalBytes < 0) {
+              totalBytes = if (code == 206) {
+                connection.getHeaderField("Content-Range")?.substringAfter('/')?.toLongOrNull() ?: -2L
+              } else {
+                connection.contentLengthLong
+              }
+            }
+
+            connection.inputStream.use { input ->
+              val buffer = ByteArray(64 * 1024)
+              while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                output.write(buffer, 0, read)
+                written += read
+                if (written - lastReportedBytes >= 512 * 1024) {
+                  lastReportedBytes = written
+                  jsCommunicator.progress(id, "{ \"bytes\": $written, \"total\": $totalBytes }")
+                }
+              }
+            }
+            connection.disconnect()
+
+            // unknown total length: a single (possibly ranged) response is all we get
+            if (singleRequest || totalBytes == -2L) break
+          }
+        }
+
+        if (written == 0L) {
+          throw Exception("downloaded 0 bytes")
+        }
+        jsCommunicator.resolve(id, "$written")
+      } catch (ex: Exception) {
+        try {
+          DocumentFile.fromSingleUri(context, Uri.parse(uri))?.delete()
+        } catch (_: Exception) {}
+        jsCommunicator.reject(id, ex.stackTraceToString())
+      }
+    }
+    return id
+  }
+
+  /**
+   * pulls the latest progress message of a pending promise ("" when none)
+   */
+  @JavascriptInterface
+  fun getProgress(id: String): String {
+    return try {
+      jsCommunicator.getSyncMessage("$id-progress")
+    } catch (ex: Exception) {
+      ""
+    }
+  }
+
+  @JavascriptInterface
+  fun isJishoInstalled(): Boolean {
+    return try {
+      context.packageManager.getPackageInfo(JISHO_PACKAGE, 0)
+      true
+    } catch (ex: Exception) {
+      false
+    }
+  }
+
+  /**
+   * Hands a downloaded study video over to shiroikuma-jisho via an explicit
+   * intent (contract documented in jisho's hand-off.md).
+   */
+  @JavascriptInterface
+  fun openStudyVideoInJisho(videoPath: String, subtitlePath: String, studyDir: String, title: String, videoId: String): String {
+    return try {
+      val intent = Intent("shiroikuma.jisho.intent.action.STUDY_VIDEO")
+      intent.setClassName(JISHO_PACKAGE, "$JISHO_PACKAGE.MainActivity")
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      intent.putExtra("path", videoPath)
+      intent.putExtra("subtitlePath", subtitlePath)
+      intent.putExtra("studyDir", studyDir)
+      intent.putExtra("title", title)
+      intent.putExtra("videoId", videoId)
+      intent.putExtra("source", "jiyudoga")
+      context.startActivity(intent)
+      "ok"
+    } catch (ex: Exception) {
+      "error: $ex"
+    }
   }
 
   // endregion
