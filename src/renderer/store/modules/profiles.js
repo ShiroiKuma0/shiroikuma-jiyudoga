@@ -276,17 +276,19 @@ const actions = {
   // active profile only, unless the active profile is "All Channels", in which
   // case it is removed everywhere.
   async starVideo({ dispatch, state }, videoData) {
-    const entry = { ...videoData, timeStarred: Date.now() }
+    // Everything that ends up on the profile has to survive the structured clone
+    // of the IPC call to the main process, so it must be built from the deep copy:
+    // the entries on the store's own profiles are reactive proxies, and cloning a
+    // proxy throws "An object could not be cloned", which silently loses the write.
+    const entry = deepCopy({ ...videoData, timeStarred: Date.now() })
 
     for (const profile of state.profileList) {
       if (profile._id !== state.activeProfile && profile._id !== MAIN_PROFILE_ID) { continue }
 
-      const starredVideos = profile.starredVideos ?? []
-
-      if (starredVideos.some((video) => video.videoId === entry.videoId)) { continue }
+      if ((profile.starredVideos ?? []).some((video) => video.videoId === entry.videoId)) { continue }
 
       const profileCopy = deepCopy(profile)
-      profileCopy.starredVideos = [...starredVideos, entry]
+      profileCopy.starredVideos = [...(profileCopy.starredVideos ?? []), entry]
       await dispatch('updateProfile', profileCopy)
     }
   },
@@ -297,12 +299,10 @@ const actions = {
     for (const profile of state.profileList) {
       if (!activeProfileIsMain && profile._id !== state.activeProfile) { continue }
 
-      const starredVideos = profile.starredVideos ?? []
-
-      if (!starredVideos.some((video) => video.videoId === videoId)) { continue }
+      if (!(profile.starredVideos ?? []).some((video) => video.videoId === videoId)) { continue }
 
       const profileCopy = deepCopy(profile)
-      profileCopy.starredVideos = starredVideos.filter((video) => video.videoId !== videoId)
+      profileCopy.starredVideos = profileCopy.starredVideos.filter((video) => video.videoId !== videoId)
       await dispatch('updateProfile', profileCopy)
     }
   }
