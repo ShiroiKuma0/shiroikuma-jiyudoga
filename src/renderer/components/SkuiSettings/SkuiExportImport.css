@@ -1,0 +1,212 @@
+/*
+ * 白い熊 自由動画 Export / Import panel — the Kōjiki export/import sheet in web form:
+ * ONE bordered rounded box carries the whole panel (centred bold title, dim description,
+ * a bordered tappable folder box, the last-backup line, a divider, Select all + the
+ * category checkboxes, a divider), closed by an ArcaneChat action row — round pills,
+ * Cancel alone on the left, Import + Export grouped on the right.
+ */
+
+.skuiOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgb(0 0 0 / 70%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
+
+  /* above FtPrompt, which the settings page can also raise */
+  z-index: 210;
+}
+
+.skuiPanel {
+  --skui-warn: #f66;
+
+  background-color: var(--bg-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  box-sizing: border-box;
+  color: var(--primary-text-color);
+  margin-inline: auto;
+  max-block-size: 100%;
+  max-inline-size: 40em;
+  overflow-y: auto;
+  padding-block: 16px 20px;
+  padding-inline: 20px;
+  inline-size: 100%;
+}
+
+.skuiPanelTitle {
+  color: var(--primary-color);
+  font-size: 1.15em;
+  font-weight: 700;
+  margin-block: 2px 6px;
+  margin-inline: 0;
+  text-align: center;
+}
+
+.skuiPanelDesc {
+  font-size: 0.85em;
+  margin-block: 0 10px;
+  margin-inline: 0;
+  opacity: 0.85;
+}
+
+/* the folder box: small label over the bold value, warn-red when unset */
+.skuiDirBox {
+  background: none;
+  border: 2px solid var(--primary-color);
+  border-radius: 10px;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  inline-size: 100%;
+  margin-block: 6px;
+  padding-block: 10px;
+  padding-inline: 12px;
+  text-align: start;
+}
+
+.skuiDirLabel {
+  color: var(--primary-color);
+  display: block;
+  font-size: 0.78em;
+}
+
+.skuiDirValue {
+  display: block;
+  font-size: 0.98em;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.skuiStatus {
+  font-size: 0.9em;
+  margin-block: 0 8px;
+  margin-inline: 0;
+  opacity: 0.8;
+  padding-inline-start: 2px;
+}
+
+/* red until a folder is set, then the app's yellow */
+.skuiWarn {
+  color: var(--skui-warn);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.skuiOk {
+  color: var(--primary-color);
+}
+
+.skuiPanelRule {
+  background-color: var(--primary-color);
+  block-size: 1px;
+  border: 0;
+  margin-block: 8px 4px;
+  margin-inline: 0;
+  opacity: 0.4;
+}
+
+.skuiCheck {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.55em;
+  padding-block: 0.28em;
+}
+
+.skuiCheck input {
+  accent-color: var(--primary-color);
+  block-size: 1.05em;
+  flex: 0 0 auto;
+  inline-size: 1.05em;
+  margin: 0;
+}
+
+.skuiCheckAll {
+  font-weight: 700;
+}
+
+.skuiCheckChild {
+  padding-inline-start: 1.8em;
+}
+
+.skuiActions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  padding-block-start: 14px;
+}
+
+.skuiActionSpacer {
+  flex: 1 1 auto;
+}
+
+/* ArcaneChat-style dialog action: a round-pill outline button */
+.skuiPill {
+  background-color: var(--bg-color);
+  border: 1.5px solid var(--primary-color);
+  border-radius: 100px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font: inherit;
+  padding-block: 10px;
+  padding-inline: 20px;
+  white-space: nowrap;
+}
+
+.skuiPill:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* ---- the finished / failed info dialog ---- */
+
+.skuiInfoOverlay {
+  position: fixed;
+  inset: 0;
+  align-items: center;
+  background-color: rgb(0 0 0 / 70%);
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  z-index: 220;
+}
+
+.skuiInfoBox {
+  background-color: var(--bg-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  box-sizing: border-box;
+  max-block-size: 100%;
+  max-inline-size: 32em;
+  overflow-y: auto;
+  padding-block: 20px 16px;
+  padding-inline: 22px;
+  inline-size: 100%;
+}
+
+.skuiInfoTitle {
+  color: var(--primary-color);
+  font-size: 1.1em;
+  font-weight: 700;
+  margin: 0;
+}
+
+.skuiInfoBody {
+  color: var(--primary-color);
+  font-size: 0.9em;
+  margin-block: 10px 0;
+  margin-inline: 0;
+  white-space: pre-wrap;
+}
+
+.skuiInfoActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-block-start: 16px;
+}

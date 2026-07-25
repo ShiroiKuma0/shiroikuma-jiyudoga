@@ -7,9 +7,17 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
-  <!-- package visibility (Android 11+) for the shiroikuma-jisho study hand-off -->
+  <!-- Optional: lets the 保存復元 automation contract honour an absolute `path` extra
+       (e.g. the shared 「[979] バックアップ」 folder). Without the grant the export falls
+       back to the SAF folder picked in the Export/Import panel. -->
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+    tools:ignore="ScopedStorage" />
+
+  <!-- package visibility (Android 11+) for the shiroikuma-jisho study hand-off and for
+       replying to 自由作業盤's token-gated backup broadcasts -->
   <queries>
     <package android:name="shiroikuma.jisho" />
+    <package android:name="shiroikuma.jiyusagyoban" />
   </queries>
 
   <supports-screens
@@ -38,6 +46,17 @@
         android:foregroundServiceType="mediaPlayback"
         android:exported="false">
     </service>
+
+    <!-- 保存復元 automation contract: 自由作業盤 backs up every sister app in one batch.
+         No android:permission — the caller cannot hold one; the token is the gate. -->
+    <receiver
+      android:name=".backup.StateExportReceiver"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="${applicationId}.action.EXPORT_STATE" />
+        <action android:name="${applicationId}.action.LIST_CATEGORIES" />
+      </intent-filter>
+    </receiver>
 
     <receiver android:name=".MediaControlsReceiver"
       android:exported="true">

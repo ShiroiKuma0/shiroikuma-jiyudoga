@@ -1299,3 +1299,39 @@ SKUI:
   Font & UI size: Font & UI size
   Font file: Font file
   Only ttf and otf fonts are supported: Only ttf and otf fonts are supported
+  Backup:
+    Export / Import: Export / Import
+    Export / Import…: Export / Import…
+    Panel description: >-
+      Saves the ticked parts of the app into one .zip in the backup folder, or restores
+      the ticked parts a chosen .zip contains. Parts the archive does not carry are skipped.
+    Backup folder: Backup folder
+    No backup directory set: No backup directory set
+    No backup in this folder yet: No backup in this folder yet
+    Last backup: 'Last backup: {when} — {name}'
+    Working: Working…
+    Select all: Select all
+    Cancel: Cancel
+    Import: Import
+    Export: Export
+    OK: OK
+    Later: Later
+    Restart now: Restart now
+    Export finished: Export finished
+    Export failed: Export failed
+    Import finished: Import finished
+    Import failed: Import failed
+    No categories selected: No categories selected.
+    N categories: '{count} categories'
+    Restart hint: Restart the app to apply the restored data.
+    Automation export: Automation export
+    Automation export description: >-
+      Lets sister-app tasks trigger this app's export through the token-gated intent.
+    Automation token: Automation token
+    All files access needed: >-
+      Automation is on, but this app cannot write outside its own backup folder — grant
+      all-files access so a sister-app run can place the backup in the shared folder.
+    Grant access: Grant access
+    Regenerate: Regenerate
+    Token copied: Automation token copied to the clipboard
+    Token regenerated: New automation token generated — update every pasted copy

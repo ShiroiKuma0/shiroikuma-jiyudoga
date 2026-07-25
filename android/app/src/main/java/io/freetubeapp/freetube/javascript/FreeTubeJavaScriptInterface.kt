@@ -6,6 +6,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.Intent.EXTRA_KEY_EVENT
 import android.graphics.BitmapFactory
@@ -17,8 +20,8 @@ import android.media.session.PlaybackState
 import android.media.session.PlaybackState.STATE_PAUSED
 import android.net.Uri
 import android.os.Build
-import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import android.provider.Settings
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
 import android.view.KeyEvent.KEYCODE_MEDIA_PAUSE
@@ -36,8 +39,13 @@ import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.MainActivity
 import io.freetubeapp.freetube.MediaControlsReceiver
 import io.freetubeapp.freetube.R
+import io.freetubeapp.freetube.backup.AutomationAuth
+import io.freetubeapp.freetube.backup.BackupWriter
+import io.freetubeapp.freetube.backup.StateBackup
+import io.freetubeapp.freetube.backup.StateCategories
 import io.freetubeapp.freetube.helpers.AmbiguousFileUri
 import io.freetubeapp.freetube.helpers.Promise
+import io.freetubeapp.freetube.helpers.SafPaths
 import io.freetubeapp.freetube.helpers.WriteMode
 import io.freetubeapp.freetube.helpers.hexToColour
 import io.freetubeapp.freetube.helpers.readBytes
@@ -45,6 +53,7 @@ import io.freetubeapp.freetube.helpers.readText
 import io.freetubeapp.freetube.helpers.writeBytes
 import io.freetubeapp.freetube.helpers.writeText
 import io.freetubeapp.freetube.webviews.BotGuardWebView
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -471,18 +480,7 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    * MANAGE_EXTERNAL_STORAGE). Returns "" for non-device providers.
    */
   @JavascriptInterface
-  fun treeUriToPath(tree: String): String {
-    val uri = Uri.parse(tree)
-    if (uri.authority != "com.android.externalstorage.documents") {
-      return ""
-    }
-    val documentId = DocumentsContract.getTreeDocumentId(uri)
-    val parts = documentId.split(":", limit = 2)
-    val volume = parts[0]
-    val relativePath = if (parts.size > 1) parts[1] else ""
-    val root = if (volume == "primary") "/storage/emulated/0" else "/storage/$volume"
-    return if (relativePath.isEmpty()) root else "$root/${relativePath.trimEnd('/')}"
-  }
+  fun treeUriToPath(tree: String): String = SafPaths.treeUriToPath(tree)
   // endregion
 
   // region IO
@@ -830,6 +828,178 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
       "ok"
     } catch (ex: Exception) {
       "error: $ex"
+    }
+  }
+
+  // endregion
+
+  // region Backup (Export / Import + 保存復元 automation)
+
+  /**
+   * The one category model, straight out of [StateCategories] — the Export/Import panel in
+   * the UI settings page renders whatever this returns, so nothing is duplicated in JS.
+   */
+  @JavascriptInterface
+  fun listBackupCategories(): String {
+    val list = JSONArray()
+    StateCategories.ALL.forEach { category ->
+      list.put(
+        JSONObject()
+          .put("id", category.id)
+          .put("label", category.label)
+          .put("parent", category.parent ?: JSONObject.NULL)
+          .put("leaf", category.store != null)
+      )
+    }
+    return list.toString()
+  }
+
+  /** `{}` when unset, otherwise `{ tree, path, name }` of the configured backup folder. */
+  @JavascriptInterface
+  fun getBackupDirectory(): String {
+    val tree = AutomationAuth.directoryUri(context) ?: return "{}"
+    val directory = BackupWriter.configuredDirectory(context)
+    val path = SafPaths.treeUriToPath(tree)
+    return JSONObject()
+      .put("tree", tree)
+      .put("path", path)
+      .put("name", directory?.name ?: path.substringAfterLast('/').ifEmpty { tree })
+      .put("valid", directory != null)
+      .toString()
+  }
+
+  /** SAF folder picker; resolves the tree uri (already persisted) or `USER_CANCELED`. */
+  @JavascriptInterface
+  fun pickBackupDirectory(): String {
+    val id = "${randomUUID()}"
+    context.launchIntent(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)).then {
+      try {
+        if (it!!.resultCode == Activity.RESULT_CANCELED) {
+          jsCommunicator.resolve(id, "USER_CANCELED")
+        } else {
+          val uri = it.data!!.data!!
+          context.contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+          )
+          AutomationAuth.setDirectoryUri(context, uri.toString())
+          jsCommunicator.resolve(id, uri.toString())
+        }
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.stackTraceToString())
+      }
+    }
+    return id
+  }
+
+  /**
+   * The newest backup in the configured folder — the page queries this on open so the
+   * "last export" line is always current. `{}` when there is no folder or no backup.
+   */
+  @JavascriptInterface
+  fun getLatestBackup(): String {
+    val directory = BackupWriter.configuredDirectory(context) ?: return "{}"
+    val newest = runCatching {
+      directory.listFiles()
+        .filter { it.isFile && StateBackup.isBackupName(it.name ?: "") }
+        .maxByOrNull { it.lastModified() }
+    }.getOrNull() ?: return "{}"
+    return JSONObject()
+      .put("name", newest.name)
+      .put("timestamp", newest.lastModified())
+      .put("bytes", newest.length())
+      .toString()
+  }
+
+  /**
+   * Writes ONE zip holding the selected categories into the configured folder.
+   * Resolves `{ name, path, bytes, human, categories }`.
+   */
+  @JavascriptInterface
+  fun exportState(items: String): String {
+    val id = "${randomUUID()}"
+    val ids = items.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    context.threadPoolExecutor.execute {
+      try {
+        val written = BackupWriter.write(context, ids)
+        jsCommunicator.resolve(
+          id,
+          JSONObject()
+            .put("name", written.path.substringAfterLast('/'))
+            .put("path", written.path)
+            .put("bytes", written.bytes)
+            .put("human", StateBackup.humanSize(written.bytes))
+            .put("categories", written.categories)
+            .toString()
+        )
+      } catch (ex: BackupWriter.NoDirectory) {
+        jsCommunicator.reject(id, "no-directory")
+      } catch (ex: BackupWriter.NoStorageAccess) {
+        jsCommunicator.reject(id, "no-storage-access")
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.message ?: ex.javaClass.simpleName)
+      }
+    }
+    return id
+  }
+
+  /** Restores the selected categories a picked archive carries. Resolves a summary. */
+  @JavascriptInterface
+  fun importState(uri: String, items: String): String {
+    val id = "${randomUUID()}"
+    val ids = items.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    context.threadPoolExecutor.execute {
+      try {
+        val bytes = context.contentResolver.readBytes(Uri.parse(uri))
+        jsCommunicator.resolve(id, StateBackup.import(context, bytes, ids))
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.message ?: ex.javaClass.simpleName)
+      }
+    }
+    return id
+  }
+
+  @JavascriptInterface
+  fun hasAllFilesAccess(): Boolean = BackupWriter.hasAllFilesAccess()
+
+  /** Opens the system All-Files-Access screen (needed only for `path` overrides). */
+  @JavascriptInterface
+  fun requestAllFilesAccess() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+      return
+    }
+    context.runOnUiThread {
+      try {
+        context.startActivity(
+          Intent(
+            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+            Uri.parse("package:${context.packageName}")
+          )
+        )
+      } catch (ex: Exception) {
+        context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+      }
+    }
+  }
+
+  @JavascriptInterface
+  fun isAutomationEnabled(): Boolean = AutomationAuth.isEnabled(context)
+
+  @JavascriptInterface
+  fun setAutomationEnabled(enabled: Boolean) = AutomationAuth.setEnabled(context, enabled)
+
+  @JavascriptInterface
+  fun getAutomationToken(): String = AutomationAuth.token(context)
+
+  @JavascriptInterface
+  fun regenerateAutomationToken(): String = AutomationAuth.regenerate(context)
+
+  /** On the UI thread: some OEM clipboards raise their own toast when the clip is set. */
+  @JavascriptInterface
+  fun copyToClipboard(label: String, text: String) {
+    context.runOnUiThread {
+      val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+      clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
     }
   }
 

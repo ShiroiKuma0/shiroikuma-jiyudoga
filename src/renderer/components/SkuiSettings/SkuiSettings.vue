@@ -4,11 +4,73 @@
     :title="$t('SKUI.Title')"
   >
     <div class="skuiPage">
+      <!--
+        Export / Import comes first, as its own separated section — the sister-app
+        convention (白い熊 考直's UI page). The two automation rows belong INSIDE it,
+        directly below the export rows, so backup lives in one place in every app.
+      -->
       <section
-        v-for="section in SKUI_SECTIONS"
+        v-if="IS_ANDROID"
+        class="skuiSection"
+      >
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Backup.Export / Import') }}
+        </h4>
+        <button
+          class="skuiEntryRow skuiIndent1"
+          type="button"
+          @click="panelOpen = true"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Export / Import…') }}</span>
+            <span
+              class="skuiEntrySummary"
+              :class="{ skuiWarn: backupDirectoryName === null }"
+            >
+              {{ backupDirectoryName ?? $t('SKUI.Backup.No backup directory set') }}
+            </span>
+          </span>
+        </button>
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Automation export') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Backup.Automation export description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="automationEnabled"
+            @change="updateAutomationEnabled($event.target.checked)"
+          >
+        </label>
+        <div class="skuiEntryRow skuiIndent1">
+          <button
+            class="skuiEntryText"
+            type="button"
+            @click="copyAutomationToken"
+          >
+            <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Automation token') }}</span>
+            <span class="skuiEntrySummary">{{ abbreviatedToken }}</span>
+          </button>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            @click="regenerateAutomationToken"
+          >
+            {{ $t('SKUI.Backup.Regenerate') }}
+          </button>
+        </div>
+      </section>
+
+      <section
+        v-for="(section, index) in SKUI_SECTIONS"
         :key="section.key"
         class="skuiSection"
       >
+        <hr
+          v-if="index > 0 || IS_ANDROID"
+          class="skuiSectionRule"
+        >
         <h4 class="skuiSectionTitle">
           {{ $t(`SKUI.Sections.${section.key}`) }}
         </h4>
@@ -62,17 +124,28 @@
         </template>
       </section>
     </div>
+
+    <SkuiExportImport
+      v-if="panelOpen"
+      @close="closePanel"
+      @close-chain="closeChain"
+    />
   </FtSettingsSection>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import android from 'android'
 
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import SkuiColorRow from './SkuiColorRow.vue'
+import SkuiExportImport from './SkuiExportImport.vue'
 import SkuiFontRow from './SkuiFontRow.vue'
 import SkuiSliderRow from './SkuiSliderRow.vue'
 
+import { showToast } from '../../helpers/utils'
 import store from '../../store/index'
 import {
   SKUI_RECENT_COLORS_MAX,
@@ -86,6 +159,67 @@ import {
   resolveDims,
   resolveFont,
 } from '../../helpers/skui'
+
+const IS_ANDROID = !!process.env.IS_ANDROID
+
+const { t } = useI18n()
+const router = useRouter()
+
+const panelOpen = ref(false)
+const backupDirectoryName = ref(null)
+const automationEnabled = ref(false)
+const automationToken = ref('')
+
+// Queried on opening the page, and again whenever the panel writes something, so the
+// folder row and the panel's "last backup" line never show a stale answer.
+function refreshBackupState() {
+  if (!IS_ANDROID) { return }
+
+  const directory = JSON.parse(android.getBackupDirectory())
+  backupDirectoryName.value = directory.tree ? directory.name : null
+  automationEnabled.value = android.isAutomationEnabled()
+  automationToken.value = android.getAutomationToken()
+}
+
+onMounted(refreshBackupState)
+
+const abbreviatedToken = computed(() => {
+  const token = automationToken.value
+  if (token.length <= 20) { return token }
+  return `${token.slice(0, 8)}…${token.slice(-8)}`
+})
+
+/**
+ * @param {boolean} enabled
+ */
+function updateAutomationEnabled(enabled) {
+  android.setAutomationEnabled(enabled)
+  automationEnabled.value = enabled
+}
+
+function copyAutomationToken() {
+  android.copyToClipboard('automation token', automationToken.value)
+  showToast(t('SKUI.Backup.Token copied'))
+}
+
+function regenerateAutomationToken() {
+  automationToken.value = android.regenerateAutomationToken()
+  showToast(t('SKUI.Backup.Token regenerated'))
+}
+
+function closePanel() {
+  panelOpen.value = false
+  refreshBackupState()
+}
+
+/**
+ * A finished export or import closes the whole chain: the info dialog (already gone by
+ * now), the Export/Import panel, and the UI settings page itself.
+ */
+function closeChain() {
+  panelOpen.value = false
+  router.back()
+}
 
 const theme = computed(() => parseTheme(store.getters.getSkuiTheme))
 const themeColors = computed(() => theme.value.colors ?? {})

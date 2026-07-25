@@ -1,44 +1,130 @@
 /*
- * 白い熊 自由動画 UI settings page layout — sister-repo conventions:
- * big bold underlined section headings (full-width accent rule), bold
- * subgroup headings with a text-width underline, deep indent steps per
- * level, and TIGHT rows: no vertical padding between sibling rows,
- * breathing room only between top-level sections.
+ * 白い熊 自由動画 UI settings page — laid out after the futokxkb Keyboard UI page,
+ * the house style for these pages:
+ *
+ *   · a thin full-width accent hairline separates one section from the next
+ *     (never above the first one);
+ *   · section headings are big and bold with an underline the width of the TEXT,
+ *     not of the row — hence inline-block + border-block-end;
+ *   · subgroup headings repeat that one step smaller and one indent deeper;
+ *   · rows sit a further indent in, with a tight vertical rhythm.
+ *
+ * The indent ladder mirrors kxkb's 36 / 54 / 72 / 90 dp exactly (÷36 → 1 / 1.5 / 2 / 2.5 em).
  */
 
 .skuiPage {
-  --skui-indent-step: 3em;
+  /* the one non-themed colour on the page: "not set" has to read as wrong */
+  --skui-warn: #f66;
 
   line-height: 1.35;
 }
 
 .skuiSection {
-  margin-block-end: 1.4em;
+  margin-block-end: 0.9em;
+}
+
+/* the between-sections border; the first section has none above it */
+.skuiSectionRule {
+  background-color: var(--primary-color);
+  block-size: 1px;
+  border: 0;
+  margin-block: 0.9em 0;
+  margin-inline: 0;
 }
 
 .skuiSectionTitle {
+  display: inline-block;
   border-block-end: 2px solid var(--primary-color);
-  font-size: 1.3em;
+  color: var(--primary-color);
+  font-size: 1.25em;
   font-weight: 700;
-  margin-block: 0 0.2em;
-  margin-inline: 0;
-  padding-block-end: 0.15em;
-  text-decoration: underline;
+  margin-block: 0.5em 0.25em;
+  margin-inline-start: 1em;
+  padding-block-end: 2px;
 }
 
 .skuiGroupTitle {
   display: inline-block;
-  border-block-end: 2px solid var(--primary-color);
-  font-size: 1.1em;
+  border-block-end: 1.5px solid var(--primary-color);
+  color: var(--primary-color);
+  font-size: 1.06em;
   font-weight: 700;
-  margin-block: 0.3em 0.1em;
-  margin-inline: 0;
+  margin-block: 0.55em 0.2em;
+  margin-inline-start: 1.5em;
+  padding-block-end: 2px;
 }
 
 .skuiIndent1 {
-  margin-inline-start: var(--skui-indent-step);
+  margin-inline-start: 2em;
 }
 
 .skuiIndent2 {
-  margin-inline-start: calc(var(--skui-indent-step) * 2);
+  margin-inline-start: 2.5em;
+}
+
+/* ---- Export / Import section rows ---- */
+
+.skuiEntryRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  background: none;
+  border: 0;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font: inherit;
+  inline-size: calc(100% - 2em);
+  padding-block: 0.3em;
+  padding-inline: 0;
+  text-align: start;
+}
+
+/* also worn by a <button> (the tap-to-copy token row), hence the resets */
+.skuiEntryText {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  flex: 1 1 auto;
+  font: inherit;
+  min-inline-size: 0;
+  padding: 0;
+  text-align: start;
+}
+
+.skuiEntryTitle {
+  display: block;
+}
+
+.skuiEntrySummary {
+  color: var(--secondary-text-color);
+  display: block;
+  font-size: 0.82em;
+  overflow-wrap: anywhere;
+}
+
+/* the backup folder is the one thing that must shout when it is missing */
+.skuiEntrySummary.skuiWarn {
+  color: var(--skui-warn);
+  font-weight: 700;
+}
+
+.skuiEntryAction {
+  background: none;
+  border: 1px solid var(--primary-color);
+  border-radius: 100px;
+  color: var(--primary-color);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.8em;
+  padding-block: 0.2em;
+  padding-inline: 0.9em;
+}
+
+.skuiEntrySwitch {
+  accent-color: var(--primary-color);
+  flex: 0 0 auto;
+  block-size: 1.1em;
+  inline-size: 1.1em;
 }
