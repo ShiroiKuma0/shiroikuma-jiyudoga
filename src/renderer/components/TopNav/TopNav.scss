@@ -40,6 +40,12 @@
 }
 
 .menuButton {
+  // a long press here opens the UI settings, so the browser must not turn it
+  // into a text callout or claim the gesture for panning first
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+
   @media only screen and (width <= 680px) {
     display: none;
   }

@@ -9,6 +9,11 @@
         :aria-label="expandCollapseSideBarLabel"
         :title="expandCollapseSideBarLabel"
         @click="toggleSideNav"
+        @pointerdown="startMenuLongPress"
+        @pointerup="cancelMenuLongPress"
+        @pointerleave="cancelMenuLongPress"
+        @pointercancel="cancelMenuLongPress"
+        @contextmenu.prevent="openUiSettings"
       >
         <FontAwesomeIcon
           class="navIcon"
@@ -355,7 +360,54 @@ watch(appTitle, (value) => {
   })
 })
 
+// Long press (or right click) on the hamburger opens the 白い熊 UI settings section
+// directly — same 500 ms boundary the navigation arrows use for their dropdowns.
+const MENU_LONG_PRESS_MS = 500
+const SKUI_SETTINGS_PATH = '/settings#shiroikuma-ui'
+
+let menuLongPressTimer = null
+let menuLongPressFired = false
+
+/**
+ * @param {PointerEvent} event
+ */
+function startMenuLongPress(event) {
+  if (event.pointerType === 'mouse' && event.button !== 0) { return }
+
+  menuLongPressFired = false
+  menuLongPressTimer = setTimeout(() => {
+    menuLongPressTimer = null
+    menuLongPressFired = true
+    openUiSettings()
+  }, MENU_LONG_PRESS_MS)
+}
+
+function cancelMenuLongPress() {
+  if (menuLongPressTimer != null) {
+    clearTimeout(menuLongPressTimer)
+    menuLongPressTimer = null
+  }
+}
+
+async function openUiSettings() {
+  cancelMenuLongPress()
+  menuLongPressFired = true
+
+  await router.push(SKUI_SETTINGS_PATH)
+
+  // The settings page opens its sections from the URL on mount and on popstate,
+  // so tell it to re-read the hash: without this nothing happens when we are
+  // already on the settings page.
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 function toggleSideNav() {
+  // the click that ends a long press must not toggle the side nav as well
+  if (menuLongPressFired) {
+    menuLongPressFired = false
+    return
+  }
+
   store.commit('toggleSideNav')
 }
 
