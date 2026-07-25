@@ -1,9 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.FreeTubeAndroid" parent="Base.Theme.FreeTubeAndroid">
-        <!-- Transparent system bars for edge-to-edge. -->
-        <item name="android:navigationBarColor">@android:color/background_dark</item>
-        <item name="android:statusBarColor">@android:color/background_dark</item>
+        <!-- Black system bars: the runtime themeSystemUi() recolours them from the
+             app's own theme once the WebView is up, this is what shows before that. -->
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowBackground">@color/black</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
