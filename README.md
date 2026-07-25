@@ -13,14 +13,15 @@ additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), original-language
 titles & descriptions, a channel-discovery **Similar** tab, per-profile video **starring**,
-live grid zoom with tuning sliders, theatre mode on Android, full-width views, and a
-sister-repo-style UI theming layer. Every release builds **both** artifacts:
+live grid zoom with tuning sliders, theatre mode on Android, full-width views, a
+sister-repo-style UI theming layer, and a **one-zip backup** of the whole app that a sister
+automation app can trigger unattended. Every release builds **both** artifacts:
 
 - **GNU/Linux amd64 `.deb`** (Electron; installable on Tuxedo OS / Ubuntu / Debian)
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1+29`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1+34`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -93,7 +94,19 @@ A first-class Settings section in the sister-repo (denwa / messeji) style: found
 (black `#000000` / yellow `#FFFF00`) with every other slot inheriting until overridden, RGBA
 slider color rows with recent-color boxes, external `.ttf`/`.otf` font import with live
 glyph preview, font-weight and UI-size sliders, and border / roundness / divider widths all
-the way down to 0 — everything previewed live as you drag.
+the way down to 0 — everything previewed live as you drag. The page itself is laid out like
+the futokxkb keyboard UI page: thin hairlines between sections and headings underlined to
+the width of the text, never the row. A long press on the hamburger opens it directly.
+
+## 💾 One-zip backup, unattended if you want it
+
+Export / Import sits at the top of that page, in the Kōjiki flow: pick a backup folder once,
+tick what you want, and the **entire** app — every setting, sliced into ten logical groups,
+plus profiles with their subscriptions and stars, playlists, watch history and search
+history — lands in a single timestamped `.zip`. Import merges it back and offers a restart.
+The same export runs **headlessly**: sister apps can fire a token-gated intent at it, and
+自由作業盤 backs up every app on the phone in one run, each reporting live counts and the
+path and size it wrote. The export core is native, so it works with no window open at all.
 
 ## 🔄 Own update channel
 
