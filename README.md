@@ -11,17 +11,18 @@ Android layer of [FreeTubeAndroid](https://github.com/MarmadileManteater/FreeTub
 grafted on and maintained against the current FreeTube development tip, plus **major
 additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
-[shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), original-language
-titles & descriptions, a channel-discovery **Similar** tab, per-profile video **starring**,
-live grid zoom with tuning sliders, theatre mode on Android, full-width views, a
-sister-repo-style UI theming layer, and a **one-zip backup** of the whole app that a sister
-automation app can trigger unattended. Every release builds **both** artifacts:
+[shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
+button that writes chapter-preserving mkv files, original-language titles & descriptions, a
+channel-discovery **Similar** tab, per-profile video **starring**, live grid zoom with tuning
+sliders, theatre mode on Android, full-width views, a sister-repo-style UI theming layer, and
+a **one-zip backup** of the whole app that a sister automation app can trigger unattended.
+Every release builds **both** artifacts:
 
 - **GNU/Linux amd64 `.deb`** (Electron; installable on Tuxedo OS / Ubuntu / Debian)
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1+34`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1+35`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -39,6 +40,32 @@ tracks, mkvmerge-grade structure) saved to your study folder — then the right 
 opens automatically: **shiroikuma-jisho** on Android (via intent), **shiroikuma-yosuga**
 (our Memento fork) on the desktop. Replay line by line, tap words for dictionary lookups —
 from news feed to language lesson in one tap.
+
+## ⬇️ Download videos — as mkv, with the chapters intact
+
+A download button sits beside the share icon on every watch page. It grabs the best
+video-only and audio-only streams YouTube will hand over — the `bestvideo+bestaudio` of
+`yt-dlp`, and the reason the output is Matroska, since YouTube pairs mp4/AVC video with
+WebM/Opus audio, a combination mp4 cannot legally hold — and passthrough-remuxes them into
+one file without re-encoding a single frame. When a session serves playback over SABR and
+hands out no fetchable stream URLs, it falls back through Invidious to the muxed progressive
+stream rather than failing.
+
+The point of the exercise is **chapters**. YouTube's chapter markers are written into the
+file as a real Matroska `Chapters` element, so mpv, VLC and mpvEx list them, mark them on the
+seekbar and jump between them. Getting that right meant hand-building the EBML and putting it
+*ahead of the first cluster* — players parse level-1 elements only that far and resolve
+anything later through a fixed-size SeekHead — then correcting every byte offset the
+insertion shifts.
+
+Files land in a folder you're asked for once (SAF picker on Android, native picker on the
+desktop) under a **`yt-dlp` style filename template** you can edit, previewed live in the UI
+settings page:
+
+```
+%(title)s %(upload_date)s (%(channel)s).%(ext)s
+→ Monster Kettlebell Workout Motivation. Lift 100kg … 2022-07-02 (WestportBattlebells).mkv
+```
 
 ## 🈶 Original-language titles & descriptions
 
