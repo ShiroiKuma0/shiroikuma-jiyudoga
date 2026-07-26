@@ -863,6 +863,7 @@ Video:
   Unstar Video: Unstar Video
   Study in jisho: Study in jisho
   Study in yosuga: Study in yosuga
+  Download Video: Download Video
   Study Export:
     Preparing: Preparing study subtitles…
     Done Aligned: Sent to jisho — subtitles aligned with the description transcript
@@ -1299,6 +1300,34 @@ SKUI:
   Font & UI size: Font & UI size
   Font file: Font file
   Only ttf and otf fonts are supported: Only ttf and otf fonts are supported
+  Download:
+    Section: Video download
+    Description: >-
+      The download button on the watch page saves the video as a Matroska file with its
+      chapters embedded, so players like mpv can jump between them. The best separate video
+      and audio streams are used where YouTube offers them, otherwise the muxed stream.
+    Download folder: Download folder
+    No download directory set: No download directory set
+    Choose…: Choose…
+    Filename template: Filename template
+    Tokens: 'Tokens: %(title)s %(upload_date)s %(channel)s %(uploader)s %(id)s %(resolution)s %(ext)s'
+    Date format hint: >-
+      %(upload_date)s is YYYY-MM-DD; use %(upload_date>%Y%m%d)s for another format.
+    Preview: 'Preview: {name}'
+    Max filename length: Max filename length
+    Bytes: '{count} bytes'
+    Downloading: Downloading…
+    Muxing: Building the Matroska file…
+    Writing: Saving…
+    Finished: Download finished
+    Failed: Download failed
+    Cancel: Cancel
+    OK: OK
+    Bad Directory: The download folder could not be used — please pick it again
+    No Format: No downloadable video format available for this video
+    Download Failed: The download failed — try again later
+    Too Large: This video is too large to download in one piece
+    Write Failed: The file could not be written to the download folder
   Backup:
     Export / Import: Export / Import
     Export / Import…: Export / Import…

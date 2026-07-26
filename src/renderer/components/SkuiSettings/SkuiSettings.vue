@@ -62,15 +62,99 @@
         </div>
       </section>
 
+      <!--
+        Video download: where the watch page's download button puts files and what
+        it calls them. The folder is asked for on the first download either way —
+        on Android with the SAF picker, on desktop from the main process — so this
+        section is where it gets reviewed and changed afterwards.
+      -->
+      <section class="skuiSection">
+        <hr
+          v-if="IS_ANDROID"
+          class="skuiSectionRule"
+        >
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Download.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Download.Description') }}
+        </p>
+
+        <button
+          v-if="IS_ANDROID"
+          class="skuiEntryRow skuiIndent1"
+          type="button"
+          @click="chooseDownloadDirectory"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download folder') }}</span>
+            <span
+              class="skuiEntrySummary"
+              :class="{ skuiWarn: downloadDirectoryLabel === null }"
+            >
+              {{ downloadDirectoryLabel ?? $t('SKUI.Download.No download directory set') }}
+            </span>
+          </span>
+          <span class="skuiEntryAction">{{ $t('SKUI.Download.Choose…') }}</span>
+        </button>
+        <div
+          v-else
+          class="skuiEntryRow skuiIndent1"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download folder') }}</span>
+            <span
+              class="skuiEntrySummary"
+              :class="{ skuiWarn: downloadDirectoryLabel === null }"
+            >
+              {{ downloadDirectoryLabel ?? $t('SKUI.Download.No download directory set') }}
+            </span>
+          </span>
+        </div>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Filename template') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Download.Tokens') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Download.Date format hint') }}</span>
+          </span>
+        </div>
+        <input
+          class="skuiEntryInput skuiIndent2"
+          type="text"
+          spellcheck="false"
+          :value="filenameTemplate"
+          :aria-label="$t('SKUI.Download.Filename template')"
+          @change="updateFilenameTemplate($event.target.value)"
+        >
+        <p class="skuiEntrySummary skuiIndent2">
+          {{ $t('SKUI.Download.Preview', { name: filenamePreview }) }}
+        </p>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Max filename length') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Download.Bytes', { count: maxFilenameBytes }) }}</span>
+          </span>
+          <input
+            class="skuiEntryNumber"
+            type="number"
+            min="40"
+            max="255"
+            step="1"
+            :value="maxFilenameBytes"
+            :aria-label="$t('SKUI.Download.Max filename length')"
+            @change="updateMaxFilenameBytes($event.target.value)"
+          >
+        </div>
+      </section>
+
       <section
-        v-for="(section, index) in SKUI_SECTIONS"
+        v-for="section in SKUI_SECTIONS"
         :key="section.key"
         class="skuiSection"
       >
-        <hr
-          v-if="index > 0 || IS_ANDROID"
-          class="skuiSectionRule"
-        >
+        <hr class="skuiSectionRule">
         <h4 class="skuiSectionTitle">
           {{ $t(`SKUI.Sections.${section.key}`) }}
         </h4>
@@ -146,6 +230,11 @@ import SkuiFontRow from './SkuiFontRow.vue'
 import SkuiSliderRow from './SkuiSliderRow.vue'
 
 import { showToast } from '../../helpers/utils'
+import {
+  DEFAULT_FILENAME_TEMPLATE,
+  DEFAULT_MAX_FILENAME_BYTES,
+  buildDownloadFilename
+} from '../../helpers/download-filename'
 import store from '../../store/index'
 import {
   SKUI_RECENT_COLORS_MAX,
@@ -182,6 +271,68 @@ function refreshBackupState() {
 }
 
 onMounted(refreshBackupState)
+
+// ---- video download ----
+
+const filenameTemplate = computed(() => store.getters.getDownloadFilenameTemplate)
+const maxFilenameBytes = computed(() => store.getters.getDownloadMaxFilenameBytes)
+
+const downloadDirectoryLabel = computed(() => {
+  if (!IS_ANDROID) {
+    // set by the main-process picker on the first download
+    return store.getters.getDownloadFolderPath || null
+  }
+
+  const tree = store.getters.getDownloadDirectoryTree
+  if (!tree) { return null }
+
+  // a device folder resolves to a real path; anything else (cloud providers)
+  // has only the tree uri to show
+  return android.treeUriToPath(tree) || decodeURIComponent(tree)
+})
+
+// what the current template would produce, so the effect of an edit is visible
+// without downloading anything
+const filenamePreview = computed(() => buildDownloadFilename(
+  filenameTemplate.value,
+  {
+    title: 'Some rather long video title that shows where the truncation falls',
+    channel: 'Channel Name',
+    published: Date.parse('2022-07-02T12:00:00'),
+    videoId: 'c70sYunZ3jI',
+    resolution: '1080p',
+    ext: 'mkv'
+  },
+  maxFilenameBytes.value
+))
+
+async function chooseDownloadDirectory() {
+  const { awaitAsyncResult } = await import('../../helpers/android/jsinterface')
+  const response = await awaitAsyncResult(android.requestDirectoryAccessDialog())
+
+  if (response === 'USER_CANCELED') { return }
+
+  store.dispatch('updateDownloadDirectoryTree', response)
+}
+
+/**
+ * @param {string} value
+ */
+function updateFilenameTemplate(value) {
+  store.dispatch('updateDownloadFilenameTemplate', value.trim() || DEFAULT_FILENAME_TEMPLATE)
+}
+
+/**
+ * @param {string} value
+ */
+function updateMaxFilenameBytes(value) {
+  const parsed = Number.parseInt(value, 10)
+
+  store.dispatch(
+    'updateDownloadMaxFilenameBytes',
+    Number.isFinite(parsed) ? Math.min(255, Math.max(40, parsed)) : DEFAULT_MAX_FILENAME_BYTES
+  )
+}
 
 const abbreviatedToken = computed(() => {
   const token = automationToken.value

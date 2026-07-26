@@ -1359,11 +1359,11 @@ function runApp() {
   /**
    * @param {import('electron').WebContents} webContents
    * @param {string | undefined} [currentPath]
-   * @param {'screenshotFolderPath' | 'studyFolderPath'} [settingId]
+   * @param {'screenshotFolderPath' | 'studyFolderPath' | 'downloadFolderPath'} [settingId]
    */
   async function chooseDefaultFolder(webContents, currentPath, settingId = 'screenshotFolderPath') {
     if (typeof currentPath !== 'string' || currentPath.length === 0) {
-      currentPath = app.getPath(settingId === 'studyFolderPath' ? 'videos' : 'pictures')
+      currentPath = app.getPath(settingId === 'screenshotFolderPath' ? 'pictures' : 'videos')
     }
 
     const dialogOptions = {
@@ -1467,10 +1467,17 @@ function runApp() {
     return true
   })
 
-  // Study export (shiroikuma-yosuga hand-off): mirrors WRITE_TO_DEFAULT_FOLDER
-  // but with its own folder setting and returns the absolute file path so the
-  // renderer can ask for it to be opened in yosuga afterwards.
-  ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {
+  // Mirrors WRITE_TO_DEFAULT_FOLDER but with a folder setting of its own, asked
+  // for once on first write, and returns the absolute file path so the renderer
+  // can act on the written file afterwards.
+  /**
+   * @param {Electron.IpcMainInvokeEvent} event
+   * @param {string} filename
+   * @param {ArrayBuffer} arrayBuffer
+   * @param {'studyFolderPath' | 'downloadFolderPath'} settingId
+   * @returns {Promise<string | null>}
+   */
+  async function writeToChosenFolder(event, filename, arrayBuffer, settingId) {
     if (
       !isFreeTubeUrl(event.senderFrame.url) ||
       typeof filename !== 'string' ||
@@ -1478,7 +1485,7 @@ function runApp() {
       return null
     }
 
-    const folderPath = (await baseHandlers.settings._findOne('studyFolderPath'))?.value
+    const folderPath = (await baseHandlers.settings._findOne(settingId))?.value
 
     let directory
     if (typeof folderPath === 'string' && folderPath.length > 0) {
@@ -1488,9 +1495,9 @@ function runApp() {
       } catch {}
     }
 
-    // one-time ask: prompt for the study folder on first use (or when access was lost)
+    // one-time ask: prompt for the folder on first use (or when access was lost)
     if (directory === undefined) {
-      directory = await chooseDefaultFolder(event.sender, undefined, 'studyFolderPath')
+      directory = await chooseDefaultFolder(event.sender, undefined, settingId)
 
       if (typeof directory !== 'string' || directory.length === 0) {
         return null
@@ -1511,13 +1518,23 @@ function runApp() {
 
       await asyncFs.writeFile(filePath, new DataView(arrayBuffer))
     } catch (error) {
-      console.error('WRITE_TO_STUDY_FOLDER failed', error)
+      console.error(`writing to the ${settingId} folder failed`, error)
       // throw a new error so that we don't expose the real error to the renderer
       // eslint-disable-next-line preserve-caught-error
       throw new Error('Failed to save')
     }
 
     return filePath
+  }
+
+  // Study export (shiroikuma-yosuga hand-off)
+  ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {
+    return await writeToChosenFolder(event, filename, arrayBuffer, 'studyFolderPath')
+  })
+
+  // Download button
+  ipcMain.handle(IpcChannels.WRITE_TO_DOWNLOAD_FOLDER, async (event, filename, arrayBuffer) => {
+    return await writeToChosenFolder(event, filename, arrayBuffer, 'downloadFolderPath')
   })
 
   ipcMain.handle(IpcChannels.OPEN_IN_YOSUGA, async (event, filePath) => {
@@ -1722,7 +1739,7 @@ function runApp() {
         case DBActions.GENERAL.UPSERT:
           // These are only allowed to be changed by the folder-picker IPC actions
           // to avoid the "write to folder" IPC calls being abused to write to arbitrary locations
-          if (data._id === 'screenshotFolderPath' || data._id === 'studyFolderPath') {
+          if (data._id === 'screenshotFolderPath' || data._id === 'studyFolderPath' || data._id === 'downloadFolderPath') {
             return null
           }
 

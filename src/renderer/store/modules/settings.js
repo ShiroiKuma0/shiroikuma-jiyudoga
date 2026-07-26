@@ -324,6 +324,14 @@ const state = {
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)
   studyFolderPath: '',
+  // SAF tree uri of the video download folder (Android; '' = not chosen yet)
+  downloadDirectoryTree: '',
+  // video download folder on desktop (set only via the main-process folder picker)
+  downloadFolderPath: '',
+  // yt-dlp style output template for downloaded videos
+  downloadFilenameTemplate: '%(title)s %(upload_date)s (%(channel)s).%(ext)s',
+  // filesystems cap a single path component at 255 bytes
+  downloadMaxFilenameBytes: 255,
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',
@@ -468,9 +476,11 @@ const sideEffectHandlers = {
 const settingsWithSideEffects = Object.keys(sideEffectHandlers)
 
 export const NON_TRANSFERABLE_SETTINGS = new Set([
-  // study-export folders are machine/device specific
+  // study-export and download folders are machine/device specific
   'studyDirectoryTree',
   'studyFolderPath',
+  'downloadDirectoryTree',
+  'downloadFolderPath',
   /* Depends on process.env.IS_ELECTRON */
   // ProxySettings
   'useProxy',

@@ -155,9 +155,21 @@
         class="watchVideo"
         :class="{ theatreWatchVideo: useTheatreMode }"
         @change-format="handleFormatChange"
+        @download-video="handleVideoDownload"
         @pause-player="pausePlayer"
         @save-watched-progress="handleWatchProgressManualSave"
         @study-export="handleStudyExport"
+      />
+      <SkuiDownloadProgress
+        v-if="downloadState !== null"
+        :stage="downloadState.stage"
+        :fraction="downloadState.fraction"
+        :received="downloadState.received"
+        :total="downloadState.total"
+        :file-name="downloadState.fileName"
+        :message="downloadState.message"
+        @cancel="cancelVideoDownload"
+        @close="downloadState = null"
       />
       <watch-video-chapters
         v-if="!hideChapters && !isLoading && videoChapters.length > 0"

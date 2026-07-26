@@ -157,6 +157,16 @@ export default {
     return await ipcRenderer.invoke(IpcChannels.OPEN_IN_YOSUGA, filePath)
   },
 
+  /**
+   * Writes a downloaded video into the (once-asked) download folder.
+   * @param {string} filename
+   * @param {ArrayBuffer} contents
+   * @returns {Promise<string | null>} the absolute file path, null when the folder prompt was cancelled
+   */
+  writeToDownloadFolder: async (filename, contents) => {
+    return await ipcRenderer.invoke(IpcChannels.WRITE_TO_DOWNLOAD_FOLDER, filename, contents)
+  },
+
   relaunch: () => {
     ipcRenderer.send(IpcChannels.RELAUNCH_REQUEST)
   },

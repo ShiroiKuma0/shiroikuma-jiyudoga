@@ -4,10 +4,10 @@
 // export paths.
 
 import { invidiousGetVideoInformation } from './api/invidious'
+import { fetchRangedBlob } from './ranged-download'
 
 // keep renderer memory in check — the whole file passes through the muxer
 export const MAX_VIDEO_BYTES = 400 * 1024 * 1024
-const DOWNLOAD_CHUNK_BYTES = 9 * 1024 * 1024
 
 /**
  * Thrown for expected, user-facing failure conditions.
@@ -126,75 +126,32 @@ export async function pickStreamUrl(legacyFormats, videoId) {
 }
 
 /**
- * Downloads the progressive stream into memory with chunked Range requests
- * (googlevideo throttles single long GETs).
+ * Downloads the progressive stream into memory.
  * @param {string} url
  * @param {(fraction: number) => void} [onProgress] 0..1
  * @returns {Promise<Blob>}
  */
 export async function fetchVideoBlob(url, onProgress) {
-  const chunks = []
-  let received = 0
-  let totalBytes = -1
-  let singleRequest = false
+  let blob
 
   try {
-    while (totalBytes < 0 || received < totalBytes) {
-      const headers = {}
-      if (!singleRequest) {
-        headers.Range = `bytes=${received}-${received + DOWNLOAD_CHUNK_BYTES - 1}`
-      }
-
-      const response = await fetch(url, { headers })
-
-      if (response.status === 200) {
-        // server ignored the Range header — one long response
-        singleRequest = true
-      } else if (response.status !== 206) {
-        throw new Error(`HTTP ${response.status} while downloading`)
-      }
-
-      if (totalBytes < 0) {
-        if (response.status === 206) {
-          const contentRange = response.headers.get('Content-Range')
-          totalBytes = Number(contentRange?.split('/')[1]) || -2
-        } else {
-          totalBytes = Number(response.headers.get('Content-Length')) || -2
-        }
-
-        if (totalBytes > MAX_VIDEO_BYTES) {
-          throw new StudyExportError('video-too-large')
+    blob = await fetchRangedBlob(url, {
+      maxBytes: MAX_VIDEO_BYTES,
+      tooLargeError: () => new StudyExportError('video-too-large'),
+      onProgress: (received, total) => {
+        if (total > 0 && onProgress) {
+          onProgress(Math.min(1, received / total))
         }
       }
-
-      const reader = response.body.getReader()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) { break }
-        chunks.push(value)
-        received += value.byteLength
-        if (received > MAX_VIDEO_BYTES) {
-          throw new StudyExportError('video-too-large')
-        }
-        if (totalBytes > 0 && onProgress) {
-          onProgress(Math.min(1, received / totalBytes))
-        }
-      }
-
-      if (singleRequest || totalBytes === -2) { break }
-    }
+    })
   } catch (error) {
     if (error instanceof StudyExportError) { throw error }
     console.error('study video download failed', error)
     throw new StudyExportError('download-failed', String(error))
   }
 
-  if (received === 0) {
-    throw new StudyExportError('download-failed', 'downloaded 0 bytes')
-  }
-
   onProgress?.(1)
-  return new Blob(chunks, { type: 'video/mp4' })
+  return blob
 }
 
 /**

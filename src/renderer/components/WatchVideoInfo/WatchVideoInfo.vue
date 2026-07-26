@@ -134,6 +134,13 @@
             :dropdown-options="formatTypeOptions"
             @click="changeFormat"
           />
+          <FtIconButton
+            v-if="(USING_ANDROID || USING_ELECTRON) && !isUpcoming"
+            :title="t('Video.Download Video')"
+            :icon="['fas', 'download']"
+            theme="secondary"
+            @click="$emit('download-video')"
+          />
           <FtShareButton
             v-if="!hideSharingActions"
             :id="id"
@@ -254,6 +261,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'change-format',
+  'download-video',
   'pause-player',
   'save-watched-progress',
   'study-export',

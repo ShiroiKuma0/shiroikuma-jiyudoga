@@ -122,6 +122,36 @@
   padding-inline: 0.9em;
 }
 
+/* free-text setting (the download filename template) — full width under its
+   label rather than squeezed onto the row, since templates are long */
+.skuiEntryInput {
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: var(--primary-text-color);
+  display: block;
+  font-family: monospace;
+  font-size: 0.85em;
+  inline-size: calc(100% - 2.5em);
+  padding-block: 0.4em;
+  padding-inline: 0.6em;
+}
+
+.skuiEntryNumber {
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  color: var(--primary-text-color);
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.85em;
+  inline-size: 5em;
+  padding-block: 0.2em;
+  padding-inline: 0.4em;
+  text-align: end;
+}
+
 .skuiEntrySwitch {
   accent-color: var(--primary-color);
   flex: 0 0 auto;

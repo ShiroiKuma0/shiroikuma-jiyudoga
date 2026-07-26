@@ -13,6 +13,7 @@ import WatchVideoLiveChat from '../../components/WatchVideoLiveChat/WatchVideoLi
 import WatchVideoPlaylist from '../../components/WatchVideoPlaylist/WatchVideoPlaylist.vue'
 import WatchVideoRecommendations from '../../components/WatchVideoRecommendations/WatchVideoRecommendations.vue'
 import FtAgeRestricted from '../../components/FtAgeRestricted/FtAgeRestricted.vue'
+import SkuiDownloadProgress from '../../components/SkuiDownloadProgress.vue'
 import { calculateColorLuminance } from '../../helpers/colors'
 import {
   buildChaptersVttFile,
@@ -80,7 +81,8 @@ export default defineComponent({
     'watch-video-live-chat': WatchVideoLiveChat,
     'watch-video-playlist': WatchVideoPlaylist,
     'watch-video-recommendations': WatchVideoRecommendations,
-    'ft-age-restricted': FtAgeRestricted
+    'ft-age-restricted': FtAgeRestricted,
+    SkuiDownloadProgress
   },
   beforeRouteLeave: async function (to, from, next) {
     this.handleRouteChange()
@@ -128,6 +130,10 @@ export default defineComponent({
       // raw plain description (basic_info/Invidious) for the jisho study export
       plainVideoDescription: '',
       studyExportRunning: false,
+      /** @type {{ stage: string, fraction: number, received: number, total: number, fileName: string, message: string } | null} */
+      downloadState: null,
+      /** @type {AbortController | null} */
+      downloadAbort: null,
       license: '',
       videoViewCount: 0,
       videoLikeCount: 0,
@@ -151,6 +157,10 @@ export default defineComponent({
       /** @type {SabrData | null} */
       sabrData: null,
       legacyFormats: [],
+      // adaptive (video-only / audio-only) formats, kept for the download
+      // button; empty when the session serves playback over SABR, which hands
+      // out no directly fetchable URLs
+      adaptiveFormats: [],
       captions: [],
       /** @type {'EQUIRECTANGULAR' | 'EQUIRECTANGULAR_THREED_TOP_BOTTOM' | 'MESH'| null} */
       vrProjection: null,
@@ -443,6 +453,7 @@ export default defineComponent({
       this.manifestMimeType = MANIFEST_TYPE_DASH
       this.sabrData = null
       this.legacyFormats = []
+      this.adaptiveFormats = []
       this.captions = []
       this.vrProjection = null
       this.recommendedVideos = []
@@ -908,6 +919,21 @@ export default defineComponent({
             if (result.streaming_data.formats.length > 0) {
               this.legacyFormats = result.streaming_data.formats.map(mapLocalLegacyFormat)
             }
+
+            // Only useful to the download button, and only when this session
+            // isn't on SABR — under SABR these carry no fetchable URL, and the
+            // download falls back to Invidious or the progressive stream.
+            this.adaptiveFormats = (result.streaming_data.adaptive_formats ?? [])
+              .filter((format) => format.url)
+              .map((format) => ({
+                itag: format.itag,
+                url: format.url,
+                mimeType: format.mime_type,
+                bitrate: format.bitrate,
+                height: format.height,
+                width: format.width,
+                qualityLabel: format.quality_label
+              }))
 
             if (result.captions) {
               const captionTracks = result.captions?.caption_tracks?.map((caption) => {
@@ -2022,6 +2048,90 @@ export default defineComponent({
         this.$store.commit('setShowProgressBar', false)
         this.studyExportRunning = false
       }
+    },
+
+    handleVideoDownload: async function () {
+      if ((!process.env.IS_ANDROID && !process.env.IS_ELECTRON) || this.downloadState !== null) { return }
+
+      const controller = new AbortController()
+      this.downloadAbort = controller
+      this.downloadState = {
+        stage: 'downloading',
+        fraction: 0,
+        received: 0,
+        total: 0,
+        fileName: '',
+        message: ''
+      }
+
+      try {
+        const downloadVideo = process.env.IS_ANDROID
+          ? (await import('../../helpers/android/video-download')).downloadVideoAndroid
+          : (await import('../../helpers/video-download-desktop')).downloadVideoDesktop
+
+        const { fileName } = await downloadVideo({
+          adaptiveFormats: this.adaptiveFormats,
+          legacyFormats: this.legacyFormats,
+          videoId: this.videoId,
+          title: this.videoTitle,
+          channel: this.channelName,
+          published: this.videoPublished,
+          chapters: this.videoChapters,
+          language: this.captions[0]?.language,
+          signal: controller.signal,
+          onProgress: (stage, fraction, detail) => {
+            if (this.downloadState === null) { return }
+
+            this.downloadState = {
+              ...this.downloadState,
+              stage,
+              fraction,
+              received: detail?.received ?? this.downloadState.received,
+              total: detail?.total ?? this.downloadState.total
+            }
+          }
+        })
+
+        this.downloadState = {
+          stage: 'done',
+          fraction: 1,
+          received: 0,
+          total: 0,
+          fileName,
+          message: ''
+        }
+      } catch (error) {
+        console.error('video download failed', error)
+
+        if (error?.code === 'canceled') {
+          this.downloadState = null
+        } else {
+          const messages = {
+            'no-download-dir': this.t('SKUI.Download.Bad Directory'),
+            'no-format': this.t('SKUI.Download.No Format'),
+            'download-failed': this.t('SKUI.Download.Download Failed'),
+            'video-too-large': this.t('SKUI.Download.Too Large'),
+            'write-failed': this.t('SKUI.Download.Write Failed')
+          }
+
+          this.downloadState = {
+            stage: 'failed',
+            fraction: 0,
+            received: 0,
+            total: 0,
+            fileName: '',
+            message: messages[error?.code] ?? this.t('SKUI.Download.Failed')
+          }
+        }
+      } finally {
+        this.downloadAbort = null
+      }
+    },
+
+    cancelVideoDownload: function () {
+      this.downloadAbort?.abort()
+      this.downloadAbort = null
+      this.downloadState = null
     },
 
     getWatchedProgress: function () {

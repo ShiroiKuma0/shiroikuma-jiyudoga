@@ -1,0 +1,77 @@
+/* Download progress dialog. Deliberately the same black/accent-bordered box as
+   the Export / Import info dialog on the 白い熊 UI settings page, so the fork's
+   modal language stays consistent. */
+
+.skuiDownloadOverlay {
+  position: fixed;
+  inset: 0;
+  align-items: center;
+  background-color: rgb(0 0 0 / 70%);
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  z-index: 220;
+}
+
+.skuiDownloadBox {
+  background-color: var(--bg-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  box-sizing: border-box;
+  max-block-size: 100%;
+  max-inline-size: 32em;
+  overflow-y: auto;
+  padding-block: 20px 16px;
+  padding-inline: 22px;
+  inline-size: 100%;
+}
+
+.skuiDownloadTitle {
+  color: var(--primary-color);
+  font-size: 1.1em;
+  font-weight: 700;
+  margin: 0;
+}
+
+.skuiDownloadBody {
+  color: var(--primary-color);
+  font-size: 0.9em;
+  margin-block: 10px 0;
+  margin-inline: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.skuiDownloadTrack {
+  background-color: var(--side-nav-color);
+  border-radius: 100px;
+  block-size: 6px;
+  margin-block-start: 14px;
+  overflow: hidden;
+}
+
+.skuiDownloadBar {
+  background-color: var(--primary-color);
+  block-size: 100%;
+  transition: inline-size 0.2s linear;
+}
+
+/* ArcaneChat-style dialog action: a round-pill outline button */
+.skuiPill {
+  background-color: var(--bg-color);
+  border: 1.5px solid var(--primary-color);
+  border-radius: 100px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font: inherit;
+  padding-block: 10px;
+  padding-inline: 20px;
+  white-space: nowrap;
+}
+
+.skuiDownloadActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-block-start: 16px;
+}
