@@ -37,7 +37,7 @@ jobs:
       id: pkg
       uses: jaywcjlove/github-action-package@v1.3.0
 
-    - name: Set environment icon & splash for android app
+    - name: Generate build number for final part of version number
       id: buildNumber
       run: |
         # to make it easier to tell which is which when multiple are installed
