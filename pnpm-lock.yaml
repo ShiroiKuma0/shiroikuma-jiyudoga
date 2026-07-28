@@ -47,6 +47,9 @@ importers:
       process:
         specifier: ^0.11.10
         version: 0.11.10
+      run-s:
+        specifier: ^0.0.0
+        version: 0.0.0
       shaka-player:
         specifier: ^5.1.4
         version: 5.1.4
@@ -4432,6 +4435,9 @@ packages:
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
+
+  run-s@0.0.0:
+    resolution: {integrity: sha512-KPDNauF2Tpnm3nG0+0LJuJxwBFrhAdthpM8bVdDvjWQA7pWP7QoNwEl1+dJ7WVJj81AQP/i6kl6JUmAk7tg3Og==}
 
   safe-buffer@5.1.2:
     resolution: {integrity: sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==}
@@ -9937,6 +9943,8 @@ snapshots:
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
+
+  run-s@0.0.0: {}
 
   safe-buffer@5.1.2: {}
 
