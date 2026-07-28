@@ -6,7 +6,7 @@ window.addEventListener('message', (event) => {
     const result = new Function(code)()
     Android.resolve(
       id,
-      // eslint-disable-next-line no-new-func
+
       JSON.stringify(result)
     )
   } catch (ex) {

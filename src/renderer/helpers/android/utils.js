@@ -1,5 +1,3 @@
-
-
 /**
  * @param {string} filePath
  * @param {string} newFileType
@@ -88,11 +86,11 @@ export function isColourDark(colour) {
 
 export function reverseObject(object) {
   return Object.fromEntries(
-      Object.entries(object)
-        .map(([key, value]) => {
-          return [value, key]
-        })
-      )
+    Object.entries(object)
+      .map(([key, value]) => {
+        return [value, key]
+      })
+  )
 }
 
 export function versionNumberGt(versionA, versionB) {

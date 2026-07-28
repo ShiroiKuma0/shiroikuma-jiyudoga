@@ -1,4 +1,3 @@
-
 import android from 'android'
 
 export const STATE_PLAYING = 3

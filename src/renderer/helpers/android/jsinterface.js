@@ -1,10 +1,9 @@
-
 import android from 'android'
 
 /**
- * 
- * @param {String} id the result of a js interface async function
- * @returns {Promise<String>}
+ *
+ * @param {string} id the result of a js interface async function
+ * @returns {Promise<string>}
  */
 export function awaitAsyncResult(id) {
   return new Promise((resolve, reject) => {

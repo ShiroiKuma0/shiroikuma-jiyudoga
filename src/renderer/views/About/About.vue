@@ -118,7 +118,7 @@ const chunks = computed(() => [
   {
     icon: ['fas', 'money-check-dollar'],
     title: `${t('About.Donate')}`,
-    content: `<a href="https://liberapay.com/MarmadileManteater/">Liberapay</a>`
+    content: '<a href="https://liberapay.com/MarmadileManteater/">Liberapay</a>'
   },
   {
     icon: ['fab', 'bitcoin'],

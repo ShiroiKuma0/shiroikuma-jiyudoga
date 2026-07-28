@@ -107,9 +107,9 @@ export async function appendFileAsync(filename, toAppend, options) {
  */
 export async function readFileAsync(filename, options) {
   try {
-    let uri = await getFullUri(filename)
+    const uri = await getFullUri(filename)
     if (uri === null) {
-      throw new Error("File not found!")
+      throw new Error('File not found!')
     }
     const content = await readFile(uri)
     return content
@@ -162,7 +162,7 @@ export async function ensureDatafileIntegrityAsync(filename) { Promise.resolve()
 
 /**
  * Fully write or rewrite the datafile, immune to crashes during the write operation (data will not be lost)
- * * @param {string} filename
+ * @param {string} filename
  * @param {string[]} lines
  * @return {Promise<void>}
  * @alias module:storageBrowser.crashSafeWriteFileLinesAsync

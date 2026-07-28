@@ -1261,7 +1261,7 @@ async function importPlaylists() {
       shouldAddDuplicateVideos = existingPlaylist.videos.length > existingVideoIdSet.size
     }
 
-    const playlistVideos = [...existingPlaylist.videos]
+    const playlistVideos = deepCopy(existingPlaylist.videos)
 
     playlistObject.videos.forEach((video) => {
       let videoExists = false

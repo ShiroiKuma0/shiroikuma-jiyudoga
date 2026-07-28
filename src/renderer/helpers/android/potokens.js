@@ -1,4 +1,3 @@
-
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
 import i18n from '../../i18n'
