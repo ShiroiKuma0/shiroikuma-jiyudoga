@@ -39,6 +39,12 @@
         :related-channels="relatedChannels"
       />
       <div class="select-container">
+        <FtButton
+          v-if="showViewAllButton"
+          style="margin-top: 33px;"
+          :label="$t('Channel.View All')"
+          @click="router.push(currentTabViewAllRoute)"
+        />
         <FtSelect
           v-if="showVideoSortBy"
           v-show="currentTab === 'videos' && (showFetchMoreButton || filteredVideos.length > 1)"
@@ -266,7 +272,7 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import autolinker from 'autolinker'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
-import { useI18n } from '../../composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 import { isNavigationFailure, NavigationFailureType, useRoute, useRouter } from 'vue-router'
 import { YTNodes } from 'youtubei.js'
 
@@ -280,6 +286,7 @@ import FtElementList from '../../components/FtElementList/FtElementList.vue'
 import FtFlexBox from '../../components/ft-flex-box/ft-flex-box.vue'
 import FtLoader from '../../components/FtLoader/FtLoader.vue'
 import FtSelect from '../../components/FtSelect/FtSelect.vue'
+import FtButton from '../../components/FtButton/FtButton.vue'
 
 import store from '../../store/index'
 
@@ -508,6 +515,24 @@ const tabInfoValues = computed(() => {
   }
 
   return values
+})
+
+const showViewAllButton = computed(() => {
+  switch (currentTab.value) {
+    case 'videos': return (videoSortBy.value === 'newest' || videoSortBy.value === 'popular') && (showFetchMoreButton.value || filteredVideos.value.length > 1)
+    case 'shorts': return (shortSortBy.value === 'newest' || shortSortBy.value === 'popular') && (showFetchMoreButton.value || filteredShorts.value.length > 1)
+    case 'live': return (liveSortBy.value === 'newest' || liveSortBy.value === 'popular') && (showFetchMoreButton.value || filteredLive.value.length > 1)
+    default: return false
+  }
+})
+
+const currentTabViewAllRoute = computed(() => {
+  switch (currentTab.value) {
+    case 'videos': return `/playlist/${getChannelPlaylistId(id.value, 'videos', videoSortBy.value)}`
+    case 'shorts': return `/playlist/${getChannelPlaylistId(id.value, 'shorts', shortSortBy.value)}`
+    case 'live': return `/playlist/${getChannelPlaylistId(id.value, 'live', liveSortBy.value)}`
+    default: return ''
+  }
 })
 
 watch(route, () => {

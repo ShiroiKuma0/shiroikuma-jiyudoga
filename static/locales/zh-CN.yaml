@@ -818,6 +818,7 @@ Video:
     'Remaining preroll-ad time: {remindingTimeSeconds}s': 剩余的预滚动广告时间:：{remindingTimeSeconds} 秒
     'Remaining SABR backoff time: {remindingTimeSeconds}s': 剩余 SABR 后退时间：{remindingTimeSeconds} 秒
   Popout Live Chat: 弹出式聊天
+  Private: 无法在 FreeTube 中观看私密视频，因它们需要 Google 登录和视频所有权。
 Playlist:
   #& About
   View Full Playlist: '查看完整播放列表'

@@ -81,6 +81,7 @@
         :value="defaultViewingMode"
         :select-names="viewingModeNames"
         :select-values="viewingModeValues"
+        :tooltip="t('Settings.Player Settings.Default Viewing Mode.Tooltip')"
         :icon="['fas', 'expand']"
         @change="updateDefaultViewingMode"
       />
@@ -260,7 +261,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useI18n } from '../../composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import FtSelect from '../FtSelect/FtSelect.vue'
@@ -405,10 +406,12 @@ const viewingModeNames = computed(() => {
     t('Settings.General Settings.Thumbnail Preference.Default'),
     t('Settings.Player Settings.Default Viewing Mode.Theater'),
     t('Video.Player.Full Window'),
+    t('Settings.Player Settings.Default Viewing Mode.Full Window (Always On)'),
 
     ...process.env.IS_ELECTRON
       ? [
           t('Settings.Player Settings.Default Viewing Mode.Full Screen'),
+          t('Settings.Player Settings.Default Viewing Mode.Full Screen (Always On)'),
           t('Settings.Player Settings.Default Viewing Mode.Picture in Picture')
         ]
       : []
@@ -428,9 +431,14 @@ const viewingModeValues = computed(() => {
     'default',
     'theatre',
     'fullwindow',
+    'fullwindow_always_on',
 
     ...process.env.IS_ELECTRON
-      ? ['fullscreen', 'pip']
+      ? [
+          'fullscreen',
+          'fullscreen_always_on',
+          'pip',
+        ]
       : []
   ]
 

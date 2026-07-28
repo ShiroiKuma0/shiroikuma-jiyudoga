@@ -445,6 +445,9 @@ Settings:
       Full Screen: Full Screen
       Picture in Picture: Picture in Picture
       External Player: External Player ({externalPlayerName})
+      Full Window (Always On): Full Window (Always On)
+      Full Screen (Always On): Full Screen (Always On)
+      Tooltip: Most default viewing modes are only applied at the start of each watch session. Changes made during the session persist until it ends. Always-on viewing modes are applied whenever you switch to a new video, regardless of any viewing mode changes made when viewing the previous video.
     Scroll Volume Over Video Player: Scroll Volume Over Video Player
     Scroll Playback Rate Over Video Player: Scroll Playback Rate Over Video Player
     Skip by Scrolling Over Video Player: Skip by Scrolling Over Video Player
@@ -593,6 +596,7 @@ Settings:
     History File: History File
     Playlist File: Playlist File
     Search history file: Search history file
+    Settings File: Settings File
     Export Subscriptions: Export Subscriptions
     Export FreeTube: Export FreeTube
     Export YouTube: Export YouTube
@@ -604,6 +608,9 @@ Settings:
     Search history: Search history
     Import search history: Import search history
     Export search history: Export search history
+    Import Settings: Import Settings
+    Export Settings: Export Settings
+    Settings Tooltip: Settings that are OS/user-specific or experimental cannot be exported or imported (e.g., proxy, external player, screenshot folder...)
     Profile object has insufficient data, skipping item: Profile object has insufficient
       data, skipping item
     All subscriptions and profiles have been successfully imported: All subscriptions
@@ -629,9 +636,16 @@ Settings:
       successfully imported
     All search history has been successfully exported: All search history has been
       successfully exported
+    All settings have been successfully imported: All settings have been
+      successfully imported
+    All settings have been successfully exported: All settings have been
+      successfully exported
     Unable to read file: Unable to read file
     Unable to write file: Unable to write file
     Unknown data key: Unknown data key
+    Setting object has insufficient data, skipping item: Setting object has insufficient data, skipping item
+    Unknown setting key: 'Unknown setting key: {key}'
+    Non-transferable setting key: 'Non-transferable setting key: {key}'
     How do I import my subscriptions?: How do I import my subscriptions?
     Manage Subscriptions: Manage Subscriptions
   Proxy Settings:
@@ -775,6 +789,7 @@ Channel:
   This channel does not allow searching: This channel does not allow searching
   This channel is age-restricted and currently cannot be viewed in FreeTube.: This channel is age-restricted and currently cannot be viewed in FreeTube.
   Channel Tabs: Channel Tabs
+  View All: View All
   Videos:
     Videos: Videos
     This channel does not currently have any videos: This channel does not currently
@@ -831,6 +846,7 @@ Video:
   MembersOnly: Members-only videos cannot be watched with FreeTube as they require Google login and paid membership to the uploader's channel.
   AgeRestricted: Age-restricted videos cannot be watched with FreeTube as they require Google login and using an age-verified YouTube account.
   DRMProtected: DRM protected videos cannot be played in FreeTube, as they require proprietary, closed source components. If you want to watch this video please watch it on the official YouTube website in a DRM enabled web browser.
+  Private: Private videos cannot be watched in FreeTube as they require Google login and ownership of the video.
   More Options: More Options
   Mark As Watched: Mark As Watched
   Remove From History: Remove From History

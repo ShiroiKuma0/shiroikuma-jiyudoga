@@ -8,10 +8,11 @@
       appearance="result"
       :data="result"
       :data-type="dataType || result.type"
-      :first-screen="index < 16"
+      :first-screen="!renderAllItemsLazily && index < 16"
       :layout="displayValue"
       :show-video-with-last-viewed-playlist="showVideoWithLastViewedPlaylist"
       :use-channels-hidden-preference="useChannelsHiddenPreference"
+      :use-hide-upcoming-premieres-preference="useHideUpcomingPremieresPreference"
       :hide-forbidden-titles="hideForbiddenTitles"
       :always-show-add-to-playlist-button="alwaysShowAddToPlaylistButton"
       :quick-bookmark-button-enabled="quickBookmarkButtonEnabled"
@@ -52,6 +53,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  renderAllItemsLazily: {
+    type: Boolean,
+    default: false
+  },
   display: {
     type: String,
     required: false,
@@ -62,6 +67,10 @@ const props = defineProps({
     default: false
   },
   useChannelsHiddenPreference: {
+    type: Boolean,
+    default: true,
+  },
+  useHideUpcomingPremieresPreference: {
     type: Boolean,
     default: true,
   },

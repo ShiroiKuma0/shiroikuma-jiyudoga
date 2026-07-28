@@ -66,7 +66,7 @@ import { computed, ref } from 'vue'
 
 import { handleDragAndDrop } from '../../helpers/dragAndDrop'
 
-import FtListVideo from '../ft-list-video/ft-list-video.vue'
+import FtListVideo from '../FtListVideo/FtListVideo.vue'
 import FtListChannel from '../FtListChannel/FtListChannel.vue'
 import FtListPlaylist from '../FtListPlaylist/FtListPlaylist.vue'
 import FtCommunityPost from '../FtCommunityPost/FtCommunityPost.vue'
@@ -100,6 +100,10 @@ const props = defineProps({
     default: false
   },
   useChannelsHiddenPreference: {
+    type: Boolean,
+    default: true,
+  },
+  useHideUpcomingPremieresPreference: {
     type: Boolean,
     default: true,
   },
@@ -187,6 +191,8 @@ const hideLiveStreams = computed(() => {
 
 /** @type {import('vue').ComputedRef<boolean>} */
 const hideUpcomingPremieres = computed(() => {
+  if (!props.useHideUpcomingPremieresPreference) { return false }
+
   return store.getters.getHideUpcomingPremieres
 })
 

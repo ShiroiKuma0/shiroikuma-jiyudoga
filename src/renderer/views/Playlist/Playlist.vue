@@ -80,6 +80,7 @@
             :playlist-type="infoSource"
             :show-video-with-last-viewed-playlist="true"
             :use-channels-hidden-preference="false"
+            :use-hide-upcoming-premieres-preference="false"
             :hide-forbidden-titles="false"
             :always-show-add-to-playlist-button="true"
             :quick-bookmark-button-enabled="quickBookmarkButtonEnabled"
@@ -172,7 +173,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { useI18n } from '../../composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 import { isNavigationFailure, NavigationFailureType, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import FtLoader from '../../components/FtLoader/FtLoader.vue'
