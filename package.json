@@ -49,8 +49,8 @@
     "pack:botGuardScript:android": "webpack --config _scripts/webpack.botGuardScript.android.config.js",
     "pack:android:core": "webpack --mode=production --config-node-env=production --config _scripts/webpack.android.config.js",
     "pack:android:dev:core": "webpack --mode=development --config-node-env=development --config _scripts/webpack.android.config.js",
-    "pack:android": "run-s pack:botGuardScript:android pack:android:core",
-    "pack:android:dev": "run-s pack:botGuardScript:android pack:android:dev:core",
+    "pack:android": "pnpm run \"/^pack:(botGuardScript:android|android:core)$/\"",
+    "pack:android:dev": "pnpm run \"/^pack:(botGuardScript:android|android:dev:core)$/\"",
     "checkforbadtemplates": "node _scripts/findMissingTemplates.mjs",
     "ci": "pnpm install --frozen-lockfile"
   },
@@ -68,7 +68,6 @@
     "googlevideo": "^4.0.4",
     "marked": "^18.0.3",
     "process": "^0.11.10",
-    "run-s": "^0.0.0",
     "shaka-player": "^5.1.4",
     "swiper": "^12.1.4",
     "terser": "^5.47.1",
