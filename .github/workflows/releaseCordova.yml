@@ -36,17 +36,23 @@ jobs:
       id: pkg
       uses: jaywcjlove/github-action-package@v1.3.0
 
+    - name: Set environment icon & splash for android app
+      id: buildNumber
+      run: |
+        # to make it easier to tell which is which when multiple are installed
+        echo "buildNumber=$(node ./_scripts/getReleaseNumber.mjs)" >> "$GITHUB_OUTPUT"
+
     - name: Set Version Number Variable
       id: versionNumber
       uses: actions/github-script@v6
       with:
         result-encoding: string
         script: |
-          // TODO✏ automate this
-          var run_number = ${{ github.run_number }} - 154
+          var run_number = ${{ steps.buildNumber.outputs.buildNumber }}
           var version = '${{ steps.pkg.outputs.version }}'
           var version_number = version + '.' + run_number
           return version_number
+
     - name: Set App ID Variable
       id: appId
       uses: actions/github-script@v6
