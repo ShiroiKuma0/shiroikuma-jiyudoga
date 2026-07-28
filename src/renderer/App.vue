@@ -135,7 +135,6 @@ import { openExternalLink, openInternalPath, showToast } from './helpers/utils'
 import { translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 
-import 'core-js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 
