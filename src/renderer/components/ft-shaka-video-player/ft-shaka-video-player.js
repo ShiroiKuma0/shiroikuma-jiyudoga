@@ -27,6 +27,7 @@ import {
   throttle,
   debounce,
   removeFromArrayIfExists,
+  copyToClipboard,
 } from '../../helpers/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
 import { setupSabrScheme } from '../../helpers/player/SabrSchemePlugin'
@@ -105,6 +106,10 @@ export default defineComponent({
     currentChapterIndex: {
       type: Number,
       default: 0
+    },
+    chaptersSrc: {
+      type: String,
+      default: ''
     },
     storyboardSrc: {
       type: String,
@@ -364,6 +369,11 @@ export default defineComponent({
     })
 
     /** @type {import('vue').ComputedRef<string>} */
+    const screenshotMode = computed(() => {
+      return store.getters.getScreenshotMode
+    })
+
+    /** @type {import('vue').ComputedRef<string>} */
     const screenshotFormat = computed(() => {
       return store.getters.getScreenshotFormat
     })
@@ -371,11 +381,6 @@ export default defineComponent({
     /** @type {import('vue').ComputedRef<number>} */
     const screenshotQuality = computed(() => {
       return store.getters.getScreenshotQuality
-    })
-
-    /** @type {import('vue').ComputedRef<boolean>} */
-    const screenshotAskPath = computed(() => {
-      return store.getters.getScreenshotAskPath
     })
 
     /** @type {import('vue').ComputedRef<boolean>} */
@@ -809,22 +814,18 @@ export default defineComponent({
 
     const uiConfig = computed(() => {
       const controlPanelElements = [
+        'ft_skip_previous',
         'play_pause',
+        'ft_skip_next',
         'mute',
         'volume',
         'time_and_duration',
         'spacer'
       ]
-      const controlPanelElementsWithSkipButtons = [
-        ...controlPanelElements.slice(0, 1),
-        'ft_skip_previous',
-        'ft_skip_next',
-        ...controlPanelElements.slice(1)
-      ]
 
       /** @type {shaka.extern.UIConfiguration} */
       const uiConfig = {
-        controlPanelElements: props.watchingPlaylist ? controlPanelElementsWithSkipButtons : controlPanelElements,
+        controlPanelElements: controlPanelElements,
         overflowMenuButtons: [],
 
         // only set this to label when we actually have labels, so that the warning doesn't show up
@@ -846,6 +847,7 @@ export default defineComponent({
           'playback_rate',
           'captions',
           'ft_audio_tracks',
+          'chapter',
           'loop',
           'ft_screenshot',
           'picture_in_picture',
@@ -873,6 +875,7 @@ export default defineComponent({
           'captions',
           'playback_rate',
           props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
+          'chapter',
           'loop',
           'recenter_vr',
           'toggle_stereoscopic',
@@ -906,6 +909,15 @@ export default defineComponent({
         removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'toggle_stereoscopic')
       }
 
+      if (!props.watchingPlaylist) {
+        removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_skip_previous')
+        removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_skip_next')
+      }
+
+      if (props.chapters.length === 0) {
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'chapter')
+      }
+
       return uiConfig
     })
 
@@ -926,6 +938,10 @@ export default defineComponent({
           contextMenuElements: ['ft_stats'],
           enableTooltips: true,
           seekBarColors: {
+            // shaka-player's chapter markers only show up part of the time for the DASH and audio formats
+            // the issue is clearly on the FreeTube side as shaka-player's demo page works fine and they show up all the time for the legacy formats.
+            // As I have spent way too much time debugging it and still cannot make sense of it, we'll stick with FreeTube's own chapter markers for now.
+            chapters: 'transparent',
             played: 'var(--primary-color)'
           },
           showAudioCodec: false,
@@ -1726,29 +1742,14 @@ export default defineComponent({
       canvas.height = height
       canvas.getContext('2d').drawImage(video_, 0, 0)
 
-      const format = screenshotFormat.value
+      // Navigator Clipboard API only supports PNG
+      const format = screenshotMode.value === 'clipboard' ? 'png' : screenshotFormat.value
       const mimeType = `image/${format === 'jpg' ? 'jpeg' : format}`
       // imageQuality is ignored for pngs, so it is still okay to pass the quality value
       const imageQuality = screenshotQuality.value / 100
 
-      let filename
-      try {
-        filename = await store.dispatch('parseScreenshotCustomFileName', {
-          date: new Date(),
-          playerTime: video_.currentTime,
-          videoId: props.videoId
-        })
-      } catch (err) {
-        console.error(`Parse failed: ${err.message}`)
-        showToast(t('Screenshot Error', { error: err.message }))
-        canvas.remove()
-        return
-      }
-
-      const filenameWithExtension = `${filename}.${format}`
-
       const wasPlaying = !video_.paused
-      if ((!process.env.IS_ELECTRON || screenshotAskPath.value) && wasPlaying) {
+      if ((!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') && wasPlaying) {
         video_.pause()
       }
 
@@ -1756,25 +1757,45 @@ export default defineComponent({
         /** @type {Blob} */
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, mimeType, imageQuality))
 
-        if (!process.env.IS_ELECTRON || screenshotAskPath.value) {
-          const saved = await writeFileWithPicker(
-            filenameWithExtension,
-            blob,
-            format.toUpperCase(),
-            mimeType,
-            `.${format}`,
-            'player-screenshots',
-            'pictures'
-          )
-
-          if (saved) {
-            showToast(t('Screenshot Success'))
+        if (screenshotMode.value === 'clipboard') {
+          await copyToClipboard(blob, { messageOnSuccess: t('Screenshot Clipboard Success'), messageOnError: t('Screenshot Clipboard Error') })
+        } else if (screenshotMode.value === 'prompt_folder' || screenshotMode.value === 'default_folder') {
+          let filename
+          try {
+            filename = await store.dispatch('parseScreenshotCustomFileName', {
+              date: new Date(),
+              playerTime: video_.currentTime,
+              videoId: props.videoId
+            })
+          } catch (err) {
+            console.error(`Parse failed: ${err.message}`)
+            showToast(t('Screenshot Error', { error: err.message }))
+            canvas.remove()
+            return
           }
-        } else {
-          const arrayBuffer = await blob.arrayBuffer()
 
-          if (await window.ftElectron.writeToDefaultFolder(filenameWithExtension, arrayBuffer)) {
-            showToast(t('Screenshot Success'))
+          const filenameWithExtension = `${filename}.${format}`
+
+          if (!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') {
+            const saved = await writeFileWithPicker(
+              filenameWithExtension,
+              blob,
+              format.toUpperCase(),
+              mimeType,
+              `.${format}`,
+              'player-screenshots',
+              'pictures'
+            )
+
+            if (saved) {
+              showToast(t('Screenshot Success'))
+            }
+          } else {
+            const arrayBuffer = await blob.arrayBuffer()
+
+            if (await window.ftElectron.writeToDefaultFolder(filenameWithExtension, arrayBuffer)) {
+              showToast(t('Screenshot Success'))
+            }
           }
         }
       } catch (error) {
@@ -1783,7 +1804,7 @@ export default defineComponent({
       } finally {
         canvas.remove()
 
-        if ((!process.env.IS_ELECTRON || screenshotAskPath.value) && wasPlaying) {
+        if ((!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') && wasPlaying) {
           video_.play()
         }
       }
@@ -2930,7 +2951,7 @@ export default defineComponent({
         sabrManifest = player.getManifest()
       }
 
-      // For SABR we include the thumbnails and subtitles in the manifest
+      // For SABR we include the thumbnails, chapters and subtitles in the manifest
       if (!process.env.SUPPORTS_LOCAL_API || props.format === 'legacy' || props.manifestMimeType !== MANIFEST_TYPE_SABR) {
         const promises = []
 
@@ -3000,6 +3021,15 @@ export default defineComponent({
             // If an error occurs with them, it's not critical
             player.addThumbnailsTrack(props.storyboardSrc, 'text/vtt')
               .catch(error => logShakaError(error, 'addThumbnailsTrack', props.videoId, props.storyboardSrc))
+          )
+        }
+
+        if (!isLive.value && props.chaptersSrc.length > 0) {
+          promises.push(
+            // Only log the error, as the chapters are a nice to have (we have our own UI outside of the player too)
+            // If an error occurs with them, it is not critical
+            player.addChaptersTrack(props.chaptersSrc, 'und', 'text/vtt')
+              .catch(error => logShakaError(error, 'addChaptersTrack', props.videoId, props.chaptersSrc))
           )
         }
 

@@ -73,7 +73,9 @@ Search Listing:
 Search Filters:
   Search Filters: ''
   Prioritize:
+    Prioritize: ''
     Most Relevant: ''
+    Popularity: ''
   Time:
     Time: ''
     Any Time: ''
@@ -91,6 +93,9 @@ Search Filters:
   Duration:
     Duration: ''
     All Durations: ''
+    '< 3 minutes': ''
+    '3 - 20 minutes': ''
+    '> 20 minutes': ''
   Features:
     Features: ''
     HD: ''
@@ -467,10 +472,13 @@ Settings:
       8k: ''
     Screenshot:
       Enable: ''
-      Format Label: ''
-      Quality Label: ''
+      Mode: ''
       Modes:
         Ask Path: ''
+        Save To Folder: ''
+        Clipboard: ''
+      Format Label: ''
+      Quality Label: ''
       Folder Label: ''
       Folder Button: ''
       File Name Label: ''
@@ -659,6 +667,7 @@ About:
   About: ''
   Beta: ''
   Source code: ''
+  Licensed under the {licenseLink}: ''
   AGPLv3: ''
   Downloads / Changelog: ''
   GitHub releases: ''
@@ -673,9 +682,11 @@ About:
   Email: ''
   Mastodon: ''
   Chat on Matrix: ''
+  Please read the {roomRulesLink}: ''
   room rules: ''
   Translate: ''
   Credits: ''
+  FreeTube is made possible by {creditsPageLink}: ''
   these people and projects: ''
   Donate: ''
 
@@ -825,6 +836,7 @@ Video:
   Live Now: ''
   Live Chat: ''
   Enable Live Chat: ''
+  Popout Live Chat: ''
   Live Chat is currently not supported in this build.: ''
   Live chat is enabled. Chat messages will appear here once sent.: ''
   'Live Chat is currently not supported with the Invidious API. A direct connection to YouTube is required.': ''
@@ -891,6 +903,9 @@ Video:
     You appear to be offline: ''
     Playback will resume automatically when your connection comes back: ''
     Skipped segment: ''
+  Watch:
+    'Remaining preroll-ad time: {remindingTimeSeconds}s': ''
+    'Remaining SABR backoff time: {remindingTimeSeconds}s': ''
 #& Playlists
 Playlist:
   #& About
@@ -1035,7 +1050,9 @@ Age Restricted:
   This video is age restricted: ''
 External link opening has been disabled in the general settings: ''
 Screenshot Success: ''
+Screenshot Clipboard Success: ''
 Screenshot Error: ''
+Screenshot Clipboard Error: ''
 Channel Hidden: ''
 Channel Unhidden: ''
 Trimmed input must be at least N characters long: ''

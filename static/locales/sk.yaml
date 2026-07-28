@@ -403,10 +403,14 @@ Settings:
       File Name Label: Vzor názvu súboru
       Folder Button: Vybrať priečinok
       Folder Label: Priečinok snímky obrazovky
-      Ask Path: Spýtať sa na priečinok uloženia
+      Modes:
+        Ask Path: Spýtať sa na priečinok uloženia
+        Save To Folder: Uložiť do priečinka
+        Clipboard: Kopírovať do schránky
       Quality Label: Kvalita snímky obrazovky
       Format Label: Formát snímky obrazovky
       Enable: Povoliť snímku obrazovky
+      Mode: Režim snímky obrazovky
     Video Playback Rate Interval: Interval rýchlosti prehrávania videa
     Max Video Playback Rate: Maximálna rýchlosť prehrávania videa
     Autoplay Interruption Timer: Časovač prerušenia automatického prehrávania
@@ -589,6 +593,7 @@ Settings:
     Hide Uploader on Watch page: Skryť nahrávača na stránke pozerania
     Hide Unsubscribe Button: Skryť tlačidlo odhlásenia
     Parental Control Settings: Rodičovská kontrola
+    Disable Channel Links: Vypnüť odkazy na kanál
   Password Settings:
     Remove Password: Odstrániť heslo
     Set Password: Nastaviť heslo
@@ -972,7 +977,7 @@ Profile:
   Toggle Profile List: Prepnúť zoznam profilov
 Download From Site: Stiahnuť zo stránky
 Version {versionNumber} is now available!  Click for more details: Verzia {versionNumber} je k dispozícii! Kliknite pre viac podrobností
-Locale Name: Angličtina (US)
+Locale Name: Slovenčina
 Playing Next Video Interval: Prehrávanie ďalšieho videa okamžite. Kliknite pre zrušenie. | Prehrávanie ďalšieho videa o {nextVideoInterval} sekundu. Kliknite pre zrušenie. | Prehrávanie ďalšieho videa o {nextVideoInterval} sekúnd. Kliknite pre zrušenie.
 More: Viac
 Unknown YouTube url type, cannot be opened in app: Neznámy typ adresy URL YouTube, nemôže byť otvorený v aplikácii
@@ -1008,7 +1013,7 @@ Search Listing:
 Feed:
   Feed Last Updated: 'Kanál {feedName} naposledy aktualizovaný: {date}'
   Refresh Feed: Obnoviť {subscriptionName}
-Go to page: Prejsť na {stránka}
+Go to page: Prejsť na {page}
 Right-click or hold to see history: Podržte alebo kliknite pravým tlačidlom pre zobrazenie histórie
 KeyboardShortcutPrompt:
   Toggle Developer Tools: Prepnúť nástroje pre vývojárov
@@ -1106,3 +1111,5 @@ Clipboard:
 Tag already exists: Označenie "{tagName}" už existuje
 Compact side navigation: Kompaktná bočná navigácia
 Expand side navigation: Rozbaliť bočnú navigáciu
+Screenshot Clipboard Success: Snímka obrazovky uložená do schránky
+Screenshot Clipboard Error: Kopírovanie snímky obrazovky do schránky sa nepodarilo

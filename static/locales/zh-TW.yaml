@@ -406,9 +406,13 @@ Settings:
       Error:
         Forbidden Characters: 禁止的字元
         Empty File Name: 空的檔案名稱
-      Ask Path: 詢問儲存的資料夾
+      Modes:
+        Ask Path: 詢問儲存的資料夾
+        Save To Folder: 儲存至資料夾
+        Clipboard: 複製到剪貼簿
       Folder Label: 螢幕截圖資料夾
       File Name Tooltip: 您可以使用下方的變數。%Y 為四位數的年份。%M 為兩位數的月份。%D 為兩位數的日。%H 為兩位數的小時。%N 為兩位數的分鐘。%S 為兩位數的秒數。%T 為三位數的毫秒。%s 為影片的秒數。%t 為三位數的影片毫秒數。%i 為影片 ID。
+      Mode: 螢幕截圖模式
     Enter Fullscreen on Display Rotate: 在顯示旋轉時進入全螢幕
     Skip by Scrolling Over Video Player: 捲動影片播放器跳過
     Autoplay Interruption Timer: 自動播放中斷計時器
@@ -590,6 +594,7 @@ Settings:
     Hide Search Bar: 隱藏搜尋列
     Parental Control Settings: 家長控制
     Hide Uploader on Watch page: 在觀看頁面隱藏上傳者
+    Disable Channel Links: 停用頻道連結
   Experimental Settings:
     Replace HTTP Cache: 取代 HTTP 快取
     Warning: 這些設定是實驗性的，它們啟用時可能會導致當機。強烈建議做好備份。使用時風險自負！
@@ -1112,3 +1117,5 @@ KeyboardShortcutPrompt:
 shortcutLabelSeparator: ｜
 Compact side navigation: 簡潔側邊導航
 Expand side navigation: 展開側邊導航
+Screenshot Clipboard Success: 儲存螢幕截圖至剪貼簿
+Screenshot Clipboard Error: 複製螢幕截圖到剪貼簿失敗

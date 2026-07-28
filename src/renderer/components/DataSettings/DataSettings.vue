@@ -883,7 +883,6 @@ async function importFreeTubeWatchHistory(textDecode) {
   const requiredKeys = [
     'author',
     'authorId',
-    'description',
     'isLive',
     'lengthSeconds',
     'published',
@@ -901,6 +900,7 @@ async function importFreeTubeWatchHistory(textDecode) {
     'lastViewedPlaylistItemId',
     'lastViewedPlaylistType',
     'viewCount',
+    'description',
   ]
 
   const ignoredKeys = [
@@ -933,6 +933,9 @@ async function importFreeTubeWatchHistory(textDecode) {
       showToast(t('Settings.Data Settings.History object has insufficient data, skipping item'))
       console.error('Missing Keys: ', missingKeys, historyData)
     } else {
+      // FreeTube history export does not have this data if the video was marked as watched manually, setting default value
+      historyObject.description = historyObject.description ?? ''
+
       historyItems.set(historyObject.videoId, historyObject)
     }
   })
