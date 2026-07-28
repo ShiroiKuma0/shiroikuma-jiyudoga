@@ -19,9 +19,15 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 22.x
-        cache: "yarn"
-    - name: 🧶 Yarn install
-      run: yarn ci
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 #v6.0.8
+      with:
+        version: 10
+        cache: false
+
+    - name: PNPM install
+      run: pnpm i
 
     - name: Set environment icon & splash for android app
       run: |
@@ -29,7 +35,7 @@ jobs:
         node ./_scripts/_setAppSplashTheme.mjs --nightly
 
     - name: 🔍Lint code
-      run: yarn lint
+      run: pnpm run lint
       continue-on-error: true
 
     - name: 📚Read package.json
@@ -73,7 +79,7 @@ jobs:
         value: ${{ steps.pkg.outputs.productName }} Nightly
 
     - name: 📦 Pack for 🕸web with Node.js
-      run: yarn pack:web
+      run: pnpm run pack:web
 
     - name: 🐋 Build docker image
       run: |
@@ -97,8 +103,8 @@ jobs:
 
     - name: 📦 Pack for 📱Android
       run: |
-        yarn pack:botGuardScript:android
-        yarn pack:android:dev
+        pnpm run pack:botGuardScript:android
+        pnpm run pack:android:dev
 
     - name: 🦴 Fetch keystore from secrets
       run: |

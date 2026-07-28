@@ -110,7 +110,7 @@
 <script setup>
 import { marked } from 'marked'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useI18n } from './composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import FtFlexBox from './components/ft-flex-box/ft-flex-box.vue'
@@ -135,7 +135,6 @@ import { openExternalLink, openInternalPath, showToast } from './helpers/utils'
 import { translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 
-import 'core-js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 
@@ -180,7 +179,7 @@ onMounted(async () => {
   await store.dispatch('grabUserSettings')
 
   updateTheme()
-  
+
   await store.dispatch('fetchInvidiousInstancesFromFile')
   if (defaultInvidiousInstance.value === '') {
     await store.dispatch('setRandomCurrentInvidiousInstance')
@@ -220,7 +219,7 @@ onMounted(async () => {
     }
 
     dataReady.value = true
-    
+
     setTimeout(() => {
       checkForNewUpdates()
     }, 500)
@@ -261,7 +260,6 @@ const secColor = computed(() => store.getters.getSecColor)
 watch(secColor, updateTheme)
 
 function updateTheme() {
-
   if (process.env.IS_ANDROID) {
     const theme = {
       baseTheme: baseTheme.value || 'dark',
@@ -300,11 +298,10 @@ const updateBannerMessage = computed(() => {
 })
 
 async function checkForNewUpdates() {
-  
   if (!checkForUpdates.value) {
     return
   }
-  
+
   const info = await getUpdateInfo()
   if (info.updateAvailable) {
     updateChangelog.value = info.changeLog.body
@@ -564,13 +561,7 @@ const windowTitle = computed(() => {
     !routePath.startsWith('/playlist/') &&
     !routePath.startsWith('/search/')
   ) {
-    let title = translateWindowTitle(route.meta.title)
-    if (!title) {
-      title = packageDetails.productName
-    } else {
-      title = `${title} - ${packageDetails.productName}`
-    }
-    return title
+    return translateWindowTitle(route.meta.title) ?? ''
   } else {
     return null
   }
@@ -580,7 +571,11 @@ const windowTitle = computed(() => {
 const appTitle = computed(() => store.getters.getAppTitle)
 
 watch(appTitle, (value) => {
-  document.title = value
+  if (value.length > 0) {
+    document.title = `${value} - ${packageDetails.productName}`
+  } else {
+    document.title = packageDetails.productName
+  }
 })
 
 watch(windowTitle, setWindowTitle)

@@ -42,7 +42,7 @@
   border-block-end: 1px solid #e46962;
 }
 
-[data-theme="light"] .logs > .warning {
+[data-theme='light'] .logs > .warning {
   background-color: #fef6d5;
   color: #3e2f00;
   border-block-end: 2px solid var(--card-bg-color);
@@ -69,16 +69,17 @@
   display: block;
 }
 
-.error .source, .warning .source {
+.error .source,
+.warning .source {
   color: #fff;
 }
 
-[data-theme="light"] .source,
-[data-theme="light"] .error {
+[data-theme='light'] .source,
+[data-theme='light'] .error {
   color: #000;
 }
 
-[data-theme="light"] .logs > .error {
+[data-theme='light'] .logs > .error {
   background-color: #fcebeb;
   color: #410e0b;
   border-block-end: 2px solid var(--card-bg-color);

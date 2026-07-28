@@ -1,387 +1,94 @@
 package io.freetubeapp.freetube.javascript
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Intent
-import android.content.Intent.EXTRA_KEY_EVENT
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.media.MediaMetadata
-import android.media.session.MediaSession
-import android.media.session.PlaybackState
 import android.media.session.PlaybackState.STATE_PAUSED
-import android.net.Uri
-import android.os.Build
-import android.provider.OpenableColumns
-import android.view.KeyEvent
-import android.view.KeyEvent.KEYCODE_MEDIA_NEXT
-import android.view.KeyEvent.KEYCODE_MEDIA_PAUSE
-import android.view.KeyEvent.KEYCODE_MEDIA_PLAY
-import android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
-import android.view.WindowManager
 import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.toDrawable
-import androidx.core.view.WindowCompat
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import io.freetubeapp.freetube.MainActivity
-import io.freetubeapp.freetube.MediaControlsReceiver
-import io.freetubeapp.freetube.R
-import io.freetubeapp.freetube.helpers.AmbiguousFileUri
+import io.freetubeapp.freetube.activities.FreeTubeActivity
+import io.freetubeapp.freetube.helpers.MediaSessionFacade
 import io.freetubeapp.freetube.helpers.Promise
 import io.freetubeapp.freetube.helpers.WriteMode
-import io.freetubeapp.freetube.helpers.hexToColour
+import io.freetubeapp.freetube.helpers.getDataDirectory
+import io.freetubeapp.freetube.helpers.getFileName
 import io.freetubeapp.freetube.helpers.readBytes
 import io.freetubeapp.freetube.helpers.readText
+import io.freetubeapp.freetube.helpers.resolveAmbiguousUri
 import io.freetubeapp.freetube.helpers.writeBytes
-import io.freetubeapp.freetube.helpers.writeText
-import io.freetubeapp.freetube.webviews.BotGuardWebView
+import io.freetubeapp.freetube.webviews.FreeTubeWebView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.json.JSONObject
 import java.io.File
-import java.net.URL
 import java.nio.charset.Charset
-import java.util.UUID.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+const val DATA_DIRECTORY = "data://"
 
-class FreeTubeJavaScriptInterface(main: MainActivity) {
-  private var context: MainActivity = main
-  private var mediaSession: MediaSession?
-  private var lastPosition: Long
-  private var lastState: Int
-  private var lastNotification: Notification? = null
-  private var keepScreenOn: Boolean = false
-  val jsCommunicator: AsyncJSCommunicator
-
-  companion object {
-    private const val DATA_DIRECTORY = "data://"
-    private const val CHANNEL_ID = "media_controls"
-    private val NOTIFICATION_ID = (2..1000).random()
-    private val NOTIFICATION_TAG = String.format("%s", randomUUID())
-  }
-
-  init {
-    mediaSession = null
-    lastPosition = 0
-    lastState = PlaybackState.STATE_PLAYING
-    jsCommunicator = AsyncJSCommunicator(main.webView)
-  }
+class FreeTubeJavaScriptInterface(
+  private val context: FreeTubeActivity,
+  private val webView: FreeTubeWebView
+) {
+  private val coroutineScope = CoroutineScope(Dispatchers.Main)
+  private val mediaSession: MediaSessionFacade = MediaSessionFacade(
+    context,
+    "media_controls",
+    { event ->
+      webView.dispatchEvent(event)
+    },
+    { position ->
+      webView.dispatchEvent("media-seek", "position", position)
+    }
+  )
+  val jsCommunicator: AsyncJSCommunicator = AsyncJSCommunicator(webView)
 
   // region Media Notifications
-
   /**
-   * retrieves actions for the media controls
-   * @param state the current state of the media controls (ex PlaybackState.STATE_PLAYING or PlaybackState.STATE_PAUSED
-   */
-  private fun getActions(state: Int = lastState): Array<Notification.Action> {
-    var neutralAction = arrayOf("Pause", "pause")
-    var neutralIcon = androidx.media3.ui.R.drawable.exo_icon_pause
-    if (state == STATE_PAUSED) {
-      neutralAction = arrayOf("Play", "play")
-      neutralIcon = androidx.media3.ui.R.drawable.exo_icon_play
-    }
-    return arrayOf(
-      Notification.Action.Builder(
-        androidx.media3.ui.R.drawable.exo_ic_skip_previous,
-        "Back",
-        PendingIntent.getBroadcast(context, 1, Intent(context, MediaControlsReceiver::class.java).setAction("previous"), PendingIntent.FLAG_IMMUTABLE)
-      ).build(),
-      Notification.Action.Builder(
-        neutralIcon,
-        neutralAction[0],
-        PendingIntent.getBroadcast(context, 1, Intent(context, MediaControlsReceiver::class.java).setAction(neutralAction[1]), PendingIntent.FLAG_IMMUTABLE)
-      ).build(),
-      Notification.Action.Builder(
-        androidx.media3.ui.R.drawable.exo_ic_skip_next,
-        "Next",
-        PendingIntent.getBroadcast(context, 1, Intent(context, MediaControlsReceiver::class.java).setAction("next"), PendingIntent.FLAG_IMMUTABLE)
-      ).build()
-    )
-  }
-
-  /**
-   * retrieves the media style for the media controls notification
-   */
-  private fun getMediaStyle(): Notification.MediaStyle? {
-    return if (mediaSession != null) {
-      Notification.MediaStyle()
-        .setMediaSession(mediaSession!!.sessionToken).setShowActionsInCompactView(0, 1, 2)
-    } else {
-      null
-    }
-  }
-
-  /**
-   * Gets a fresh media controls notification given the current `mediaSession`
-   * @param actions a list of actions for the media controls (defaults to `getActions()`)
-   */
-  @RequiresApi(Build.VERSION_CODES.O)
-  private fun getMediaControlsNotification(actions: Array<Notification.Action> = getActions()): Notification? {
-    val mediaStyle = getMediaStyle()
-    if (mediaStyle != null) {
-      // when clicking the notification, launch the app as if the user tapped on it in their launcher (open an existing instance if able)
-      val notificationIntent = Intent(Intent.ACTION_MAIN)
-        .addCategory(Intent.CATEGORY_LAUNCHER)
-        .setClass(context,  MainActivity::class.java)
-
-      // always reuse notification
-      if (lastNotification != null) {
-        lastNotification!!.actions = actions
-        return lastNotification
-      }
-      lastNotification = Notification.Builder(context, CHANNEL_ID)
-        .setStyle(getMediaStyle())
-        .setSmallIcon(R.drawable.ic_media_notification_icon)
-        .addAction(
-          actions[0]
-        )
-        .addAction(
-          actions[1]
-        )
-        .addAction(
-          actions[2]
-        )
-        .setContentIntent(
-          PendingIntent.getActivity(
-            context, 1, notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-          )
-        )
-        .setDeleteIntent(
-          PendingIntent.getBroadcast(context, 1, Intent(context, MediaControlsReceiver::class.java).setAction("pause"), PendingIntent.FLAG_IMMUTABLE)
-        )
-        .setVisibility(Notification.VISIBILITY_PUBLIC)
-        .build()
-      return lastNotification
-    } else {
-      return null
-    }
-  }
-
-  /**
-   * pushes a notification
-   * @param notification the notification the be pushed (usually a media controls notification)
-   */
-  @SuppressLint("MissingPermission")
-  private fun pushNotification(notification: Notification) {
-    if (lastNotification !== null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // always set notifications to pause before sending another on android 13+
-      setState(mediaSession!!, STATE_PAUSED)
-    }
-    val manager = NotificationManagerCompat.from(context)
-    manager.notify(NOTIFICATION_TAG, NOTIFICATION_ID, notification)
-  }
-
-  /**
-   * sets the state of the media session
-   * @param session the current media session
-   * @param state the state of playback
-   * @param position the position in milliseconds of playback
-   */
-  @SuppressLint("MissingPermission")
-  private fun setState(session: MediaSession, state: Int, position: Long? = null) {
-
-    if (state != lastState) {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        // need to reissue a notification if we want to update the actions
-        val actions = getActions(state)
-        val notification = getMediaControlsNotification(actions)
-        pushNotification(notification!!)
-      }
-    }
-    lastState = state
-    val statePosition: Long = position ?: lastPosition
-    session.setPlaybackState(
-      PlaybackState.Builder()
-        .setState(state, statePosition, 0.0f)
-        .setActions(PlaybackState.ACTION_PLAY_PAUSE or PlaybackState.ACTION_PAUSE or PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS or
-        PlaybackState.ACTION_PLAY_FROM_MEDIA_ID or
-        PlaybackState.ACTION_PLAY_FROM_SEARCH or PlaybackState.ACTION_SEEK_TO)
-        .build()
-    )
-  }
-
-  /**
-   * sets the metadata of the media session
-   * @param session the current media session
-   * @param trackName the video name
-   * @param artist the channel name
-   * @param duration duration in milliseconds
-   */
-  @SuppressLint("MissingPermission")
-  @RequiresApi(Build.VERSION_CODES.O)
-  private fun setMetadata(session: MediaSession, trackName: String, artist: String, duration: Long, art: String?, pushNotification: Boolean = true) {
-    var notification: Notification? = null
-    if (pushNotification) {
-      notification = getMediaControlsNotification()
-    }
-
-    if (art != null) {
-      // todo move this to a function and add try catch
-      val connection = URL(art).openConnection()
-      connection.connect()
-      val input = connection.getInputStream()
-      val bitmapArt = BitmapFactory.decodeStream(input)
-      // todo
-      session.setMetadata(
-        MediaMetadata.Builder()
-          .putString(MediaMetadata.METADATA_KEY_TITLE, trackName)
-          .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
-          .putBitmap(MediaMetadata.METADATA_KEY_ART, bitmapArt)
-          .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmapArt)
-          .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
-          .build()
-      )
-    } else {
-      session.setMetadata(
-        MediaMetadata.Builder()
-          .putString(MediaMetadata.METADATA_KEY_TITLE, trackName)
-          .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
-          .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
-          .build()
-      )
-    }
-    if (pushNotification && notification != null) {
-      pushNotification(notification)
-    }
-  }
-
-  /**
-   * creates (or updates) a media session
+   * creates a media notification
    * @param title the track name / video title
    * @param artist the author / channel name
    * @param duration the duration in milliseconds of the video
    * @param thumbnail a URL to the thumbnail for the video
    */
-  @SuppressLint("MissingPermission")
-  @RequiresApi(Build.VERSION_CODES.O)
   @JavascriptInterface
   fun createMediaSession(title: String, artist: String, duration: Long = 0, thumbnail: String? = null) {
-    val notificationManager = NotificationManagerCompat.from(context)
-    val channel = notificationManager.getNotificationChannel(CHANNEL_ID, "Media Controls")
-      ?: NotificationChannel(CHANNEL_ID, "Media Controls", NotificationManager.IMPORTANCE_MIN)
-
-    channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-    val session: MediaSession
-
-    // don't create multiple sessions or multiple channels
-    if (mediaSession == null) {
-      notificationManager.createNotificationChannel(channel)
-      // add the callbacks && listeners
-
-      session = MediaSession(context, CHANNEL_ID)
-      session.isActive = true
-      mediaSession = session
-
-      session.setCallback(object : MediaSession.Callback() {
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-        override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
-          val keyEvent = mediaButtonIntent.extras!!.getParcelable(EXTRA_KEY_EVENT, KeyEvent::class.java)
-          return if (keyEvent == null) {
-            super.onMediaButtonEvent(mediaButtonIntent)
-          } else {
-            when (keyEvent.keyCode) {
-              KEYCODE_MEDIA_PLAY -> {
-                context.webView.dispatchEvent("media-play")
-              }
-              KEYCODE_MEDIA_PAUSE -> {
-                context.webView.dispatchEvent("media-pause")
-              }
-              KEYCODE_MEDIA_NEXT -> {
-                context.webView.dispatchEvent("media-next")
-              }
-              KEYCODE_MEDIA_PREVIOUS -> {
-                context.webView.dispatchEvent("media-previous")
-              }
-            }
-            false
-          }
-        }
-
-        override fun onSkipToNext() {
-          super.onSkipToNext()
-          context.webView.dispatchEvent("media-next")
-        }
-
-        override fun onSkipToPrevious() {
-          super.onSkipToPrevious()
-          context.webView.dispatchEvent("media-previous")
-        }
-
-        override fun onSeekTo(pos: Long) {
-          super.onSeekTo(pos)
-          context.webView.dispatchEvent("media-seek", "position", pos)
-        }
-
-        override fun onPlay() {
-          super.onPlay()
-          context.webView.dispatchEvent("media-play")
-        }
-
-        override fun onPause() {
-          super.onPause()
-          context.webView.dispatchEvent("media-pause")
-        }
-
-      })
-    } else {
-      session = mediaSession!!
-    }
-
-    val notification = getMediaControlsNotification()
-    // use the set metadata function without pushing a notification
-    setMetadata(session, title, artist, duration, thumbnail, false)
-    setState(session, PlaybackState.STATE_PLAYING)
-
-    pushNotification(notification!!)
+    mediaSession
+      .setMetadata(title, artist, duration, thumbnail)
+      .setState(STATE_PAUSED, 0)
+      .push()
   }
 
   /**
-   * updates the state of the active media session
-   * @param state the state; should be an Int (as a string because the java bridge)
-   * @param position the position; should be a Long (as a string because the java bridge)
+   * updates the playback state of a media notification
    */
   @JavascriptInterface
   fun updateMediaSessionState(state: String?, position: String? = null) {
-    var givenState = state?.toInt()
-    if (state == null) {
-      givenState = lastState
-    }
-    if (position != null) {
-      lastPosition = position.toLong()
-    }
-    setState(mediaSession!!, givenState!!, position?.toLong())
+    mediaSession
+      .setState(
+        state?.toInt(),
+        position?.toLong()
+      )
   }
 
   /**
-   * updates the metadata of the active media session
-   * @param trackName the video title
-   * @param artist the channel name
-   * @param duration the length of the video in milliseconds
-   * @param art the URL to the video thumbnail
+   * updates the track information of a media notification
    */
-  @SuppressLint("NewApi")
   @JavascriptInterface
   fun updateMediaSessionData(trackName: String, artist: String, duration: Long, art: String? = null) {
-    setMetadata(mediaSession!!, trackName, artist, duration, art)
+    mediaSession
+      .setMetadata(
+        trackName,
+        artist,
+        duration,
+        art
+      )
   }
 
-  /**
-   * cancels the active media notification
-   */
   @JavascriptInterface
   fun cancelMediaNotification() {
-    val manager = NotificationManagerCompat.from(context)
-    manager.cancelAll()
+    mediaSession.cancel()
   }
 
   // endregion
@@ -392,65 +99,51 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    * @return a full directory uri
    */
   @JavascriptInterface
-  fun getDirectory(directory: String): String {
-    val path =  if (directory == DATA_DIRECTORY) {
-      // this is the directory cordova gave us access to before
-      context.getExternalFilesDir(null)!!.parent
+  fun getDirectory(directory: String): String? {
+    return if (directory == DATA_DIRECTORY) {
+      context.getDataDirectory()
     } else {
       directory
     }
-    return path
-  }
-
-  fun getFileNameFromUri(uri: String): String {
-    var result: String? = null
-    val cursor = context.contentResolver.query(Uri.parse(uri),  null, null, null, null)
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (index != -1) {
-          result = cursor.getString(index)
-        }
-      }
-    } finally {
-      cursor!!.close()
-    }
-
-    if (result == null) {
-      result = uri.split(Regex("(/)|(%2F)")).last()
-    }
-
-    return result
   }
 
   @JavascriptInterface
   fun revokePermissionForTree(treeUri: String) {
-    context.revokeUriPermission(Uri.parse(treeUri), Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+    context.revokeUriPermission(
+      treeUri.toUri(),
+      Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+    )
   }
 
   @JavascriptInterface
   fun listFilesInTree(tree: String): String {
-    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
-    val files = directory!!.listFiles().joinToString(",") { file ->
+    val directory = DocumentFile.fromTreeUri(context, tree.toUri())
+    val files = directory?.listFiles()?.joinToString(",") { file ->
       "{ \"uri\": \"${file.uri}\", \"fileName\": \"${file.name}\", \"isFile\": ${file.isFile}, \"isDirectory\": ${file.isDirectory} }"
     }
-    return "[$files]"
+    return "[${files ?: ""}]"
   }
 
   @JavascriptInterface
-  fun createFileInTree(tree: String, fileName: String): String {
-    val directory = DocumentFile.fromTreeUri(context, Uri.parse(tree))
-    return directory!!.createFile("*/*", fileName)!!.uri.toString()
+  fun createFileInTree(tree: String, fileName: String): String? {
+    val directory = DocumentFile.fromTreeUri(context, tree.toUri())
+    return directory?.createFile("*/*", fileName)?.uri?.toString()
   }
   // endregion
 
   // region IO
   @JavascriptInterface
   fun listFilesInDataDir(): String {
-    return "[${File(getDirectory(DATA_DIRECTORY)).listFiles()?.map {
-      file ->
-      "{ \"uri\": \"${DATA_DIRECTORY}${file.name}\", \"fileName\": \"${file.name}\", \"isFile\": ${file.isFile}, \"isDirectory\": ${file.isDirectory} }"
-    }!!.joinToString(",")}]"
+    val directory = context.getDataDirectory()
+    return if (directory == null) {
+      "[]"
+    } else {
+      "[${
+        File(directory).listFiles()?.joinToString(",") { file ->
+          "{ \"uri\": \"$DATA_DIRECTORY${file.name}\", \"fileName\": \"${file.name}\", \"isFile\": ${file.isFile}, \"isDirectory\": ${file.isDirectory} }"
+        } ?: ""
+      }]"
+    }
   }
 
   /**
@@ -458,28 +151,20 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    */
   @JavascriptInterface
   fun readFile(uri: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject ->
-      AmbiguousFileUri(uri)
-        .ifContentUri {
-          uri ->
-            resolve(
-              context.contentResolver
-                .readBytes(uri)
-                .toString(Charset.forName("utf-8"))
-            )
+    return Promise(coroutineScope) { resolve, reject ->
+      val file = context.resolveAmbiguousUri(uri)
+      if (file != null) {
+        try {
+          resolve(context.contentResolver
+            .readBytes(file.uri)
+            ?.toString(Charset.forName("utf-8")))
+        } catch (ex: Throwable) {
+          reject(ex.stackTraceToString())
         }
-        .ifDataUri {
-          fileName ->
-          val path = getDirectory(DATA_DIRECTORY)
-          resolve(File(path, fileName).readText())
-        }
-        .catch {
-          ex ->
-            reject(ex.stackTraceToString())
-        }
-    }).addJsCommunicator(jsCommunicator)
+      } else {
+        reject("File not found from given uri")
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   /**
@@ -488,68 +173,46 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
   @OptIn(ExperimentalEncodingApi::class)
   @JavascriptInterface
   fun writeFile(uri: String, content: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject ->
-        AmbiguousFileUri(uri)
-          .ifContentUri {
-            uri ->
-              val bytes = if (content.startsWith("data:")) {
-                Base64.decode(content.split("base64,")[1])
-              } else {
-                content.toByteArray()
-              }
-              context.contentResolver.writeBytes(
-                uri,
-                bytes
-              )
-              resolve("")
-          }
-          .ifDataUri {
-            fileName ->
-              val path = getDirectory(DATA_DIRECTORY)
-              File(path, fileName).writeText(content)
-              resolve("")
-          }
-          .catch {
-            ex ->
-              reject(ex.stackTraceToString())
-          }
-    }).addJsCommunicator(jsCommunicator)
+    return Promise(coroutineScope) { resolve, reject ->
+      val file = context.resolveAmbiguousUri(uri)
+      if (file != null) {
+        val bytes = if (content.startsWith("data:")) {
+          Base64.decode(content.split("base64,")[1])
+        } else {
+          content.toByteArray()
+        }
+        context.contentResolver.writeBytes(
+          file.uri,
+          bytes
+        )
+        resolve("")
+      } else {
+        reject("File not found from given uri")
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   @OptIn(ExperimentalEncodingApi::class)
   @JavascriptInterface
   fun appendFile(uri: String, content: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject ->
-        AmbiguousFileUri(uri)
-          .ifContentUri {
-              uri ->
-                val bytes = if (content.startsWith("data:")) {
-                  Base64.decode(content.split("base64,")[1])
-                } else {
-                  content.toByteArray()
-                }
-                context.contentResolver.writeBytes(
-                  uri,
-                  bytes,
-                  WriteMode.Append
-                )
-                resolve("")
-          }
-          .ifDataUri {
-              fileName ->
-                val path = getDirectory(DATA_DIRECTORY)
-                File(path, fileName).writeText(content, WriteMode.Append)
-                resolve("")
-          }
-          .catch {
-              ex ->
-                reject(ex.stackTraceToString())
-          }
-    }).addJsCommunicator(jsCommunicator)
+    return Promise(coroutineScope) { resolve, reject ->
+      val file = context.resolveAmbiguousUri(uri)
+      if (file != null) {
+        val bytes = if (content.startsWith("data:")) {
+          Base64.decode(content.split("base64,")[1])
+        } else {
+          content.toByteArray()
+        }
+        context.contentResolver.writeBytes(
+          file.uri,
+          bytes,
+          WriteMode.Append
+        )
+        resolve("")
+      } else {
+        reject("File not found from given uri")
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
   // endregion
 
@@ -560,82 +223,83 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    */
   @JavascriptInterface
   fun requestSaveDialog(fileName: String, fileType: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject
-      ->
+    return Promise(coroutineScope) { resolve, reject ->
       context.launchIntent(
         Intent(Intent.ACTION_CREATE_DOCUMENT)
-        .addCategory(Intent.CATEGORY_OPENABLE)
-        .setType(fileType)
-        .putExtra(Intent.EXTRA_TITLE, fileName)
+          .addCategory(Intent.CATEGORY_OPENABLE)
+          .setType(fileType)
+          .putExtra(Intent.EXTRA_TITLE, fileName)
       ).then {
-          if (it!!.resultCode == Activity.RESULT_CANCELED) {
-            resolve("USER_CANCELED")
-          }
-          try {
-            val payload = JSONObject()
-            payload.put("uri", it.data!!.data)
-            resolve(payload)
-          } catch (ex: Exception) {
-            reject(ex.toString())
-          }
+        if (it?.resultCode == Activity.RESULT_CANCELED) {
+          resolve("USER_CANCELED")
         }
-    }).addJsCommunicator(jsCommunicator)
+        try {
+          val payload = JSONObject()
+          payload.put("uri", it?.data?.data)
+          resolve(payload)
+        } catch (ex: Exception) {
+          reject(ex.toString())
+        }
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   @JavascriptInterface
   fun requestOpenDialog(fileTypes: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject ->
-        context.launchIntent(
-          Intent(Intent.ACTION_GET_CONTENT)
+    return Promise(coroutineScope) { resolve, reject ->
+      context.launchIntent(
+        Intent(Intent.ACTION_GET_CONTENT)
           .setType("*/*")
           .putExtra(Intent.EXTRA_MIME_TYPES, fileTypes.split(",").toTypedArray())
-        ).then {
-            if (it!!.resultCode == Activity.RESULT_CANCELED) {
-              resolve("USER_CANCELED")
-            }
-            try {
-              val uri = it.data!!.data
-              val mimeType = context.contentResolver.getType(uri!!)
-              val fileName = getFileNameFromUri(uri.toString())
-              val payload = JSONObject()
-              payload.put("uri", uri)
-              payload.put("type", mimeType)
-              payload.put("fileName", fileName)
-              resolve(payload)
-            } catch (ex: Exception) {
-              reject(ex.toString())
-            }
+      ).then {
+        if (it?.resultCode == Activity.RESULT_CANCELED) {
+          resolve("USER_CANCELED")
+        }
+        try {
+          val uri = it?.data?.data
+          if (uri != null) {
+            val mimeType = context.contentResolver.getType(uri)
+            val fileName = context.contentResolver.getFileName(uri)
+            val payload = JSONObject()
+            payload.put("uri", uri)
+            payload.put("type", mimeType)
+            payload.put("fileName", fileName)
+            resolve(payload)
+          } else {
+            reject("Uri from intent was null")
           }
-    }).addJsCommunicator(jsCommunicator)
+        } catch (ex: Exception) {
+          reject(ex.toString())
+        }
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   @JavascriptInterface
   fun requestDirectoryAccessDialog(): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject ->
+    return Promise(coroutineScope) { resolve, reject ->
       context.launchIntent(
         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
       ).then {
-          if (it!!.resultCode == Activity.RESULT_CANCELED) {
-            resolve("USER_CANCELED")
-          }
-          try {
-            val uri = it.data!!.data!!
+        if (it?.resultCode == Activity.RESULT_CANCELED) {
+          resolve("USER_CANCELED")
+        }
+        try {
+          val uri = it?.data?.data
+          if (uri != null) {
             context.contentResolver.takePersistableUriPermission(
               uri,
               Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             )
             resolve(uri)
-          } catch (ex: Exception) {
-            reject(ex.toString())
+          } else {
+            reject("Uri from intent was null")
           }
+        } catch (ex: Exception) {
+          reject(ex.toString())
         }
-    }).addJsCommunicator(jsCommunicator)
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   // endregion
@@ -644,28 +308,28 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
 
   @JavascriptInterface
   fun openExternalLink(url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-    context.startActivity(intent)
+    context.startActivity(
+      Intent(Intent.ACTION_VIEW, url.toUri())
+    )
   }
 
   @JavascriptInterface
   fun getLogs(): String {
     var logs = "["
-    for (message in context.consoleMessages) {
+    for (message in context.state.consoleMessages) {
       logs += "${message},"
     }
     // get rid of trailing comma
-    logs = logs.substring(0, logs.length - 1)
+    if (logs.length > 1) {
+      logs = logs.substring(0, logs.length - 1)
+    }
     logs += "]"
     return logs
   }
 
   @JavascriptInterface
   fun restart() {
-    context.finish()
-    context.startActivity(Intent(Intent.ACTION_MAIN)
-      .addCategory(Intent.CATEGORY_LAUNCHER)
-      .setClass(context,  MainActivity::class.java))
+    context.restart()
   }
 
   /**
@@ -673,34 +337,24 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    */
   @JavascriptInterface
   fun hideSplashScreen() {
-    context.showSplashScreen = false
+    context.state.showSplashScreen = false
   }
 
   @JavascriptInterface
   fun enableKeepScreenOn() {
-    if (!keepScreenOn) {
-      keepScreenOn = true
-      context.runOnUiThread {
-        context.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-      }
-    }
+    context.setKeepScreenOn(true)
   }
 
   @JavascriptInterface
   fun disableKeepScreenOn() {
-    if (keepScreenOn) {
-      keepScreenOn = false
-      context.runOnUiThread {
-        context.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-      }
-    }
+    context.setKeepScreenOn(false)
   }
 
   /**
    * used on the JS side for async js communication
    */
   @JavascriptInterface
-  fun getSyncMessage(promise: String): String {
+  fun getSyncMessage(promise: String): String? {
     return jsCommunicator.getSyncMessage(promise)
   }
 
@@ -709,26 +363,12 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
    */
   @JavascriptInterface
   fun themeSystemUi(navigationHex: String, statusHex: String, navigationDarkMode: Boolean  = true,  statusDarkMode: Boolean = true) {
-    context.runOnUiThread {
-      val windowInsetsController =
-        WindowCompat.getInsetsController(context.window, context.window.decorView)
-      windowInsetsController.isAppearanceLightNavigationBars = !navigationDarkMode
-      windowInsetsController.isAppearanceLightStatusBars = !statusDarkMode
-      context.window.navigationBarColor = navigationHex.hexToColour()
-      context.window.statusBarColor = statusHex.hexToColour()
-    }
-
-    val bitmap = createBitmap(24, 24)
-    bitmap.eraseColor(navigationHex.hexToColour())
-    val canvas = Canvas(bitmap)
-    canvas.drawColor(navigationHex.hexToColour())
-    val bitmapDrawable = bitmap.toDrawable(context.resources)
-    context.window.setBackgroundDrawable(bitmapDrawable)
+    context.themeSystemUi(navigationHex, statusHex, navigationDarkMode, statusDarkMode)
   }
 
   @JavascriptInterface
   fun getSystemTheme(): String {
-    return if (context.darkMode) {
+    return if (context.state.darkMode) {
       "dark"
     } else {
       "light"
@@ -737,24 +377,24 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
 
   @JavascriptInterface
   fun isAppPaused(): Boolean {
-    return context.paused
+    return context.state.paused
   }
 
   @JavascriptInterface
   fun enterPromptMode() {
-    context.webView.isVerticalScrollBarEnabled = false
-    context.isInAPrompt = true
+    webView.isVerticalScrollBarEnabled = false
+    context.state.isInAPrompt = true
   }
 
   @JavascriptInterface
   fun exitPromptMode() {
-    context.webView.isVerticalScrollBarEnabled = true
-    context.isInAPrompt = false
+    webView.isVerticalScrollBarEnabled = true
+    context.state.isInAPrompt = false
   }
 
   @JavascriptInterface
   fun setScale(scale: Int) {
-    context.webView.setScale(scale / 100.0, context)
+    webView.setScale(scale / 100.0, context)
   }
 
   // endregion
@@ -777,64 +417,70 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
 
   @JavascriptInterface
   fun generatePOToken(videoId: String, sessionContext: String): String {
-    return Promise(context.threadPoolExecutor, {
-      resolve,
-      reject
-      ->
-        context.runOnUiThread {
-          try {
-            val bgScript = getBotGuardScript(videoId, sessionContext)
-            val bgWv = context.generateBgWebview()
-            bgWv.jsInterface.onReturnToken {
-              run {
-                context.runOnUiThread {
-                  resolve(it)
-                  bgWv.destroy()
-                }
+    return Promise(coroutineScope) { resolve, reject ->
+      webView.post {
+        try {
+          val bgScript = getBotGuardScript(videoId, sessionContext)
+          val bgWv = webView.generateBgWebview()
+          bgWv.jsInterface.onReturnToken {
+            run {
+              webView.post {
+                resolve(it)
+                bgWv.destroy()
               }
             }
-            context.runOnUiThread {
-              bgWv.loadDataWithBaseURL(
-                "https://www.youtube.com/",
-                "<script>\n" +
-                  "window.ofetch = window.fetch\n" +
-                  "window.fetch = async (url, data) => {\n" +
-                  "  if (url.startsWith('https://www.google.com/')) {\n" +
-                  "    return new Promise((resolve, _) => {" +
-                  "    const script = document.createElement('script')\n" +
-                  "    script.src = url\n" +
-                  "    script.async = true\n" +
-                  "    document.body.appendChild(script)\n" +
-                  "     script.addEventListener('load', () => {\n" +
-                  "       resolve({ text: () => '() => {}' })\n" +
-                  "     })\n" +
-                  "    })\n" +
-                  "  }\n" +
-                  "  const id = crypto.randomUUID()\n" +
-                  "  if (data && 'body' in data) {" +
-                  "    Android.queueBody(id, data.body)\n" +
-                  "    data.headers['x-fta-request-id'] = id\n" +
-                  "  }" +
-                  "  return await window.ofetch(url, data)\n" +
-                  "}</script><script>${bgScript}</script>",
-                "text/html",
-                "utf-8",
-                null
-              )
-            }
-          } catch (exception: Exception) {
-            reject(exception.message!!)
           }
+          webView.post {
+            bgWv.loadDataWithBaseURL(
+              "https://www.youtube.com/",
+              "<script>\n" +
+                "window.ofetch = window.fetch\n" +
+                "window.fetch = async (url, data) => {\n" +
+                "  if (url.startsWith('https://www.google.com/')) {\n" +
+                "    return new Promise((resolve, _) => {" +
+                "    const script = document.createElement('script')\n" +
+                "    script.src = url\n" +
+                "    script.async = true\n" +
+                "    document.body.appendChild(script)\n" +
+                "     script.addEventListener('load', () => {\n" +
+                "       resolve({ text: () => '() => {}' })\n" +
+                "     })\n" +
+                "    })\n" +
+                "  }\n" +
+                "  const id = crypto.randomUUID()\n" +
+                "  if (data && 'body' in data) {" +
+                "    Android.queueBody(id, data.body)\n" +
+                "    data.headers['x-fta-request-id'] = id\n" +
+                "  }" +
+                "  return await window.ofetch(url, data)\n" +
+                "}</script><script>${bgScript}</script>",
+              "text/html",
+              "utf-8",
+              null
+            )
+          }
+        } catch (exception: Exception) {
+          reject(exception.message ?: exception.javaClass.name)
         }
-    }).addJsCommunicator(jsCommunicator)
+      }
+    }.addJsCommunicator(jsCommunicator)
   }
 
   @JavascriptInterface
-  fun runDecipherScript(id: String, code: String): String {
-    // pass data to other webview
-    context.sigJsInterface.jsCommunicator.resolve(id, code)
-    // dispatch event to read data
-    context.sigWebView.dispatchEvent("message", "id", id)
+  fun runDecipherScript(id: String, code: String, timeout: String): String {
+    webView.post {
+      webView.generateSigWebview()
+        .onLoad = {
+          // pass data to other webview
+          jsInterface.jsCommunicator.resolve(id, code)
+          // dispatch event to read data
+          dispatchEvent("message", "id", id)
+          // when timeout is called, clean up webview
+          postDelayed({
+            destroy()
+          }, timeout.toLong())
+      }
+    }
     return id
   }
 

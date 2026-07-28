@@ -1,8 +1,8 @@
-
 import android from 'android'
 
 export const STATE_PLAYING = 3
 export const STATE_PAUSED = 2
+export const STATE_BUFFERING = 6
 
 /**
  * creates a new media session / or updates the previous one
@@ -22,5 +22,5 @@ export function createMediaSession(title, artist, duration, cover = null) {
  * @param {number?} position playback position in milliseconds
  */
 export function updateMediaSessionState(state, position = null) {
-  android.updateMediaSessionState(state?.toString() || null, position)
+  android.updateMediaSessionState(state?.toString() || null, position?.toString() || null)
 }

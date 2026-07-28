@@ -1,19 +1,14 @@
-
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
 import { blobToBase64, reverseObject } from './utils'
-import { useI18n } from '../../composables/use-i18n-polyfill'
-import { showToast } from '../utils'
 
-const DATA_DIRECTORY = 'data://'
+export const DATA_DIRECTORY = 'data://'
 
 const DATA_LOCATION = `${DATA_DIRECTORY}data-location.json`
 
 const EXPECTED_FILES = ['profiles.db', 'settings.db', 'history.db', 'playlists.db', 'search-history.db', 'subscription-cache.db']
 
 const EXPECTED_FILES_MAP = Object.fromEntries(EXPECTED_FILES.map((file) => { return [file, `${DATA_DIRECTORY}${file}`] }))
-
-const { t } = useI18n()
 
 /**
  * a soft file read which returns '' if the file doesn't exist yet
@@ -30,7 +25,7 @@ export async function readFile(uri) {
 }
 
 /**
- * @param {string} uri 
+ * @param {string} uri
  * @param {string|Blob} content
  * @param {bool?} append whether or not to append to the file (default: false)
  * @returns {Promise<boolean>} was able to successfully write?
@@ -75,7 +70,7 @@ export async function writeFile(uri, content, append = false) {
  */
 
 /**
- * 
+ *
  * @typedef DirectoryHandle
  * @property {string} uri
  * @property {CreateFile} createFile
@@ -83,8 +78,8 @@ export async function writeFile(uri, content, append = false) {
  */
 
 /**
- * 
- * @param {String} uri 
+ *
+ * @param {string} uri
  * @returns {DirectoryHandle}
  */
 function restoreHandleFromDirectoryUri(uri) {
@@ -112,11 +107,11 @@ function restoreHandleFromDirectoryUri(uri) {
 
 /**
  * @typedef {Array<AndroidFile>} FileList
-*/
+ */
 
 /**
- * 
- * @param {Record<String, String>} files 
+ *
+ * @param {Record<string, string>} files
  * @returns {FileList}
  */
 function filesToEntries(files) {
@@ -129,9 +124,9 @@ function filesToEntries(files) {
 }
 
 /**
- * 
+ *
  * @param {FileList} entries
- * @returns {Record<String, String>}
+ * @returns {Record<string, string>}
  */
 function entriesToFiles(entries) {
   return Object.fromEntries(entries.map((file) => { return [file.fileName, file.uri] }))
@@ -139,7 +134,7 @@ function entriesToFiles(entries) {
 
 /**
  * @typedef FileMap
- * @property {Record<String, String>} files
+ * @property {Record<string, string>} files
  */
 
 /**
@@ -149,7 +144,7 @@ function entriesToFiles(entries) {
 /** @type {DataDirectory} */
 let currentDataDirectory = null
 
-/**=
+/** =
  * @returns {Promise<DataDirectory>}
  */
 export async function getCurrentDataDirectory() {
@@ -182,7 +177,7 @@ export async function getCurrentDataDirectory() {
 
 /**
  * Updates the files known in the current data dir
- * @param {Record<String, String>} files 
+ * @param {Record<string, string>} files
  */
 export async function updateFilesInCurrentDataDirectory(files) {
   currentDataDirectory.files = files
@@ -193,7 +188,7 @@ export async function updateFilesInCurrentDataDirectory(files) {
 }
 
 /**
- * @returns {Promise<DirectoryHandle & { canceled: Boolean }>}
+ * @returns {Promise<DirectoryHandle & {canceled: boolean}>}
  */
 async function requestDirectoryAccessDialog() {
   const uri = await awaitAsyncResult(android.requestDirectoryAccessDialog())
@@ -210,9 +205,9 @@ async function requestDirectoryAccessDialog() {
 }
 
 /**
- * 
- * @param {DirectoryHandle} handle 
- * @returns {Promise<Record<String, String>>} 
+ *
+ * @param {DirectoryHandle} handle
+ * @returns {Promise<Record<string, string>>}
  */
 async function initializeDataDirectory(handle) {
   const foundFiles = entriesToFiles(handle.listFiles())
@@ -230,7 +225,7 @@ async function initializeDataDirectory(handle) {
 export async function selectDataDirectory(copyFiles = false, reset = false) {
   try {
     const newDirectory = reset ? restoreHandleFromDirectoryUri(DATA_DIRECTORY) : await requestDirectoryAccessDialog()
-    
+
     if (newDirectory.canceled) {
       return
     }
@@ -258,14 +253,12 @@ export async function selectDataDirectory(copyFiles = false, reset = false) {
       files: filesToEntries(newFiles)
     }))
 
-    showToast(t('Data Settings.Your data directory has been moved successfully'))
     if (!copyFiles) {
       android.restart()
     }
     return android.getDirectory(newDirectory.uri)
   } catch (exception) {
-    showToast(t('Data Settings.Error moving data directory'))
-    console.error(exception)
+    throw exception
   }
 }
 
@@ -277,7 +270,7 @@ export async function getFullUri(partialUri) {
 
   const files = directoryData.listFiles()
   const possibleMatches = files.filter(file => partialUri == file.fileName)
-  
+
   if (possibleMatches.length > 0) {
     directoryData.files[partialUri] = possibleMatches[0].uri
     await updateFilesInCurrentDataDirectory(directoryData.files)

@@ -103,7 +103,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { useI18n } from '../../composables/use-i18n-polyfill'
+import { useI18n } from 'vue-i18n'
 
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import FtPrompt from '../FtPrompt/FtPrompt.vue'
@@ -418,7 +418,7 @@ const updateQueryDebounce = debounce(/** @param {string} query_ */(query_) => {
 
 onMounted(() => {
   document.addEventListener('keydown', keyboardShortcutHandler)
-  // Don't open keyboard prompt immediately on android 
+  // Don't open keyboard prompt immediately on android
   if (!process.env.IS_ANDROID) {
     // User might want to search first if they have many playlists
     nextTick(() => {

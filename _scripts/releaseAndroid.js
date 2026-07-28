@@ -10,7 +10,7 @@ const { writeFile, rm, readFile } = require('fs/promises')
 // #endregion
 ;(async (get, exec) => {
   const givenArguments = { dryRun: false }
-  for (let arg of process.argv) {
+  for (const arg of process.argv) {
     if (arg.startsWith('--version-number=')) {
       givenArguments.versionNumber = arg.split('--version-number=')[1]
     }
@@ -32,21 +32,23 @@ const { writeFile, rm, readFile } = require('fs/promises')
   const releasesJSON = await releases.json()
   // #region Version Number
   const latestTag = releasesJSON[0].tag_name
-  const [ _latestMajor, _latestMinor, _latestPatch, latestRun ] = latestTag.split('.')
-  const [ currentMajor, currentMinor, currentPatch ] = version.split('.')
+  const [_latestMajor, _latestMinor, _latestPatch, latestRun] = latestTag.split('.')
+  const [currentMajor, currentMinor, currentPatch] = version.split('.')
   const latestRunNumber = parseInt(latestRun)
   const currentRunNumber = latestRunNumber + 1
   const defaultVersionNumber = `${currentMajor}.${currentMinor}.${currentPatch}.${currentRunNumber}`
   // get version number from either the props or a prompt
-  let { versionNumber } = ('versionNumber' in givenArguments) ? givenArguments : await get({
-    properties: {
-      versionNumber: {
-        pattern: /[0-9]*?.[0-9]*?.[0-9]*?.[0-9]*/,
-        message: 'Version number to release with',
-        default: defaultVersionNumber
-      }
-    }
-  })
+  let { versionNumber } = ('versionNumber' in givenArguments)
+    ? givenArguments
+    : await get({
+        properties: {
+          versionNumber: {
+            pattern: /(?:\d*?.){3}\d*/,
+            message: 'Version number to release with',
+            default: defaultVersionNumber
+          }
+        }
+      })
   const buildNumber = versionNumber.split('.').at(-1)
   if (versionNumber === 'default') {
     versionNumber = defaultVersionNumber
@@ -58,12 +60,12 @@ const { writeFile, rm, readFile } = require('fs/promises')
     const numberOfCommits = ('numberOfCommits' in givenArguments) ? givenArguments.numberOfCommits : 3
     let accumulator = 0
     let mostRecentCommits = ''
-    for (let line of gitDiff.split('\n')) {
+    for (const line of gitDiff.split('\n')) {
       if (line.trim() === '') {
         continue
       }
       if (line.startsWith('commit ')) {
-        mostRecentCommits += `\n`
+        mostRecentCommits += '\n'
         accumulator++
       }
       if (accumulator < numberOfCommits + 1) {
@@ -100,6 +102,4 @@ const { writeFile, rm, readFile } = require('fs/promises')
     console.log('nothing committed: dry run')
   }
   // #endregion
-
 })(promisify(get), promisify(exec))
-

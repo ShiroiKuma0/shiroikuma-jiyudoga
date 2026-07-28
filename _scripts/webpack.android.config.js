@@ -133,7 +133,7 @@ const config = {
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
-      __VUE_I18N_LEGACY_API__: 'true',
+      __VUE_I18N_LEGACY_API__: 'false',
       __VUE_I18N_FULL_INSTALL__: 'false',
       __INTLIFY_PROD_DEVTOOLS__: 'false',
       'process.env.SWIPER_VERSION': `'${swiperVersion}'`
@@ -148,7 +148,7 @@ const config = {
       nodeModules: false,
     }),
     new HtmlWebpackPlugin({
-      filename: "decipher.html",
+      filename: 'decipher.html',
       inject: false,
       templateContent: sigViewTemplateParameters.sigViewRaw,
       nodeModules: false
@@ -175,7 +175,7 @@ const config = {
     alias: {
 
       DB_HANDLERS_ELECTRON_RENDERER_OR_WEB$: path.resolve(__dirname, '../src/datastores/handlers/web.js'),
-      
+
       // change to "shaka-player.ui-es2021.debug.js" to get debug logs (update jsconfig to get updated types)
       'shaka-player$': 'shaka-player/dist/shaka-player.ui-es2021.js',
     },
@@ -228,6 +228,5 @@ config.plugins.push(
     ]
   })
 )
-
 
 module.exports = config
