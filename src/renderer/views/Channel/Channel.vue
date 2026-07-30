@@ -2339,6 +2339,30 @@ function changeTab(tab) {
     newTabNode.focus()
     store.commit('setOutlinesHidden', false)
   }
+
+  // the search tab stores its state (including the query) with `saveStateInRouter` instead
+  if (tab !== 'search') {
+    saveTabInRouter(tab)
+  }
+}
+
+/**
+ * Store the selected tab in the current history entry, so that navigating back to it
+ * (e.g. after watching a video from this tab) restores the tab instead of the first one.
+ * @param {string} tab
+ */
+async function saveTabInRouter(tab) {
+  skipRouteChangeWatcherOnce = true
+
+  try {
+    await router.replace({ path: `/channel/${id.value}/${tab}` })
+  } catch (failure) {
+    if (!isNavigationFailure(failure, NavigationFailureType.duplicated)) {
+      throw failure
+    }
+  } finally {
+    skipRouteChangeWatcherOnce = false
+  }
 }
 
 function handleSubscription() {
