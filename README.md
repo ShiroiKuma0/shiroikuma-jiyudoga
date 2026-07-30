@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1+36`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1+37`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -134,6 +134,9 @@ history — lands in a single timestamped `.zip`. Import merges it back and offe
 The same export runs **headlessly**: sister apps can fire a token-gated intent at it, and
 自由作業盤 backs up every app on the phone in one run, each reporting live counts and the
 path and size it wrote. The export core is native, so it works with no window open at all.
+Every item states whether it starts ticked rather than leaving the picker to guess, and a
+中止 is a **real** cancel — the run unwinds at the next entry boundary and the half-written
+archive is deleted, so a stopped backup leaves the folder exactly as it found it.
 
 ## 🔄 Own update channel
 
