@@ -8,12 +8,18 @@ package io.freetubeapp.freetube.backup
  * @param label   human label shown in the picker and reported by `LIST_CATEGORIES`
  * @param parent  id of the category this one is a sub-option of (null = top level)
  * @param store   nedb datastore the documents come from (null = a parent with no own data)
+ * @param defaultSelected whether the item starts TICKED in a picker — this app's answer to
+ *                state rather than the picker's to guess (the contract's optional fourth
+ *                `LIST_CATEGORIES` field, `on`/`off`). Fifth parameter on purpose: [store]
+ *                already holds the fourth position in every existing entry. Everything here
+ *                is `on` — nothing this app exports is large, derived AND re-creatable.
  */
 data class BackupCategory(
   val id: String,
   val label: String,
   val parent: String?,
-  val store: String?
+  val store: String?,
+  val defaultSelected: Boolean = true
 )
 
 /**

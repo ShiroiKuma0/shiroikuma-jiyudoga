@@ -58,30 +58,47 @@ class StateExportReceiver : BroadcastReceiver() {
       }
     }
 
+    // CANCEL_EXPORT is fire-and-forget: it answers NOTHING, not even a gate error — a reply
+    // would carry the cancelled export's own reply_id and could be mistaken for its outcome.
+    val isCancel = action.endsWith(".action.CANCEL_EXPORT")
+    val finishQuietly: () -> Unit = {
+      if (replied.compareAndSet(false, true)) {
+        runCatching { pendingResult.finish() }
+      }
+    }
+
     if (!AutomationAuth.isEnabled(app)) {
-      reply("ERROR:automation disabled")
+      if (isCancel) finishQuietly() else reply("ERROR:automation disabled")
       return
     }
     if (!AutomationAuth.matches(app, intent.getStringExtra("token"))) {
-      reply("ERROR:bad token")
+      if (isCancel) finishQuietly() else reply("ERROR:bad token")
       return
     }
 
     when {
       action.endsWith(".action.LIST_CATEGORIES") -> reply(listCategories())
       action.endsWith(".action.EXPORT_STATE") -> runExport(app, intent, replyId, replyPackage, reply)
+      isCancel -> {
+        // An absent reply_id means "the export you are running", which is unambiguous.
+        // Nothing running (or already finished) is a silent no-op, never an error.
+        val flagged = ExportControl.cancel(replyId.ifEmpty { null })
+        Log.i(TAG, "$action → ${if (flagged) "cancelling" else "nothing running"}")
+        finishQuietly()
+      }
       else -> reply("ERROR:unknown action")
     }
   }
 
-  /** `OK:` + one `id<TAB>label[<TAB>parent-id]` line per category. */
+  /**
+   * `OK:` + one `id<TAB>label<TAB>parent<TAB>on|off` line per category — the contract's
+   * fourth field says whether the item starts ticked, and the third stays EMPTY for a
+   * top-level item so the flag keeps its position.
+   */
   private fun listCategories(): String =
     "OK:" + StateCategories.ALL.joinToString("\n") { category ->
-      if (category.parent == null) {
-        "${category.id}\t${category.label}"
-      } else {
-        "${category.id}\t${category.label}\t${category.parent}"
-      }
+      val default = if (category.defaultSelected) "on" else "off"
+      "${category.id}\t${category.label}\t${category.parent ?: ""}\t$default"
     }
 
   private fun runExport(
@@ -137,7 +154,7 @@ class StateExportReceiver : BroadcastReceiver() {
     // kotlinx-coroutines dependency, and goAsync() already holds the broadcast open.
     Thread {
       try {
-        val written = BackupWriter.write(app, items, pathOverride, progress)
+        val written = BackupWriter.write(app, items, pathOverride, progress, replyId)
 
         // always a final progress line at completion, throttling notwithstanding
         lastProgressAt = 0L
@@ -152,6 +169,11 @@ class StateExportReceiver : BroadcastReceiver() {
           "OK:${written.path}|${written.bytes}|${StateBackup.humanSize(written.bytes)}|" +
             "${written.categories} categories"
         )
+      } catch (_: ExportControl.Cancelled) {
+        // The partial file is already gone (BackupWriter's cleanup path). This terminal
+        // reply goes out even though nobody may still be listening: it is what proves the
+        // run ended rather than carrying on unseen.
+        reply("ERROR:cancelled")
       } catch (_: BackupWriter.NoDirectory) {
         reply("ERROR:no-directory")
       } catch (_: BackupWriter.NoStorageAccess) {

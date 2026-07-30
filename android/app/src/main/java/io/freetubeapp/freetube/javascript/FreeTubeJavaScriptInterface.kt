@@ -849,6 +849,7 @@ class FreeTubeJavaScriptInterface(main: MainActivity) {
           .put("label", category.label)
           .put("parent", category.parent ?: JSONObject.NULL)
           .put("leaf", category.store != null)
+          .put("defaultSelected", category.defaultSelected)
       )
     }
     return list.toString()

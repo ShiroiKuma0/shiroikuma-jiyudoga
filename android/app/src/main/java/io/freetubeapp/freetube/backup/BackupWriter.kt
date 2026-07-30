@@ -45,46 +45,70 @@ object BackupWriter {
 
   /**
    * Runs an export into the resolved destination.
+   *
+   * A cancelled or failed run must leave the directory EXACTLY as it was found, so the
+   * incomplete file is deleted on every non-success path. There is no `<name>.part`
+   * intermediate: SAF's `createFile` derives the extension from the MIME type, so a `.part`
+   * name is not reliably honoured across providers — deleting the incomplete document
+   * reaches the same end state without depending on that.
+   *
    * @param pathOverride the automation contract's `path` extra, or null
+   * @param replyId      the request a `CANCEL_EXPORT` can name; "" for the in-app panel
    */
   fun write(
     context: Context,
     ids: Collection<String>,
     pathOverride: String? = null,
-    progress: StateBackup.Progress? = null
+    progress: StateBackup.Progress? = null,
+    replyId: String = ""
   ): Written {
     val name = StateBackup.fileName()
 
-    if (!pathOverride.isNullOrBlank() && hasAllFilesAccess()) {
-      val dir = File(SafPaths.normalisePath(pathOverride))
-      if (!dir.isDirectory && !dir.mkdirs()) {
-        throw NoStorageAccess()
+    ExportControl.begin(replyId)
+    try {
+      if (!pathOverride.isNullOrBlank() && hasAllFilesAccess()) {
+        val dir = File(SafPaths.normalisePath(pathOverride))
+        if (!dir.isDirectory && !dir.mkdirs()) {
+          throw NoStorageAccess()
+        }
+        val target = File(dir, name)
+        val categories = try {
+          target.outputStream().use { StateBackup.export(context, ids, it, progress) }
+        } catch (failure: Throwable) {
+          target.delete()
+          throw failure
+        }
+        return Written(target.absolutePath, target.length(), categories)
       }
-      val target = File(dir, name)
-      val categories = target.outputStream().use { StateBackup.export(context, ids, it, progress) }
-      return Written(target.absolutePath, target.length(), categories)
+
+      val tree = configuredDirectory(context)
+        ?: if (pathOverride.isNullOrBlank()) throw NoDirectory() else throw NoStorageAccess()
+
+      val treePath = configuredPath(context)
+      val (dir, dirPath) = resolveInsideTree(tree, treePath, pathOverride)
+
+      val file = dir.createFile("application/zip", name) ?: throw NoStorageAccess()
+
+      val categories = try {
+        context.contentResolver.openOutputStream(file.uri)?.use {
+          StateBackup.export(context, ids, it, progress)
+        } ?: throw NoStorageAccess()
+      } catch (failure: Throwable) {
+        runCatching { file.delete() }
+        throw failure
+      }
+
+      val bytes = DocumentFile.fromSingleUri(context, file.uri)?.length()?.takeIf { it > 0 }
+        ?: file.length()
+
+      // The reply must carry a real path; a non-device provider (cloud) has none, so the
+      // document uri is the honest answer there.
+      val path = if (dirPath.isEmpty()) file.uri.toString() else "$dirPath/$name"
+
+      return Written(path, bytes, categories)
+    } finally {
+      ExportControl.end()
     }
-
-    val tree = configuredDirectory(context)
-      ?: if (pathOverride.isNullOrBlank()) throw NoDirectory() else throw NoStorageAccess()
-
-    val treePath = configuredPath(context)
-    val (dir, dirPath) = resolveInsideTree(tree, treePath, pathOverride)
-
-    val file = dir.createFile("application/zip", name) ?: throw NoStorageAccess()
-
-    val categories = context.contentResolver.openOutputStream(file.uri)?.use {
-      StateBackup.export(context, ids, it, progress)
-    } ?: throw NoStorageAccess()
-
-    val bytes = DocumentFile.fromSingleUri(context, file.uri)?.length()?.takeIf { it > 0 }
-      ?: file.length()
-
-    // The reply must carry a real path; a non-device provider (cloud) has none, so the
-    // document uri is the honest answer there.
-    val path = if (dirPath.isEmpty()) file.uri.toString() else "$dirPath/$name"
-
-    return Written(path, bytes, categories)
   }
 
   /**

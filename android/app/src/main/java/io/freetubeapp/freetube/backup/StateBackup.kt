@@ -78,6 +78,9 @@ object StateBackup {
 
     ZipOutputStream(out.buffered()).use { zip ->
       leaves.forEachIndexed { index, category ->
+        // A cancel unwinds at an entry boundary, never in the middle of a write.
+        ExportControl.throwIfCancelled()
+
         val store = category.store!!
         val docs = stores.getOrPut(store) { NedbFile.read(context, store) }
 
@@ -97,6 +100,8 @@ object StateBackup {
           }
           zip.write(doc.toString().toByteArray(Charsets.UTF_8))
           if (position % 500 == 499) {
+            // the one store big enough to matter (watch history) also unwinds here
+            ExportControl.throwIfCancelled()
             progress?.report(
               "${category.label} ${position + 1}/${selected.size}",
               (position + 1).toLong(),

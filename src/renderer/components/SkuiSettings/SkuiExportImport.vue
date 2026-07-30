@@ -205,7 +205,10 @@ const statusText = computed(() => {
 
 onMounted(() => {
   categories.value = JSON.parse(android.listBackupCategories())
-  selected.value = new Set(leaves.value.map(leaf => leaf.id))
+  // Seeded from the SAME `defaultSelected` flag the automation contract's fourth
+  // LIST_CATEGORIES field reports, so this sheet and 保存復元's picker start alike.
+  // An older bridge without the field means "ticked", exactly as an absent field does.
+  selected.value = new Set(leaves.value.filter(leaf => leaf.defaultSelected !== false).map(leaf => leaf.id))
   refresh()
 })
 
