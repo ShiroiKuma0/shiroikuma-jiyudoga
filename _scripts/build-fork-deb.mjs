@@ -6,7 +6,8 @@ import config from './ebuilder.config.mjs'
 // BUILD_NUMBER is shared with the Android build and lives in android/gradle.properties.
 const buildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(readFileSync('android/gradle.properties', 'utf8'))[1]
 const upstreamVersion = JSON.parse(readFileSync('package.json', 'utf8')).version
-const forkVersion = `${upstreamVersion}+${buildNumber}`
+// the counter is zero-padded to three digits so artifact lists sort in build order
+const forkVersion = `${upstreamVersion}+${buildNumber.padStart(3, '0')}`
 
 /** @type {import('electron-builder').Configuration} */
 const forkConfig = {

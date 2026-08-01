@@ -34,7 +34,7 @@ its mandatory ⛔ proceed gate).
 | Android namespace | `io.freetubeapp.freetube` (**unchanged** from the android fork — never rename) | `android/app/build.gradle.kts` |
 | Desktop appId / deb package | `shiroikuma.jiyudoga` / `shiroikuma-jiyudoga` | `_scripts/build-fork-deb.mjs` |
 | App label | `白い熊 自由動画` | `android/app/src/main/res/values/strings.xml` → `app_name`; desktop branding TBD in rebrand pass |
-| Version | `<upstream package.json version>+<N>`; Android versionCode `(maj*10000+min*100+patch)*10000+N` (0.25.1+1 → 25010001) | `android/app/build.gradle.kts` fork block; `BUILD_NUMBER` in `android/gradle.properties` |
+| Version | `<upstream package.json version>+<NNN>` — the counter is **zero-padded to three digits** (global rule: artifact lists sort in build order), in the versionName, the deb version and both artifact filenames alike; Android versionCode `(maj*10000+min*100+patch)*10000+N` stays unpadded (0.25.1+001 → 25010001) | `android/app/build.gradle.kts` fork block, `_scripts/build-fork.sh`, `_scripts/build-fork-deb.mjs`; `BUILD_NUMBER` in `android/gradle.properties` |
 | Signing | gitignored `keystore.properties` → `~/.android-keystores/shiroikuma-jiyudoga.jks` (alias `jiyudoga`) | `android/app/build.gradle.kts` |
 | Artifacts | `~/tmp/shiroikuma-jiyudoga_<ver>_amd64.deb` + `..._arm64-v8a.apk` | `_scripts/build-fork.sh` |
 | Desktop-build repairs for the android layer | `android$` stub alias + `IS_ANDROID:false` defines (main/renderer/web webpack configs), guarded require in `src/datastores/index.js`, `_scripts/android-stub.js` | `_scripts/` |

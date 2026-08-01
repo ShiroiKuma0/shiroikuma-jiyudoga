@@ -4,8 +4,9 @@
 #   2. Android arm64-v8a .apk (WebView wrapper, Gradle, signed release)
 # copies them to ~/tmp/ with fork naming, then bumps BUILD_NUMBER.
 #
-# Fork versioning: versionName = <upstream package.json version>+<BUILD_NUMBER>,
-# Android versionCode = (maj*10000 + min*100 + patch) * 10000 + BUILD_NUMBER.
+# Fork versioning: versionName = <upstream package.json version>+<BUILD_NUMBER>, with the
+# counter zero-padded to three digits (global rule: artifact lists sort in build order).
+# Android versionCode = (maj*10000 + min*100 + patch) * 10000 + BUILD_NUMBER (unpadded).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,7 +17,8 @@ export ANDROID_HOME="$HOME/android-sdk"
 
 BUILD_NUMBER=$(sed -n 's/^BUILD_NUMBER=//p' android/gradle.properties)
 VERSION=$(node -p "require('./package.json').version")
-FORKVER="${VERSION}+${BUILD_NUMBER}"
+printf -v PADDED '%03d' "$BUILD_NUMBER"
+FORKVER="${VERSION}+${PADDED}"
 
 echo ">>> Building shiroikuma-jiyudoga ${FORKVER} (deb + apk)"
 

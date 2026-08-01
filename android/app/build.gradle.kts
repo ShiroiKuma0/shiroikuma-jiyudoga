@@ -14,8 +14,9 @@ class VersionInfo {
 
 // Fork versioning (shiroikuma-jiyudoga):
 //   upstream package.json version <maj>.<min>.<patch>  ->  baseCode = maj*10000 + min*100 + patch
-//   versionName = "<upstream>+<BUILD_NUMBER>"
-//   versionCode = baseCode * 10000 + BUILD_NUMBER   (0.25.1+1 -> 25010001)
+//   versionName = "<upstream>+<BUILD_NUMBER>", counter zero-padded to three digits
+//                 (global rule: artifact lists sort in build order)
+//   versionCode = baseCode * 10000 + BUILD_NUMBER   (0.25.1+001 -> 25010001)
 // BUILD_NUMBER lives in android/gradle.properties and is bumped by the fork build script.
 fun getVersionInfo(project: Project): VersionInfo {
   val json = JsonSlurper()
@@ -33,7 +34,7 @@ fun getVersionInfo(project: Project): VersionInfo {
 
   val baseCode = major * 10000 + minor * 100 + patch
   val versionCode = baseCode * 10000 + buildNumber
-  val versionName = "$upstreamVersion+$buildNumber"
+  val versionName = "$upstreamVersion+%03d".format(buildNumber)
 
   return VersionInfo(appId, versionName, versionCode)
 }
