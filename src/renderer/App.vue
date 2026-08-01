@@ -135,7 +135,6 @@ import { debounce, openExternalLink, openInternalPath, showToast } from './helpe
 import { translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 
-import 'core-js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 import { applySkuiTheme, parseTheme } from './helpers/skui'

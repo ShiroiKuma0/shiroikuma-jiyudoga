@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">白い熊 自由動画</string>
+    <string name="youtube_regex">^https?:\/\/((www\.)?youtube\.com(\/embed)?|youtu\.be)\/.*$</string>
 </resources>

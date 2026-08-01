@@ -418,7 +418,7 @@ const updateQueryDebounce = debounce(/** @param {string} query_ */(query_) => {
 
 onMounted(() => {
   document.addEventListener('keydown', keyboardShortcutHandler)
-  // Don't open keyboard prompt immediately on android 
+  // Don't open keyboard prompt immediately on android
   if (!process.env.IS_ANDROID) {
     // User might want to search first if they have many playlists
     nextTick(() => {

@@ -95,7 +95,10 @@
 }
 
 @media only screen and (width <= 420px) {
-  .pure-checkbox input[type="checkbox"] + label, .pure-radiobutton input[type="checkbox"] + label, .pure-checkbox input[type="radio"] + label, .pure-radiobutton input[type="radio"] + label {
+  .pure-checkbox input[type='checkbox'] + label,
+  .pure-radiobutton input[type='checkbox'] + label,
+  .pure-checkbox input[type='radio'] + label,
+  .pure-radiobutton input[type='radio'] + label {
     margin-block: 20px;
   }
 }

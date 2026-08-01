@@ -73,8 +73,10 @@ object NedbFile {
       is Location.Local ->
         if (location.file.isFile) location.file.readText() else ""
       is Location.Document ->
-        runCatching { String(context.contentResolver.readBytes(location.uri), Charsets.UTF_8) }
-          .getOrDefault("")
+        runCatching {
+          // `readBytes` went nullable in the 0.25.1.1 android refactor
+          context.contentResolver.readBytes(location.uri)?.toString(Charsets.UTF_8) ?: ""
+        }.getOrDefault("")
     }
 
     val docs = LinkedHashMap<String, JSONObject>()

@@ -1,10 +1,8 @@
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
 import { blobToBase64, reverseObject } from './utils'
-import i18n from '../../i18n/index'
-import { showToast } from '../utils'
 
-const DATA_DIRECTORY = 'data://'
+export const DATA_DIRECTORY = 'data://'
 
 const DATA_LOCATION = `${DATA_DIRECTORY}data-location.json`
 
@@ -225,45 +223,39 @@ async function initializeDataDirectory(handle) {
 }
 
 export async function selectDataDirectory(copyFiles = false, reset = false) {
-  try {
-    const newDirectory = reset ? restoreHandleFromDirectoryUri(DATA_DIRECTORY) : await requestDirectoryAccessDialog()
+  const newDirectory = reset ? restoreHandleFromDirectoryUri(DATA_DIRECTORY) : await requestDirectoryAccessDialog()
 
-    if (newDirectory.canceled) {
-      return
-    }
+  if (newDirectory.canceled) {
+    return
+  }
 
-    const newFiles = await initializeDataDirectory(newDirectory)
-    const currentDirectory = await getCurrentDataDirectory()
-    const hasOldLocation = currentDirectory.uri !== DATA_DIRECTORY
+  const newFiles = await initializeDataDirectory(newDirectory)
+  const currentDirectory = await getCurrentDataDirectory()
+  const hasOldLocation = currentDirectory.uri !== DATA_DIRECTORY
 
-    if (copyFiles) {
-      for (const fileName in currentDirectory.files) {
-        if (EXPECTED_FILES.indexOf(fileName) !== -1) {
-          const data = await readFile(currentDirectory.files[fileName])
-          await writeFile(newFiles[fileName], data)
-        }
+  if (copyFiles) {
+    for (const fileName in currentDirectory.files) {
+      if (EXPECTED_FILES.indexOf(fileName) !== -1) {
+        const data = await readFile(currentDirectory.files[fileName])
+        await writeFile(newFiles[fileName], data)
       }
     }
-
-    if (hasOldLocation) {
-      android.revokePermissionForTree(currentDirectory.uri)
-    }
-
-    currentDataDirectory = null
-    await writeFile(DATA_LOCATION, JSON.stringify({
-      directory: newDirectory.uri,
-      files: filesToEntries(newFiles)
-    }))
-
-    showToast(i18n.global.t('Data Settings.Your data directory has been moved successfully'))
-    if (!copyFiles) {
-      android.restart()
-    }
-    return android.getDirectory(newDirectory.uri)
-  } catch (exception) {
-    showToast(i18n.global.t('Data Settings.Error moving data directory'))
-    console.error(exception)
   }
+
+  if (hasOldLocation) {
+    android.revokePermissionForTree(currentDirectory.uri)
+  }
+
+  currentDataDirectory = null
+  await writeFile(DATA_LOCATION, JSON.stringify({
+    directory: newDirectory.uri,
+    files: filesToEntries(newFiles)
+  }))
+
+  if (!copyFiles) {
+    android.restart()
+  }
+  return android.getDirectory(newDirectory.uri)
 }
 
 export async function getFullUri(partialUri) {

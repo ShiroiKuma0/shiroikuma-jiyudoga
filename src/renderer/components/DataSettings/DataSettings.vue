@@ -146,8 +146,8 @@ import FtButton from '../FtButton/FtButton.vue'
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import FtPrompt from '../FtPrompt/FtPrompt.vue'
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
-import FtTooltip from '../FtTooltip/FtTooltip.vue'
 import FtToggleSwitch from '../FtToggleSwitch/FtToggleSwitch.vue'
+import FtTooltip from '../FtTooltip/FtTooltip.vue'
 
 import store from '../../store/index'
 import { defaultUpdaterId, NON_TRANSFERABLE_SETTINGS } from '../../store/modules/settings'
@@ -165,7 +165,7 @@ import {
 import { processToBeAddedPlaylistVideo } from '../../helpers/playlists'
 
 import android from 'android'
-import { selectDataDirectory, getCurrentDataDirectory } from '../../helpers/android/storage'
+import { selectDataDirectory, getCurrentDataDirectory, DATA_DIRECTORY } from '../../helpers/android/storage'
 import { handleAmbigiousContent } from '../../helpers/android/utils'
 
 const IMPORT_DIRECTORY_ID = 'data-settings-import'
@@ -186,22 +186,34 @@ function toggleCopyDataDir() {
 }
 
 async function selectDirectory() {
-  const uri = await selectDataDirectory(shouldCopyDataFilesWhenMoving.value)
-  if (uri !== null) {
-    dataDirectory.value = uri
+  try {
+    const uri = await selectDataDirectory(shouldCopyDataFilesWhenMoving.value)
+    if (uri !== null) {
+      dataDirectory.value = uri
+    }
+    showToast(t('Data Settings.Your data directory has been moved successfully'))
+  } catch (exception){
+    showToast(t('Data Settings.Error moving data directory'))
+    console.error(exception)
   }
 }
 
 async function resetDirectory() {
-  const uri = await selectDataDirectory(shouldCopyDataFilesWhenMoving.value, true)
-  if (uri !== null) {
-    dataDirectory.value = uri
+  try {
+    const uri = await selectDataDirectory(shouldCopyDataFilesWhenMoving.value, true)
+    if (uri !== null) {
+      dataDirectory.value = uri
+    }
+    showToast(t('Data Settings.Your data directory has been moved successfully'))
+  } catch (exception) {
+    showToast(t('Data Settings.Error moving data directory'))
+    console.error(exception)
   }
 }
 
 const dataDirectory = ref('')
 if (process.env.IS_ANDROID) {
-  dataDirectory.value = android.getDirectory('data://')
+  dataDirectory.value = android.getDirectory(DATA_DIRECTORY)
 
   getCurrentDataDirectory().then(({ uri }) => {
     if (uri !== 'data://') {

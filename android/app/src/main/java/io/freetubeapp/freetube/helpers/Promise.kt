@@ -1,23 +1,25 @@
 package io.freetubeapp.freetube.helpers
 
 import io.freetubeapp.freetube.javascript.AsyncJSCommunicator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.UUID.randomUUID
-import java.util.concurrent.ThreadPoolExecutor
 
-class Promise<T, G>(executor: ThreadPoolExecutor, runnable: ((T) -> Unit, (G) -> Unit) -> Unit) {
+class Promise<T, G>(coroutineScope: CoroutineScope, runnable: ((T) -> Unit, (G) -> Unit) -> Unit) {
   private val successListeners: MutableList<(T) -> Unit> = mutableListOf()
   private var successResult: T? = null
   private val errorListeners: MutableList<(G) -> Unit> = mutableListOf()
   private var errorResult: G? = null
   private val id = "${randomUUID()}"
 
+  constructor(runnable: ((T) -> Unit, (G) -> Unit) -> Unit): this(CoroutineScope(Dispatchers.IO), runnable)
+
   init {
-    executor.run {
-      runnable.invoke({
-        result ->
+    coroutineScope.launch {
+      runnable.invoke({ result ->
         notifySuccess(result)
-      }, {
-        result ->
+      }, { result ->
         notifyError(result)
       })
     }
@@ -50,9 +52,9 @@ class Promise<T, G>(executor: ThreadPoolExecutor, runnable: ((T) -> Unit, (G) ->
   }
 
   fun then(listener: (T) -> Unit): Promise<T, G> {
-    if (successResult != null) {
-      // assume success result won't be unset
-      listener(successResult!!)
+    val result = successResult
+    if (result != null) {
+      listener(result)
     } else {
       successListeners.add(listener)
     }
@@ -61,9 +63,9 @@ class Promise<T, G>(executor: ThreadPoolExecutor, runnable: ((T) -> Unit, (G) ->
 
   @SuppressWarnings // will complain that it could be private, but it is public on purpose
   fun catch(listener: (G) -> Unit): Promise<T, G> {
-    if (errorResult != null) {
-      // assume success result won't be unset
-      listener(errorResult!!)
+    val result = errorResult
+    if (result != null) {
+      listener(result)
     } else {
       errorListeners.add(listener)
     }

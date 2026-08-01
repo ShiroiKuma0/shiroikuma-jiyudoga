@@ -30,9 +30,9 @@ class AsyncJSCommunicator(givenWebView: WebView) {
     webView.dispatchEvent("$id-progress")
   }
 
-  fun getSyncMessage(promise: String): String {
+  fun getSyncMessage(promise: String): String? {
     val value = syncMessages[promise]
     syncMessages.remove(promise)
-    return value!!
+    return value
   }
 }

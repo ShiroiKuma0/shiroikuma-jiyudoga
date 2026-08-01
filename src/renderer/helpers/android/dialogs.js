@@ -1,4 +1,3 @@
-
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
 import { readFile } from './storage'

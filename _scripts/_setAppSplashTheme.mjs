@@ -1,8 +1,6 @@
-
 import { readFile, readdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
-
 
 // sets the splashscreen & icon to one of three predefined themes (this makes it easier to tell, at a glance, which one is open)
 // - release (the default production look)
@@ -84,8 +82,8 @@ async function constructThemePath(isDark = false, version = 0) {
   const resDirectory = join(scriptDir, '..', '..', 'android/app/src/main/res/')
   const files = await readdir(resDirectory)
   const versionsListed = files
-                        .filter(file => file.startsWith(`values${isDark ? '-night-' : '-'}v`))
-                        .map(file => parseInt(file.split('-v')[1]))
+    .filter(file => file.startsWith(`values${isDark ? '-night-' : '-'}v`))
+    .map(file => parseInt(file.split('-v')[1]))
   if (versionsListed.indexOf(version) !== -1) {
     return join(resDirectory, `values${isDark ? '-night-' : '-'}v${version}`, 'themes.xml')
   } else {
@@ -101,7 +99,6 @@ async function setValuesForThemeFile(values, isDark = false, version = 0) {
   }
   await writeFile(themePath, themeXml)
 }
-
 
 await setValuesForThemeFile({
   windowSplashScreenBackground: currentTheme.back,
