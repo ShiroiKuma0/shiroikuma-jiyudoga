@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1+001`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-02.g435ac348.2026-07-30.gfea7a050+003`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -148,22 +148,40 @@ new fork builds — never a stale upstream version.
 
 ## What this fork is
 
-- **Tracks FreeTube's `development` branch** — always slightly ahead of the latest beta.
+- **Tracks both upstreams' `development` branches** — FreeTube's, always slightly ahead of the
+  latest beta, and FreeTubeAndroid's, where their current work lands.
 - **Dual upstream**: the desktop app comes from FreeTubeApp/FreeTube; the Android packaging
   layer comes from MarmadileManteater/FreeTubeAndroid and is adapted to the current FreeTube
   by this fork (including keeping the desktop Electron build alive, which the Android fork
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
-- Versioning: `<FORK_VERSION>+<build>`, where **`FORK_VERSION` is the higher of the two
-  upstreams' versions** — FreeTube's `package.json` version and FreeTubeAndroid's release tag —
-  adopted after merging either, so the version says what the build actually contains (their
-  fourth component is a packaging respin of the same FreeTube base, not a FreeTube version
-  component). Both artifacts always carry the same version, even when only one upstream moved.
-  The build counter is zero-padded to three digits so releases and artifacts sort in build order
-  (e.g. `0.25.1.1+001`) and **resets on every `FORK_VERSION` change**; Android
-  `versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + build`, which keeps
-  rising across that reset (`0.25.1+039` → `25010039`, `0.25.1.1+001` → `25011001`). Tags up to
-  `0.25.1+37` predate the padding and are left as published.
+- Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
+  `0.25.1.1.2026-08-02.g435ac348.2026-07-30.gfea7a050+003`.
+
+  **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
+  version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
+  component is a packaging respin of the same FreeTube base, not a FreeTube version component).
+
+  Because both upstreams are tracked **by branch, not by release**, neither version literal says
+  which commit a build actually contains: FreeTube's `0.25.1` stands still across hundreds of
+  development commits. So each upstream contributes a **base pin**,
+  `.<base commit date>.g<8-char sha>` — the commit our layer sits on, from
+  `git merge-base HEAD <ref>`, FreeTube first. The date is the base commit's own committer date,
+  never build time, so every build on one base shares a pin and version names still sort
+  chronologically. Pins are recomputed from git at build time and never stored; each moves only
+  when *its* upstream is synced, which is exactly the "this upstream has not moved" signal.
+
+  Both artifacts always carry the same version, even when only one upstream moved. (One cosmetic
+  exception: the `.deb`'s internal control field renders the pins' dates with `~` instead of `-`,
+  because electron-builder sanitises `-` for deb/rpm targets. Both filenames keep the hyphens, and
+  the ordering is unaffected.)
+
+  The build counter is zero-padded to three digits so releases and artifacts sort in build order,
+  and **resets on every `FORK_VERSION` change**; Android
+  `versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + build` is untouched by the
+  pins and keeps rising across that reset (`0.25.1+039` → `25010039`,
+  `0.25.1.1.…+003` → `25011003`). Tags up to `0.25.1+37` predate the padding and those up to
+  `0.25.1.1+001` predate the pins; both are left exactly as published.
 
 ## Branch model
 
@@ -171,6 +189,13 @@ new fork builds — never a stale upstream version.
 | --- | --- |
 | `master` | Mirror of `FreeTubeApp/FreeTube` `development`, fast-forward only |
 | `custom` | The fork: Android-layer graft + adaptations + branding + features |
+
+Upstream refs the version pins are measured against:
+
+| Upstream | Ref we follow | Pin |
+| --- | --- | --- |
+| `FreeTubeApp/FreeTube` | `development` (via local `master`) | first |
+| `MarmadileManteater/FreeTubeAndroid` | `development` | second |
 
 ## Built on FreeTube
 
