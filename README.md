@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-02.g435ac348.2026-07-30.gfea7a050+003`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+005`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -156,7 +156,7 @@ new fork builds — never a stale upstream version.
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
 - Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.1.1.2026-08-02.g435ac348.2026-07-30.gfea7a050+003`.
+  `0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+005`.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
@@ -171,6 +171,11 @@ new fork builds — never a stale upstream version.
   chronologically. Pins are recomputed from git at build time and never stored; each moves only
   when *its* upstream is synced, which is exactly the "this upstream has not moved" signal.
 
+  The pinned string is also what the app reports about itself, so the in-app update check
+  compares like with like against the release tag. It sorts the pins ahead of the build counter:
+  a release built on newer upstream wins even with a lower counter, and an older base loses with
+  a higher one.
+
   Both artifacts always carry the same version, even when only one upstream moved. (One cosmetic
   exception: the `.deb`'s internal control field renders the pins' dates with `~` instead of `-`,
   because electron-builder sanitises `-` for deb/rpm targets. Both filenames keep the hyphens, and
@@ -180,7 +185,7 @@ new fork builds — never a stale upstream version.
   and **resets on every `FORK_VERSION` change**; Android
   `versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + build` is untouched by the
   pins and keeps rising across that reset (`0.25.1+039` → `25010039`,
-  `0.25.1.1.…+003` → `25011003`). Tags up to `0.25.1+37` predate the padding and those up to
+  `0.25.1.1.…+005` → `25011005`). Tags up to `0.25.1+37` predate the padding and those up to
   `0.25.1.1+001` predate the pins; both are left exactly as published.
 
 ## Branch model
