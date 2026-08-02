@@ -4,10 +4,12 @@
 #   2. Android arm64-v8a .apk (WebView wrapper, Gradle, signed release)
 # copies them to ~/tmp/ with fork naming, then bumps BUILD_NUMBER.
 #
-# Fork versioning: versionName = <FORK_VERSION>+<BUILD_NUMBER>, with the counter zero-padded
-# to three digits (global rule: artifact lists sort in build order). FORK_VERSION is the higher
-# of our two upstreams' versions and may carry FreeTubeAndroid's fourth "respin" component —
-# see fork.properties, which holds it together with BUILD_NUMBER.
+# Fork versioning: versionName = <FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<BUILD_NUMBER>,
+# each pin being .<base commit date>.g<8-char base sha> and the counter zero-padded to three
+# digits (global rule: artifact lists sort in build order). FORK_VERSION is the higher of our two
+# upstreams' versions and may carry FreeTubeAndroid's fourth "respin" component — see
+# fork.properties, which holds it together with BUILD_NUMBER. Both upstreams are git-tracking, so
+# both are pinned, FreeTube first (global git-versioning rule).
 # Android versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + BUILD_NUMBER.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -20,7 +22,44 @@ export ANDROID_HOME="$HOME/android-sdk"
 BUILD_NUMBER=$(sed -n 's/^BUILD_NUMBER=//p' fork.properties)
 VERSION=$(sed -n 's/^FORK_VERSION=//p' fork.properties)
 printf -v PADDED '%03d' "$BUILD_NUMBER"
-FORKVER="${VERSION}+${PADDED}"
+
+# Upstream-base pins — BOTH upstreams are git-tracking, so both get one. Neither upstream's
+# version literal identifies the commit we actually contain: master mirrors FreeTube's
+# *development tip*, and we merge FreeTubeAndroid's `release` branch rather than its tags.
+# Each sha is `git merge-base HEAD <ref>` — the upstream commit our layer sits on — NOT our own
+# HEAD (already covered by +N) and NOT the ref's tip (which overstates it when custom has not
+# merged the new tip yet). Each date is that commit's own committer date, never build time, so
+# every build on one base shares a pin while names still sort chronologically.
+# Order is fixed: FreeTube first, FreeTubeAndroid second. The pins are independent — a missing
+# ref drops only its own pin. The build must never fail over a missing sha: a pin degrades to
+# .g<sha> without a date and vanishes entirely without git.
+fork_pin() {                 # $1 = upstream ref; echoes ".<date>.g<sha>", ".g<sha>", or ""
+  local ref="$1" sha date
+  sha=$(git merge-base HEAD "$ref" 2>/dev/null | cut -c1-8) || sha=""
+  [ ${#sha} -eq 8 ] || { echo ""; return 0; }
+  date=$(git show -s --format=%cd --date=format:%Y-%m-%d "$sha" 2>/dev/null) || date=""
+  if [ ${#date} -eq 10 ]; then echo ".${date}.g${sha}"; else echo ".g${sha}"; fi
+}
+
+# The FreeTubeAndroid pin must name FreeTubeAndroid work, not history the two upstreams SHARE.
+# Their `development` regularly merges FreeTube's own development into itself, so until we have
+# merged their branch the newest commit we have in common with it is a FREETUBE commit. Pinning
+# that would name the wrong upstream and would drift on every FreeTube sync, so drop the pin
+# instead: no pin is honest, a wrong one is not.
+fork_pin_android() {         # $1 = upstream ref; echoes a pin, or "" while only history is shared
+  local ref="$1" mb
+  mb=$(git merge-base HEAD "$ref" 2>/dev/null) || mb=""
+  [ -n "$mb" ] || { echo ""; return 0; }
+  if git rev-parse --verify -q master >/dev/null 2>&1 &&
+     git merge-base --is-ancestor "$mb" master 2>/dev/null; then
+    echo ""; return 0        # shared FreeTube history — their branch is not in our layer yet
+  fi
+  fork_pin "$ref"
+}
+
+PIN="$(fork_pin master)$(fork_pin_android android/development)"
+
+FORKVER="${VERSION}${PIN}+${PADDED}"
 
 echo ">>> Building shiroikuma-jiyudoga ${FORKVER} (deb + apk)"
 

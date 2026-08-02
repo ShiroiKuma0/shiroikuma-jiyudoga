@@ -31,7 +31,7 @@ git fetch android --tags
 # FreeTube: new work our master doesn't have
 git log --oneline master..upstream/development | head -50
 # FreeTubeAndroid: new work beyond what we last merged
-git log --oneline $(git merge-base custom android/release)..android/release
+git log --oneline $(git merge-base custom android/development)..android/development
 ```
 
 Also check their releases: `gh api 'repos/FreeTubeApp/FreeTube/releases?per_page=3'` (all are
@@ -68,15 +68,23 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    Compile-verify all bundles: `pnpm run pack` **and** `pnpm run pack:android`.
 5. Set `FORK_VERSION` in the repo-root `fork.properties` to the **higher** of the two upstreams'
    versions (FreeTube's `package.json` vs FreeTubeAndroid's latest release tag) and reset
-   `BUILD_NUMBER=1` there.
+   `BUILD_NUMBER=1` there. The `.<date>.g<sha>` upstream-base pins need **no** hand-edit: merging
+   `master` moves `git merge-base HEAD master`, so the next build picks up the new FreeTube sha
+   and date by itself. This is the step that moves the **FreeTube** pin; the FreeTubeAndroid pin
+   is untouched here.
 
 ### 3b. New FreeTubeAndroid version
 
-1. On `custom`: `git merge android/release`
-2. Resolve so upstream-FreeTube code wins wherever FreeTubeAndroid's copy lags (their release
-   branch is typically one FreeTube minor behind us — prefer HEAD for shared app code; take
-   their side for the android layer itself: `android/`, `src/renderer/helpers/android/*`,
-   `_scripts/*android*`, `static/locales-android/`).
+1. On `custom`: `git merge android/development` — we follow their **`development`**, not
+   `release`. The two have diverged (2026-08-02: 108 commits only on `release`, 75 only on
+   `development`, neither an ancestor of the other), and `custom` still carries the old
+   `android/release` merge, so the **first** `development` merge is a large one — expect
+   conflicts well beyond the usual hotspots and budget for it.
+2. Resolve so upstream-FreeTube code wins wherever FreeTubeAndroid's copy lags (their branch
+   typically trails FreeTube — prefer HEAD for shared app code; take their side for the android
+   layer itself: `android/`, `src/renderer/helpers/android/*`, `_scripts/*android*`,
+   `static/locales-android/`). Their `development` merges FreeTube's `development` into itself,
+   so some incoming commits are FreeTube's own and already in `custom` — those resolve to HEAD.
 3. Re-check the desktop build still compiles (their layer historically breaks it — that is
    why the android stub alias and the datastores guarded require exist; keep them).
 4. Compile-verify both: `pnpm run pack` and `pnpm run pack:android`.
@@ -86,6 +94,19 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    `FORK_VERSION` change, whichever upstream caused it; the versionCode formula gives the respin
    its own digit so the code still rises across the reset. Both artifacts are rebuilt at the new
    version even though the deb is functionally unchanged — synchronized versions are the point.
+   This is the step that moves the **FreeTubeAndroid** pin — merging `android/development` moves
+   `git merge-base HEAD android/development`, so the next build picks up their new sha and date by
+   itself, with nothing to hand-edit. The FreeTube pin does **not** move here, and should not:
+   their branch trails FreeTube, so `git merge-base HEAD master` is unchanged and that pin keeps
+   naming the FreeTube commit we actually sit on.
+   Note that because their side is git-tracked, a FreeTubeAndroid sync that brings **no** new
+   release tag still changes the version (their pin moves) — so the rebuild is still meaningful
+   even when `FORK_VERSION` and `BUILD_NUMBER` are both left alone.
+   **This merge is also what restores the FreeTubeAndroid pin.** Until it happens the pin is
+   suppressed by the shared-history guard (the merge-base is a FreeTube commit), so builds read
+   `<FORK_VERSION>.<FT date>.g<FT sha>+<NNN>` with no second pin. Because dropping a pin makes the
+   version sort *below* the last dual-pinned build (`…gdae5eb0b+003` < `…gdae5eb0b.2026-07-28.…+002`),
+   avoid shipping an interim build between now and that merge — or bump `FORK_VERSION` if you must.
 
 ### 4. Verify our customizations are intact
 

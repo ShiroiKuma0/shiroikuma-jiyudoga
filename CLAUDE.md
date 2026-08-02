@@ -20,12 +20,32 @@ its mandatory ⛔ proceed gate).
 - `origin` → `git@github.com:ShiroiKuma0/shiroikuma-jiyudoga` (push here).
 - `upstream` → `https://github.com/FreeTubeApp/FreeTube` (fetch only). `master` mirrors its
   **`development` tip** (not release tags — we ride slightly ahead of the beta), ff-only.
-- `android` → `https://github.com/MarmadileManteater/FreeTubeAndroid` (fetch only). Its
-  `release` branch carries their upstream-sync work; we **merge** it into `custom` and adapt
-  it to the current FreeTube ourselves (their release typically lags FreeTube by one minor).
+- `android` → `https://github.com/MarmadileManteater/FreeTubeAndroid` (fetch only). We follow
+  their **`development`** branch — that is where their current work lands; `release` lags it and
+  the two have genuinely diverged (as of 2026-08-02: 108 commits only on `release`, 75 only on
+  `development`, neither containing the other). We **merge** `android/development` into `custom`
+  and adapt it to the current FreeTube ourselves. Note their `development` periodically merges
+  FreeTube's own `development` into itself, so the two upstreams share history — see the pin
+  guard under **Upstream tracking** below.
 - `custom` — all our work. **Merge-based, not rebase-based** (the android graft is a merge
   commit; rebasing would flatten it). New FreeTube → `git merge master` into `custom`.
   Audit our layer with `git log --first-parent custom` or `git diff master...custom`.
+- **Upstream tracking: `git`** — for **both** upstreams. `master` mirrors FreeTube's *development
+  tip*, and we merge FreeTubeAndroid's `release` **branch** rather than its tags, so neither
+  version literal identifies the commit we actually contain. The fork versionName therefore
+  carries one pin per upstream, FreeTube first:
+  `<FORK_VERSION>.<FT date>.g<FT sha>.<FTA date>.g<FTA sha>+<BUILD_NUMBER, 3 digits>` — e.g.
+  `0.25.1.1.2026-08-01.gdae5eb0b.2026-07-28.g27fc24f4+002`. Each sha is
+  `git merge-base HEAD <ref>` (`master` / `android/development`) — the upstream commit our layer
+  sits on, not our HEAD and not the ref's tip. Each pin moves **only** when that upstream is
+  synced, which is the "this upstream has not moved" signal; a missing ref drops only its own pin.
+  **Shared-history guard:** the FreeTubeAndroid pin is emitted only when its merge-base is *not*
+  an ancestor of `master`. Their `development` merges FreeTube's `development` into itself, so
+  before we have merged their branch the newest commit in common is a **FreeTube** one — pinning
+  that would name the wrong upstream and drift on FreeTube syncs, so the pin is dropped instead.
+  ⚠️ **As of 2026-08-02 the FreeTubeAndroid pin is therefore ABSENT** — `custom` still contains
+  `android/release`'s work, not `android/development`'s. It reappears by itself at the first build
+  after `android/development` is merged. See the global **`git-versioning`** skill.
 
 ### Our customizations (identity + build)
 | What | Value | Where |
@@ -34,7 +54,7 @@ its mandatory ⛔ proceed gate).
 | Android namespace | `io.freetubeapp.freetube` (**unchanged** from the android fork — never rename) | `android/app/build.gradle.kts` |
 | Desktop appId / deb package | `shiroikuma.jiyudoga` / `shiroikuma-jiyudoga` | `_scripts/build-fork-deb.mjs` |
 | App label | `白い熊 自由動画` | `android/app/src/main/res/values/strings.xml` → `app_name`; desktop branding TBD in rebrand pass |
-| Version | `<FORK_VERSION>+<NNN>`, where **`FORK_VERSION` is the HIGHER of our two upstreams' versions** — FreeTube's `package.json` version (`0.25.1`) vs FreeTubeAndroid's release tag (`0.25.1.1`), adopted after merging *either* upstream. FreeTubeAndroid's fourth component is its packaging respin of the same FreeTube base, not a FreeTube version component (their own `package.json` still reads `0.25.1`); adopting it keeps our version describing what the build contains, so kakutoku sees no phantom update. **Both artifacts always carry the same version**, even when a bump came from the Android side alone and the deb is functionally unchanged. `package.json` stays upstream's — never edit it. The counter is **zero-padded to three digits** (global rule: artifact lists sort in build order) in the versionName, the deb version and both filenames, and **resets to 1 on EVERY `FORK_VERSION` change**; Android versionCode `((maj*10000+min*100+patch)*10+respin)*1000+N` stays unpadded (0.25.1+039 → 25010039, 0.25.1.1+001 → 25011001) — the respin owns a digit so the code still rises across a respin bump despite the counter reset | `fork.properties` (repo root: `FORK_VERSION` + `BUILD_NUMBER`), `android/app/build.gradle.kts` fork block, `_scripts/build-fork.sh`, `_scripts/build-fork-deb.mjs` |
+| Version | `<FORK_VERSION>.<FT date>.g<FT sha>.<FTA date>.g<FTA sha>+<NNN>`, where **`FORK_VERSION` is the HIGHER of our two upstreams' versions** — FreeTube's `package.json` version (`0.25.1`) vs FreeTubeAndroid's release tag (`0.25.1.1`), adopted after merging *either* upstream. FreeTubeAndroid's fourth component is its packaging respin of the same FreeTube base, not a FreeTube version component (their own `package.json` still reads `0.25.1`); adopting it keeps our version describing what the build contains, so kakutoku sees no phantom update. **Both artifacts always carry the same version**, even when a bump came from the Android side alone and the deb is functionally unchanged — with one cosmetic exception outside our control: the deb's internal *control-field* version renders **both** pins' dates with tildes (`…2026~08~01.gdae5eb0b.2026~07~28.g27fc24f4…`), because electron-builder rewrites `-` to `~` for deb/rpm targets (`LinuxTargetHelper.getSanitizedVersion`). Both **filenames** keep the hyphens (they expand from the raw `appInfo.version`), and `dpkg --compare-versions` orders the tilde form correctly, so upgrades are unaffected. Not a bug — do not "fix" it. `package.json` stays upstream's — never edit it. The counter is **zero-padded to three digits** (global rule: artifact lists sort in build order) in the versionName, the deb version and both filenames, and **resets to 1 on EVERY `FORK_VERSION` change**; Android versionCode `((maj*10000+min*100+patch)*10+respin)*1000+N` stays unpadded (0.25.1+039 → 25010039, 0.25.1.1+001 → 25011001) — the respin owns a digit so the code still rises across a respin bump despite the counter reset. The two `.<date>.g<sha>` **upstream-base pins** (see **Upstream tracking: `git`** above) are never stored — all three entry points recompute them from git at build time and degrade per-pin (`.g<sha>` with no date, that pin omitted entirely with no ref, nothing at all with no git) so a build never fails over a missing sha. They leave `versionCode` untouched and each moves only on its own upstream's sync, independently of the counter reset. `FORK_VERSION` **keeps its respin component** even though the FreeTubeAndroid pin now identifies that side exactly — dropping it would regress `0.25.1.1` → `0.25.1` (a phantom downgrade for kakutoku) and zero the versionCode respin digit. The respin orders; the pin identifies | `fork.properties` (repo root: `FORK_VERSION` + `BUILD_NUMBER`), `android/app/build.gradle.kts` fork block, `_scripts/build-fork.sh`, `_scripts/build-fork-deb.mjs` |
 | Signing | gitignored `keystore.properties` → `~/.android-keystores/shiroikuma-jiyudoga.jks` (alias `jiyudoga`) | `android/app/build.gradle.kts` |
 | Artifacts | `~/tmp/shiroikuma-jiyudoga_<ver>_amd64.deb` + `..._arm64-v8a.apk` | `_scripts/build-fork.sh` |
 | Desktop-build repairs for the android layer | `android$` stub alias + `IS_ANDROID:false` defines (main/renderer/web webpack configs), guarded require in `src/datastores/index.js`, `_scripts/android-stub.js` | `_scripts/` |
