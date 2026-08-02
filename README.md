@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1+039`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1+001`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -154,10 +154,16 @@ new fork builds — never a stale upstream version.
   by this fork (including keeping the desktop Electron build alive, which the Android fork
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
-- Versioning: `<upstream version>+<build>`, the build counter zero-padded to three digits so
-  releases and artifacts sort in build order (e.g. `0.25.1+039`); Android
-  `versionCode = (maj*10000 + min*100 + patch) * 10000 + build`. Tags up to `0.25.1+37`
-  predate the padding and are left as published.
+- Versioning: `<FORK_VERSION>+<build>`, where **`FORK_VERSION` is the higher of the two
+  upstreams' versions** — FreeTube's `package.json` version and FreeTubeAndroid's release tag —
+  adopted after merging either, so the version says what the build actually contains (their
+  fourth component is a packaging respin of the same FreeTube base, not a FreeTube version
+  component). Both artifacts always carry the same version, even when only one upstream moved.
+  The build counter is zero-padded to three digits so releases and artifacts sort in build order
+  (e.g. `0.25.1.1+001`) and **resets on every `FORK_VERSION` change**; Android
+  `versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + build`, which keeps
+  rising across that reset (`0.25.1+039` → `25010039`, `0.25.1.1+001` → `25011001`). Tags up to
+  `0.25.1+37` predate the padding and are left as published.
 
 ## Branch model
 
