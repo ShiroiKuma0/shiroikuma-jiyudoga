@@ -66,7 +66,9 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    the android helpers even without textual conflicts (e.g. 0.25 deleted
    `composables/use-i18n-polyfill` → android files now import `useI18n` from `vue-i18n`).
    Compile-verify all bundles: `pnpm run pack` **and** `pnpm run pack:android`.
-5. Reset `BUILD_NUMBER=1` in `android/gradle.properties`.
+5. Set `FORK_VERSION` in the repo-root `fork.properties` to the **higher** of the two upstreams'
+   versions (FreeTube's `package.json` vs FreeTubeAndroid's latest release tag) and reset
+   `BUILD_NUMBER=1` there.
 
 ### 3b. New FreeTubeAndroid version
 
@@ -78,7 +80,12 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
 3. Re-check the desktop build still compiles (their layer historically breaks it — that is
    why the android stub alias and the datastores guarded require exist; keep them).
 4. Compile-verify both: `pnpm run pack` and `pnpm run pack:android`.
-5. `BUILD_NUMBER` keeps counting (only a new **FreeTube** version resets it to 1).
+5. If their new release tag is **higher** than the current `FORK_VERSION` (their fourth component
+   is a packaging respin of the same FreeTube base — `0.25.1` → `0.25.1.1`), adopt it as
+   `FORK_VERSION` in `fork.properties` and reset `BUILD_NUMBER=1`. The counter resets on **every**
+   `FORK_VERSION` change, whichever upstream caused it; the versionCode formula gives the respin
+   its own digit so the code still rises across the reset. Both artifacts are rebuilt at the new
+   version even though the deb is functionally unchanged — synchronized versions are the point.
 
 ### 4. Verify our customizations are intact
 

@@ -1,4 +1,3 @@
-import groovy.json.JsonSlurper
 import java.util.Properties
 
 class VersionInfo {
@@ -13,28 +12,38 @@ class VersionInfo {
 }
 
 // Fork versioning (shiroikuma-jiyudoga):
-//   upstream package.json version <maj>.<min>.<patch>  ->  baseCode = maj*10000 + min*100 + patch
-//   versionName = "<upstream>+<BUILD_NUMBER>", counter zero-padded to three digits
+//   FORK_VERSION <maj>.<min>.<patch>[.<respin>] — the higher of our two upstreams (see
+//   fork.properties). The optional fourth component is FreeTubeAndroid's packaging respin
+//   of the same FreeTube base.
+//   versionName = "<FORK_VERSION>+<BUILD_NUMBER>", counter zero-padded to three digits
 //                 (global rule: artifact lists sort in build order)
-//   versionCode = baseCode * 10000 + BUILD_NUMBER   (0.25.1+001 -> 25010001)
-// BUILD_NUMBER lives in android/gradle.properties and is bumped by the fork build script.
+//   baseCode    = (maj*10000 + min*100 + patch) * 10 + respin
+//   versionCode = baseCode * 1000 + BUILD_NUMBER
+//                 (0.25.1+039 -> 25010039, 0.25.1.1+001 -> 25011001)
+//   The respin gets its own digit so versionCode still RISES across a respin bump even
+//   though BUILD_NUMBER resets to 1 on every FORK_VERSION change; the counter's slot is
+//   three digits, which it already was in every name. Codes shipped under the previous
+//   formula reproduce unchanged (respin 0, counter <= 999).
+// FORK_VERSION and BUILD_NUMBER live in the repo-root fork.properties (shared with the deb
+// build); BUILD_NUMBER is bumped by _scripts/build-fork.sh.
 fun getVersionInfo(project: Project): VersionInfo {
-  val json = JsonSlurper()
-  val packageJsonPath = project.file("../../package.json")
+  val forkProperties = Properties().apply {
+    project.file("../../fork.properties").inputStream().use { load(it) }
+  }
 
-  val packageJson = json.parse(packageJsonPath) as Map<String, Any>
-  val upstreamVersion = (packageJson["version"] as String).split("-")[0]
-  val numbers = upstreamVersion.split(".")
+  val forkVersion = forkProperties.getProperty("FORK_VERSION").split("-")[0]
+  val numbers = forkVersion.split(".")
   val major = numbers[0].toInt()
   val minor = numbers[1].toInt()
   val patch = numbers[2].toInt()
+  val respin = numbers.getOrNull(3)?.toIntOrNull() ?: 0
 
-  val buildNumber = (project.properties["BUILD_NUMBER"] as? String)?.toInt() ?: 1
+  val buildNumber = forkProperties.getProperty("BUILD_NUMBER")?.toInt() ?: 1
   val appId = project.properties["APP_ID"] as? String ?: "shiroikuma.jiyudoga"
 
-  val baseCode = major * 10000 + minor * 100 + patch
-  val versionCode = baseCode * 10000 + buildNumber
-  val versionName = "$upstreamVersion+%03d".format(buildNumber)
+  val baseCode = (major * 10000 + minor * 100 + patch) * 10 + respin
+  val versionCode = baseCode * 1000 + buildNumber
+  val versionName = "$forkVersion+%03d".format(buildNumber)
 
   return VersionInfo(appId, versionName, versionCode)
 }

@@ -23,11 +23,13 @@ _scripts/build-fork.sh
 It: packs the desktop webpack bundles → builds the deb (`_scripts/build-fork-deb.mjs`,
 electron-builder, deb-only, fork naming) → packs the android webpack bundle → builds the
 signed release APK (`android/gradlew assembleRelease`) → copies both to `~/tmp/` →
-**bumps `BUILD_NUMBER`** in `android/gradle.properties`.
+**bumps `BUILD_NUMBER`** in the repo-root `fork.properties`.
 
-Outputs (`<ver>` = `<upstream package.json version>+<BUILD_NUMBER>`, e.g. `0.25.1+1`):
+Outputs (`<ver>` = `<FORK_VERSION>+<BUILD_NUMBER>`, e.g. `0.25.1.1+001`; `FORK_VERSION` is the
+higher of our two upstreams' versions and lives in `fork.properties`):
 - `~/tmp/shiroikuma-jiyudoga_<ver>_amd64.deb`
-- `~/tmp/shiroikuma-jiyudoga_<ver>_arm64-v8a.apk` (versionCode `(maj*10000+min*100+patch)*10000+N`, e.g. `25010001`)
+- `~/tmp/shiroikuma-jiyudoga_<ver>_arm64-v8a.apk` (versionCode
+  `((maj*10000+min*100+patch)*10+respin)*1000+N`, e.g. `25011001`)
 
 ## Toolchain (all wired inside the script)
 

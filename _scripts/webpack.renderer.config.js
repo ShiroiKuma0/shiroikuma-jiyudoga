@@ -16,8 +16,7 @@ const { sigFrameTemplateParameters } = require('./sigFrameConfig')
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
-const forkBuildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(readFileSync(path.join(__dirname, '../android/gradle.properties'), 'utf8'))[1]
-const forkVersion = `${JSON.parse(readFileSync(path.join(__dirname, '../package.json'))).version}+${forkBuildNumber}`
+const { forkVersion } = require('./fork-version')
 
 const { version: swiperVersion } = JSON.parse(readFileSync(path.join(__dirname, '../node_modules/swiper/package.json')))
 
