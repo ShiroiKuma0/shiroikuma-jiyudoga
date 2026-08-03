@@ -51,10 +51,18 @@
         />
         <FtToggleSwitch
           v-if="USING_ANDROID"
-          :label="t('General Settings.Show Tap Highlight')"
+          :label="t('Settings.General Settings.Show Tap Highlight')"
           :default-value="showTapHighlight"
           :compact="true"
           @change="updateShowTapHighlight"
+        />
+        <FtToggleSwitch
+          v-if="USING_ANDROID"
+          :label="t('Settings.General Settings.Keep Running In The Background')"
+          :default-value="keepRunningInTheBackground"
+          :compact="true"
+          :tooltip="t('Tooltips.General Settings.Keep Running In The Background')"
+          @change="updateKeepRunningInTheBackground"
         />
       </div>
     </div>
@@ -178,6 +186,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import android from 'android'
 
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import FtSelect from '../FtSelect/FtSelect.vue'
@@ -257,6 +266,22 @@ const showTapHighlight = computed(() => store.getters.getTapHighlight)
 
 function updateShowTapHighlight(value) {
   store.dispatch('updateTapHighlight', value)
+}
+
+// The keep-alive foreground service. Its flag lives in Android's SharedPreferences rather
+// than the settings store, because MainActivity has to read it before the WebView — and
+// with it the settings database — exists. Off by default.
+const keepRunningInTheBackground = ref(false)
+
+if (USING_ANDROID) {
+  onMounted(() => {
+    keepRunningInTheBackground.value = android.isKeepAliveEnabled()
+  })
+}
+
+function updateKeepRunningInTheBackground(value) {
+  keepRunningInTheBackground.value = value
+  android.setKeepAliveEnabled(value)
 }
 
 /** @type {import('vue').ComputedRef<boolean>} */

@@ -289,6 +289,8 @@ Settings:
     Enable Search Suggestions: Enable Search Suggestions
     Open Deep Links In New Window: Open URLs Passed to 白い熊 自由動画 in a New Window
     Minimize to system tray: Minimize to system tray
+    Show Tap Highlight: Show Tap Highlight
+    Keep Running In The Background: Keep Running In The Background
     Auto Load Next Page:
       Label: Auto Load Next Page
       Tooltip: Load additional pages and comments automatically.
@@ -1097,6 +1099,9 @@ Tooltips:
       By default 白い熊 自由動画 will open the clicked link in your default browser.
     Open Deep Links In New Window: URLs passed to 白い熊 自由動画, such as by redirect
       browser extensions or command line arguments, are opened in a new window.
+    Keep Running In The Background: Keeps 白い熊 自由動画 alive after you leave it, so playback
+      is not cut short — at the cost of a permanent notification and of Android never letting
+      the app doze. Off by default.
   Player Settings:
     Proxy Videos Through Invidious: Will connect to Invidious to serve videos instead
       of making a direct connection to YouTube.

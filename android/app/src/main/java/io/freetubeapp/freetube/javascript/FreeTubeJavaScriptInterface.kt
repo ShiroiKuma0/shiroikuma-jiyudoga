@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.webkit.JavascriptInterface
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import io.freetubeapp.freetube.KeepAliveService
 import io.freetubeapp.freetube.activities.FreeTubeActivity
 import io.freetubeapp.freetube.backup.AutomationAuth
 import io.freetubeapp.freetube.backup.BackupWriter
@@ -669,6 +670,27 @@ class FreeTubeJavaScriptInterface(
   @JavascriptInterface
   fun disableKeepScreenOn() {
     context.setKeepScreenOn(false)
+  }
+
+  /**
+   * Fork (白い熊 自由動画): the Settings › General switch for the keep-alive foreground
+   * service. The flag is read back by `MainActivity.onCreate` on the next launch; flipping
+   * it here starts or stops the service straight away, so the notification appears and
+   * disappears with the switch.
+   */
+  @JavascriptInterface
+  fun isKeepAliveEnabled(): Boolean = KeepAliveService.isEnabled(context)
+
+  @JavascriptInterface
+  fun setKeepAliveEnabled(enabled: Boolean) {
+    KeepAliveService.setEnabled(context, enabled)
+    context.runOnUiThread {
+      if (enabled) {
+        context.startService(KeepAliveService.intent(context))
+      } else {
+        context.stopService(KeepAliveService.intent(context))
+      }
+    }
   }
 
   /**

@@ -255,6 +255,8 @@ Settings:
       Tooltip: 追加のページやコメント欄の続きを自動的に読み込みます。
     Open Deep Links In New Window: 白い熊 自由動画 に渡された URL を新しいウィンドウで開く
     Minimize to system tray: システムトレイに最小化
+    Show Tap Highlight: タップ時のハイライトを表示
+    Keep Running In The Background: バックグラウンドで実行し続ける
   Theme Settings:
     Theme Settings: 'テーマ'
     Match Top Bar with Main Color: '上部バーを主要色に合わせる'
@@ -1005,6 +1007,7 @@ Tooltips:
     Region for Trending: 急上昇の地域設定では、急上昇動画を表示する国を選択できます。
     External Link Handling: "白い熊 自由動画 で開けないリンクをクリックしたときのデフォルトの動作を選択します。\nデフォルトでは、白い熊 自由動画 はクリックしたリンクをデフォルトのブラウザで開きます。\n"
     Open Deep Links In New Window: 白い熊 自由動画 に渡された URL は、ブラウザの拡張機能やコマンドライン引数などによって、新しいウィンドウで開かれます。
+    Keep Running In The Background: アプリを離れても 白い熊 自由動画 を終了させず、再生が途切れないようにします。ただし通知が常駐し、Android の Doze も効かなくなります。デフォルトは無効です。
   External Player Settings:
     Custom External Player Arguments: '外部プレーヤーに渡したいカスタムコマンドライン引数。'
     Ignore Warnings: 現在の外部プレーヤーが、現在のアクションに未対応の場合（再生リストを逆順にするなど）に警告を抑制します。

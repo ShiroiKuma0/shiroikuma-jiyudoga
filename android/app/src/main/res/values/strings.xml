@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">白い熊 自由動画</string>
     <string name="youtube_regex">^https?:\/\/((www\.)?youtube\.com(\/embed)?|youtu\.be)\/.*$</string>
+    <!-- Foreground service (Settings › General › バックグラウンドで実行し続ける, default off) -->
+    <string name="keep_alive_channel">バックグラウンド実行</string>
+    <string name="keep_alive_notification">%1$s はバックグラウンドで実行中です</string>
 </resources>

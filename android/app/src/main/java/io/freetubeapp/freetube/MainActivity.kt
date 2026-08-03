@@ -15,7 +15,7 @@ import io.freetubeapp.freetube.webviews.FreeTubeWebView
 class MainActivity: FreeTubeActivity() {
   private val keepGoingService: Intent
     get() {
-      return Intent(this, KeepAliveService::class.java)
+      return KeepAliveService.intent(this)
     }
   private lateinit var webView: FreeTubeWebView
 
@@ -46,8 +46,11 @@ class MainActivity: FreeTubeActivity() {
       root.addView(webView)
     }
 
-    // this keeps android from shutting off the app to conserve battery
-    startService(keepGoingService)
+    // this keeps android from shutting off the app to conserve battery — opt-in, and off
+    // by default: the foreground service costs a permanent notification and blocks Doze
+    if (KeepAliveService.isEnabled(this)) {
+      startService(keepGoingService)
+    }
 
     state.darkMode = resources.configuration.isDarkMode()
 
