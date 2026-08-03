@@ -76,10 +76,11 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
 ### 3b. New FreeTubeAndroid version
 
 1. On `custom`: `git merge android/development` — we follow their **`development`**, not
-   `release`. The two have diverged (2026-08-02: 108 commits only on `release`, 75 only on
-   `development`, neither an ancestor of the other), and `custom` still carries the old
-   `android/release` merge, so the **first** `development` merge is a large one — expect
-   conflicts well beyond the usual hotspots and budget for it.
+   `release`. The two have genuinely diverged (2026-08-03: 108 commits only on `release`, 75 only
+   on `development`, neither an ancestor of the other), so never merge `release` "to catch up" —
+   it would drag back work `development` does not have. The big one-off switch from the old
+   `android/release` merge to `development` is **done** (2026-08-02, `f749ac02a`); `custom` now
+   contains their `development` tip, so each further sync is an ordinary incremental merge.
 2. Resolve so upstream-FreeTube code wins wherever FreeTubeAndroid's copy lags (their branch
    typically trails FreeTube — prefer HEAD for shared app code; take their side for the android
    layer itself: `android/`, `src/renderer/helpers/android/*`, `_scripts/*android*`,
@@ -102,11 +103,12 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    Note that because their side is git-tracked, a FreeTubeAndroid sync that brings **no** new
    release tag still changes the version (their pin moves) — so the rebuild is still meaningful
    even when `FORK_VERSION` and `BUILD_NUMBER` are both left alone.
-   **This merge is also what restores the FreeTubeAndroid pin.** Until it happens the pin is
-   suppressed by the shared-history guard (the merge-base is a FreeTube commit), so builds read
-   `<FORK_VERSION>.<FT date>.g<FT sha>+<NNN>` with no second pin. Because dropping a pin makes the
-   version sort *below* the last dual-pinned build (`…gdae5eb0b+003` < `…gdae5eb0b.2026-07-28.…+002`),
-   avoid shipping an interim build between now and that merge — or bump `FORK_VERSION` if you must.
+   The FreeTubeAndroid pin has been present since the `development` merge of 2026-08-02
+   (`f749ac02a`) and stays present as long as `custom` contains a commit of theirs that is not
+   also FreeTube's. Should the shared-history guard ever suppress it again, **do not ship that
+   build as-is**: a missing pin sorts the version *below* the last dual-pinned one
+   (`…gdc7c4e2e+008` < `…gdc7c4e2e.2026-07-30.…+007`), which reads as a downgrade to kakutoku.
+   Bump `FORK_VERSION` instead.
 
 ### 4. Verify our customizations are intact
 

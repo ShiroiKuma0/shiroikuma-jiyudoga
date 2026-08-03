@@ -26,13 +26,13 @@ signed release APK (`android/gradlew assembleRelease`) → copies both to `~/tmp
 **bumps `BUILD_NUMBER`** in the repo-root `fork.properties`.
 
 Outputs (`<ver>` = `<FORK_VERSION>.<FT date>.g<FT sha>.<FTA date>.g<FTA sha>+<BUILD_NUMBER>`, e.g.
-`0.25.1.1.2026-08-01.gdae5eb0b.2026-07-28.g27fc24f4+002`; `FORK_VERSION` is the higher of our two
+`0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+007`; `FORK_VERSION` is the higher of our two
 upstreams' versions and lives in `fork.properties`, while the two `.<date>.g<sha>` pins name the
 FreeTube and FreeTubeAndroid commits the build sits on — `git merge-base HEAD master` and
 `… HEAD android/development`, in that order — and are recomputed from git by each entry point,
 never stored. The FreeTubeAndroid pin is **suppressed while its merge-base is shared FreeTube
-history**, which it is until `android/development` is merged, so builds right now read
-`0.25.1.1.2026-08-01.gdae5eb0b+NNN`; see the global **`git-versioning`** skill):
+history** — but that stopped being the case when `android/development` was merged on 2026-08-02
+(`f749ac02a`), so builds carry **both** pins; see the global **`git-versioning`** skill):
 - `~/tmp/shiroikuma-jiyudoga_<ver>_amd64.deb`
 - `~/tmp/shiroikuma-jiyudoga_<ver>_arm64-v8a.apk` (versionCode
   `((maj*10000+min*100+patch)*10+respin)*1000+N`, e.g. `25011001`)
@@ -49,7 +49,7 @@ history**, which it is until `android/development` is merged, so builds right no
 - Every build MUST go through `_scripts/build-fork.sh` so `BUILD_NUMBER` bumps and both
   artifacts stay in lockstep — never ship one without the other, never reuse a `+N`.
 - The deb's **control-field** version shows both pins' dates with tildes
-  (`0.25.1.1.2026~08~01.gdae5eb0b.2026~07~28.g27fc24f4+002`):
+  (`0.25.1.1.2026~08~02.gdc7c4e2e.2026~07~30.gfea7a050+007`):
   electron-builder rewrites `-` → `~` for deb/rpm in `LinuxTargetHelper.getSanitizedVersion`.
   Both filenames keep the hyphens, and `dpkg --compare-versions` still orders it correctly.
   Expected, verified 2026-08-02 — not a bug, and not worth dropping the `YYYY-MM-DD` format over.
