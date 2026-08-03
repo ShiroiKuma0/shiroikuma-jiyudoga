@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+005`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+007`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -138,6 +138,15 @@ Every item states whether it starts ticked rather than leaving the picker to gue
 中止 is a **real** cancel — the run unwinds at the next entry boundary and the half-written
 archive is deleted, so a stopped backup leaves the folder exactly as it found it.
 
+## 🔕 Nothing runs in the background unless you ask
+
+The Android layer held a foreground service from the moment you first opened the app —
+permanently, with a notification to match and no setting anywhere to stop it. Here it is a
+switch in Settings › General, **off by default**: leave it off and the app stops when you
+leave it, keep it on and playback survives being backgrounded at the cost of the
+notification and of Android never letting the app doze. Flipping the switch starts or stops
+the service immediately, so the notification comes and goes with it.
+
 ## 🔄 Own update channel
 
 The built-in update check points at this repo's releases (with a version comparison that
@@ -156,7 +165,7 @@ new fork builds — never a stale upstream version.
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
 - Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+005`.
+  `0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+007`.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
