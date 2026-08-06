@@ -262,7 +262,7 @@ const activePlaylists = computed(() => {
   })
 })
 
-const playlistIdsContainingVideosToBeAdded = computed(() => {
+const getPlaylistIdsFiltered = (filter) => {
   /** @type {Set<string>} */
   const ids = new Set()
 
@@ -271,12 +271,24 @@ const playlistIdsContainingVideosToBeAdded = computed(() => {
   allPlaylists.value.forEach((playlist) => {
     const playlistVideoIdSet = playlist.videos.reduce((s, v) => s.add(v.videoId), new Set())
 
-    if (toBeAddedToPlaylistVideoIdList_.some((vid) => playlistVideoIdSet.has(vid))) {
+    if (filter(toBeAddedToPlaylistVideoIdList_, playlistVideoIdSet)) {
       ids.add(playlist._id)
     }
   })
 
   return ids
+}
+
+const playlistIdsContainingVideosToBeAdded = computed(() => {
+  return getPlaylistIdsFiltered((videoIdsToAdd, playlistVideoIds) =>
+    videoIdsToAdd.some((videoId) => playlistVideoIds.has(videoId))
+  )
+})
+
+const playlistIdsContainingAllVideosToBeAdded = computed(() => {
+  return getPlaylistIdsFiltered((videoIdsToAdd, playlistVideoIds) =>
+    videoIdsToAdd.every((videoId) => playlistVideoIds.has(videoId))
+  )
 })
 
 const anyPlaylistContainsVideosToBeAdded = computed(() => {
@@ -341,7 +353,7 @@ watch(addingDuplicateVideosEnabled, (val) => {
     // Only care when addingDuplicateVideosEnabled disabled
     // Remove disabled playlists
     selectedPlaylistIdList.value = selectedPlaylistIdList.value.filter(playlistId => {
-      return !playlistIdsContainingVideosToBeAdded.value.has(playlistId)
+      return !playlistIdsContainingAllVideosToBeAdded.value.has(playlistId)
     })
   }
 })
@@ -446,7 +458,7 @@ function playlistDisabled(playlistId) {
     return false
   }
 
-  return playlistIdsContainingVideosToBeAdded.value.has(playlistId)
+  return playlistIdsContainingAllVideosToBeAdded.value.has(playlistId)
 }
 </script>
 
