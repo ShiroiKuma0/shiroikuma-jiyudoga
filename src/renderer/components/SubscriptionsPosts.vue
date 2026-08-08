@@ -47,7 +47,9 @@ const subscriptionCacheReady = computed(() => store.getters.getSubscriptionCache
 /** @type {import('vue').ComputedRef<boolean>} */
 const fetchSubscriptionsAutomatically = computed(() => store.getters.getFetchSubscriptionsAutomatically)
 
-const activeSubscriptionList = computed(() => store.getters.getActiveProfile.subscriptions)
+// The feed filter's channel set: the active profile's own subscriptions unless the
+// funnel next to the profile bubble narrows them (see helpers/feedFilter.js)
+const activeSubscriptionList = computed(() => store.getters.getFeedSubscriptions)
 
 const cacheEntriesForAllActiveProfileChannels = computed(() => {
   const postsCache = store.getters.getPostsCache

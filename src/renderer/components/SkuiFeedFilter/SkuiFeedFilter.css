@@ -1,0 +1,278 @@
+.skuiFeedFilter {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* sized like the profile bubble it sits next to */
+.filterButton {
+  position: relative;
+  inline-size: 40px;
+  block-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--secondary-card-bg-color);
+  color: var(--primary-text-color);
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  box-shadow: 0 0 0 2px var(--side-nav-hover-color);
+}
+
+.filterOn {
+  background-color: var(--primary-color);
+  color: var(--text-with-main-color);
+}
+
+.filterIcon {
+  font-size: 18px;
+}
+
+.filterBadge {
+  position: absolute;
+  inset-block-end: -1px;
+  inset-inline-end: -1px;
+  min-inline-size: 17px;
+  padding-inline: 3px;
+  border-radius: 9px;
+  background-color: var(--accent-color);
+  color: var(--text-with-accent-color);
+  font-size: 11px;
+  line-height: 17px;
+  text-align: center;
+  user-select: none;
+}
+
+/* anchored like the profile list, so both drop from the same corner. Qualified with the
+   wrapper so the padding and margin beat ft-card's own, which carry equal specificity */
+.skuiFeedFilter .filterPanel {
+  position: absolute;
+  inset-block-start: 60px;
+  inset-inline-end: 10px;
+  z-index: 20;
+  inline-size: 330px;
+  max-inline-size: calc(100vw - 20px);
+  margin: 0;
+  padding: 10px;
+  background-color: var(--card-bg-color);
+  box-shadow: 0 0 4px var(--scrollbar-color-hover);
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.panelLegend {
+  margin-block: 2px 8px;
+  margin-inline: 0;
+  color: var(--tertiary-text-color);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-block-end: 8px;
+  border-block-end: 1px solid var(--secondary-card-bg-color);
+}
+
+.presetChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 12px;
+  background-color: var(--secondary-card-bg-color);
+}
+
+.presetApplied {
+  background-color: var(--primary-color);
+  color: var(--text-with-main-color);
+}
+
+.presetApply,
+.presetDelete,
+.presetSave,
+.clearButton {
+  padding-block: 3px;
+  padding-inline: 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.presetApply {
+  max-inline-size: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presetDelete {
+  padding-inline: 6px 8px;
+  opacity: 0.6;
+}
+
+.presetDelete:hover {
+  opacity: 1;
+}
+
+.presetSave {
+  border-radius: 12px;
+  color: var(--tertiary-text-color);
+}
+
+.presetSave:hover {
+  color: var(--primary-text-color);
+}
+
+.presetNaming {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.presetNameInput {
+  inline-size: 110px;
+  padding-block: 3px;
+  padding-inline: 6px;
+  border: 1px solid var(--tertiary-text-color);
+  border-radius: 4px;
+  background-color: var(--card-bg-color);
+  color: var(--primary-text-color);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.profileRows {
+  overflow-y: auto;
+  max-block-size: calc(90vh - 260px);
+  min-block-size: 120px;
+  padding-block: 4px;
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rowMain {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: var(--sk-profile-row-pad, 2px);
+  padding-inline: 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.rowMain:hover {
+  background-color: var(--side-nav-hover-color);
+  color: var(--side-nav-hover-text-color);
+}
+
+.stateChip {
+  flex-shrink: 0;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  background-color: var(--secondary-card-bg-color);
+  color: var(--tertiary-text-color);
+  font-size: 13px;
+  line-height: 22px;
+  text-align: center;
+  user-select: none;
+}
+
+.state-include {
+  background-color: var(--primary-color);
+  color: var(--text-with-main-color);
+}
+
+.state-exclude {
+  background-color: var(--destructive-color);
+  color: var(--destructive-text-color);
+}
+
+.state-cap {
+  background-color: var(--accent-color);
+  color: var(--text-with-accent-color);
+}
+
+.profileBubble {
+  flex-shrink: 0;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 24px;
+  text-align: center;
+  user-select: none;
+}
+
+.profileName {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.channelCount {
+  flex-shrink: 0;
+  color: var(--tertiary-text-color);
+  font-size: 12px;
+}
+
+.capInput {
+  inline-size: 52px;
+  padding-block: 2px;
+  padding-inline: 4px;
+  border: 1px solid var(--tertiary-text-color);
+  border-radius: 4px;
+  background-color: var(--card-bg-color);
+  color: var(--primary-text-color);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.panelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--secondary-card-bg-color);
+  font-size: 13px;
+}
+
+.viewCount {
+  color: var(--tertiary-text-color);
+}
+
+.clearButton {
+  border-radius: 12px;
+  background-color: var(--secondary-card-bg-color);
+}
+
+.clearButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

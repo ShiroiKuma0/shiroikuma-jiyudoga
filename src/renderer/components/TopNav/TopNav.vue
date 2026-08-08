@@ -119,7 +119,10 @@
         </button>
       </div>
     </div>
-    <FtProfileSelector class="side profiles" />
+    <div class="side profiles">
+      <SkuiFeedFilter />
+      <FtProfileSelector />
+    </div>
   </nav>
 </template>
 
@@ -131,6 +134,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import FtInput from '../FtInput/FtInput.vue'
 import FtProfileSelector from '../FtProfileSelector/FtProfileSelector.vue'
+import SkuiFeedFilter from '../SkuiFeedFilter/SkuiFeedFilter.vue'
 import FtIconButton from '../FtIconButton/FtIconButton.vue'
 
 import store from '../../store/index'

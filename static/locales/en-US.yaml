@@ -1402,3 +1402,26 @@ SKUI:
     Regenerate: Regenerate
     Token copied: Automation token copied to the clipboard
     Token regenerated: New automation token generated — update every pasted copy
+  Feed filter:
+    Feed filter: Feed filter
+    Legend: >-
+      Tap a profile to cycle it: + shows it, − hides it, a number keeps only that many
+      newest videos per channel. With no + anywhere, the active profile is the base.
+    Apply preset: Show this view
+    Delete preset: Delete this view
+    Save current: Save current…
+    Save: Save
+    Preset name: View name
+    Cycle state: 'Cycle: neutral, show, hide, limit'
+    Max per channel: Newest videos kept per channel
+    Channels in view: '{count} channels in view'
+    Clear: Clear
+  Subscriptions:
+    Section: Subscriptions
+    Description: >-
+      The feed filter itself lives behind the funnel next to the profile bubble; this is
+      what the profile it filters is called.
+    All Channels label: '"All Channels" label'
+    All Channels label description: >-
+      What the profile holding every subscription is called in the bubble and the profile
+      lists. Empty falls back to the translated name.

@@ -2,6 +2,13 @@ import { MAIN_PROFILE_ID } from '../../../constants'
 import { DBProfileHandlers } from '../../../datastores/handlers/index'
 import { calculateColorLuminance, getRandomColor } from '../../helpers/colors'
 import {
+  feedFilterIsEmpty,
+  feedFilterSignature,
+  parseFeedFilter,
+  parseFeedFilterPresets,
+  resolveFeedChannels
+} from '../../helpers/feedFilter'
+import {
   SIMILAR_MAX_SEEDS_TO_BLAME,
   SIMILAR_SEED_DEMERIT_LIMIT,
   emptySimilarTuning,
@@ -53,6 +60,37 @@ async function writeSimilarTuning({ dispatch, getters }, mutate) {
   await dispatch('updateProfile', profileCopy)
 }
 
+/**
+ * Memo for the feed filter resolution, keyed on everything that can change the answer.
+ * A refresh rewrites the profiles through `batchUpdateSubscriptionDetails` (fresh names and
+ * thumbnails), which would otherwise hand the feed tabs a new channel array every time and
+ * re-fire the watcher they reload on. Channel membership is what the feed actually reads,
+ * so profile id + subscription count is enough to notice a real change.
+ */
+let feedResolutionSignature = null
+let feedResolution = { channels: [], capByChannelId: new Map() }
+
+/**
+ * @param {object} state
+ * @param {object} getters
+ */
+function resolveFeed(state, getters) {
+  const filter = getters.getFeedFilter
+
+  const signature = [
+    state.activeProfile,
+    feedFilterSignature(filter),
+    state.profileList.map((profile) => `${profile._id}:${profile.subscriptions.length}`).join(',')
+  ].join('|')
+
+  if (signature !== feedResolutionSignature) {
+    feedResolutionSignature = signature
+    feedResolution = resolveFeedChannels(state.profileList, getters.getActiveProfile, filter)
+  }
+
+  return feedResolution
+}
+
 const state = {
   profileList: [{
     _id: MAIN_PROFILE_ID,
@@ -89,6 +127,33 @@ const getters = {
 
   getActiveProfileSubscribedChannelIdSet: (_state, getters) => {
     return getters.getActiveProfile.subscriptions.reduce((set, channel) => set.add(channel.id), new Set())
+  },
+
+  // The feed filter: a view mask over the profiles, read by the Subscriptions feed tabs
+  // only. Everything with write semantics (subscribing, starring, Similar tuning) keeps
+  // using the active profile, so where a change lands never depends on the current view.
+  getFeedFilter: (_state, getters) => {
+    return parseFeedFilter(getters.getSkuiFeedFilter)
+  },
+
+  getFeedFilterPresets: (_state, getters) => {
+    return parseFeedFilterPresets(getters.getSkuiFeedFilterPresets)
+  },
+
+  getFeedFilterActive: (_state, getters) => {
+    return !feedFilterIsEmpty(getters.getFeedFilter)
+  },
+
+  getFeedResolution: (state, getters) => {
+    return resolveFeed(state, getters)
+  },
+
+  getFeedSubscriptions: (_state, getters) => {
+    return getters.getFeedResolution.channels
+  },
+
+  getFeedChannelCaps: (_state, getters) => {
+    return getters.getFeedResolution.capByChannelId
   },
 
   getActiveProfileStarredVideos: (_state, getters) => {

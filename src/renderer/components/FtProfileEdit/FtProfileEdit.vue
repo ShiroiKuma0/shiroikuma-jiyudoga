@@ -123,6 +123,7 @@ import { MAIN_PROFILE_ID } from '../../../constants'
 import { calculateColorLuminance, colors } from '../../helpers/colors'
 import { deepCopy, showToast } from '../../helpers/utils'
 import { getFirstCharacter } from '../../helpers/strings'
+import { useProfileLabel } from '../../composables/profileLabel'
 
 /**
  * @typedef {object} Profile
@@ -176,8 +177,10 @@ watch(profileBgColor, (value) => {
   profileTextColor.value = calculateColorLuminance(value)
 })
 
+const { displayNameFor } = useProfileLabel()
+
 const translatedProfileName = computed(() => {
-  return props.isMainProfile ? t('Profile.All Channels') : profileName.value
+  return displayNameFor(props.isMainProfile, profileName.value)
 })
 
 const profileInitial = computed(() => {

@@ -68,7 +68,7 @@ import store from '../../store/index'
 
 import { deepCopy, showToast } from '../../helpers/utils'
 import { youtubeImageUrlToInvidious } from '../../helpers/api/invidious'
-import { MAIN_PROFILE_ID } from '../../../constants'
+import { useProfileLabel } from '../../composables/profileLabel'
 
 /**
  * @typedef {object} Profile
@@ -83,6 +83,9 @@ import { MAIN_PROFILE_ID } from '../../../constants'
  */
 
 const { locale, t } = useI18n()
+
+// "All Channels" answers to the skuiAllChannelsLabel setting (白い熊: 全)
+const { profileDisplayName: translateProfileName } = useProfileLabel()
 
 const props = defineProps({
   profile: {
@@ -201,13 +204,6 @@ function fillProfileList() {
 
   profileIdList.value = profiles.map((profile) => profile._id)
   profileNameList.value = profiles.map(translateProfileName)
-}
-
-/**
- * @param {Profile} profile
- */
-function translateProfileName(profile) {
-  return profile._id === MAIN_PROFILE_ID ? t('Profile.All Channels') : profile.name
 }
 
 /**

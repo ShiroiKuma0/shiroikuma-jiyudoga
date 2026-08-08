@@ -33,6 +33,7 @@ import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { getFirstCharacter } from '../../helpers/strings'
+import { useProfileLabel } from '../../composables/profileLabel'
 
 const props = defineProps({
   profileName: {
@@ -53,12 +54,14 @@ const props = defineProps({
   }
 })
 
-const { locale, t } = useI18n()
+const { locale } = useI18n()
 
 const id = useId()
 
+const { displayNameFor } = useProfileLabel()
+
 const translatedProfileName = computed(() => {
-  return props.isMainProfile ? t('Profile.All Channels') : props.profileName
+  return displayNameFor(props.isMainProfile, props.profileName)
 })
 
 const profileInitial = computed(() => {

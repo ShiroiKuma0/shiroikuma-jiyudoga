@@ -150,6 +150,37 @@
       </section>
 
       <!--
+        Subscriptions: the filter itself lives in the top bar (the funnel next to the
+        profile bubble), because it is a view you switch while browsing. What belongs
+        here is the one profile name the app owns rather than the user.
+      -->
+      <section class="skuiSection">
+        <hr class="skuiSectionRule">
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Subscriptions.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Subscriptions.Description') }}
+        </p>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Subscriptions.All Channels label') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Subscriptions.All Channels label description') }}</span>
+          </span>
+        </div>
+        <input
+          class="skuiEntryInput skuiIndent2"
+          type="text"
+          spellcheck="false"
+          maxlength="24"
+          :value="allChannelsLabel"
+          :aria-label="$t('SKUI.Subscriptions.All Channels label')"
+          @change="updateAllChannelsLabel($event.target.value)"
+        >
+      </section>
+
+      <!--
         Similar tab: what the discovery feed has been taught in the active profile.
         Everything here is stored on the profile itself, so it travels with profile
         export/import like the starred videos do.
@@ -540,6 +571,17 @@ function resetSimilarTuning() {
   store.dispatch('resetSimilarTuning')
 
   showToast(t('SKUI.Similar.Reset done'))
+}
+
+// ---- subscriptions ----
+
+const allChannelsLabel = computed(() => store.getters.getSkuiAllChannelsLabel)
+
+/**
+ * @param {string} value
+ */
+function updateAllChannelsLabel(value) {
+  store.dispatch('updateSkuiAllChannelsLabel', value.trim())
 }
 
 // ---- video download ----

@@ -25,6 +25,7 @@ import SubscriptionsTabUi from './SubscriptionsTabUi/SubscriptionsTabUi.vue'
 import store from '../store/index'
 
 import { getRelativeTimeFromDate, showToast } from '../helpers/utils'
+import { feedFilterSignature } from '../helpers/feedFilter'
 import {
   assembleSimilarVideoList,
   cacheSimilarResults,
@@ -65,7 +66,16 @@ const fetchSubscriptionsAutomatically = computed(() => store.getters.getFetchSub
 
 const activeProfileId = computed(() => store.getters.getActiveProfile._id)
 
-const activeSubscriptionList = computed(() => store.getters.getActiveProfile.subscriptions)
+// The feed filter's channel set: the active profile's own subscriptions unless the
+// funnel next to the profile bubble narrows them (see helpers/feedFilter.js)
+const activeSubscriptionList = computed(() => store.getters.getFeedSubscriptions)
+
+// The session cache of assembled recommendations is keyed per profile AND per filter:
+// two filters over the same profile seed from different channels, so sharing one entry
+// would show the previous filter's suggestions after a switch
+const similarCacheKey = computed(() => {
+  return `${activeProfileId.value}|${feedFilterSignature(store.getters.getFeedFilter)}`
+})
 
 /** @type {import('vue').ComputedRef<Set<string>>} */
 const blockedChannelIds = computed(() => store.getters.getSimilarBlockedChannelIdSet)
@@ -255,7 +265,7 @@ function loadSimilarSometimes() {
   // Can only pick seeds reliably when the cache is ready
   if (!subscriptionCacheReady.value) { return }
 
-  const cached = getCachedSimilarResults(activeProfileId.value)
+  const cached = getCachedSimilarResults(similarCacheKey.value)
 
   if (cached !== null) {
     rawCandidates.value = cached.videos
@@ -280,7 +290,7 @@ function loadSimilarSometimes() {
  */
 async function loadSimilarFromRemote(force = false) {
   const seedList = seeds.value
-  const profileId = activeProfileId.value
+  const profileId = similarCacheKey.value
 
   if (seedList.length === 0) {
     isLoading.value = false

@@ -108,8 +108,8 @@ import FtIconButton from '../FtIconButton/FtIconButton.vue'
 import store from '../../store/index'
 
 import { debounce, showToast } from '../../helpers/utils'
-import { MAIN_PROFILE_ID } from '../../../constants'
 import { getFirstCharacter } from '../../helpers/strings'
+import { useProfileLabel } from '../../composables/profileLabel'
 
 /**
  * @typedef {object} Profile
@@ -124,6 +124,9 @@ import { getFirstCharacter } from '../../helpers/strings'
  */
 
 const { locale, t } = useI18n()
+
+// "All Channels" answers to the skuiAllChannelsLabel setting (白い熊: 全)
+const { profileDisplayName: translateProfileName } = useProfileLabel()
 
 const id = useId()
 
@@ -238,12 +241,6 @@ function setActiveProfile(event) {
   profileListShown.value = false
 }
 
-/**
- * @param {Profile} profile
- */
-function translateProfileName(profile) {
-  return profile._id === MAIN_PROFILE_ID ? t('Profile.All Channels') : profile.name
-}
 </script>
 
 <style scoped src="./FtProfileSelector.css" />

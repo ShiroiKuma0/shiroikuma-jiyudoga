@@ -320,6 +320,15 @@ const state = {
   skuiGridTitleLines: 3,
   // vertical padding of the Profile Select dropdown rows, px
   skuiProfileRowPadding: 2,
+  // feed filter (funnel next to the profile bubble): set algebra over the profiles,
+  // { include: [profileId], exclude: [profileId], caps: { profileId: N }, presetId }
+  // and the saved presets [{ id, name, include, exclude, caps }]. View mask only —
+  // the active profile stays the write target for subscribing and starring
+  skuiFeedFilter: '{}',
+  skuiFeedFilterPresets: '[]',
+  // what the "All Channels" profile is called in the bubble and the profile lists
+  // ('' falls back to the translated name)
+  skuiAllChannelsLabel: '全',
   // Similar tab: 'agreement' ranks by how many seeds recommended a video,
   // 'newest' keeps the plain date order; the threshold drops everything below
   // that many agreeing seeds (1 = keep everything)

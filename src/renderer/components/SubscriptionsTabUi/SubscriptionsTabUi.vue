@@ -132,8 +132,10 @@ const activeVideoList = computed(() => {
   }
 })
 
+// What the feed filter leaves to show — the active profile's own subscriptions when no
+// filter is applied, so the empty state reads correctly either way
 const activeProfileHasSubscriptions = computed(() => {
-  return store.getters.getActiveProfile.subscriptions.length > 0
+  return store.getters.getFeedSubscriptions.length > 0
 })
 
 /** @type {import('vue').ComputedRef<boolean>} */
@@ -157,6 +159,13 @@ const onlyShowLatestFromChannelNumber = computed(() => {
   return store.getters.getOnlyShowLatestFromChannelNumber
 })
 
+// Per-channel caps from the feed filter: a group marked "cap N" stays in the feed but
+// contributes at most its N newest videos per channel
+/** @type {import('vue').ComputedRef<Map<string, number>>} */
+const feedChannelCaps = computed(() => {
+  return store.getters.getFeedChannelCaps
+})
+
 const filteredVideoList = computed(() => {
   if (props.isCommunity) {
     return props.videoList
@@ -170,26 +179,33 @@ const filteredVideoList = computed(() => {
     })
   }
 
-  if (onlyShowLatestFromChannel.value) {
-    const authors = new Map()
+  const globalLimit = onlyShowLatestFromChannel.value ? onlyShowLatestFromChannelNumber.value : Infinity
+  const caps = feedChannelCaps.value
+
+  if (globalLimit !== Infinity || caps.size > 0) {
+    // The list arrives newest first, so counting down the list keeps the newest N
+    const shownPerAuthor = new Map()
+
     videoList = videoList.filter((video) => {
       if (!video.authorId) {
         return true
       }
 
-      if (!authors.has(video.authorId)) {
-        authors.set(video.authorId, 1)
-        return true
-      } else {
-        const currentVideos = authors.get(video.authorId)
+      // the tighter of the two limits wins; a channel under neither is unlimited
+      const limit = Math.min(globalLimit, caps.get(video.authorId) ?? Infinity)
 
-        if (currentVideos < onlyShowLatestFromChannelNumber.value) {
-          authors.set(video.authorId, currentVideos + 1)
-          return true
-        }
+      if (limit === Infinity) {
+        return true
       }
 
-      return false
+      const shown = shownPerAuthor.get(video.authorId) ?? 0
+
+      if (shown >= limit) {
+        return false
+      }
+
+      shownPerAuthor.set(video.authorId, shown + 1)
+      return true
     })
   }
 

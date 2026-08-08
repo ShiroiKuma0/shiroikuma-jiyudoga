@@ -107,6 +107,10 @@ object StateCategories {
     "onlyShowLatestFromChannelNumber" to SUBSCRIPTIONS,
     "unsubscriptionPopupStatus" to SUBSCRIPTIONS,
     "useRssFeeds" to SUBSCRIPTIONS,
+    // the feed filter and its saved views are subscription state, not appearance —
+    // the `skui` prefix rule below would otherwise file them with the theme
+    "skuiFeedFilter" to SUBSCRIPTIONS,
+    "skuiFeedFilterPresets" to SUBSCRIPTIONS,
     // appearance
     "baseTheme" to APPEARANCE,
     "mainColor" to APPEARANCE,
