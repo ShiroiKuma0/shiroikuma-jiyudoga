@@ -1,50 +1,76 @@
 .skuiFeedFilter {
-  display: inline-flex;
-  align-items: center;
-}
-
-/* sized like the profile bubble it sits next to */
-.filterButton {
-  position: relative;
-  inline-size: 40px;
-  block-size: 40px;
+  flex: 1;
+  min-inline-size: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background-color: var(--secondary-card-bg-color);
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* the pills live between the search bar and the + button, and scroll sideways when there
+   are more of them than the bar is wide */
+.pillStrip {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: auto hidden;
+  scrollbar-width: none;
+
+  /* a held pill is dragged along this axis, so the strip must not claim the gesture first */
+  overscroll-behavior-inline: contain;
+}
+
+.pillStrip::-webkit-scrollbar {
+  block-size: 0;
+}
+
+.pill {
+  flex: none;
+  max-inline-size: 140px;
+  padding-block: 4px;
+  padding-inline: 12px;
+  border: 1px solid var(--tertiary-text-color);
+  border-radius: 14px;
+  background-color: transparent;
   color: var(--primary-text-color);
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
+
+  /* scrolling the strip stays possible over a pill; once one is held, the drag cancels
+     touchmove itself, which a touch-action change mid-gesture could not do */
+  user-select: none;
+  touch-action: pan-x pan-y;
 }
 
-.filterButton:hover {
-  box-shadow: 0 0 0 2px var(--side-nav-hover-color);
+.pill:hover {
+  border-color: var(--primary-color);
 }
 
-.filterOn {
+/* the applied filter, unmistakable at a glance */
+.pillSelected {
+  border-color: var(--primary-color);
   background-color: var(--primary-color);
   color: var(--text-with-main-color);
+  font-weight: bold;
 }
 
-.filterIcon {
-  font-size: 18px;
+/* picked up by a long press: raised, and following the finger */
+.pillGrabbed {
+  box-shadow: 0 2px 6px var(--primary-shadow-color);
+  opacity: 0.85;
+  transform: scale(1.06);
+  touch-action: none;
 }
 
-.filterBadge {
-  position: absolute;
-  inset-block-end: -1px;
-  inset-inline-end: -1px;
-  min-inline-size: 17px;
-  padding-inline: 3px;
-  border-radius: 9px;
-  background-color: var(--accent-color);
-  color: var(--text-with-accent-color);
-  font-size: 11px;
-  line-height: 17px;
-  text-align: center;
-  user-select: none;
+.newPill {
+  padding-inline: 10px;
 }
 
 /* anchored like the profile list, so both drop from the same corner. Qualified with the
@@ -76,88 +102,12 @@
   line-height: 1.4;
 }
 
-.presetRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding-block-end: 8px;
-  border-block-end: 1px solid var(--secondary-card-bg-color);
-}
-
-.presetChip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 12px;
-  background-color: var(--secondary-card-bg-color);
-}
-
-.presetApplied {
-  background-color: var(--primary-color);
-  color: var(--text-with-main-color);
-}
-
-.presetApply,
-.presetDelete,
-.presetSave,
-.clearButton {
-  padding-block: 3px;
-  padding-inline: 8px;
-  border: 0;
-  background: none;
-  color: inherit;
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.presetApply {
-  max-inline-size: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.presetDelete {
-  padding-inline: 6px 8px;
-  opacity: 0.6;
-}
-
-.presetDelete:hover {
-  opacity: 1;
-}
-
-.presetSave {
-  border-radius: 12px;
-  color: var(--tertiary-text-color);
-}
-
-.presetSave:hover {
-  color: var(--primary-text-color);
-}
-
-.presetNaming {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.presetNameInput {
-  inline-size: 110px;
-  padding-block: 3px;
-  padding-inline: 6px;
-  border: 1px solid var(--tertiary-text-color);
-  border-radius: 4px;
-  background-color: var(--card-bg-color);
-  color: var(--primary-text-color);
-  font-size: 13px;
-  font-family: inherit;
-}
-
 .profileRows {
   overflow-y: auto;
-  max-block-size: calc(90vh - 260px);
+  max-block-size: calc(90vh - 280px);
   min-block-size: 120px;
   padding-block: 4px;
+  border-block-start: 1px solid var(--secondary-card-bg-color);
 }
 
 .profileRow {
@@ -253,12 +203,12 @@
   font-family: inherit;
 }
 
-.panelFooter {
+.panelCount {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-block-start: 8px;
+  padding-block: 8px;
   border-block-start: 1px solid var(--secondary-card-bg-color);
   font-size: 13px;
 }
@@ -267,12 +217,46 @@
   color: var(--tertiary-text-color);
 }
 
-.clearButton {
-  border-radius: 12px;
-  background-color: var(--secondary-card-bg-color);
+.panelFooter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.clearButton:disabled {
+.nameInput {
+  flex: 1;
+  min-inline-size: 0;
+  padding-block: 5px;
+  padding-inline: 8px;
+  border: 1px solid var(--tertiary-text-color);
+  border-radius: 4px;
+  background-color: var(--card-bg-color);
+  color: var(--primary-text-color);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.clearButton,
+.footerButton {
+  flex: none;
+  padding-block: 5px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 14px;
+  background-color: var(--secondary-card-bg-color);
+  color: var(--primary-text-color);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.createButton {
+  background-color: var(--primary-color);
+  color: var(--text-with-main-color);
+}
+
+.clearButton:disabled,
+.footerButton:disabled {
   opacity: 0.45;
   cursor: default;
 }

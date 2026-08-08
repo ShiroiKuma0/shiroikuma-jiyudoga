@@ -1403,15 +1403,15 @@ SKUI:
     Token copied: Automation token copied to the clipboard
     Token regenerated: New automation token generated — update every pasted copy
   Feed filter:
-    Feed filter: Feed filter
+    New filter: New filter
     Legend: >-
       Tap a profile to cycle it: + shows it, − hides it, a number keeps only that many
       newest videos per channel. With no + anywhere, the active profile is the base.
-    Apply preset: Show this view
-    Delete preset: Delete this view
-    Save current: Save current…
-    Save: Save
-    Preset name: View name
+    Pill hint: Tap to show this filter — hold to move it, or to delete it
+    Filter name: Filter name
+    Create: Create
+    Cancel: Cancel
+    Deleted: '"{name}" deleted — tap to undo'
     Cycle state: 'Cycle: neutral, show, hide, limit'
     Max per channel: Newest videos kept per channel
     Channels in view: '{count} channels in view'

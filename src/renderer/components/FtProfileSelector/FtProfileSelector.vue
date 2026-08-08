@@ -108,6 +108,7 @@ import FtIconButton from '../FtIconButton/FtIconButton.vue'
 import store from '../../store/index'
 
 import { debounce, showToast } from '../../helpers/utils'
+import { emptyFeedFilter } from '../../helpers/feedFilter'
 import { getFirstCharacter } from '../../helpers/strings'
 import { useProfileLabel } from '../../composables/profileLabel'
 
@@ -225,6 +226,12 @@ function handleProfileListEscape() {
 function setActiveProfile(event) {
   /** @type {string} */
   const profileId = event.currentTarget.dataset.profileId
+
+  // Picking a profile is the way back to the plain profile view: whatever filter pill was
+  // applied is dropped, including when the profile picked is the one already active
+  if (store.getters.getFeedFilterActive) {
+    store.dispatch('updateSkuiFeedFilter', JSON.stringify(emptyFeedFilter()))
+  }
 
   if (activeProfile.value._id !== profileId) {
     const targetProfile = profileList.value.find((x) => {
