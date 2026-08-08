@@ -13,7 +13,7 @@ additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
 button that writes chapter-preserving mkv files, original-language titles & descriptions, a
-channel-discovery **Similar** tab, per-profile video **starring**, live grid zoom with tuning
+**self-teaching** channel-discovery **Similar** tab, per-profile video **starring**, live grid zoom with tuning
 sliders, theatre mode on Android, full-width views, a sister-repo-style UI theming layer, and
 a **one-zip backup** of the whole app that a sister automation app can trigger unattended.
 Every release builds **both** artifacts:
@@ -22,7 +22,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-06.gf70dac7a.2026-08-06.g4623e4a6+011`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+014`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -78,14 +78,26 @@ response, which always carries the original — title *and* description (links a
 timestamps stay clickable). Watch a trilingual feed — 日本語, русский, English — and every
 word is the one its creator wrote.
 
-## 🧭 Similar tab — discover channels per topic
+## 🧭 Similar tab — discovery that learns what you don't want
 
-Every profile groups subscriptions by topic; the new **Similar** tab in Subscriptions turns
-that into a discovery engine. It takes the newest videos across the profile's channels,
-collects YouTube's "watch next" recommendations for them, throws away everything you're
-already subscribed to, and shows the rest as a date-ordered grid — related videos from
-**channels you don't know yet**, matched to the profile's topic. Visit one, like it,
-subscribe it into the profile.
+Every profile groups subscriptions by topic; the **Similar** tab in Subscriptions turns that
+into a discovery engine. It seeds from the profile's starred videos and the newest videos
+across its channels, collects YouTube's "watch next" recommendations for each, drops every
+channel you already follow, and shows the rest — related videos from **channels you don't
+know yet**, matched to the profile's topic.
+
+What makes it usable is that it **takes correction**. Suggestions are ranked by how many of
+your own videos led to the same one, since agreement between seeds is a far better relevance
+signal than recency; each tile says **which of your channels it came from**, so a bad
+suggestion is traceable rather than mysterious. Two buttons on every tile act on it: block
+the channel outright, or ask for fewer videos like this one — which hides that video, learns
+the words its title was phrased with (character bigrams, so Japanese works without a
+tokeniser) and holds the seed that produced it responsible; a seed that keeps producing
+rejects stops seeding altogether. Nothing generalises off a single tap — a pattern has to
+repeat before it filters — and every action is undone by tapping its toast. All of it is
+stored per profile, so a channel that is noise for one topic stays welcome in another,
+reviewable and removable item by item in the UI settings page, and it travels with your
+profiles on backup and import.
 
 ## ⭐ Star videos, per profile
 
@@ -129,7 +141,7 @@ the width of the text, never the row. A long press on the hamburger opens it dir
 
 Export / Import sits at the top of that page, in the Kōjiki flow: pick a backup folder once,
 tick what you want, and the **entire** app — every setting, sliced into ten logical groups,
-plus profiles with their subscriptions and stars, playlists, watch history and search
+plus profiles with their subscriptions, stars and Similar tuning, playlists, watch history and search
 history — lands in a single timestamped `.zip`. Import merges it back and offers a restart.
 The same export runs **headlessly**: sister apps can fire a token-gated intent at it, and
 自由作業盤 backs up every app on the phone in one run, each reporting live counts and the
@@ -165,7 +177,7 @@ new fork builds — never a stale upstream version.
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
 - Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.1.1.2026-08-06.gf70dac7a.2026-08-06.g4623e4a6+011`.
+  `0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+014`.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
