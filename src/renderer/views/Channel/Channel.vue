@@ -299,6 +299,11 @@ import {
 } from '../../helpers/utils'
 import { isNullOrEmpty } from '../../helpers/strings'
 import {
+  cachedShortsPublishedDates,
+  fetchShortsPublishedDates,
+  withShortsPublishedDates
+} from '../../helpers/shortsPublished'
+import {
   getInvidiousChannelLive,
   getInvidiousChannelPlaylists,
   getInvidiousChannelPodcasts,
@@ -1260,6 +1265,10 @@ async function getChannelShortsLocal() {
   isElementListLoading.value = true
   const expectedId = id.value
 
+  // Started alongside the shelf request rather than after it: the tile reads `published`
+  // once, when it is created, so the dates have to be in the list before it is assigned
+  const publishedDates = fetchShortsPublishedDates(expectedId, shortSortBy.value)
+
   try {
     await ensureChannelInstance()
 
@@ -1284,7 +1293,13 @@ async function getChannelShortsLocal() {
       parsedShorts = parseLocalChannelShorts(shortsTab.videos, id.value, channelName.value)
     }
 
-    latestShorts.value = parsedShorts
+    const dates = await publishedDates
+
+    if (expectedId !== id.value) {
+      return
+    }
+
+    latestShorts.value = withShortsPublishedDates(parsedShorts, dates)
     shortContinuationData.value = shortsTab.has_continuation ? shortsTab : null
     isElementListLoading.value = false
 
@@ -1327,7 +1342,11 @@ async function getChannelShortsLocalMore() {
       parsedShorts = parseLocalChannelShorts(continuation.videos, id.value, channelName.value)
     }
 
-    latestShorts.value = latestShorts.value.concat(parsedShorts)
+    // Only what the feed already gave us: a continuation is older than the feed window,
+    // so re-reading it per page would cost a request to date almost nothing
+    latestShorts.value = latestShorts.value.concat(
+      withShortsPublishedDates(parsedShorts, cachedShortsPublishedDates(id.value, shortSortBy.value))
+    )
     shortContinuationData.value = continuation.has_continuation ? continuation : null
   } catch (err) {
     console.error(err)
@@ -1353,12 +1372,20 @@ async function channelInvidiousShorts(sortByChanged = false) {
     isElementListLoading.value = true
   }
 
+  // Through the instance's own feed proxy, never youtube.com — the whole point of the
+  // Invidious backend is that the page does not talk to Google directly
+  const publishedDates = more
+    ? Promise.resolve(cachedShortsPublishedDates(id.value, shortSortBy.value))
+    : fetchShortsPublishedDates(id.value, shortSortBy.value, currentInvidiousInstanceUrl.value)
+
   try {
     const response = await getInvidiousChannelShorts(id.value, shortSortBy.value, shortContinuationData.value)
+    const shorts = withShortsPublishedDates(response.videos, await publishedDates)
+
     if (more) {
-      latestShorts.value = latestShorts.value.concat(response.videos)
+      latestShorts.value = latestShorts.value.concat(shorts)
     } else {
-      latestShorts.value = response.videos
+      latestShorts.value = shorts
     }
     shortContinuationData.value = response.continuation || null
     isElementListLoading.value = false
