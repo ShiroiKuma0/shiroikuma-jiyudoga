@@ -13,7 +13,8 @@ additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
 button that writes chapter-preserving mkv files, original-language titles & descriptions, a
-**self-teaching** channel-discovery **Similar** tab, per-profile video **starring**, live grid zoom with tuning
+**self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
+subscription feed into one-tap views, per-profile video **starring**, live grid zoom with tuning
 sliders, theatre mode on Android, full-width views, a sister-repo-style UI theming layer, and
 a **one-zip backup** of the whole app that a sister automation app can trigger unattended.
 Every release builds **both** artifacts:
@@ -22,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+014`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+017`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -98,6 +99,29 @@ repeat before it filters — and every action is undone by tapping its toast. Al
 stored per profile, so a channel that is noise for one topic stays welcome in another,
 reviewable and removable item by item in the UI settings page, and it travels with your
 profiles on backup and import.
+
+## 🔻 Feed filter pills — one tap per view
+
+Keep tens of topical profiles and one of them drowns the rest: a news profile alone can fill
+the first hundreds of tiles of "All Channels", date-descending, and nothing else is visible.
+Building a narrower view used to mean creating a profile and hand-deselecting channels one
+by one — a second channel set to keep in sync forever.
+
+Your profiles are already named channel sets, so the filter is **set algebra over them**. The
+top bar carries a strip of named **pills**; the **+** beside it opens a panel where every
+profile cycles **neutral → + → − → cap N**: `+` shows it, `−` hides it, and a **cap keeps the
+group but thins it to its N newest videos per channel** — the answer to flooding that doesn't
+delete the content. With no `+` anywhere the active profile is the base, so `− japan-news`
+alone means "what I have active, minus the news".
+
+Name it and it becomes a pill. **Tap** to apply it (it fills with the accent colour, so which
+view you're in is never a guess), tap again to leave. **Hold** to pick a pill up: move it
+sideways to reorder the strip, let go without moving to delete it — with a tap-to-undo toast.
+The strip scrolls when the pills outgrow the bar, and picking any profile clears the filter.
+It applies to the feed alone: subscribing, starring and Similar tuning always land in the
+active profile, never in whatever you happen to be looking at.
+
+The "All Channels" bubble also stops reading `A`: it's whatever you set — `全` out of the box.
 
 ## ⭐ Star videos, per profile
 
