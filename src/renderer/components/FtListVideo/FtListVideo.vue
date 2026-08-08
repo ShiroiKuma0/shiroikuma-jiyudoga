@@ -119,6 +119,29 @@
           @click="removeFromPlaylist"
         />
       </span>
+      <span
+        v-if="showSimilarControls"
+        class="similarIcons"
+        draggable="true"
+        @dragstart="onDragStart"
+      >
+        <FtIconButton
+          :title="t('Subscriptions.Similar Reject Video')"
+          :icon="['fas', 'thumbs-down']"
+          class="similarRejectVideoIcon"
+          :padding="playlistIconPadding"
+          :size="playlistIconSize"
+          @click="rejectSimilarVideo"
+        />
+        <FtIconButton
+          :title="t('Subscriptions.Similar Block Channel', { channel: channelName })"
+          :icon="['fas', 'user-slash']"
+          class="similarBlockChannelIcon"
+          :padding="playlistIconPadding"
+          :size="playlistIconSize"
+          @click="blockSimilarChannel"
+        />
+      </span>
       <div
         v-if="addWatchedStyle"
         class="videoWatched"
@@ -176,6 +199,13 @@
           v-if="isLive && !hideViews"
           class="viewCount"
         > • {{ t('Global.Counts.Watching Count', { count: parsedViewCount }, viewCount) }}</span>
+      </div>
+      <div
+        v-if="similarProvenanceLabel !== ''"
+        class="similarProvenance"
+        dir="auto"
+      >
+        {{ similarProvenanceLabel }}
       </div>
       <div
         v-if="is4k || hasCaptions || is8k || isNew || isVr180 || isVr360 || is3D"
@@ -281,7 +311,7 @@
 
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
@@ -421,6 +451,33 @@ const showDeArrowThumbnail = ref(false)
 const historyEntry = computed(() => store.getters.getHistoryCacheById[id.value])
 
 const isStarred = computed(() => store.getters.getStarredVideoIdSet.has(id.value))
+
+// Provided by SubscriptionsSimilar.vue only, so the discovery controls below
+// exist on the Similar tab's tiles and nowhere else
+const similarTabControls = inject('similarTabControls', null)
+
+/** @type {import('vue').ComputedRef<{ videoId: string, authorId: string, author: string }[]>} */
+const similarSeeds = computed(() => props.data.similarSeeds ?? [])
+
+const showSimilarControls = computed(() => similarTabControls != null && channelId.value !== null)
+
+const primarySimilarSeed = computed(() => similarSeeds.value[0] ?? null)
+
+const otherSimilarSeedCount = computed(() => Math.max(0, similarSeeds.value.length - 1))
+
+// Which of your own videos this recommendation came from — the tab's only way of
+// explaining itself, and what the "stop seeding" option acts on
+const similarProvenanceLabel = computed(() => {
+  const seed = primarySimilarSeed.value
+
+  if (!showSimilarControls.value || seed == null) { return '' }
+
+  const channel = seed.author ?? ''
+
+  return otherSimilarSeedCount.value > 0
+    ? t('Subscriptions.Similar Because Of More', { channel, count: otherSimilarSeedCount.value })
+    : t('Subscriptions.Similar Because Of', { channel })
+})
 
 const historyEntryExists = computed(() => historyEntry.value !== undefined)
 
@@ -612,6 +669,18 @@ const dropdownOptions = computed(() => {
     )
   }
 
+  if (showSimilarControls.value && primarySimilarSeed.value !== null) {
+    options.push(
+      {
+        type: 'divider'
+      },
+      {
+        label: t('Subscriptions.Similar Stop Seeding', { channel: primarySimilarSeed.value.author }),
+        value: 'blockSimilarSeed'
+      }
+    )
+  }
+
   return options
 })
 
@@ -707,7 +776,33 @@ function handleOptionsClick(option) {
     case 'unhideChannel':
       unhideChannel(channelName.value, channelId.value)
       break
+    case 'blockSimilarSeed':
+      similarTabControls.blockSeedChannel(primarySimilarSeed.value)
+      break
   }
+}
+
+/**
+ * What the Similar tab needs to block or learn from this video. The title is
+ * taken from the ref rather than the raw data, so the term model is taught the
+ * original-language title when one was resolved.
+ */
+function similarVideoPayload() {
+  return {
+    videoId: id.value,
+    title: title.value,
+    author: channelName.value,
+    authorId: channelId.value,
+    similarSeeds: similarSeeds.value
+  }
+}
+
+function blockSimilarChannel() {
+  similarTabControls.blockChannel(similarVideoPayload())
+}
+
+function rejectSimilarVideo() {
+  similarTabControls.rejectVideo(similarVideoPayload())
 }
 
 const thumbnail = computed(() => {

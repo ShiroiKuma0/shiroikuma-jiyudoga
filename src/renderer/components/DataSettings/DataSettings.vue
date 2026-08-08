@@ -163,6 +163,7 @@ import {
   writeFileWithPicker,
 } from '../../helpers/utils'
 import { processToBeAddedPlaylistVideo } from '../../helpers/playlists'
+import { mergeSimilarTuning, mergeStarredVideos } from '../../helpers/profileExtras'
 
 import android from 'android'
 import { selectDataDirectory, getCurrentDataDirectory, DATA_DIRECTORY } from '../../helpers/android/storage'
@@ -192,7 +193,7 @@ async function selectDirectory() {
       dataDirectory.value = uri
     }
     showToast(t('Data Settings.Your data directory has been moved successfully'))
-  } catch (exception){
+  } catch (exception) {
     showToast(t('Data Settings.Error moving data directory'))
     console.error(exception)
   }
@@ -384,6 +385,24 @@ function convertOldFreeTubeFormatToNew(oldData) {
 }
 
 /**
+ * Folds the fork's own profile fields — the starred videos and the Similar tab's
+ * tuning — from an imported profile into the one already in the app. Upstream's
+ * merge only knows about subscriptions, so without this they would be dropped
+ * whenever the import lands on a profile that already exists.
+ * @param {object} target the profile already in the app, mutated in place
+ * @param {object} imported the profile read from the file
+ */
+function mergeProfileExtras(target, imported) {
+  if (imported.starredVideos != null) {
+    target.starredVideos = mergeStarredVideos(target.starredVideos, imported.starredVideos)
+  }
+
+  if (imported.similarTuning != null) {
+    target.similarTuning = mergeSimilarTuning(target.similarTuning, imported.similarTuning)
+  }
+}
+
+/**
  * @param {string} textDecode
  */
 function importFreeTubeSubscriptions(textDecode) {
@@ -405,6 +424,13 @@ function importFreeTubeSubscriptions(textDecode) {
     'subscriptions'
   ]
 
+  // Our own fields on a profile: accepted when the file carries them, but never
+  // demanded — a stock FreeTube export has neither, and must still import
+  const optionalKeys = [
+    'starredVideos',
+    'similarTuning'
+  ]
+
   textDecode.forEach((profileData) => {
     // We would technically already be done by the time the data is parsed,
     // however we want to limit the possibility of malicious data being sent
@@ -412,7 +438,7 @@ function importFreeTubeSubscriptions(textDecode) {
 
     const profileObject = {}
     Object.keys(profileData).forEach((key) => {
-      if (!requiredKeys.includes(key)) {
+      if (!requiredKeys.includes(key) && !optionalKeys.includes(key)) {
         const message = t('Settings.Data Settings.Unknown data key')
         showToast(`${message}: ${key}`)
       } else {
@@ -420,7 +446,7 @@ function importFreeTubeSubscriptions(textDecode) {
       }
     })
 
-    if (Object.keys(profileObject).length < requiredKeys.length) {
+    if (requiredKeys.some((key) => !(key in profileObject))) {
       const message = t('Settings.Data Settings.Profile object has insufficient data, skipping item')
       showToast(message)
     } else {
@@ -433,6 +459,7 @@ function importFreeTubeSubscriptions(textDecode) {
 
           return profileIndex === index
         })
+        mergeProfileExtras(primaryProfile.value, profileObject)
         store.dispatch('updateProfile', primaryProfile.value)
       } else {
         const existingProfileIndex = profileList.value.findIndex((profile) => {
@@ -449,6 +476,7 @@ function importFreeTubeSubscriptions(textDecode) {
 
             return profileIndex === index
           })
+          mergeProfileExtras(existingProfile, profileObject)
           store.dispatch('updateProfile', existingProfile)
         } else {
           store.dispatch('updateProfile', profileObject)

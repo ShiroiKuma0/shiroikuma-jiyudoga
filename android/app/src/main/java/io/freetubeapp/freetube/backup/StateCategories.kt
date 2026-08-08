@@ -59,7 +59,7 @@ object StateCategories {
     BackupCategory(EXTERNAL, "External player", "settings", SETTINGS_STORE),
     BackupCategory(PROXY, "Proxy", "settings", SETTINGS_STORE),
     BackupCategory(DOWNLOADS, "Screenshots & study export", "settings", SETTINGS_STORE),
-    BackupCategory("profiles", "Profiles, subscriptions & starred videos", null, "profiles"),
+    BackupCategory("profiles", "Profiles, subscriptions, starred videos & Similar tuning", null, "profiles"),
     BackupCategory("playlists", "Playlists", null, "playlists"),
     BackupCategory("history", "Watch history", null, "history"),
     BackupCategory("search-history", "Search history", null, "search-history")

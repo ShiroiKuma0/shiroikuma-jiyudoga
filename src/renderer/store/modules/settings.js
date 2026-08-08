@@ -320,6 +320,11 @@ const state = {
   skuiGridTitleLines: 3,
   // vertical padding of the Profile Select dropdown rows, px
   skuiProfileRowPadding: 2,
+  // Similar tab: 'agreement' ranks by how many seeds recommended a video,
+  // 'newest' keeps the plain date order; the threshold drops everything below
+  // that many agreeing seeds (1 = keep everything)
+  skuiSimilarSort: 'agreement',
+  skuiSimilarMinAgreement: 1,
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)

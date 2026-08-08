@@ -149,6 +149,183 @@
         </div>
       </section>
 
+      <!--
+        Similar tab: what the discovery feed has been taught in the active profile.
+        Everything here is stored on the profile itself, so it travels with profile
+        export/import like the starred videos do.
+      -->
+      <section class="skuiSection">
+        <hr class="skuiSectionRule">
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Similar.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Similar.Description') }}
+        </p>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Rank by agreement') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Similar.Rank by agreement description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="similarSortByAgreement"
+            @change="updateSimilarSort($event.target.checked)"
+          >
+        </label>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Minimum agreement') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Similar.Minimum agreement description') }}</span>
+          </span>
+          <input
+            class="skuiEntryNumber"
+            type="number"
+            min="1"
+            max="5"
+            step="1"
+            :value="similarMinAgreement"
+            :aria-label="$t('SKUI.Similar.Minimum agreement')"
+            @change="updateSimilarMinAgreement($event.target.value)"
+          >
+        </div>
+
+        <h5 class="skuiGroupTitle skuiIndent1">
+          {{ $t('SKUI.Similar.Blocked channels') }}
+        </h5>
+        <p
+          v-if="similarBlockedChannels.length === 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.Nothing yet') }}
+        </p>
+        <div
+          v-for="channel in similarBlockedChannels"
+          :key="channel.id"
+          class="skuiEntryRow skuiIndent2"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ channel.name || channel.id }}</span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            @click="unblockSimilarChannel(channel.id)"
+          >
+            {{ $t('SKUI.Similar.Remove') }}
+          </button>
+        </div>
+
+        <h5 class="skuiGroupTitle skuiIndent1">
+          {{ $t('SKUI.Similar.Rejected videos') }}
+        </h5>
+        <p
+          v-if="similarBlockedVideos.length === 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.Nothing yet') }}
+        </p>
+        <div
+          v-for="video in similarBlockedVideos"
+          :key="video.videoId"
+          class="skuiEntryRow skuiIndent2"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ video.title || video.videoId }}</span>
+            <span class="skuiEntrySummary">{{ video.author }}</span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            @click="unrejectSimilarVideo(video.videoId)"
+          >
+            {{ $t('SKUI.Similar.Remove') }}
+          </button>
+        </div>
+        <p
+          v-if="similarBlockedVideosHidden > 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.And more', { count: similarBlockedVideosHidden }) }}
+        </p>
+
+        <h5 class="skuiGroupTitle skuiIndent1">
+          {{ $t('SKUI.Similar.Learned words') }}
+        </h5>
+        <p
+          v-if="similarTerms.length === 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.Nothing yet') }}
+        </p>
+        <div
+          v-else
+          class="skuiTermList skuiIndent2"
+        >
+          <button
+            v-for="term in similarTerms"
+            :key="term.term"
+            class="skuiTermChip"
+            type="button"
+            :title="$t('SKUI.Similar.Remove')"
+            @click="clearSimilarNegativeTerm(term.term)"
+          >
+            {{ term.term }}
+            <span class="skuiTermWeight">{{ $t('SKUI.Similar.Term weight', { count: term.weight }) }}</span>
+          </button>
+        </div>
+        <p
+          v-if="similarTermsHidden > 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.And more', { count: similarTermsHidden }) }}
+        </p>
+
+        <h5 class="skuiGroupTitle skuiIndent1">
+          {{ $t('SKUI.Similar.Suggestion sources') }}
+        </h5>
+        <p
+          v-if="similarSeedChannels.length === 0"
+          class="skuiEntrySummary skuiIndent2"
+        >
+          {{ $t('SKUI.Similar.Nothing yet') }}
+        </p>
+        <div
+          v-for="seed in similarSeedChannels"
+          :key="seed.id"
+          class="skuiEntryRow skuiIndent2"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ seed.name || seed.id }}</span>
+            <span class="skuiEntrySummary">
+              {{ similarBlockedSeedChannelIds.has(seed.id)
+                ? $t('SKUI.Similar.Seed blocked')
+                : $t('SKUI.Similar.Seed demerits', { count: seed.demerits ?? 0 }) }}
+            </span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            @click="clearSimilarSeedChannel(seed.id)"
+          >
+            {{ $t('SKUI.Similar.Remove') }}
+          </button>
+        </div>
+
+        <button
+          class="skuiEntryRow skuiIndent1"
+          type="button"
+          @click="resetSimilarTuning"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Reset') }}</span>
+          </span>
+        </button>
+      </section>
+
       <section
         v-for="section in SKUI_SECTIONS"
         :key="section.key"
@@ -271,6 +448,99 @@ function refreshBackupState() {
 }
 
 onMounted(refreshBackupState)
+
+// ---- Similar tab ----
+
+// Long lists are truncated: rejecting videos adds entries faster than anyone wants
+// to scroll, and the point of the list is to spot and undo a mistaken tap
+const SIMILAR_LIST_LIMIT = 40
+
+const similarTuning = computed(() => store.getters.getActiveProfileSimilarTuning)
+
+/** @type {import('vue').ComputedRef<Set<string>>} */
+const similarBlockedSeedChannelIds = computed(() => store.getters.getSimilarBlockedSeedChannelIdSet)
+
+const similarSortByAgreement = computed(() => store.getters.getSkuiSimilarSort === 'agreement')
+
+const similarMinAgreement = computed(() => store.getters.getSkuiSimilarMinAgreement)
+
+const similarBlockedChannels = computed(() => {
+  return [...similarTuning.value.blockedChannels].sort((a, b) => (b.blockedAt ?? 0) - (a.blockedAt ?? 0))
+})
+
+const allSimilarBlockedVideos = computed(() => {
+  return [...similarTuning.value.blockedVideos].sort((a, b) => (b.blockedAt ?? 0) - (a.blockedAt ?? 0))
+})
+
+const similarBlockedVideos = computed(() => allSimilarBlockedVideos.value.slice(0, SIMILAR_LIST_LIMIT))
+
+const similarBlockedVideosHidden = computed(() => {
+  return Math.max(0, allSimilarBlockedVideos.value.length - similarBlockedVideos.value.length)
+})
+
+const allSimilarTerms = computed(() => {
+  return [...similarTuning.value.negativeTerms].sort((a, b) => b.weight - a.weight)
+})
+
+const similarTerms = computed(() => allSimilarTerms.value.slice(0, SIMILAR_LIST_LIMIT))
+
+const similarTermsHidden = computed(() => {
+  return Math.max(0, allSimilarTerms.value.length - similarTerms.value.length)
+})
+
+const similarSeedChannels = computed(() => {
+  return [...similarTuning.value.seedChannels].sort((a, b) => (b.demerits ?? 0) - (a.demerits ?? 0))
+})
+
+/**
+ * @param {boolean} byAgreement
+ */
+function updateSimilarSort(byAgreement) {
+  store.dispatch('updateSkuiSimilarSort', byAgreement ? 'agreement' : 'newest')
+}
+
+/**
+ * @param {string} value
+ */
+function updateSimilarMinAgreement(value) {
+  const parsed = parseInt(value)
+
+  store.dispatch('updateSkuiSimilarMinAgreement', isNaN(parsed) ? 1 : Math.min(5, Math.max(1, parsed)))
+}
+
+/**
+ * @param {string} channelId
+ */
+function unblockSimilarChannel(channelId) {
+  store.dispatch('unblockSimilarChannel', channelId)
+}
+
+/**
+ * @param {string} videoId
+ */
+function unrejectSimilarVideo(videoId) {
+  store.dispatch('unrejectSimilarVideo', videoId)
+}
+
+/**
+ * @param {string} term
+ */
+function clearSimilarNegativeTerm(term) {
+  store.dispatch('clearSimilarNegativeTerm', term)
+}
+
+/**
+ * @param {string} channelId
+ */
+function clearSimilarSeedChannel(channelId) {
+  store.dispatch('clearSimilarSeedChannel', channelId)
+}
+
+function resetSimilarTuning() {
+  store.dispatch('resetSimilarTuning')
+
+  showToast(t('SKUI.Similar.Reset done'))
+}
 
 // ---- video download ----
 

@@ -138,6 +138,14 @@ Subscriptions:
   Empty Posts: Your subscribed channels currently do not have any posts.
   Empty Starred: You have not starred any videos in this profile yet. Star videos with the star button on the watch page to collect them here.
   Similar Needs Videos: Similar videos are discovered from the recent videos of your subscriptions. Refresh the Videos tab first, then come back here.
+  Similar Block Channel: 'Never show {channel} here'
+  Similar Reject Video: Fewer videos like this
+  Similar Stop Seeding: 'Stop basing suggestions on {channel}'
+  Similar Because Of: 'Because of {channel}'
+  Similar Because Of More: 'Because of {channel} and {count} more'
+  Similar Channel Blocked: '{channel} will no longer appear here — tap to undo'
+  Similar Video Rejected: Noted, fewer videos like this one — tap to undo
+  Similar Seed Blocked: 'Suggestions are no longer based on {channel} — tap to undo'
   Load More Videos: Load More Videos
   Load More Posts: Load More Posts
   Subscriptions Tabs: Subscriptions Tabs
@@ -1334,6 +1342,30 @@ SKUI:
     Download Failed: The download failed — try again later
     Too Large: This video is too large to download in one piece
     Write Failed: The file could not be written to the download folder
+  Similar:
+    Section: Similar tab
+    Description: >-
+      What the Similar tab has been taught in the profile you are using. Blocks made
+      while "All Channels" is active apply to every profile and are managed there.
+    Rank by agreement: Rank by agreement
+    Rank by agreement description: >-
+      Puts the videos that several of your own videos led to first, instead of
+      simply the newest ones.
+    Minimum agreement: Minimum agreeing videos
+    Minimum agreement description: >-
+      Hides suggestions that fewer than this many of your videos led to. 1 keeps everything.
+    Blocked channels: Blocked channels
+    Rejected videos: Rejected videos
+    Learned words: Learned words
+    Suggestion sources: Suggestion sources
+    Seed blocked: no longer used for suggestions
+    Seed demerits: '{count} rejected so far'
+    Nothing yet: Nothing yet
+    And more: '{count} more'
+    Term weight: '×{count}'
+    Remove: Remove
+    Reset: Clear everything the Similar tab learned in this profile
+    Reset done: The Similar tab forgot everything for this profile
   Backup:
     Export / Import: Export / Import
     Export / Import…: Export / Import…

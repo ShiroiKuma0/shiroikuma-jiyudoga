@@ -158,3 +158,29 @@
   block-size: 1.1em;
   inline-size: 1.1em;
 }
+
+/* learned Similar-tab words: too many for one row each, so they wrap as
+   removable chips */
+.skuiTermList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-block: 0.3em 0.5em;
+}
+
+.skuiTermChip {
+  background: none;
+  border: 1px solid var(--primary-color);
+  border-radius: 100px;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85em;
+  padding-block: 0.15em;
+  padding-inline: 0.7em;
+}
+
+.skuiTermWeight {
+  color: var(--tertiary-text-color);
+  font-size: 0.85em;
+}

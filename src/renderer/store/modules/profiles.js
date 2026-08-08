@@ -1,7 +1,57 @@
 import { MAIN_PROFILE_ID } from '../../../constants'
 import { DBProfileHandlers } from '../../../datastores/handlers/index'
 import { calculateColorLuminance, getRandomColor } from '../../helpers/colors'
+import {
+  SIMILAR_MAX_SEEDS_TO_BLAME,
+  SIMILAR_SEED_DEMERIT_LIMIT,
+  emptySimilarTuning,
+  withSimilarTuningDefaults
+} from '../../helpers/profileExtras'
+import { extractTerms } from '../../helpers/similarTerms'
 import { deepCopy } from '../../helpers/utils'
+
+/**
+ * The tunings that apply while browsing: the active profile's own, plus the
+ * "All Channels" one, which therefore acts as the global list.
+ * @param {object} state
+ * @param {object} getters
+ */
+function effectiveSimilarTunings(state, getters) {
+  const activeProfile = getters.getActiveProfile
+  const tunings = []
+
+  if (activeProfile?.similarTuning != null) {
+    tunings.push(activeProfile.similarTuning)
+  }
+
+  // The all channels profile is always the first profile in the array
+  const mainProfile = state.profileList[0]
+
+  if (mainProfile != null && mainProfile._id !== activeProfile?._id && mainProfile.similarTuning != null) {
+    tunings.push(mainProfile.similarTuning)
+  }
+
+  return tunings
+}
+
+/**
+ * Applies `mutate` to the active profile's tuning and persists the profile. Writes
+ * always go to the active profile — the same rule as starring — so a topic profile
+ * learns for itself, while what is taught in "All Channels" applies everywhere.
+ * @param {{ dispatch: Function, getters: object }} context
+ * @param {(tuning: object) => void} mutate
+ */
+async function writeSimilarTuning({ dispatch, getters }, mutate) {
+  // deepCopy first: the profile on the store is a reactive proxy and cloning a
+  // proxy for the IPC call throws, silently losing the write (see starVideo)
+  const profileCopy = deepCopy(getters.getActiveProfile)
+
+  profileCopy.similarTuning = withSimilarTuningDefaults(profileCopy.similarTuning)
+
+  mutate(profileCopy.similarTuning)
+
+  await dispatch('updateProfile', profileCopy)
+}
 
 const state = {
   profileList: [{
@@ -47,6 +97,59 @@ const getters = {
 
   getStarredVideoIdSet: (_state, getters) => {
     return getters.getActiveProfileStarredVideos.reduce((set, video) => set.add(video.videoId), new Set())
+  },
+
+  // What the Similar tab has been told to stop showing. Edits are always written to
+  // the active profile, but "All Channels" is read alongside it, so a block made
+  // there applies to every profile.
+  getActiveProfileSimilarTuning: (_state, getters) => {
+    return withSimilarTuningDefaults(getters.getActiveProfile?.similarTuning)
+  },
+
+  getSimilarBlockedChannelIdSet: (state, getters) => {
+    const set = new Set()
+
+    for (const tuning of effectiveSimilarTunings(state, getters)) {
+      for (const channel of tuning.blockedChannels ?? []) { set.add(channel.id) }
+    }
+
+    return set
+  },
+
+  getSimilarBlockedVideoIdSet: (state, getters) => {
+    const set = new Set()
+
+    for (const tuning of effectiveSimilarTunings(state, getters)) {
+      for (const video of tuning.blockedVideos ?? []) { set.add(video.videoId) }
+    }
+
+    return set
+  },
+
+  getSimilarNegativeTerms: (state, getters) => {
+    const weights = new Map()
+
+    for (const tuning of effectiveSimilarTunings(state, getters)) {
+      for (const { term, weight } of tuning.negativeTerms ?? []) {
+        weights.set(term, (weights.get(term) ?? 0) + weight)
+      }
+    }
+
+    return Array.from(weights, ([term, weight]) => ({ term, weight }))
+  },
+
+  getSimilarBlockedSeedChannelIdSet: (state, getters) => {
+    const set = new Set()
+
+    for (const tuning of effectiveSimilarTunings(state, getters)) {
+      for (const channel of tuning.seedChannels ?? []) {
+        if (channel.blocked || (channel.demerits ?? 0) >= SIMILAR_SEED_DEMERIT_LIMIT) {
+          set.add(channel.id)
+        }
+      }
+    }
+
+    return set
   },
 }
 
@@ -305,6 +408,123 @@ const actions = {
       profileCopy.starredVideos = profileCopy.starredVideos.filter((video) => video.videoId !== videoId)
       await dispatch('updateProfile', profileCopy)
     }
+  },
+
+  async blockSimilarChannel({ dispatch, getters }, { id, name }) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      if (tuning.blockedChannels.some((channel) => channel.id === id)) { return }
+
+      tuning.blockedChannels.push({ id, name, blockedAt: Date.now() })
+    })
+  },
+
+  async unblockSimilarChannel({ dispatch, getters }, id) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      tuning.blockedChannels = tuning.blockedChannels.filter((channel) => channel.id !== id)
+    })
+  },
+
+  /**
+   * "Less like this": hides the video, learns the terms it was phrased with and
+   * blames the seeds that produced it. The terms and seeds it contributed are
+   * stored on the entry, so undoing takes back exactly what this rejection added.
+   */
+  async rejectSimilarVideo({ dispatch, getters }, { video, seedChannels = [] }) {
+    const terms = extractTerms(video.title, video.author)
+
+    const blamedSeeds = seedChannels.length > 0 && seedChannels.length <= SIMILAR_MAX_SEEDS_TO_BLAME
+      ? seedChannels
+      : []
+
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      if (tuning.blockedVideos.some((blocked) => blocked.videoId === video.videoId)) { return }
+
+      tuning.blockedVideos.push({
+        videoId: video.videoId,
+        title: video.title ?? '',
+        author: video.author ?? '',
+        authorId: video.authorId ?? '',
+        blockedAt: Date.now(),
+        terms,
+        seedChannelIds: blamedSeeds.map((seed) => seed.id)
+      })
+
+      for (const term of terms) {
+        const existing = tuning.negativeTerms.find((entry) => entry.term === term)
+
+        if (existing) {
+          existing.weight++
+        } else {
+          tuning.negativeTerms.push({ term, weight: 1 })
+        }
+      }
+
+      for (const seed of blamedSeeds) {
+        const existing = tuning.seedChannels.find((entry) => entry.id === seed.id)
+
+        if (existing) {
+          existing.demerits = (existing.demerits ?? 0) + 1
+        } else {
+          tuning.seedChannels.push({ id: seed.id, name: seed.name ?? '', demerits: 1, blocked: false })
+        }
+      }
+    })
+  },
+
+  async unrejectSimilarVideo({ dispatch, getters }, videoId) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      const entry = tuning.blockedVideos.find((blocked) => blocked.videoId === videoId)
+
+      if (entry == null) { return }
+
+      tuning.blockedVideos = tuning.blockedVideos.filter((blocked) => blocked.videoId !== videoId)
+
+      for (const term of entry.terms ?? []) {
+        const existing = tuning.negativeTerms.find((negative) => negative.term === term)
+
+        if (existing) { existing.weight-- }
+      }
+
+      tuning.negativeTerms = tuning.negativeTerms.filter((negative) => negative.weight > 0)
+
+      for (const seedChannelId of entry.seedChannelIds ?? []) {
+        const existing = tuning.seedChannels.find((seed) => seed.id === seedChannelId)
+
+        if (existing) { existing.demerits = Math.max(0, (existing.demerits ?? 0) - 1) }
+      }
+
+      tuning.seedChannels = tuning.seedChannels.filter((seed) => seed.blocked || seed.demerits > 0)
+    })
+  },
+
+  async blockSimilarSeedChannel({ dispatch, getters }, { id, name }) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      const existing = tuning.seedChannels.find((seed) => seed.id === id)
+
+      if (existing) {
+        existing.blocked = true
+      } else {
+        tuning.seedChannels.push({ id, name: name ?? '', demerits: 0, blocked: true })
+      }
+    })
+  },
+
+  async clearSimilarSeedChannel({ dispatch, getters }, id) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      tuning.seedChannels = tuning.seedChannels.filter((seed) => seed.id !== id)
+    })
+  },
+
+  async clearSimilarNegativeTerm({ dispatch, getters }, term) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      tuning.negativeTerms = tuning.negativeTerms.filter((negative) => negative.term !== term)
+    })
+  },
+
+  async resetSimilarTuning({ dispatch, getters }) {
+    await writeSimilarTuning({ dispatch, getters }, (tuning) => {
+      Object.assign(tuning, emptySimilarTuning())
+    })
   }
 }
 

@@ -17,14 +17,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import SubscriptionsTabUi from './SubscriptionsTabUi/SubscriptionsTabUi.vue'
 
 import store from '../store/index'
 
-import { getRelativeTimeFromDate } from '../helpers/utils'
+import { getRelativeTimeFromDate, showToast } from '../helpers/utils'
 import {
   assembleSimilarVideoList,
   cacheSimilarResults,
@@ -32,12 +32,21 @@ import {
   getCachedSimilarResults,
   pickSimilarSeeds
 } from '../helpers/similarVideos'
+import {
+  extractTerms,
+  matchNegativeTerms,
+  negativeTermMap,
+  shouldHideForTerms
+} from '../helpers/similarTerms'
 import { updateVideoListAfterProcessing } from '../helpers/subscriptions'
 
 const { t } = useI18n()
 
+const UNDO_TOAST_MS = 10000
+
 const isLoading = ref(true)
-const videoList = shallowRef([])
+// everything the seeds turned up, before the profile's blocklists are applied
+const rawCandidates = shallowRef([])
 const attemptedFetch = ref(false)
 /** @type {import('vue').Ref<number | null>} */
 const lastRefreshSuccessTimestamp = ref(null)
@@ -58,6 +67,23 @@ const activeProfileId = computed(() => store.getters.getActiveProfile._id)
 
 const activeSubscriptionList = computed(() => store.getters.getActiveProfile.subscriptions)
 
+/** @type {import('vue').ComputedRef<Set<string>>} */
+const blockedChannelIds = computed(() => store.getters.getSimilarBlockedChannelIdSet)
+
+/** @type {import('vue').ComputedRef<Set<string>>} */
+const blockedVideoIds = computed(() => store.getters.getSimilarBlockedVideoIdSet)
+
+/** @type {import('vue').ComputedRef<Set<string>>} */
+const blockedSeedChannelIds = computed(() => store.getters.getSimilarBlockedSeedChannelIdSet)
+
+const negativeTerms = computed(() => negativeTermMap(store.getters.getSimilarNegativeTerms))
+
+/** @type {import('vue').ComputedRef<string>} */
+const similarSort = computed(() => store.getters.getSkuiSimilarSort)
+
+/** @type {import('vue').ComputedRef<number>} */
+const minAgreement = computed(() => store.getters.getSkuiSimilarMinAgreement)
+
 const cacheEntriesForAllActiveProfileChannels = computed(() => {
   const videoCache = store.getters.getVideoCache
   const entries = []
@@ -73,10 +99,53 @@ const cacheEntriesForAllActiveProfileChannels = computed(() => {
   return entries
 })
 
-const seeds = computed(() => pickSimilarSeeds(cacheEntriesForAllActiveProfileChannels.value))
+const seeds = computed(() => {
+  return pickSimilarSeeds(cacheEntriesForAllActiveProfileChannels.value, {
+    starredVideos: store.getters.getActiveProfileStarredVideos,
+    blockedSeedChannelIds: blockedSeedChannelIds.value
+  })
+})
 
-// Seeds come from the subscription video cache, so the Videos tab has to have
-// been loaded at least once before similar videos can be discovered
+// Applied against the store rather than baked into the fetched list, so blocking
+// a channel or a video removes it from the tab straight away
+const videoList = computed(() => {
+  const terms = negativeTerms.value
+
+  const filtered = rawCandidates.value.filter((video) => {
+    if (blockedChannelIds.value.has(video.authorId) || blockedVideoIds.value.has(video.videoId)) {
+      return false
+    }
+
+    if ((video.similarAgreement ?? 1) < minAgreement.value) {
+      return false
+    }
+
+    // A blocked seed channel stops seeding on the next refresh, but its existing
+    // suggestions have to go now — except where another seed also vouches for them
+    const videoSeeds = video.similarSeeds ?? []
+
+    if (videoSeeds.length > 0 && videoSeeds.every(seed => blockedSeedChannelIds.value.has(seed.authorId))) {
+      return false
+    }
+
+    if (terms.size > 0 && shouldHideForTerms(matchNegativeTerms(similarTermsOf(video), terms))) {
+      return false
+    }
+
+    return true
+  })
+
+  if (similarSort.value === 'newest') {
+    return filtered.sort((a, b) => b.published - a.published)
+  }
+
+  return filtered.sort((a, b) => {
+    return (b.similarAgreement ?? 1) - (a.similarAgreement ?? 1) || b.published - a.published
+  })
+})
+
+// Seeds come from the starred videos and the subscription video cache, so the
+// Videos tab has to have been loaded at least once before anything can be found
 const showSeedHint = computed(() => {
   return !isLoading.value &&
     activeSubscriptionList.value.length > 0 &&
@@ -107,6 +176,81 @@ onMounted(() => {
   loadSimilarSometimes()
 })
 
+// Picked up by FtListVideo, which shows the block buttons and the provenance
+// line only for tiles rendered inside this tab
+provide('similarTabControls', {
+  blockChannel,
+  rejectVideo,
+  blockSeedChannel
+})
+
+/**
+ * Terms are cached on the candidate, as the filter reruns on every store change.
+ * @param {any} video
+ */
+function similarTermsOf(video) {
+  video.similarTerms ??= extractTerms(video.title, video.author)
+
+  return video.similarTerms
+}
+
+/**
+ * @param {any} video
+ * @returns {{ id: string, name: string }[]} the channels of the seeds that produced it
+ */
+function seedChannelsOf(video) {
+  const byId = new Map()
+
+  for (const seed of video.similarSeeds ?? []) {
+    if (seed.authorId != null && !byId.has(seed.authorId)) {
+      byId.set(seed.authorId, { id: seed.authorId, name: seed.author ?? '' })
+    }
+  }
+
+  return Array.from(byId.values())
+}
+
+/**
+ * @param {any} video
+ */
+function blockChannel(video) {
+  store.dispatch('blockSimilarChannel', { id: video.authorId, name: video.author })
+
+  showToast(t('Subscriptions.Similar Channel Blocked', { channel: video.author }), UNDO_TOAST_MS, () => {
+    store.dispatch('unblockSimilarChannel', video.authorId)
+  })
+}
+
+/**
+ * @param {any} video
+ */
+function rejectVideo(video) {
+  store.dispatch('rejectSimilarVideo', {
+    video: {
+      videoId: video.videoId,
+      title: video.title,
+      author: video.author,
+      authorId: video.authorId
+    },
+    seedChannels: seedChannelsOf(video)
+  })
+
+  showToast(t('Subscriptions.Similar Video Rejected'), UNDO_TOAST_MS, () => {
+    store.dispatch('unrejectSimilarVideo', video.videoId)
+  })
+}
+
+/**
+ * @param {{ authorId: string, author: string }} seed
+ */
+function blockSeedChannel(seed) {
+  store.dispatch('blockSimilarSeedChannel', { id: seed.authorId, name: seed.author })
+
+  showToast(t('Subscriptions.Similar Seed Blocked', { channel: seed.author }), UNDO_TOAST_MS, () => {
+    store.dispatch('clearSimilarSeedChannel', seed.authorId)
+  })
+}
+
 function loadSimilarSometimes() {
   // Can only pick seeds reliably when the cache is ready
   if (!subscriptionCacheReady.value) { return }
@@ -114,7 +258,7 @@ function loadSimilarSometimes() {
   const cached = getCachedSimilarResults(activeProfileId.value)
 
   if (cached !== null) {
-    videoList.value = cached.videos
+    rawCandidates.value = cached.videos
     lastRefreshSuccessTimestamp.value = cached.timestamp
     attemptedFetch.value = true
     isLoading.value = false
@@ -126,7 +270,7 @@ function loadSimilarSometimes() {
     return
   }
 
-  videoList.value = []
+  rawCandidates.value = []
   attemptedFetch.value = false
   isLoading.value = false
 }
@@ -140,7 +284,7 @@ async function loadSimilarFromRemote(force = false) {
 
   if (seedList.length === 0) {
     isLoading.value = false
-    videoList.value = []
+    rawCandidates.value = []
     return
   }
 
@@ -161,10 +305,10 @@ async function loadSimilarFromRemote(force = false) {
   )
 
   const subscribedChannelIds = store.getters.getActiveProfileSubscribedChannelIdSet
-  const assembled = assembleSimilarVideoList(recommendationsPerSeed, subscribedChannelIds)
+  const assembled = assembleSimilarVideoList(recommendationsPerSeed, seedList, subscribedChannelIds)
 
-  videoList.value = updateVideoListAfterProcessing(assembled)
-  cacheSimilarResults(profileId, videoList.value)
+  rawCandidates.value = updateVideoListAfterProcessing(assembled)
+  cacheSimilarResults(profileId, rawCandidates.value)
   lastRefreshSuccessTimestamp.value = Date.now()
   isLoading.value = false
   store.commit('setShowProgressBar', false)
