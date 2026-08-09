@@ -1404,12 +1404,18 @@ SKUI:
     Token regenerated: New automation token generated — update every pasted copy
   Feed filter:
     New filter: New filter
+    Edit filter: Edit filter
     Legend: >-
       Tap a profile to cycle it: + shows it, − hides it, a number keeps only that many
       newest videos per channel. With no + anywhere, the active profile is the base.
-    Pill hint: Tap to show this filter — hold to move it, or to delete it
+    Pill hint: >-
+      Tap to show this filter — hold to move it or let go to delete it, keep holding
+      (or right-click) to edit it
+    Hide upcoming: Hide upcoming
+    Upcoming hint: Leave out videos and streams that have not premiered yet
     Filter name: Filter name
     Create: Create
+    Save: Save
     Cancel: Cancel
     Deleted: '"{name}" deleted — tap to undo'
     Cycle state: 'Cycle: neutral, show, hide, limit'

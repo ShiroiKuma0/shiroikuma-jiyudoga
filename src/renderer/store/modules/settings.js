@@ -320,10 +320,10 @@ const state = {
   skuiGridTitleLines: 3,
   // vertical padding of the Profile Select dropdown rows, px
   skuiProfileRowPadding: 2,
-  // feed filter (funnel next to the profile bubble): set algebra over the profiles,
-  // { include: [profileId], exclude: [profileId], caps: { profileId: N }, presetId }
-  // and the saved presets [{ id, name, include, exclude, caps }]. View mask only —
-  // the active profile stays the write target for subscribing and starring
+  // feed filter (the pill strip in the top bar): set algebra over the profiles,
+  // { include: [profileId], exclude: [profileId], caps: { profileId: N }, hideUpcoming,
+  // presetId } and the saved presets [{ id, name, include, exclude, caps, hideUpcoming }].
+  // View mask only — the active profile stays the write target for subscribing and starring
   skuiFeedFilter: '{}',
   skuiFeedFilterPresets: '[]',
   // what the "All Channels" profile is called in the bubble and the profile lists

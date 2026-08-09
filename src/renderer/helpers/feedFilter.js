@@ -26,12 +26,13 @@ export const FEED_FILTER_MAX_CAP = 20
  * @property {string[]} include profile ids contributing their channels
  * @property {string[]} exclude profile ids whose channels are removed
  * @property {Record<string, number>} caps profile id → max videos per channel
+ * @property {boolean} hideUpcoming drop videos that have not premiered yet
  * @property {string|null} presetId the preset this filter was applied from, if unedited since
  */
 
 /** @returns {FeedFilter} */
 export function emptyFeedFilter() {
-  return { include: [], exclude: [], caps: {}, presetId: null }
+  return { include: [], exclude: [], caps: {}, hideUpcoming: false, presetId: null }
 }
 
 /**
@@ -84,6 +85,7 @@ export function parseFeedFilter(json) {
     include: Array.from(new Set(include)),
     exclude: Array.from(excludeSet),
     caps,
+    hideUpcoming: raw.hideUpcoming === true,
     presetId: typeof raw.presetId === 'string' ? raw.presetId : null
   }
 }
@@ -94,7 +96,8 @@ export function parseFeedFilter(json) {
 export function feedFilterIsEmpty(filter) {
   return filter.include.length === 0 &&
     filter.exclude.length === 0 &&
-    Object.keys(filter.caps).length === 0
+    Object.keys(filter.caps).length === 0 &&
+    !filter.hideUpcoming
 }
 
 /**
@@ -124,6 +127,7 @@ export function withProfileState(filter, profileId, state, cap = FEED_FILTER_DEF
     include: filter.include.filter((id) => id !== profileId),
     exclude: filter.exclude.filter((id) => id !== profileId),
     caps: Object.fromEntries(Object.entries(filter.caps).filter(([id]) => id !== profileId)),
+    hideUpcoming: filter.hideUpcoming,
     presetId: null
   }
 
@@ -140,6 +144,41 @@ export function withProfileState(filter, profileId, state, cap = FEED_FILTER_DEF
   }
 
   return next
+}
+
+/**
+ * The one rule that is not about profiles: a scheduled premiere or stream is not something
+ * to watch yet, and a channel that queues a dozen of them buries everything else. Like the
+ * profile states it is part of the filter, so a pill can carry it.
+ * @param {FeedFilter} filter
+ * @param {boolean} hideUpcoming
+ * @returns {FeedFilter}
+ */
+export function withHideUpcoming(filter, hideUpcoming) {
+  return { ...filter, hideUpcoming, presetId: null }
+}
+
+/**
+ * What the tiles label "Upcoming" — the flag the local and Invidious APIs set, plus a
+ * premiere date that has not arrived yet. The date alone is not enough: Invidious keeps
+ * `premiereTimestamp` on videos that have long since premiered, and those are ordinary
+ * videos now. RSS entries carry neither, so an RSS feed cannot be thinned this way —
+ * nothing else in the app can tell a premiere from a video there either.
+ * @param {object} video
+ */
+export function isUpcomingVideo(video) {
+  if (video.isUpcoming === true || video.premiere === true) { return true }
+
+  let premiereAt = null
+
+  if (video.premiereDate != null) {
+    premiereAt = new Date(video.premiereDate).getTime()
+  } else if (typeof video.premiereTimestamp === 'number') {
+    // Invidious counts in seconds
+    premiereAt = video.premiereTimestamp * 1000
+  }
+
+  return premiereAt != null && Number.isFinite(premiereAt) && premiereAt > Date.now()
 }
 
 /**
@@ -245,6 +284,7 @@ export function resolveFeedChannels(profileList, activeProfile, filter) {
  * @property {string[]} include
  * @property {string[]} exclude
  * @property {Record<string, number>} caps
+ * @property {boolean} hideUpcoming
  */
 
 /**
@@ -265,14 +305,15 @@ export function parseFeedFilterPresets(json) {
   return raw
     .filter((preset) => preset != null && typeof preset === 'object' && typeof preset.name === 'string')
     .map((preset) => {
-      const { include, exclude, caps } = parseFeedFilter(preset)
+      const { include, exclude, caps, hideUpcoming } = parseFeedFilter(preset)
 
       return {
         id: typeof preset.id === 'string' && preset.id.length > 0 ? preset.id : newPresetId(),
         name: preset.name,
         include,
         exclude,
-        caps
+        caps,
+        hideUpcoming
       }
     })
 }
@@ -290,13 +331,16 @@ export function feedFilterFromPreset(preset) {
     include: [...preset.include],
     exclude: [...preset.exclude],
     caps: { ...preset.caps },
+    hideUpcoming: preset.hideUpcoming === true,
     presetId: preset.id
   }
 }
 
 /**
- * Stable identity of what a filter actually selects — the preset link is deliberately left
- * out, so two ways of arriving at the same view share a signature.
+ * Stable identity of the CHANNELS a filter selects — the preset link is deliberately left
+ * out, so two ways of arriving at the same view share a signature, and so is `hideUpcoming`,
+ * which thins the videos of an unchanged channel set: it must not invalidate the channel
+ * resolution or the Similar tab's seeds, both of which key off this.
  * @param {FeedFilter} filter
  */
 export function feedFilterSignature(filter) {

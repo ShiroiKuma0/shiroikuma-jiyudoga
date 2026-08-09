@@ -156,6 +156,19 @@ const getters = {
     return getters.getFeedResolution.capByChannelId
   },
 
+  getFeedHideUpcoming: (_state, getters) => {
+    return getters.getFeedFilter.hideUpcoming
+  },
+
+  // Identity of the view the feed tabs are showing. It changes when a pill is applied or
+  // dropped and when the profile is switched, which is exactly when a feed read from the
+  // top is a different feed — so the tabs page it from the beginning again.
+  getFeedViewKey: (state, getters) => {
+    const filter = getters.getFeedFilter
+
+    return `${state.activeProfile}|${feedFilterSignature(filter)}|${filter.hideUpcoming ? 'u' : ''}`
+  },
+
   getActiveProfileStarredVideos: (_state, getters) => {
     return getters.getActiveProfile?.starredVideos ?? []
   },

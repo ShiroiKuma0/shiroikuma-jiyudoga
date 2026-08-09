@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import FtAutoLoadNextPageWrapper from '../FtAutoLoadNextPageWrapper.vue'
 import FtButton from '../FtButton/FtButton.vue'
@@ -81,6 +81,7 @@ import FtRefreshWidget from '../FtRefreshWidget/FtRefreshWidget.vue'
 
 import store from '../../store/index'
 
+import { isUpcomingVideo } from '../../helpers/feedFilter'
 import { KeyboardShortcuts } from '../../../constants'
 
 const props = defineProps({
@@ -166,6 +167,12 @@ const feedChannelCaps = computed(() => {
   return store.getters.getFeedChannelCaps
 })
 
+// The feed filter's other rule: drop what has not premiered yet
+/** @type {import('vue').ComputedRef<boolean>} */
+const feedHideUpcoming = computed(() => {
+  return store.getters.getFeedHideUpcoming
+})
+
 const filteredVideoList = computed(() => {
   if (props.isCommunity) {
     return props.videoList
@@ -177,6 +184,11 @@ const filteredVideoList = computed(() => {
     videoList = videoList.filter((video) => {
       return historyCacheById.value[video.videoId] === undefined
     })
+  }
+
+  if (feedHideUpcoming.value) {
+    // before the caps, so a capped channel spends its quota on watchable videos
+    videoList = videoList.filter((video) => !isUpcomingVideo(video))
   }
 
   const globalLimit = onlyShowLatestFromChannel.value ? onlyShowLatestFromChannelNumber.value : Infinity
@@ -216,6 +228,15 @@ function increaseLimit() {
   dataLimit.value += props.initialDataLimit
   sessionStorage.setItem('subscriptionLimit', dataLimit.value.toFixed(0))
 }
+
+// Switching the profile or the filter pill hands the tab a different feed, so the extra
+// pages loaded into the old one mean nothing: paging starts over. The stored limit goes
+// with them, or opening another tab would restore it. (The view scrolls itself back to the
+// top — that belongs to the page, not to one tab of it.)
+watch(() => store.getters.getFeedViewKey, () => {
+  dataLimit.value = props.initialDataLimit
+  sessionStorage.removeItem('subscriptionLimit')
+})
 
 /**
  * @param {KeyboardEvent} event

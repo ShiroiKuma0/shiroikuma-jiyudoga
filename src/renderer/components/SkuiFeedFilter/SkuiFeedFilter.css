@@ -61,6 +61,12 @@
   font-weight: bold;
 }
 
+/* open in the panel: the strip says which pill the panel is about to rewrite */
+.pillEditing {
+  border-style: dashed;
+  border-color: var(--primary-color);
+}
+
 /* picked up by a long press: raised, and following the finger */
 .pillGrabbed {
   box-shadow: 0 2px 6px var(--primary-shadow-color);
@@ -102,9 +108,10 @@
   line-height: 1.4;
 }
 
+/* 320px is the panel's fixed furniture: title, legend, the upcoming row, count and footer */
 .profileRows {
   overflow-y: auto;
-  max-block-size: calc(90vh - 280px);
+  max-block-size: calc(90vh - 320px);
   min-block-size: 120px;
   padding-block: 4px;
   border-block-start: 1px solid var(--secondary-card-bg-color);
@@ -201,6 +208,18 @@
   color: var(--primary-text-color);
   font-size: 13px;
   font-family: inherit;
+}
+
+/* the rules that are not about a profile, kept out of the scrolling profile list so they
+   stay in sight however long that list is */
+.contentRows {
+  padding-block: 4px;
+  border-block-start: 1px solid var(--secondary-card-bg-color);
+}
+
+/* no profile row to share the line with, so the row takes it whole */
+.contentRows .rowMain {
+  inline-size: 100%;
 }
 
 .panelCount {

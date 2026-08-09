@@ -217,6 +217,14 @@ const useRssFeeds = computed(() => {
 /** @type {import('vue').Ref<'videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community' | null>} */
 const currentTab = ref('videos')
 
+// A profile or a filter pill picked from the top bar replaces the feed under the reader, so
+// the scroll position inside the old one is meaningless — every tab starts at the top of
+// the new feed. Scoped to this view on purpose: the pills are in the top bar everywhere,
+// and applying one while watching a video must not yank that page around.
+watch(() => store.getters.getFeedViewKey, () => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+})
+
 watch(currentTab, (value) => {
   if (value !== null) {
   // Save last used tab, restore when view mounted again

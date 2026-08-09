@@ -10,7 +10,8 @@
         class="pill"
         :class="{
           pillSelected: pill.id === appliedPresetId,
-          pillGrabbed: pill.id === grabbedId
+          pillGrabbed: pill.id === grabbedId,
+          pillEditing: pill.id === editingPillId
         }"
         :title="t('SKUI.Feed filter.Pill hint')"
         dir="auto"
@@ -19,7 +20,7 @@
         @pointerup="endPress($event)"
         @pointercancel="cancelPress"
         @click="applyPill($event, pill)"
-        @contextmenu.prevent
+        @contextmenu.prevent="handleContextMenu(pill)"
       >
         {{ pill.name }}
       </button>
@@ -47,7 +48,7 @@
       @keydown.esc.stop="handlePanelEscape"
     >
       <h3 class="panelTitle">
-        {{ t('SKUI.Feed filter.New filter') }}
+        {{ editingPillId == null ? t('SKUI.Feed filter.New filter') : t('SKUI.Feed filter.Edit filter') }}
       </h3>
       <p class="panelLegend">
         {{ t('SKUI.Feed filter.Legend') }}
@@ -92,6 +93,21 @@
         </div>
       </div>
 
+      <div class="contentRows">
+        <button
+          class="rowMain"
+          :title="t('SKUI.Feed filter.Upcoming hint')"
+          :aria-pressed="filter.hideUpcoming"
+          @click="toggleUpcoming"
+        >
+          <span
+            class="stateChip"
+            :class="{ 'state-exclude': filter.hideUpcoming }"
+          >{{ upcomingGlyph }}</span>
+          <span class="profileName">{{ t('SKUI.Feed filter.Hide upcoming') }}</span>
+        </button>
+      </div>
+
       <div class="panelCount">
         <span class="viewCount">{{ t('SKUI.Feed filter.Channels in view', { count: channelCount }) }}</span>
         <button
@@ -112,7 +128,7 @@
           :placeholder="t('SKUI.Feed filter.Filter name')"
           :aria-label="t('SKUI.Feed filter.Filter name')"
           :maxlength="24"
-          @keydown.enter="createPill"
+          @keydown.enter="savePill"
         >
         <button
           class="footerButton"
@@ -122,10 +138,10 @@
         </button>
         <button
           class="footerButton createButton"
-          :disabled="!canCreate"
-          @click="createPill"
+          :disabled="!canSave"
+          @click="savePill"
         >
-          {{ t('SKUI.Feed filter.Create') }}
+          {{ editingPillId == null ? t('SKUI.Feed filter.Create') : t('SKUI.Feed filter.Save') }}
         </button>
       </div>
     </FtCard>
@@ -152,6 +168,7 @@ import {
   feedFilterFromPreset,
   newPresetId,
   stateForProfile,
+  withHideUpcoming,
   withProfileState
 } from '../../helpers/feedFilter'
 import { debounce, showToast } from '../../helpers/utils'
@@ -172,10 +189,15 @@ import { useProfileLabel } from '../../composables/profileLabel'
  *
  * Gestures on a pill: tap applies, long-press picks it up. Moving while held reorders the
  * strip; letting go without moving deletes the pill, with a tap-to-undo toast, the same
- * bargain the Similar tab's rejections make.
+ * bargain the Similar tab's rejections make. Keeping it held instead — past a second, longer
+ * threshold — opens it in the panel for editing, which is what right-click does with a mouse.
+ * The touch path cannot use `contextmenu`: Android fires that mid-hold and would steal the
+ * drag and the delete from under the finger.
  */
 
 const LONG_PRESS_MS = 500
+/** Held this long without moving, a pill opens for editing instead of waiting to be deleted. */
+const EDIT_PRESS_MS = 1100
 /** Pointer travel that counts as "the finger moved" rather than a press in place. */
 const MOVE_SLOP_PX = 8
 
@@ -188,6 +210,8 @@ const panelShown = ref(false)
 let mouseDownOnIcon = false
 
 const pillName = ref('')
+/** The pill the open panel is editing, or null when the panel is drafting a new one. */
+const editingPillId = ref(null)
 
 /** The filter as it stood when the panel was opened, restored if the draft is abandoned. */
 let filterBeforePanel = null
@@ -200,7 +224,7 @@ const channelCount = computed(() => store.getters.getFeedSubscriptions.length)
 
 const appliedPresetId = computed(() => filter.value.presetId)
 
-const canCreate = computed(() => pillName.value.trim().length > 0 && filterActive.value)
+const canSave = computed(() => pillName.value.trim().length > 0 && filterActive.value)
 
 /** While a pill is held, the strip renders this order instead, so a drag is visible as it happens. */
 const dragOrder = ref(null)
@@ -290,6 +314,13 @@ function setCap(profileId, rawValue) {
   writeFilter(withProfileState(filter.value, profileId, FEED_FILTER_CAP, cap), true)
 }
 
+/** The same two glyphs the profile rows use: − for removed, · for left alone. */
+const upcomingGlyph = computed(() => (filter.value.hideUpcoming ? '−' : '·'))
+
+function toggleUpcoming() {
+  writeFilter(withHideUpcoming(filter.value, !filter.value.hideUpcoming))
+}
+
 function clearRows() {
   writeFilter(emptyFeedFilter())
 }
@@ -347,11 +378,17 @@ function deletePill(pill) {
   })
 }
 
-function createPill() {
-  if (!canCreate.value) { return }
+function savePill() {
+  if (!canSave.value) { return }
 
   const name = pillName.value.trim()
-  const existing = pills.value.find((entry) => entry.name === name)
+
+  // An edit belongs to the pill it was opened from, whatever it is now called; a new draft
+  // reusing an existing name overwrites that pill instead of forking a second one with it
+  const existing = editingPillId.value != null
+    ? pills.value.find((entry) => entry.id === editingPillId.value)
+    : pills.value.find((entry) => entry.name === name)
+
   const presetId = existing?.id ?? newPresetId()
 
   const entry = {
@@ -359,9 +396,11 @@ function createPill() {
     name,
     include: [...filter.value.include],
     exclude: [...filter.value.exclude],
-    caps: { ...filter.value.caps }
+    caps: { ...filter.value.caps },
+    hideUpcoming: filter.value.hideUpcoming
   }
 
+  // rewritten in place, so editing a pill never moves it in the strip
   writePills(existing != null
     ? pills.value.map((pill) => (pill.id === presetId ? entry : pill))
     : [...pills.value, entry])
@@ -369,8 +408,37 @@ function createPill() {
   // the draft becomes the pill, so it stays applied and shows up selected
   writeFilter({ ...filter.value, presetId })
 
-  filterBeforePanel = null
-  panelShown.value = false
+  closePanel()
+}
+
+/**
+ * Opens a saved pill in the panel: it is applied while it is edited, exactly as a new draft
+ * is, so the channel count and the feed below answer for every change before it is saved.
+ * @param {import('../../helpers/feedFilter').FeedFilterPreset} pill
+ */
+function editPill(pill) {
+  filterBeforePanel ??= store.getters.getSkuiFeedFilter
+
+  editingPillId.value = pill.id
+  pillName.value = pill.name
+  panelShown.value = true
+
+  writeFilter(feedFilterFromPreset(pill))
+
+  nextTick(() => {
+    panelRef.value?.$el?.focus()
+  })
+}
+
+/**
+ * @param {import('../../helpers/feedFilter').FeedFilterPreset} pill
+ */
+function handleContextMenu(pill) {
+  // Android raises this in the middle of a hold, where the finger is still choosing between
+  // moving, deleting and editing — there the press timer opens the editor instead
+  if (lastPointerType === 'touch') { return }
+
+  editPill(pill)
 }
 
 // ---- press, drag and drop ------------------------------------------------------------
@@ -378,10 +446,30 @@ function createPill() {
 /** Set once a long press has been dealt with, so the click it produces is ignored. */
 let pressHandled = false
 let pressTimer = null
+let editTimer = null
 let pressStartX = 0
 let pressMoved = false
+/** Which kind of pointer is pressing, so the touch and mouse edit gestures stay apart. */
+let lastPointerType = 'mouse'
 /** @type {import('../../helpers/feedFilter').FeedFilterPreset|null} */
 let pressedPill = null
+
+/** Whatever the hold turns out to be about, it is no longer about editing. */
+function cancelEditTimer() {
+  if (editTimer !== null) {
+    clearTimeout(editTimer)
+    editTimer = null
+  }
+}
+
+function clearPressTimers() {
+  if (pressTimer !== null) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
+
+  cancelEditTimer()
+}
 
 // Once a pill is held, the strip must not scroll under the finger. touchmove has to be
 // cancelled non-passively for that, which no template listener can do.
@@ -394,6 +482,8 @@ function blockScroll(event) {
  * @param {import('../../helpers/feedFilter').FeedFilterPreset} pill
  */
 function startPress(event, pill) {
+  lastPointerType = event.pointerType ?? 'mouse'
+
   if (event.button != null && event.button > 0) { return }
 
   pressedPill = pill
@@ -415,6 +505,19 @@ function startPress(event, pill) {
     }
 
     document.addEventListener('touchmove', blockScroll, { passive: false })
+
+    // still held, still in place: the hold was never about moving or deleting it
+    editTimer = setTimeout(() => {
+      editTimer = null
+
+      const held = pressedPill
+
+      releaseGrab()
+      pressHandled = true
+      pressedPill = null
+
+      if (held != null) { editPill(held) }
+    }, EDIT_PRESS_MS - LONG_PRESS_MS)
   }, LONG_PRESS_MS)
 }
 
@@ -426,6 +529,9 @@ function movePress(event) {
 
   if (Math.abs(event.clientX - pressStartX) > MOVE_SLOP_PX) {
     pressMoved = true
+
+    // the finger is going somewhere, so this hold is a drag and not an edit
+    cancelEditTimer()
 
     // a swipe that started before the hold matured is the strip being scrolled
     if (pressTimer !== null) {
@@ -481,6 +587,9 @@ function reorderTo(clientX) {
 
   dragOrder.value = next
   pressMoved = true
+
+  // a pill that has already been moved is being dragged, however short the travel was
+  cancelEditTimer()
 }
 
 /**
@@ -489,11 +598,12 @@ function reorderTo(clientX) {
 function endPress(event) {
   if (pressTimer !== null) {
     // released before the hold matured: an ordinary tap, handled by the click
-    clearTimeout(pressTimer)
-    pressTimer = null
+    clearPressTimers()
     pressedPill = null
     return
   }
+
+  clearPressTimers()
 
   if (grabbedId.value == null) {
     pressedPill = null
@@ -517,10 +627,7 @@ function endPress(event) {
 }
 
 function cancelPress() {
-  if (pressTimer !== null) {
-    clearTimeout(pressTimer)
-    pressTimer = null
-  }
+  clearPressTimers()
 
   if (grabbedId.value != null) {
     releaseGrab()
@@ -549,7 +656,7 @@ function releaseGrab(event) {
 }
 
 onBeforeUnmount(() => {
-  if (pressTimer !== null) { clearTimeout(pressTimer) }
+  clearPressTimers()
 
   document.removeEventListener('touchmove', blockScroll)
 })
@@ -569,6 +676,7 @@ function togglePanel() {
   // the draft starts from whatever is applied, so a variation of the current view is a
   // couple of taps rather than a rebuild
   filterBeforePanel = store.getters.getSkuiFeedFilter
+  editingPillId.value = null
   pillName.value = ''
   panelShown.value = true
 
@@ -580,9 +688,14 @@ function togglePanel() {
 function cancelPanel() {
   if (filterBeforePanel != null) {
     writeFilterJson(filterBeforePanel)
-    filterBeforePanel = null
   }
 
+  closePanel()
+}
+
+function closePanel() {
+  filterBeforePanel = null
+  editingPillId.value = null
   panelShown.value = false
 }
 
