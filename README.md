@@ -23,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+017`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+018`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
 
 </div>
 
@@ -114,12 +114,21 @@ group but thins it to its N newest videos per channel** — the answer to floodi
 delete the content. With no `+` anywhere the active profile is the base, so `− japan-news`
 alone means "what I have active, minus the news".
 
+The same panel carries one rule that isn't about profiles: **hide upcoming** drops the
+premieres and scheduled streams a channel queues up, which otherwise sit at the top of a
+date-descending feed for days before there is anything to watch. It rides along in the pill,
+and it runs before the caps, so a capped channel spends its N on videos that actually play.
+
 Name it and it becomes a pill. **Tap** to apply it (it fills with the accent colour, so which
 view you're in is never a guess), tap again to leave. **Hold** to pick a pill up: move it
 sideways to reorder the strip, let go without moving to delete it — with a tap-to-undo toast.
-The strip scrolls when the pills outgrow the bar, and picking any profile clears the filter.
-It applies to the feed alone: subscribing, starring and Similar tuning always land in the
-active profile, never in whatever you happen to be looking at.
+**Keep holding** — or right-click, on the desktop — and the pill opens for **editing**: it is
+applied while you rework it, so the channel count and the feed below answer for every change
+before you save it back over the same pill. Switching pill or profile puts the feed back at
+the top, rather than stranding you in page four of a feed that no longer exists. The strip
+scrolls when the pills outgrow the bar, and picking any profile clears the filter. It applies
+to the feed alone: subscribing, starring and Similar tuning always land in the active profile,
+never in whatever you happen to be looking at.
 
 The "All Channels" bubble also stops reading `A`: it's whatever you set — `全` out of the box.
 
