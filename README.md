@@ -23,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+018`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases)
+**📥 Latest release: [`0.25.1.1.2026-08-10.g3b675980.2026-08-06.g4623e4a6+019`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -210,7 +210,7 @@ new fork builds — never a stale upstream version.
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
 - Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+014`.
+  `0.25.1.1.2026-08-10.g3b675980.2026-08-06.g4623e4a6+019`.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth

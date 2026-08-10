@@ -1,0 +1,313 @@
+# Changelog
+
+This file carries **both** histories: 白い熊 自由動画's own releases, and — beneath them, whenever
+either upstream starts shipping one — the upstream changelog, untouched. Neither
+[FreeTube](https://github.com/FreeTubeApp/FreeTube) nor
+[FreeTubeAndroid](https://github.com/MarmadileManteater/FreeTubeAndroid) keeps a `CHANGELOG.md` in
+its tree today (their history lives in their GitHub releases), so for now the fork's history is the
+whole file. Our block always stays at the very top, so an upstream file arriving later inserts
+below it and merges cleanly.
+
+Entries are **per-release deltas** — only the first fork release, `0.25.1+7`, lists everything the
+fork adds to stock. Each entry names the two upstream commits the build sits on; releases up to
+`0.25.1.1+001` predate the base pins, and those up to `0.25.1+37` predate the zero-padded counter.
+Both are left exactly as published.
+
+---
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-10.g3b675980.2026-08-06.g4623e4a6+019` — 2026-08-10
+
+Built on FreeTube `3b675980` (2026-08-10) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+A **pure upstream-sync release** — no fork work, and no patch needed re-porting.
+
+- **Opening a playlist from a user playlist no longer loads the view twice** (FreeTube #9525). The
+  route watcher resets the view state before the debounced fetch, and the three
+  `selectedUserPlaylist` watchers are gated behind `isUserPlaylistRequested`, so user-playlist store
+  churn stops re-firing `getPlaylistInfo` for a remote playlist. The flicker goes with it.
+- **Translations**: English (United Kingdom) back to 100 % (987 strings — the always-on viewing
+  modes, the settings-file import/export block, "Move Video to the Top/Bottom", "Loading replies"),
+  and Bulgarian now names itself `Български` in the language picker. Both files are ones this fork
+  rebrands; the incoming lines sit elsewhere in each, so all 25 白い熊 自由動画 strings survived
+  untouched on both sides.
+- FreeTubeAndroid did not move, so its pin holds at `2026-08-06.g4623e4a6`. Neither upstream
+  released, so `FORK_VERSION` stays `0.25.1.1` and the counter continues. Android `versionCode`
+  `25011019`.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+018` — 2026-08-09
+
+Built on FreeTube `6bd8b322` (2026-08-08) + FreeTubeAndroid `4623e4a6` (2026-08-06) — unchanged
+since `+014`, so this is fork work only.
+
+- **Hide upcoming**, a feed-filter rule that is not about profiles: premieres and scheduled streams
+  can be thinned out of the feed, saved into a pill like every other rule. It filters videos rather
+  than channels, so applying it never refetches the feed or disturbs the Similar tab's seeds, and it
+  runs before the per-channel caps so a capped group spends its slots on videos that actually play.
+  Upcoming means the backend's `isUpcoming`/premiere flag **plus** a premiere date still in the
+  future — the date alone would wrongly hide videos Invidious still stamps with an old
+  `premiereTimestamp`.
+- **Editing a saved pill**: right-click on the desktop, or keep holding past the delete window on
+  Android, opens it in the panel prefilled and outlined dashed; the edit applies live and saving
+  rewrites the pill in place, keeping its position and staying applied. Touch deliberately avoids
+  `contextmenu` (Android raises it mid-hold, where it would steal the drag and the delete) and uses
+  a second press timer instead.
+- **A new view starts at the top**: switching profile or pill returns the Subscriptions view to the
+  top and drops the extra pages it had loaded. Scoped to that view, so applying a pill while
+  watching a video does not yank the page around.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+017` — 2026-08-08
+
+Built on FreeTube `6bd8b322` (2026-08-08) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+
+- **Feed filter pills** — set algebra over the profiles, saved as named pills in the top bar. Each
+  profile cycles **neutral → + → − → cap N**: `+` contributes its channels, `−` removes them, and
+  `cap N` keeps a flooding group in the feed at its N newest videos per channel (composing with
+  "only show latest from channel" — the tighter limit wins). A cap implies inclusion, membership
+  grants no exemption from a cap, and where two capped groups share a channel the more permissive
+  cap wins. Tap to apply, hold to drag-reorder, hold and release to delete with tap-to-undo. The
+  panel edits a live draft with a mandatory name, so what is applied is always either nothing or
+  exactly one named pill — never an invisible filter. It is a **view mask, not a profile**: only the
+  Subscriptions feed tabs and the Similar tab's seeds read it, so subscribing, starring and the
+  channel lists never depend on what is being viewed.
+- **全 — a settable name for the "All Channels" bubble**, applied everywhere the profile is shown.
+- **Publication dates on a channel's Shorts tab**, which neither backend provides directly.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-08.g6bd8b322.2026-08-06.g4623e4a6+014` — 2026-08-08
+
+Built on FreeTube `6bd8b322` (2026-08-08) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+
+- **The Similar tab now takes correction.** Two always-visible buttons on every tile (no hover gate,
+  so they work on the phone): **⊘ never show this channel here** and **👎 fewer videos like this**.
+  "Fewer like this" hides the video, learns the words its title was phrased with, and blames the
+  seed that produced it — seeds only when provenance is narrow (at most two seed channels), and a
+  seed retires after three rejections. Learning is conservative: CJK bigrams plus Latin words (so
+  Japanese needs no tokeniser), and a candidate hides only on two matching terms with combined
+  weight three.
+- **Ranking by agreement**: candidates keep their seeds and how many distinct seeds agreed on them,
+  and the tab ranks by that first, date second, with a minimum-agreement threshold and a plain
+  newest-first mode available.
+- **Provenance on every tile** — a "Because of `<channel>`" line, plus "Stop basing suggestions on
+  `<channel>`" in the ⋮ menu.
+- **Starred videos now seed**, up to six of the twenty — the profile's only explicit "more of this".
+- Everything is **undoable** from its toast, scoped **per profile** (All Channels read alongside),
+  and **reviewable** in a new *Similar tab* section of the UI settings page.
+- **Export / import now really carries everything.**
+- Upstream sync: FreeTube `f70dac7a` → `6bd8b322`.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-06.gf70dac7a.2026-08-06.g4623e4a6+011` — 2026-08-06
+
+Built on FreeTube `f70dac7a` (2026-08-06) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+A **pure upstream-sync release**, and unlike `+010` not Android-only — both fixes are
+renderer-side, so the `.deb` and the APK each gain them.
+
+- **Tag inputs no longer duplicate a tag** when click or Enter is spammed: `FtInputTags` awaited its
+  async add without guarding re-entry, so a fast second press re-ran the handler before the list had
+  updated. An `isUpdating` ref gates it and disables the input, released in a `finally` so a failed
+  add cannot wedge the field (FreeTube #9511).
+- **Playlists holding only some of the videos being copied are selectable again**: the predicate is
+  split, so only playlists already holding **every** video are disabled (FreeTube #9560).
+- Welsh, Chinese (Traditional), Russian, Slovak and Basque translation updates. Two touched lines
+  this fork rebrands and were resolved to keep 白い熊 自由動画 while taking upstream's improvement —
+  Slovak's real translation of *Popout Live Chat*, and zh-TW's CJK/Latin spacing.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-03.gf6991367.2026-08-03.gc5f69328+010` — 2026-08-04
+
+Built on FreeTube `f6991367` (2026-08-03) + FreeTubeAndroid `c5f69328` (2026-08-03). Android-only.
+
+- **The launcher icon draws at 85.5 % of its former size** — it sat noticeably larger than its
+  neighbours. Both adaptive-icon layers (`<foreground>` and `<monochrome>`) wrap the artwork in an
+  `<inset>` of 7.25 % per side inside the same 108 dp canvas. The vector
+  `drawable/ic_launcher_foreground.xml` is deliberately untouched, because `values-night-v31` and
+  `values-night-v33` reuse it as `windowSplashScreenAnimatedIcon` — scaling its paths would have
+  shrunk the Android 12+ splash icon too.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-03.gf6991367.2026-08-03.gc5f69328+008` — 2026-08-03
+
+Built on FreeTube `f6991367` (2026-08-03) + FreeTubeAndroid `c5f69328` (2026-08-03).
+A **pure upstream-sync build** — both upstreams moved, nothing in the fork's own layer changed, and
+both merges applied without a conflict.
+
+- **The BotGuard WebView starts with a cold cache** (FreeTubeAndroid `c5f69328`): it clears its
+  cache in its `init` block, so every PO-token generation begins clean instead of inheriting stale
+  BotGuard assets that yield a token YouTube rejects. Not free — `WebView.clearCache()` is
+  documented as per-application, so the main WebView's resource cache is dropped with it and
+  thumbnails and API responses are re-fetched more often. Android-only; desktop is untouched.
+- FreeTube contributed two Weblate commits (Azerbaijani 49.8 % → 50.7 %), no code.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+007` — 2026-08-03
+
+Built on FreeTube `dc7c4e2e` (2026-08-02) + FreeTubeAndroid `fea7a050` (2026-07-30). Neither
+upstream moved; fork work only.
+
+- **Running in the background is now opt-in, and off by default.** The Android layer started its
+  keep-alive **foreground service** unconditionally from `MainActivity.onCreate`, holding it (and
+  its mandatory notification) from first launch with no way to stop it — inherited upstream
+  behaviour. It is now a switch in Settings › General that starts and stops the service
+  immediately. The flag lives in its own `SharedPreferences` file, because `onCreate` must answer
+  "start it?" long before the WebView and the nedb settings database have loaded. Trade-off, stated
+  in the tooltip: that service is what stopped Android killing the backgrounded app, so playback
+  after leaving the app may now be cut short. The media-controls notification is separate.
+- **The notification says which app it belongs to** — it read "FreeTube is running in the
+  background.", the last user-visible `FreeTube` string in the app. It now interpolates `app_name`
+  from string resources, so it cannot drift from the launcher label; its channel is
+  「バックグラウンド実行」.
+- **Fixed: the Show Tap Highlight row printed its own key** — the Android-only toggle asked for
+  `General Settings.Show Tap Highlight`, one level above where its neighbours live and undefined in
+  every locale. Repointed and defined in `en-US` and `ja`.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+005` — 2026-08-02
+
+Built on FreeTube `dc7c4e2e` (2026-08-02, up from `435ac348`) + FreeTubeAndroid `fea7a050`
+(2026-07-30).
+
+- **Fixed: every release looked like an update.** `+003` and `+004` showed a permanent "Version … is
+  now available!" banner advertising a release *older* than the one running. The update check
+  splits on `.`/`+`/`-` and compares segments positionally — and the version compiled into the app
+  lacked the pins, because the commit that introduced them taught the three artifact build entry
+  points and missed the module feeding `process.env.FORK_VERSION` into the webpack bundles. So the
+  pin's **year** was compared against the **build counter** (`2026 > 4`) and the comparison returned
+  "newer" every time, in perpetuity, for any published release. The version string is now computed
+  in one place for both the bundles and the `.deb`, so the pins sort ahead of the counter: newer
+  upstream wins with a lower counter, older loses with a higher one. Side effect: the About page
+  matches the artifact filenames again.
+- FreeTube brought Azerbaijani translation updates only.
+
+## 白い熊 自由動画 `0.25.1.1.2026-08-02.g435ac348.2026-07-30.gfea7a050+003` — 2026-08-02
+
+Built on FreeTube `435ac348` (2026-08-02) + FreeTubeAndroid `fea7a050` (2026-07-30).
+
+- **The version now names both upstream base commits.** Both upstreams are tracked by branch, not by
+  release, so no version literal said which commit a build contained — FreeTube's `0.25.1` stands
+  still across hundreds of development commits. The versionName carries one **base pin** per
+  upstream, `.<base commit date>.g<8-char sha>` from `git merge-base HEAD <ref>`, FreeTube first.
+  The date is the base commit's own committer date, never build time, so builds on one base share a
+  pin and names still sort chronologically. Pins are recomputed from git by every build entry point
+  and never stored, degrading independently (no date → `.g<sha>`, no ref → that pin dropped, no git
+  → none), so a build never fails over a missing sha. `versionCode` is untouched.
+- **A shared-history guard** suppresses the FreeTubeAndroid pin while its merge-base is an ancestor
+  of `master`: their `development` merges FreeTube's into itself, so before their branch is merged
+  the newest shared commit is a *FreeTube* one, and pinning it would name the wrong upstream.
+- **Upstream tracking switched to FreeTubeAndroid's `development`** branch, where their current work
+  lands, instead of `release`.
+
+## 白い熊 自由動画 `0.25.1.1+001` — 2026-08-02
+
+- **A versioning release: no functional change.** The same code as `0.25.1+039`, rebuilt and
+  republished under a version that says what it contains — `FORK_VERSION` adopts FreeTubeAndroid's
+  `0.25.1.1` release tag, the higher of the two upstreams' versions, so the updater sees no phantom
+  update. The counter resets to `001`, and the `versionCode` respin digit keeps the code rising
+  across that reset.
+
+## 白い熊 自由動画 `0.25.1+039` — 2026-08-01
+
+- **A dual-upstream sync release**: 72 FreeTube `development` commits, plus FreeTubeAndroid's
+  `0.25.1.1` — their **Kotlin refactor** of the Android wrapper — merged and adapted to the current
+  FreeTube, keeping the desktop Electron build alive alongside it.
+- Packaging work to match.
+
+## 白い熊 自由動画 `0.25.1+37` — 2026-07-30
+
+- **The 保存復元 backup contract gains two things**: every category now states whether it starts
+  ticked (`id⇥label⇥parent⇥on|off`) instead of leaving the picker to assume, and an export can be
+  **cancelled for real** — a token-gated `CANCEL_EXPORT` raises a volatile flag the write loop
+  checks between entries, and the half-written archive is deleted on every non-success path.
+
+## 白い熊 自由動画 `0.25.1+36` — 2026-07-30
+
+- **A channel's tab survives Back.** Watching a video from a channel's Shorts tab and pressing Back
+  dropped you on the channel's *first* tab — Home, or Videos where there is no home data — and the
+  same went for Live, Playlists and Posts. The selected tab now lives in the history entry itself,
+  so Back returns exactly where you left.
+
+## 白い熊 自由動画 `0.25.1+35` — 2026-07-26
+
+- **A video download button** on the watch page, writing a Matroska file with YouTube's **chapters
+  embedded** as a real `Chapters` element ahead of the first cluster (every shifted byte offset
+  corrected), so mpv, VLC and mpvEx list and seek them. Filenames come from an editable `yt-dlp`
+  style template with a live preview, into a folder asked for once.
+
+## 白い熊 自由動画 `0.25.1+34` — 2026-07-25
+
+- **The UI settings page gets the futokxkb page look**: thin full-width accent hairlines between
+  sections, headings underlined to the text width, a 1 / 1.5 / 2 / 2.5 em indent ladder.
+- **Export / Import** as its first section: a SAF backup folder, the newest backup queried on open,
+  a category checklist (`settings` as a parent over ten slices, plus profiles, playlists, history
+  and search history) and an ArcaneChat-style action row. The core is **Kotlin, not JS** — it folds
+  the append-only nedb `.db` files into one timestamped zip (`manifest.json` + `<category-id>.json`),
+  so the export works headlessly with no Activity; the panel is a thin client of the same core.
+  Import appends nedb lines (upsert per `_id`) and asks for a restart. `subscription-cache` is
+  deliberately not exportable.
+- **The 保存復元 automation contract** so a sister automation app can trigger that backup
+  unattended: token-gated `EXPORT_STATE` / `LIST_CATEGORIES` broadcasts, with the token and backup
+  folder in their own prefs file, never in the zip.
+- **A long press on the hamburger** opens the UI settings page directly; **black system bars**.
+
+## 白い熊 自由動画 `0.25.1+29` — 2026-07-25
+
+- **Starring works again on every profile** — it silently died after the first starred video.
+- **The launch splash is black** instead of grey, on both the light and the dark system theme.
+
+## 白い熊 自由動画 `0.25.1+27` — 2026-07-22
+
+- **The language-study export**: one tap turns a video into a subtitled `.mkv` and opens it in the
+  study player — shiroikuma-jisho on Android (SAF folder + explicit intent), shiroikuma-yosuga on
+  the desktop (folder asked once through the main process, then spawned on the file). The subtitle
+  engine builds study SRTs from the caption track's own timing (`fmt=json3` word timing, `fmt=srt`
+  fallback) on an **ASR-skeleton** architecture: native cue timing is never repositioned, while a
+  verbatim transcript in the description is DP-aligned and text-spliced per cue over its covered
+  region, so homophone-kanji errors are corrected (陰安 → 円安) and nothing spoken is dropped. Cues
+  split at 。！？「」・ with times interpolated from real token timestamps, gap extension is
+  speech-rate-capped so music and silence stay bare, `[音楽]`-style tags are filtered, and the
+  output is one `<date> <title>.mkv` — the progressive stream remuxed without re-encoding through a
+  patched `mediabunny` at mkvmerge parity — carrying an `aligned` and an `asr` track.
+- **Android local-API repairs**: n/sig evaluation and poToken.
+- **Grid tuning sliders** next to the Subscriptions heading — thumbnail width, title font size,
+  title max lines (the bases the zoom multiplies) — plus a Profile Select row-padding slider.
+- **Theatre mode on Android**, pinned into the player's bottom row in the compact layout and applied
+  at every viewport width (upstream gated it at ≥1051 px, so it silently no-opped on the scaled
+  WebView viewport).
+
+## 白い熊 自由動画 `0.25.1+9` — 2026-07-22
+
+- **The Similar tab** — per-profile channel discovery: a date-descending feed of watch-next
+  recommendations from channels the profile does not follow, seeded from the newest ~20 cached
+  subscription videos (max 2 per channel, so seeds cost no extra requests), fetched 6-way
+  concurrently, session-cached per seed and per profile, deduplicated and filtered of subscribed
+  channels. Local API through a next-endpoint-only helper (no player setup, no poToken) with
+  Invidious fallback.
+- **Starred videos + the Starred tab**: a ☆/★ toggle on the watch page, per profile, mirroring
+  subscription semantics (star → active profile **and** All Channels; unstar in All Channels removes
+  everywhere). Stored on the profile documents, so it rides along with profile export and sync. Gold
+  badge bottom-left on every tile; the tab lists videos and shorts together, newest-starred first.
+- **Original-language video descriptions**: the same next-endpoint machinery auto-translates
+  descriptions. When the player title and the next-endpoint title differ — the reliable signal that
+  translation is active — the watch page shows the untranslated player description instead, still
+  autolinked. Local API path only.
+
+## 白い熊 自由動画 `0.25.1+7` — 2026-07-21
+
+The first fork release: FreeTube `0.25.1` (development tip) with the FreeTubeAndroid `0.24.1.1`
+Android layer grafted on, both artifacts built from one repo.
+
+- **Original-language video titles.** YouTube auto-translates titles server-side by request
+  language with no opt-out. Every visible tile — search, subscriptions, channel pages, playlists,
+  trending, recommendations, community posts — resolves its untranslated title through oEmbed
+  (session-cached, max 6 concurrent, fetched only for tiles that become visible, silent fallback for
+  deleted/private/no-embed videos), and the watch page prefers the player response's
+  `basic_info.title` over the auto-translated `next`-endpoint title. The Invidious watch path is
+  restored the same way. Side effect: history and playlist entries save original titles.
+- **Live grid zoom.** `Ctrl` + wheel on the desktop (Chromium reports laptop-touchpad pinch as a
+  Ctrl-wheel, so pinch works too) and two-finger pinch on Android, applied live during the gesture.
+  One 0.4×–3× scale drives tile minimum width, title and info line, with the column count reflowing;
+  persisted per device with a debounced write, and ignored over the player, which keeps Ctrl-wheel
+  for playback rate.
+- **The 白い熊 自由動画 UI settings layer (skui)** as the first Settings section, in the sister-repo
+  ThemeActivity style: Section → Group → Slot over Foundation, Typography, Top bar, Side nav, Cards
+  & links, Shape & lines. Defaults inherit from the foundation colours (background `#000000`,
+  text/accent/border `#FFFF00`) — secondary text = text @ 60 %, hover = text @ 12 % — and only
+  explicit overrides persist, each with a reset and an overridden marker. Colour rows carry four
+  RGBA sliders over a checkerboard, an old/new preview pair and app-wide recent-colour boxes; fonts
+  can be imported as external `.ttf`/`.otf` and render in their own glyphs (Android gained a
+  `readFileBase64` JS-interface method so binary fonts survive the transfer); border, roundness and
+  divider sliders go down to 0. Everything previews live and persists on release.
+- **Dual-artifact packaging**: a GNU/Linux amd64 `.deb` and a signed Android arm64-v8a APK from one
+  repo, at one version, with the app id `shiroikuma.jiyudoga` so it installs side-by-side.
