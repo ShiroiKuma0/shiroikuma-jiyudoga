@@ -15,6 +15,27 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.1.1.2026-08-11.g1cec704e.2026-08-06.g4623e4a6+021` — 2026-08-11
+
+Built on FreeTube `1cec704e` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+A **pure upstream-sync release** — no fork work, and no patch needed re-porting. It carries the two
+FreeTube syncs made since `+019`, because the `+020` build was never published.
+
+- **Quiz posts whose options wrap no longer stretch the radio circle** (FreeTube #9609). The marker
+  is barred from shrinking as a flex child, so an option running to a second line leaves it round
+  instead of squashing it into an ellipse; two now-unused classes leave `FtCommunityPoll`'s CSS
+  with it.
+- **Runtime dependencies**: Electron `43.2.0` → `43.3.0` (#9613) and Vue `3.5.40` → `3.5.41`
+  (#9614), both patch-level. The Electron bump reaches the `.deb` alone — the Android build is a
+  native WebView wrapper, not an Electron one. swiper `14.0.7` → `14.1.0` (#9615) rides along,
+  unused by our layer.
+- **Build tooling only**, with no runtime effect: terser `5.49.1` → `5.49.2` (#9616), postcss
+  `8.5.25` → `8.5.26` (#9612), eslint `10.8.0` → `10.8.1` with eslint-plugin-yml `3.8.0` → `3.8.1`
+  (#9611), and `globals` joining upstream's eslint dependabot group (#9610).
+- FreeTubeAndroid did not move, so its pin holds at `2026-08-06.g4623e4a6`. Neither upstream
+  released, so `FORK_VERSION` stays `0.25.1.1` and the counter continues. Android `versionCode`
+  `25011021`.
+
 ## 白い熊 自由動画 `0.25.1.1.2026-08-10.g3b675980.2026-08-06.g4623e4a6+019` — 2026-08-10
 
 Built on FreeTube `3b675980` (2026-08-10) + FreeTubeAndroid `4623e4a6` (2026-08-06).
