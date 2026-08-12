@@ -45,9 +45,13 @@ export async function getUpdateInfo() {
   try {
     const isNightly = packageDetails.version.indexOf('nightly') !== -1
 
+    // A PAGE of releases, not `per_page=1`: GitHub's release list is documented as reverse
+    // chronological but does not reliably deliver that — on 2026-08-12 this repo's list put
+    // the `+006` release ahead of both `+009` and `+008`, so `[0]` offered a stale build as
+    // an update. We pick the newest ourselves with versionNumberGt below.
     const updateUrl = isNightly
       ? `https://api.github.com/repos/${REPO_ID}/actions/runs`
-      : `https://api.github.com/repos/${REPO_ID}/releases?per_page=1`
+      : `https://api.github.com/repos/${REPO_ID}/releases?per_page=10`
 
     const response = await fetch(updateUrl)
     const updatesJSON = await response.json()
@@ -59,7 +63,16 @@ export async function getUpdateInfo() {
     let changelogBody
 
     if (!isNightly) {
-      const latestRelease = updatesJSON[0]
+      const latestRelease = updatesJSON
+        .filter(release => !release.draft && !release.prerelease)
+        .reduce((newest, release) => {
+          return newest === null || versionNumberGt(release.tag_name, newest.tag_name) ? release : newest
+        }, null)
+
+      if (latestRelease === null) {
+        return { updateAvailable: false }
+      }
+
       const tagName = latestRelease.tag_name
       currentVersion = process.env.FORK_VERSION || packageDetails.version
       latestVersion = tagName

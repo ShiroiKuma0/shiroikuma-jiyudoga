@@ -9,13 +9,15 @@ const { execFileSync } = require('child_process')
 // the version displayed inside the app is always exactly the one in the APK's versionName and the
 // artifact filenames.
 //
-// The upstream-base pins MUST be part of this string. The in-app updater compares the running
-// version against the newest GitHub release tag with `versionNumberGt`, which aligns dotted
-// segments POSITIONALLY — so a pin-less local version compares its build counter against the
-// tag's pin YEAR (`4` vs `2026`) and every published release looks newer forever. That was the
-// false "update available" banner seen on 0.25.1.1+004 (2026-08-02): c433e0d88 added the pins to
-// build-fork.sh, build-fork-deb.mjs and build.gradle.kts but not here, so the bundles kept
-// reporting the bare `0.25.1.1+004`. Both sides of that comparison must carry the same shape.
+// The upstream-base pins are part of this string so the bundles report exactly the versionName in
+// the APK and the artifact filenames (the top bar shows it). They are NOT ordering material: the
+// in-app updater compares only FORK_VERSION and the build counter, and `versionNumberGt`
+// (src/renderer/helpers/android/utils.js) strips the pins from BOTH sides before comparing. It
+// has to — pins are not monotonic. The old comparison aligned every dot/plus/dash segment
+// POSITIONALLY, which read a pin year against a build counter (`2026` vs `4`, every release newer
+// forever — the false banner on 0.25.1.1+004, 2026-08-02) and then, once both sides were pinned,
+// let the stale +006 release outrank the running +010 because switching these timestamps to UTC
+// had moved that same commit's pin date BACKWARDS from 2026-08-12 to 2026-08-11 (2026-08-12).
 const forkProperties = readFileSync(path.join(__dirname, '../fork.properties'), 'utf8')
 const buildNumber = /^BUILD_NUMBER=(\d+)$/m.exec(forkProperties)[1]
 const baseVersion = /^FORK_VERSION=(.+)$/m.exec(forkProperties)[1].trim()

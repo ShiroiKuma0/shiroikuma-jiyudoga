@@ -93,18 +93,44 @@ export function reverseObject(object) {
   )
 }
 
-export function versionNumberGt(versionA, versionB) {
-  // Compare dotted (and `+build`-suffixed) version numbers numerically,
-  // segment by segment; missing segments count as 0. `0.24.1.1` must NOT
-  // beat `0.25.1` just because it has more segments.
-  const partsA = `${versionA}`.split(/[.+-]/).map(part => parseInt(part) || 0)
-  const partsB = `${versionB}`.split(/[.+-]/).map(part => parseInt(part) || 0)
-  const length = Math.max(partsA.length, partsB.length)
-  for (let i = 0; i < length; i++) {
-    const a = partsA[i] ?? 0
-    const b = partsB[i] ?? 0
-    if (a > b) { return true }
-    if (a < b) { return false }
+// Split a fork versionName — `<FORK_VERSION>[+<pin>][+<pin>]+<NNN>`, e.g.
+// `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+009` — into the only two
+// fields that ORDER builds: FORK_VERSION and the build counter. Everything between them is
+// upstream-base pins, which merely IDENTIFY the commits our layer sits on.
+function forkVersionOrder(version) {
+  const text = `${version}`.trim().replace(/^v/, '')
+    // Cut the pins out first — a released tag may carry either shape, since tags published
+    // before 2026-08-12 joined their pins with dots (`0.25.2.2026-08-12.g86401956…`) rather
+    // than opening each with `+`, and a pin whose timestamp was unavailable degrades to a
+    // bare `g<sha>`. Left in, a dot-joined pin's YEAR reads as a fourth version component.
+    .replaceAll(/[.+](?:\d{4}-\d{2}-\d{2}(?:\.\d{2}-\d{2})?\.)?g[0-9a-f]{7,}/g, '')
+  // the leading dotted numeric run is FORK_VERSION (maj.min.patch[.respin]); the counter is
+  // the trailing all-digit `+` group, and resets to 1 on every FORK_VERSION change, so it
+  // only ever breaks a tie between equal FORK_VERSIONs
+  const base = /^\d+(?:\.\d+)*/.exec(text)
+  const counter = /\+(\d+)$/.exec(text)
+  return {
+    version: base ? base[0].split('.').map(Number) : [],
+    counter: counter ? parseInt(counter[1], 10) : 0
   }
-  return false
+}
+
+export function versionNumberGt(versionA, versionB) {
+  // The pins must NEVER be compared. They are not monotonic: their shape has changed
+  // (dot-joined -> `+`-grouped, bare date -> date + HH-MM) and a pin can move BACKWARDS for
+  // the same commit — rendering both timestamps in UTC on 2026-08-12 turned `2026-08-12`
+  // into `2026-08-11`. The old comparison aligned every dot/plus/dash segment positionally,
+  // so it read a pin year against a build counter (every release newer forever, seen on
+  // 0.25.1.1+004, 2026-08-02) and, once both sides carried pins, let the stale `+006`
+  // release beat the running `+010` on that reversed pin date alone (2026-08-12).
+  const a = forkVersionOrder(versionA)
+  const b = forkVersionOrder(versionB)
+  // missing segments count as 0, so `0.24.1.1` does not beat `0.25.1` by having more of them
+  const length = Math.max(a.version.length, b.version.length)
+  for (let i = 0; i < length; i++) {
+    const segmentA = a.version[i] ?? 0
+    const segmentB = b.version[i] ?? 0
+    if (segmentA !== segmentB) { return segmentA > segmentB }
+  }
+  return a.counter > b.counter
 }
