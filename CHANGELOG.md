@@ -15,6 +15,66 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006` — 2026-08-12
+
+Built on FreeTube `86401956` (2026-08-12) + FreeTubeAndroid `4623e4a6` (2026-08-06).
+FreeTube's `0.25.2` hotfix reworks how a video is started, and that one change broke playback on
+Android outright and quietly turned the phone into a cookie-bearing client. Both are fixed here,
+along with a third fault the rework merely exposed.
+
+- **No YouTube tracking cookies on Android.** Since FreeTube's #9607 the local API fetches
+  `youtube.com/watch` itself, and YouTube answers with **six `Set-Cookie` headers** —
+  `VISITOR_INFO1_LIVE`, `__Secure-YENID`, `__Secure-YEC`, `VISITOR_PRIVACY_METADATA`, `YSC`, two
+  of them expiring in 2027. Upstream deletes them in Electron's `onHeadersReceived`, which has no
+  Android counterpart, so on the phone they were stored in the WebView jar and replayed on every
+  later request. Every WebView the app creates now refuses cookies outright — `setAcceptCookie`
+  blocks sending as well as accepting — third-party cookies are blocked per WebView, and whatever
+  earlier builds persisted is purged once at launch. Nothing in the app logs in or reads
+  `document.cookie`, so nothing is given up. Confirmed on-device, not inferred: `acceptCookie=false`
+  and an empty jar across a session with working playback, against a request proven to carry all
+  six headers.
+- **Playback no longer hangs on the loading spinner.** BotGuard's fetch shim appends its
+  interpreter `<script>` to `document.body`, but that document is two inline `<script>`s, so the
+  shim runs while the parser is still inside `<head>` and `document.body` is `null`. It had always
+  been wrong and never mattered: BotGuard used to fetch its challenge from `/att/get` first, and
+  that round trip gave parsing time to reach `<body>`. #9607 passes the challenge in as an argument
+  instead, so the fetch now lands immediately and throws. The script is appended to a node that
+  exists, and its `load` listener is attached **before** the append, so a cached script can no
+  longer fire the event with nothing listening — the same class of silent hang.
+- **A failed poToken degrades instead of hanging.** BotGuard only ever reports success, so when its
+  script died the Kotlin promise had no way to settle and the awaiting watch page waited for ever —
+  an error that presented as an endless spinner rather than a message. It now times out after 15 s
+  and rejects, which the caller already handles by playing untokenised.
+- **YouTube serves the desktop client again.** YouTube picks what it serves from the user agent,
+  and the stock WebView agent says `Mobile`, so `youtube.com/watch` returned the **MWEB** page.
+  Harmless until #9607 built the whole Innertube session out of that page's `ytcfg` — leaving the
+  session `MWEB` while the player, the poToken flow and the rest of upstream assume `WEB`. The main
+  WebView now presents a desktop agent built around its **own** Chromium version, so it stays
+  truthful about the engine and ages with the system WebView. The BotGuard WebView deliberately
+  keeps the stock agent: claiming desktop Linux from inside an Android WebView is precisely the
+  inconsistency it fingerprints for.
+- **Adapted our Android poToken path to the new BotGuard contract.** `botGuardScript` grew from
+  `(videoId, context)` to `(videoId, context, initialAttestationData, ytConfig)`; the widening runs
+  the whole length of the chain — `local.js`, `potokens.js`, the `@JavascriptInterface` and the
+  runtime script-baking in `FreeTubeJavaScriptInterface.kt`. The branch also had to be re-plumbed
+  off the `webInnertube` session the rework deletes, onto the HTML-derived session and the
+  standalone player.
+- **From upstream** (FreeTube `0.25.2`, a hotfix for the `Reloading player according to SABR
+  request` errors): the poToken challenge and `ytcfg` are now read out of the watch-page HTML, with
+  `/player` and `/next` taken from it too when present (#9607, with `bgutils-js` `4.0.2` → `4.0.3`);
+  the fabricated session sets a screen width rather than a time zone (#9627); **Disable channel
+  links** now also covers the subscription avatars in the side nav and on Subscribed Channels
+  (#9395); Norwegian Bokmål translations. Our long-press-Settings deep link and upstream's new
+  channel-link guard now sit side by side in `SideNav.vue`.
+- **Housekeeping**: `runDecipherScript` no longer wraps an async Promise executor — the repo's own
+  pre-commit `eslint` gate rejected the file as soon as this sync touched it — and its timeout is
+  cleared on both paths instead of leaking.
+- FreeTube released `0.25.2`, which outranks FreeTubeAndroid's `0.25.1.1` respin, so `FORK_VERSION`
+  becomes `0.25.2` and the counter resets to `1`; this is the sixth build at that version. The
+  respin component drops without a phantom downgrade — `0.25.2` sorts above `0.25.1.1` for `dpkg`
+  and the `versionCode` rises across the reset all the same (`25011021` → `25020006`).
+  FreeTubeAndroid did not move, so its pin holds at `2026-08-06.g4623e4a6`.
+
 ## 白い熊 自由動画 `0.25.1.1.2026-08-11.g1cec704e.2026-08-06.g4623e4a6+021` — 2026-08-11
 
 Built on FreeTube `1cec704e` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06).

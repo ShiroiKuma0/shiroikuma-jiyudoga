@@ -23,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.1.1.2026-08-11.g1cec704e.2026-08-06.g4623e4a6+021`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -192,6 +192,18 @@ leave it, keep it on and playback survives being backgrounded at the cost of the
 notification and of Android never letting the app doze. Flipping the switch starts or stops
 the service immediately, so the notification comes and goes with it.
 
+## 🍪 No YouTube tracking cookies on Android
+
+FreeTube reads the YouTube watch page directly to start a video, and YouTube answers that
+single request with six `Set-Cookie` headers — `VISITOR_INFO1_LIVE`, `__Secure-YENID` and
+friends, two of them dated years out. The desktop app throws them away in Electron's
+response hook; the Android layer had no equivalent, so on a phone they were kept and
+replayed on every request afterwards, which is exactly the tracking identity a private
+client exists to avoid. Here every WebView refuses cookies outright — sending as well as
+storing — and anything an older build left behind is purged at launch. Nothing in the app
+logs in or reads a cookie, so nothing is lost. Verified on-device rather than assumed: an
+empty jar after a session of real playback.
+
 ## 🔄 Own update channel
 
 The built-in update check points at this repo's releases (with a version comparison that
@@ -210,7 +222,7 @@ new fork builds — never a stale upstream version.
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
 - Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.1.1.2026-08-10.g3b675980.2026-08-06.g4623e4a6+019`.
+  `0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006`.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
