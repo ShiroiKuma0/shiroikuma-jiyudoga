@@ -5,7 +5,8 @@
 # copies them to ~/tmp/ with fork naming, then bumps BUILD_NUMBER.
 #
 # Fork versioning: versionName = <FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<BUILD_NUMBER>,
-# each pin being .<base commit date>.g<8-char base sha> and the counter zero-padded to three
+# each pin being +<base commit date>.<HH-MM>.g<8-char base sha> (UTC, `+` opening each top-level
+# group, the pin's own date, time and sha dot-joined) and the counter zero-padded to three
 # digits (global rule: artifact lists sort in build order). FORK_VERSION is the higher of our two
 # upstreams' versions and may carry FreeTubeAndroid's fourth "respin" component — see
 # fork.properties, which holds it together with BUILD_NUMBER. Both upstreams are git-tracking, so
@@ -25,7 +26,7 @@ printf -v PADDED '%03d' "$BUILD_NUMBER"
 
 # Upstream-base pins — BOTH upstreams are git-tracking, so both get one. Neither upstream's
 # version literal identifies the commit we actually contain: master mirrors FreeTube's
-# *development tip*, and we merge FreeTubeAndroid's `release` branch rather than its tags.
+# *development tip*, and we merge FreeTubeAndroid's `development` branch rather than its tags.
 # Each sha is `git merge-base HEAD <ref>` — the upstream commit our layer sits on — NOT our own
 # HEAD (already covered by +N) and NOT the ref's tip (which overstates it when custom has not
 # merged the new tip yet). Each date is that commit's own committer date, never build time, so

@@ -223,8 +223,9 @@ sits in the top bar beside the app name, wrapping only between its `+` groups.
   by this fork (including keeping the desktop Electron build alive, which the Android fork
   had dropped).
 - **Rebranded** as 白い熊 自由動画 with a black-yellow outline-traced icon.
-- Versioning: `<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<build>`, e.g.
-  `0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006`.
+- Versioning: `<FORK_VERSION>+<FreeTube pin>+<FreeTubeAndroid pin>+<build>`, e.g.
+  `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+010`. A `+` opens each top-level
+  group; a pin's own date, time and sha stay dot-joined, since all three describe one commit.
 
   **`FORK_VERSION` is the higher of the two upstreams' versions** — FreeTube's `package.json`
   version and FreeTubeAndroid's release tag — adopted after merging either (their fourth
@@ -233,28 +234,33 @@ sits in the top bar beside the app name, wrapping only between its `+` groups.
   Because both upstreams are tracked **by branch, not by release**, neither version literal says
   which commit a build actually contains: FreeTube's `0.25.1` stands still across hundreds of
   development commits. So each upstream contributes a **base pin**,
-  `.<base commit date>.g<8-char sha>` — the commit our layer sits on, from
-  `git merge-base HEAD <ref>`, FreeTube first. The date is the base commit's own committer date,
-  never build time, so every build on one base shares a pin and version names still sort
-  chronologically. Pins are recomputed from git at build time and never stored; each moves only
-  when *its* upstream is synced, which is exactly the "this upstream has not moved" signal.
+  `+<base commit date>.<HH-MM>.g<8-char sha>` — the commit our layer sits on, from
+  `git merge-base HEAD <ref>`, FreeTube first. The timestamp is the base commit's own committer
+  time in **UTC**, never build time, so every build on one base shares a pin and version names
+  still sort chronologically; it carries the **minute** because two syncs landing on one day would
+  otherwise tie and hand the ordering to the random sha right behind it. Pins are recomputed from
+  git at build time and never stored; each moves only when *its* upstream is synced, which is
+  exactly the "this upstream has not moved" signal.
 
-  The pinned string is also what the app reports about itself, so the in-app update check
-  compares like with like against the release tag. It sorts the pins ahead of the build counter:
-  a release built on newer upstream wins even with a lower counter, and an older base loses with
-  a higher one.
+  The pinned string is also what the app reports about itself, so the in-app update check compares
+  like with like against the release tag — but it compares only `FORK_VERSION` and the build
+  counter, **stripping both pins from either side first**. Pins identify; they do not order. Their
+  shape has changed twice, and rendering their timestamps in UTC moved one FreeTube commit's pin
+  *backwards* by a day, which is exactly how a stale release once outranked the running build.
 
   Both artifacts always carry the same version, even when only one upstream moved. (One cosmetic
-  exception: the `.deb`'s internal control field renders the pins' dates with `~` instead of `-`,
-  because electron-builder sanitises `-` for deb/rpm targets. Both filenames keep the hyphens, and
-  the ordering is unaffected.)
+  exception: the `.deb`'s internal control field renders the pins' dates *and times* with `~`
+  instead of `-`, because electron-builder sanitises `-` for deb/rpm targets. The `+` group
+  separators pass through untouched, both filenames keep the hyphens, and the ordering is
+  unaffected.)
 
   The build counter is zero-padded to three digits so releases and artifacts sort in build order,
   and **resets on every `FORK_VERSION` change**; Android
   `versionCode = ((maj*10000 + min*100 + patch) * 10 + respin) * 1000 + build` is untouched by the
   pins and keeps rising across that reset (`0.25.1+039` → `25010039`,
-  `0.25.1.1.…+005` → `25011005`). Tags up to `0.25.1+37` predate the padding and those up to
-  `0.25.1.1+001` predate the pins; both are left exactly as published.
+  `0.25.1.1+…+005` → `25011005`). Tags up to `0.25.1+37` predate the padding, those up to
+  `0.25.1.1+001` predate the pins, and those up to `…g4623e4a6+006` carry the earlier dot-joined
+  pins without the minute; all are left exactly as published.
 
 ## Branch model
 

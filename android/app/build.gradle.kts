@@ -19,10 +19,12 @@ class VersionInfo {
 //   fork.properties). The optional fourth component is FreeTubeAndroid's packaging respin
 //   of the same FreeTube base.
 //   versionName = "<FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<BUILD_NUMBER>", each pin
-//                 being ".<base commit date>.g<8-char base sha>" and the counter zero-padded to
-//                 three digits (global rule: artifact lists sort in build order)
+//                 being "+<base commit date>.<HH-MM>.g<8-char base sha>" in UTC — a `+` opens
+//                 each top-level group, the pin's own date, time and sha stay dot-joined — and
+//                 the counter zero-padded to three digits (global rule: artifact lists sort in
+//                 build order)
 //   Both upstreams are git-tracking, so both are pinned (global git-versioning rule): master
-//   mirrors FreeTube's *development tip* and we merge FreeTubeAndroid's `release` branch, so
+//   mirrors FreeTube's *development tip* and we merge FreeTubeAndroid's `development` branch, so
 //   FORK_VERSION alone never says how current either side is. Pins never touch versionCode,
 //   which carries the ordering on Android.
 //   baseCode    = (maj*10000 + min*100 + patch) * 10 + respin
@@ -113,7 +115,7 @@ fun getVersionInfo(project: Project): VersionInfo {
 
   // BOTH upstreams are git-tracking, so both are pinned: neither version literal identifies the
   // commit we actually contain (master mirrors FreeTube's *development tip*, and we merge
-  // FreeTubeAndroid's `release` branch rather than its tags). Each pin is the merge-base of HEAD
+  // FreeTubeAndroid's `development` branch rather than its tags). Each pin is the merge-base of HEAD
   // and that ref — the upstream commit our layer sits on — NOT our own HEAD (already covered by
   // +N) and NOT the ref's tip (which overstates it when custom has not merged the new tip yet).
   // Order is fixed: FreeTube first, FreeTubeAndroid second. Each pin moves only when that upstream

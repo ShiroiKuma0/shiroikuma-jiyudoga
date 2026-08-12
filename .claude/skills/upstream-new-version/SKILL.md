@@ -68,10 +68,10 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    Compile-verify all bundles: `pnpm run pack` **and** `pnpm run pack:android`.
 5. Set `FORK_VERSION` in the repo-root `fork.properties` to the **higher** of the two upstreams'
    versions (FreeTube's `package.json` vs FreeTubeAndroid's latest release tag) and reset
-   `BUILD_NUMBER=1` there. The `.<date>.g<sha>` upstream-base pins need **no** hand-edit: merging
-   `master` moves `git merge-base HEAD master`, so the next build picks up the new FreeTube sha
-   and date by itself. This is the step that moves the **FreeTube** pin; the FreeTubeAndroid pin
-   is untouched here.
+   `BUILD_NUMBER=1` there. The `+<date>.<HH-MM>.g<sha>` upstream-base pins need **no** hand-edit:
+   merging `master` moves `git merge-base HEAD master`, so the next build picks up the new FreeTube
+   sha and timestamp by itself. This is the step that moves the **FreeTube** pin; the
+   FreeTubeAndroid pin is untouched here.
 
 ### 3b. New FreeTubeAndroid version
 
@@ -107,8 +107,10 @@ Do **not** advance `master`, merge, or build until 白い熊 answers "proceed".
    (`f749ac02a`) and stays present as long as `custom` contains a commit of theirs that is not
    also FreeTube's. Should the shared-history guard ever suppress it again, **do not ship that
    build as-is**: a missing pin sorts the version *below* the last dual-pinned one
-   (`…gdc7c4e2e+008` < `…gdc7c4e2e.2026-07-30.…+007`), which reads as a downgrade to kakutoku.
-   Bump `FORK_VERSION` instead.
+   (`…g86401956+008` < `…g86401956+2026-08-06.17-02.…+007` — both continue with `+`, and the
+   counter's leading `0` loses to the `2` of the surviving pin's year), which reads as a downgrade
+   to kakutoku. Bump `FORK_VERSION` instead. Our own in-app checker is immune — it strips the pins
+   before comparing — but kakutoku matches on the string.
 
 ### 4. Verify our customizations are intact
 

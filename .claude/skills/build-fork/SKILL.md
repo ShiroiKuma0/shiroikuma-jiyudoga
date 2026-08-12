@@ -25,14 +25,18 @@ electron-builder, deb-only, fork naming) → packs the android webpack bundle �
 signed release APK (`android/gradlew assembleRelease`) → copies both to `~/tmp/` →
 **bumps `BUILD_NUMBER`** in the repo-root `fork.properties`.
 
-Outputs (`<ver>` = `<FORK_VERSION>.<FT date>.g<FT sha>.<FTA date>.g<FTA sha>+<BUILD_NUMBER>`, e.g.
-`0.25.1.1.2026-08-02.gdc7c4e2e.2026-07-30.gfea7a050+007`; `FORK_VERSION` is the higher of our two
-upstreams' versions and lives in `fork.properties`, while the two `.<date>.g<sha>` pins name the
-FreeTube and FreeTubeAndroid commits the build sits on — `git merge-base HEAD master` and
-`… HEAD android/development`, in that order — and are recomputed from git by each entry point,
-never stored. The FreeTubeAndroid pin is **suppressed while its merge-base is shared FreeTube
-history** — but that stopped being the case when `android/development` was merged on 2026-08-02
-(`f749ac02a`), so builds carry **both** pins; see the global **`git-versioning`** skill):
+Outputs (`<ver>` =
+`<FORK_VERSION>+<FT date>.<HH-MM>.g<FT sha>+<FTA date>.<HH-MM>.g<FTA sha>+<BUILD_NUMBER>`, e.g.
+`0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+010`; `FORK_VERSION` is the higher of
+our two upstreams' versions and lives in `fork.properties`, while the two
+`+<date>.<HH-MM>.g<sha>` pins name the FreeTube and FreeTubeAndroid commits the build sits on —
+`git merge-base HEAD master` and `… HEAD android/development`, in that order — each timestamp being
+that commit's own committer time in **UTC**, and both recomputed from git by each entry point,
+never stored. A `+` opens each top-level group (each pin, then the counter); a pin's own date, time
+and sha stay dot-joined, since all three describe one commit. The FreeTubeAndroid pin is
+**suppressed while its merge-base is shared FreeTube history** — but that stopped being the case
+when `android/development` was merged on 2026-08-02 (`f749ac02a`), so builds carry **both** pins;
+see the global **`git-versioning`** skill):
 - `~/tmp/shiroikuma-jiyudoga_<ver>_amd64.deb`
 - `~/tmp/shiroikuma-jiyudoga_<ver>_arm64-v8a.apk` (versionCode
   `((maj*10000+min*100+patch)*10+respin)*1000+N`, e.g. `25011001`)
