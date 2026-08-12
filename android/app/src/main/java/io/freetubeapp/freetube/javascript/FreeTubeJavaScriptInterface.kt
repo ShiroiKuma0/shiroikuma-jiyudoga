@@ -33,6 +33,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
 import java.util.UUID.randomUUID
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.CoroutineScope
@@ -64,6 +65,9 @@ class FreeTubeJavaScriptInterface(
     private const val JISHO_PACKAGE = "shiroikuma.jisho"
     private const val DOWNLOAD_USER_AGENT =
       "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+
+    /** Generous: BotGuard runs an interpreter it downloads, and this only fires on failure. */
+    private const val POTOKEN_TIMEOUT_MS = 15000L
   }
 
   // region Media Notifications
@@ -765,11 +769,29 @@ class FreeTubeJavaScriptInterface(
         try {
           val bgScript = getBotGuardScript(videoId, sessionContext, initialAttestationData, ytConfig)
           val bgWv = webView.generateBgWebview()
+
+          // BotGuard only ever reports SUCCESS — it calls returnToken and nothing else. So any
+          // failure inside the attestation WebView (a script error, a blocked request) used to
+          // leave this promise pending for ever, and the watch page span on a token that was
+          // never coming. Time it out instead: the caller treats a missing content poToken as
+          // non-fatal and simply plays untokenised, which is far better than hanging.
+          val settled = AtomicBoolean(false)
+          val onTimeout = Runnable {
+            if (settled.compareAndSet(false, true)) {
+              bgWv.destroy()
+              reject("BotGuard timed out after ${POTOKEN_TIMEOUT_MS}ms generating the poToken")
+            }
+          }
+          webView.postDelayed(onTimeout, POTOKEN_TIMEOUT_MS)
+
           bgWv.jsInterface.onReturnToken {
             run {
               webView.post {
-                resolve(it)
-                bgWv.destroy()
+                if (settled.compareAndSet(false, true)) {
+                  webView.removeCallbacks(onTimeout)
+                  resolve(it)
+                  bgWv.destroy()
+                }
               }
             }
           }
@@ -780,14 +802,22 @@ class FreeTubeJavaScriptInterface(
                 "window.ofetch = window.fetch\n" +
                 "window.fetch = async (url, data) => {\n" +
                 "  if (url.startsWith('https://www.google.com/')) {\n" +
-                "    return new Promise((resolve, _) => {" +
+                "    return new Promise((resolve, _) => {\n" +
                 "    const script = document.createElement('script')\n" +
                 "    script.src = url\n" +
                 "    script.async = true\n" +
-                "    document.body.appendChild(script)\n" +
+                // Attach the listener BEFORE appending: appending starts the load, so a cached
+                // script could otherwise fire `load` with nothing listening and hang the promise.
                 "     script.addEventListener('load', () => {\n" +
                 "       resolve({ text: () => '() => {}' })\n" +
                 "     })\n" +
+                // This document is nothing but two inline <script>s, so the shim runs while the
+                // parser is still in <head> and document.body is null. It only started mattering
+                // with FreeTube 0.25.2: BotGuard used to fetch its challenge from /att/get first,
+                // and that round trip gave parsing time to reach <body>. Since #9607 the challenge
+                // arrives as an argument, so the interpreter fetch lands here immediately.
+                "    const parent = document.body || document.head || document.documentElement\n" +
+                "    parent.appendChild(script)\n" +
                 "    })\n" +
                 "  }\n" +
                 "  const id = crypto.randomUUID()\n" +

@@ -8,7 +8,9 @@ import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.view.WindowInsetsCompat
@@ -36,9 +38,43 @@ class FreeTubeWebView (
     dispatchEvent("console-message", "data", messageData)
   }
 
+  companion object {
+    /**
+     * A desktop agent built around the WebView's OWN Chromium version, rather than a hardcoded
+     * string: the engine really is that build, so only the platform is restated, and the version
+     * keeps pace as the system WebView updates instead of ageing into a lie.
+     */
+    fun desktopUserAgent(context: Context): String {
+      val chromeVersion = Regex("Chrome/([\\d.]+)")
+        .find(WebSettings.getDefaultUserAgent(context))
+        ?.groupValues?.get(1)
+        ?: "114.0.0.0"
+      return "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/$chromeVersion Safari/537.36"
+    }
+  }
+
   init {
     layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
     setBackgroundColor(Color.TRANSPARENT)
+
+    // BackgroundPlayWebView refuses cookies from here on, but builds before that fix may have
+    // persisted some — inert once they can no longer be sent, yet still tracking identifiers
+    // sitting on disk. Purge them once per launch; a no-op on every run after the first.
+    CookieManager.getInstance().apply {
+      removeAllCookies(null)
+      flush()
+    }
+
+    // Present as a desktop browser. YouTube picks the client it serves from the user agent, and
+    // the stock WebView agent says "Mobile" — so www.youtube.com/watch returns the MWEB page.
+    // That was harmless until FreeTube 0.25.2: since #9607 the local API builds its entire
+    // Innertube session out of the ytcfg embedded in that HTML, so a mobile page silently makes
+    // the whole session MWEB while the player, the BotGuard/poToken flow and the rest of
+    // upstream's code all assume WEB. Electron gets WEB for free; this is how Android does.
+    // Only this WebView is changed — the BotGuard WebView keeps the stock agent, since claiming
+    // desktop Linux inside an Android WebView is exactly the inconsistency it fingerprints for.
+    settings.userAgentString = desktopUserAgent(context)
 
     @SuppressLint("SetJavaScriptEnabled")
     settings.javaScriptEnabled = true
