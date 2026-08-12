@@ -15,6 +15,46 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+008` — 2026-08-12
+
+Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
+upstream commits `+006` sits on. Only their rendering changed, along with the top bar finally
+saying which build is running.
+
+- **The running version is on the main page.** The top bar never showed it. It now sits to the
+  **right** of 白い熊 自由動画 — beside the name, not under it — at a fixed 12 px, split on the `+`
+  group separators into unbreakable spans so a line break can only ever fall between groups, which
+  lands the 62-character string on two lines. Two things had to be dealt with to get there. The
+  WebView loads the page scaled down, so Chrome's font boosting inflated the block to roughly 1.5×
+  the size asked for — four lines, hanging out of the 60 px bar — until `text-size-adjust: none`
+  made 12 px mean 12 px. And our `_icons/text*Small.svg` set `白い熊` / `自由動画` at `x=0` in 15 px
+  type on a 100 px canvas, so ~40 px of the logo's text box is empty: the box is cut to the glyph
+  run and drawn from the left, and the logo's trailing padding drops from 25 px to 8 px, leaving
+  the version flush against the name. The desktop hides it below 1250 px, where the bar's fixed
+  440 px search column would start pushing the profile selector off the edge.
+- **Android's search bar is a magnifying glass.** Upstream collapses the search box only below
+  680 px and the WebView viewport is far wider, so the phone permanently carried a 440 px search
+  field — exactly the room the version needed. The bar now shows a single glass button, ordered
+  **after** the app name and version rather than before them; tapping it drops the search field
+  full-width under the bar with the caret already in it, so the keyboard comes straight up, and
+  submitting a search closes it again. The desktop keeps its search bar untouched.
+- **Version strings group with `+` and pin to the minute.** Two upstream syncs in one day left two
+  builds sharing a pin date, and the next field the sort reaches is the random sha — so the newer
+  artifact landed wherever its hex happened to fall, even when the build counters differed
+  (`g6c6f1aab+002` sorts before `g6d6f1aab+001`). Each pin now carries `HH-MM`, and `+` opens each
+  top-level group — each pin, then the counter — while a pin's own date, time and sha stay
+  dot-joined, since all three describe one commit. Both timestamps are now built from the raw epoch
+  in **UTC** instead of each commit's own timezone, which is why FreeTube's pin reads
+  `2026-08-11.21-55` here and `2026-08-12` in `+006`: the same commit `86401956`, rendered
+  honestly. `~` was rejected as the group separator on three counts — `git check-ref-format`
+  refuses it in a refname, so no release could ever be tagged; at `0x7E` it sorts above every
+  digit; and dpkg reads it as the pre-release marker, ranking every fork build below bare upstream.
+  `_` is not a legal character in a Debian version at all. All three entry points —
+  `_scripts/fork-version.js`, `_scripts/build-fork.sh` and `android/app/build.gradle.kts` — were
+  changed together and verified to emit identical strings.
+
+---
+
 ## 白い熊 自由動画 `0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006` — 2026-08-12
 
 Built on FreeTube `86401956` (2026-08-12) + FreeTubeAndroid `4623e4a6` (2026-08-06).

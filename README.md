@@ -23,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2.2026-08-12.g86401956.2026-08-06.g4623e4a6+006`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+008`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -208,7 +208,9 @@ empty jar after a session of real playback.
 
 The built-in update check points at this repo's releases (with a version comparison that
 understands the `<upstream>+<build>` scheme), so both the desktop app and the APK announce
-new fork builds — never a stale upstream version.
+new fork builds — never a stale upstream version. The build you are running is not a mystery
+either: the full version — upstream base version, one commit pin per upstream, build counter —
+sits in the top bar beside the app name, wrapping only between its `+` groups.
 
 ---
 
