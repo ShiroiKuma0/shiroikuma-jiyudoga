@@ -1,7 +1,7 @@
 <template>
   <nav
     class="topNav"
-    :class="{ topNavBarColor: barColor }"
+    :class="{ topNavBarColor: barColor, collapsedSearch: collapseSearchBar }"
   >
     <div class="side">
       <button
@@ -83,6 +83,16 @@
           class="logoText"
         />
       </RouterLink>
+      <div
+        class="appVersion"
+        :title="appVersion"
+      >
+        <span
+          v-for="part in appVersionParts"
+          :key="part"
+          class="appVersionPart"
+        >{{ part }}</span>
+      </div>
     </div>
     <div class="middle">
       <div
@@ -139,6 +149,8 @@ import FtIconButton from '../FtIconButton/FtIconButton.vue'
 
 import store from '../../store/index'
 
+import packageDetails from '../../../../package.json'
+
 import { KeyboardShortcuts, MOBILE_WIDTH_THRESHOLD, SEARCH_RESULTS_DISPLAY_LIMIT } from '../../../constants'
 import { debounce, localizeAndAddKeyboardShortcutToActionTitle, openInternalPath } from '../../helpers/utils'
 import { translateWindowTitle } from '../../helpers/strings'
@@ -149,7 +161,22 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 
-const showSearchContainer = ref(true)
+// Android collapses the search bar to its magnifying glass at EVERY width and expands it into
+// the same fixed overlay the narrow desktop layout uses (白い熊, 2026-08-12). The WebView viewport
+// is far wider than MOBILE_WIDTH_THRESHOLD, so the width-driven collapse below never fires there,
+// and the 440px search column left no room beside the app name for the version.
+const collapseSearchBar = !!process.env.IS_ANDROID
+
+// The running fork version, shown beside the app name in the top bar. It is long — base version,
+// one upstream-base pin per upstream, build counter — so it is set small and split on the `+`
+// group separators: each group is a nowrap span, and the line breaks may only fall between them.
+const appVersion = process.env.FORK_VERSION || packageDetails.version
+const appVersionParts = appVersion
+  .split('+')
+  .filter((part) => part.length > 0)
+  .map((part, index) => index === 0 ? part : `+${part}`)
+
+const showSearchContainer = ref(!collapseSearchBar)
 /** @type {import('vue').ShallowRef<string[]>} */
 const navigationHistoryDropdownOptions = shallowRef([])
 /** @type {import('vue').ShallowRef<string[]>} */
@@ -436,7 +463,7 @@ const searchSettings = computed(() => store.getters.getSearchSettings)
 function goToSearch(queryText, { event }) {
   const doCreateNewWindow = event && event.shiftKey
 
-  if (window.innerWidth <= MOBILE_WIDTH_THRESHOLD) {
+  if (collapseSearchBar || window.innerWidth <= MOBILE_WIDTH_THRESHOLD) {
     searchContainer.value.blur()
     showSearchContainer.value = false
   } else {
@@ -642,6 +669,14 @@ function removeSearchHistoryEntryInDbAndCache(query) {
 
 function toggleSearchContainer() {
   showSearchContainer.value = !showSearchContainer.value
+
+  // tapping the glass on Android is the whole way in to the search field, so put the caret
+  // there right away instead of costing a second tap
+  if (collapseSearchBar && showSearchContainer.value) {
+    nextTick(() => {
+      searchInput.value?.focus()
+    })
+  }
 }
 
 /**
@@ -677,14 +712,14 @@ function handleWindowResize() {
   // Don't change the status of showSearchContainer if only the height of the window changes
   // Opening the virtual keyboard can trigger this resize event, but it won't change the width
   if (previousWindowWidth !== window.innerWidth) {
-    showSearchContainer.value = window.innerWidth > MOBILE_WIDTH_THRESHOLD
+    showSearchContainer.value = !collapseSearchBar && window.innerWidth > MOBILE_WIDTH_THRESHOLD
     previousWindowWidth = window.innerWidth
   }
 }
 
 onMounted(() => {
   previousWindowWidth = window.innerWidth
-  if (window.innerWidth <= MOBILE_WIDTH_THRESHOLD) {
+  if (collapseSearchBar || window.innerWidth <= MOBILE_WIDTH_THRESHOLD) {
     showSearchContainer.value = false
   }
 

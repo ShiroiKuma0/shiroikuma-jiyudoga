@@ -150,7 +150,8 @@
     cursor: pointer;
     display: flex;
     padding-block: 0;
-    padding-inline: 10px 25px;
+    // trailing padding trimmed from upstream's 25px: the version sits right against the name
+    padding-inline: 10px 8px;
 
     &:hover {
       background-color: var(--side-nav-hover-color);
@@ -186,14 +187,18 @@
 
     .logoText {
       background-image: var(--logo-text);
-      background-position: right top;
+      // our _icons/text*Small.svg are a 100x49 canvas with `白い熊` / `自由動画` set at x=0 in
+      // 15px type, so the glyphs end at ~60px and the rest of the canvas is dead space. Drawn
+      // from the LEFT (upstream right-aligns it in the box) and the box cut to the glyph run,
+      // so whatever follows the name — the version — starts right after the last stroke.
+      background-position: left top;
       background-repeat: no-repeat;
       background-size: 100px;
       block-size: 40px;
       margin-inline-start: 5px;
       position: relative;
       inset-block-start: -3px;
-      inline-size: 100px;
+      inline-size: 64px;
 
       @media only screen and (width <= 680px) {
         display: none;
@@ -203,6 +208,50 @@
         background-image: var(--logo-text-bar-color);
       }
     }
+  }
+
+  // The running fork version, beside the app name rather than under it (白い熊, 2026-08-12).
+  // It is long — base version, a pin per upstream, the build counter — so it is set small and
+  // wraps ONLY at the `+` group boundaries: each group is a nowrap span, and the cap below is
+  // wide enough for two of them, so the string lands on two lines.
+  .appVersion {
+    align-content: center;
+    color: var(--secondary-text-color);
+    display: flex;
+    flex-wrap: wrap;
+    // absolute, not em: the bar is a fixed 60px, so the version may not follow a body font size
+    font-size: 12px;
+    line-height: 1.25;
+    // `ch` is the digit advance of the used font, and the widest line is version + first pin =
+    // 33 characters, so this fits two groups per line at any font size; the block cap is the
+    // three lines a 60px bar can still hold
+    max-block-size: 3.75em;
+    max-inline-size: 36ch;
+    // no `min-inline-size: 0`: the flex item must keep its min-content width, so a tight bar
+    // widens the side column (search box drifts off-centre) instead of clipping the version
+    overflow: hidden;
+    // the Android WebView loads the page scaled down, and Chrome's font boosting then inflates
+    // small text in wide blocks — it rendered this block at ~1.5x, four lines tall, hanging out
+    // of the bar (白い熊's 16:35 screenshot). Opt out so 12px means 12px — and the prefixed
+    // property is the one Blink actually implements, so it stays despite the lint rule.
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+
+    // the desktop bar reserves 440px in the middle for the search box, so under roughly this
+    // width the version would push the profile selector off the trailing edge — Android never
+    // gets here, its bar collapses the search box away instead (see .collapsedSearch)
+    @media only screen and (width <= 1250px) {
+      display: none;
+    }
+
+    @include top-nav-is-colored {
+      color: var(--text-with-main-color);
+    }
+  }
+
+  .appVersionPart {
+    white-space: nowrap;
   }
 }
 
@@ -227,6 +276,49 @@
 
     .searchInput {
       flex: 1;
+    }
+  }
+}
+
+// Android (see collapseSearchBar in TopNav.vue): the search box is collapsed to its magnifying
+// glass at every width and expands into the fixed overlay the narrow desktop layout already uses.
+// The WebView viewport is far wider than the 680px threshold, so none of the width rules above
+// fire there — and the 440px search column it kept was exactly the room the version needs.
+.topNav.collapsedSearch {
+  // beats the `width >= 961px` grid: the middle column must not reserve its 440px
+  display: flex;
+
+  .middle {
+    flex: 0 0 auto;
+    max-inline-size: none;
+  }
+
+  // upstream hides the glass again at >= 681px, and puts it left of the app name. Here it is
+  // the only thing left of the search box, so it goes AFTER the name and version (白い熊):
+  // every other item in the side keeps the default order 0.
+  .side .navSearchButton {
+    display: inline-block;
+    order: 1;
+  }
+
+  // keeps the profile selector against the trailing edge now that nothing spans the middle
+  .side.profiles {
+    flex: 1;
+  }
+
+  // shown at every width here — the search box no longer competes for the space
+  .side .appVersion {
+    display: flex;
+  }
+
+  .searchContainer {
+    background-color: var(--side-nav-color);
+    inset-inline: 0;
+    position: fixed;
+    inset-block-start: 60px;
+
+    @include top-nav-is-colored {
+      background-color: var(--primary-color-hover);
     }
   }
 }
