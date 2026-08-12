@@ -15,6 +15,24 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+009` — 2026-08-12
+
+Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
+upstream commits as `+008`. A single follow-up fix to the collapsed Android search box that shipped
+there; the desktop build is functionally unchanged, since the new code is compiled out of it.
+
+- **A link opened with the app no longer lands under the search panel.** The collapsed search is a
+  fixed overlay drawn **on top** of the page, and the only things that ever took it down were the
+  magnifying glass itself and a submitted search — so a single tap kept it up for the whole life of
+  the WebView, across every navigation. `MainActivity` is `singleTask`: a YouTube link opened with
+  the app resumes that same page instead of reloading it, so the watch view was simply drawn
+  underneath a panel opened at some earlier point, covering the top of the content and the side
+  nav's Subscriptions row. Any navigation now closes the panel, watched on the route's full path so
+  the desktop pays nothing for it, and the incoming link closes it directly as well — a link can
+  resolve to the page already on screen, where nothing navigates and the watcher would never fire.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+008` — 2026-08-12
 
 Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
