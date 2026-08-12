@@ -15,6 +15,30 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+010` — 2026-08-12
+
+Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
+upstream commits as `+009`. The in-app update check stops offering builds older than the one
+running. Both artifacts are affected: the checker is shared code.
+
+- **The update banner no longer offers a stale release.** On startup, `+010` was told that `+006` —
+  a release from that same morning — was "now available". The version comparison split both strings
+  on every `.`, `+` and `-` and aligned the segments positionally, so the verdict was reached inside
+  an **upstream-base pin** and never got as far as the build counter. Pins identify the upstream
+  commits a build sits on; they were never meant to order builds, and they cannot: their shape has
+  changed twice, and rendering their timestamps in UTC in `+008` moved the same FreeTube commit's
+  pin *backwards* from `2026-08-12` to `2026-08-11` — precisely the segment being compared. Builds
+  are now ordered by the two fields that actually order them, the version and the `+NNN` counter,
+  with the pins stripped from both sides first (in the current `+`-grouped shape, the legacy
+  dot-joined one that older tags still carry, and the degraded `+g<sha>` form).
+- **The newest release is now identified, not assumed.** The checker asked GitHub for one release
+  and trusted it to be the latest. That list is documented as reverse chronological but does not
+  arrive that way — ours returns `+006` ahead of both `+009` and `+008`, ordered by neither date nor
+  id — so even a correct comparison was being handed the wrong release. A page of ten is fetched
+  instead, drafts and prereleases dropped, and the newest picked by the same comparison.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+009` — 2026-08-12
 
 Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
