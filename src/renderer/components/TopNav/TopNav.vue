@@ -679,6 +679,19 @@ function toggleSearchContainer() {
   }
 }
 
+function closeSearchContainer() {
+  showSearchContainer.value = false
+}
+
+// The collapsed panel is a fixed overlay ON TOP of the page, and until now only the glass itself
+// or a submitted search ever took it down — so once open it stayed open for the whole life of the
+// WebView, across every navigation. MainActivity is `singleTask`: a link opened with the app
+// resumes THAT SAME page rather than reloading it, so the watch view was simply drawn underneath
+// a panel opened at some earlier point (白い熊, 2026-08-12). Any navigation now closes it.
+if (collapseSearchBar) {
+  watch(() => route.fullPath, closeSearchContainer)
+}
+
 /**
  * @param {KeyboardEvent} event
  */
@@ -732,6 +745,13 @@ onMounted(() => {
 
   window.addEventListener('resize', handleWindowResize)
 
+  // a link opened with the app arrives as this event (or as `?intent=` on a cold start, which
+  // navigates); it may resolve to the page already on screen, so the route watcher above is not
+  // enough on its own — close the panel on the intent itself as well
+  if (collapseSearchBar) {
+    window.addEventListener('youtube-link', closeSearchContainer)
+  }
+
   if (process.env.IS_ELECTRON) {
     window.addEventListener('keydown', handleKeyboardShortcuts)
 
@@ -745,6 +765,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleWindowResize)
+
+  if (collapseSearchBar) {
+    window.removeEventListener('youtube-link', closeSearchContainer)
+  }
 
   if (process.env.IS_ELECTRON) {
     window.removeEventListener('keydown', handleKeyboardShortcuts)
