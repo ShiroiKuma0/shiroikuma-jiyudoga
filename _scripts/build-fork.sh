@@ -32,13 +32,17 @@ printf -v PADDED '%03d' "$BUILD_NUMBER"
 # every build on one base shares a pin while names still sort chronologically.
 # Order is fixed: FreeTube first, FreeTubeAndroid second. The pins are independent — a missing
 # ref drops only its own pin. The build must never fail over a missing sha: a pin degrades to
-# .g<sha> without a date and vanishes entirely without git.
-fork_pin() {                 # $1 = upstream ref; echoes ".<date>.g<sha>", ".g<sha>", or ""
-  local ref="$1" sha date
+# +g<sha> without a timestamp and vanishes entirely without git.
+#
+# The timestamp carries HH-MM as well as the date (白い熊, 2026-08-12): a bare date ties whenever
+# two syncs land on one day, and the next field along is the random sha. TZ=UTC with format-local:
+# renders UTC — plain format: would use the commit's own offset, which this script did until then.
+fork_pin() {                 # $1 = upstream ref; echoes "+<date>.<HH-MM>.g<sha>", "+g<sha>", or ""
+  local ref="$1" sha stamp
   sha=$(git merge-base HEAD "$ref" 2>/dev/null | cut -c1-8) || sha=""
   [ ${#sha} -eq 8 ] || { echo ""; return 0; }
-  date=$(git show -s --format=%cd --date=format:%Y-%m-%d "$sha" 2>/dev/null) || date=""
-  if [ ${#date} -eq 10 ]; then echo ".${date}.g${sha}"; else echo ".g${sha}"; fi
+  stamp=$(TZ=UTC git show -s --format=%cd --date=format-local:%Y-%m-%d.%H-%M "$sha" 2>/dev/null) || stamp=""
+  if [ ${#stamp} -eq 16 ]; then echo "+${stamp}.g${sha}"; else echo "+g${sha}"; fi
 }
 
 # The FreeTubeAndroid pin must name FreeTubeAndroid work, not history the two upstreams SHARE.

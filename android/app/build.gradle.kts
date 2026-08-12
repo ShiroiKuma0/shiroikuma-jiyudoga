@@ -1,3 +1,6 @@
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Properties
 
 class VersionInfo {
@@ -43,16 +46,24 @@ fun gitOutput(project: Project, vararg command: String): String = try {
   ""
 }
 
-// One upstream-base pin: ".<base commit date>.g<8-char base sha>", degrading to ".g<sha>" when the
-// date lookup fails and to "" when git or the ref is absent — a build must never fail over a
-// missing sha. The date is that commit's own committer date, never build time: every build on one
-// base must share a pin, and the date is what makes the names sort chronologically (a bare sha
-// orders them at random).
+// One upstream-base pin: "+<base commit date>.<HH-MM>.g<8-char base sha>", degrading to "+g<sha>"
+// when the timestamp lookup fails and to "" when git or the ref is absent — a build must never fail
+// over a missing sha. It is that commit's own committer time, never build time: every build on one
+// base must share a pin, and the timestamp is what makes the names sort chronologically (a bare sha
+// orders them at random, and a bare DATE ties whenever two syncs land on one day, handing the
+// ordering straight back to that sha — 白い熊, 2026-08-12).
+//
+// In UTC: format the raw epoch, never `--date=format:` (the commit's own offset, used here until
+// 2026-08-12). `+` opens each top-level group, so the two pins and the counter each start one; the
+// pin's own date, time and sha stay dot-joined, all three describing one commit.
 fun forkPin(project: Project, ref: String): String {
   val sha = gitOutput(project, "git", "merge-base", "HEAD", ref).take(8)
   if (sha.length != 8) return ""
-  val date = gitOutput(project, "git", "show", "-s", "--format=%cd", "--date=format:%Y-%m-%d", sha)
-  return if (date.length == 10) ".$date.g$sha" else ".g$sha"
+  val stamp = gitOutput(project, "git", "show", "-s", "--format=%ct", sha).toLongOrNull()?.let {
+    Instant.ofEpochSecond(it).atZone(ZoneOffset.UTC)
+      .format(DateTimeFormatter.ofPattern("yyyy-MM-dd.HH-mm"))
+  } ?: ""
+  return if (stamp.length == 16) "+$stamp.g$sha" else "+g$sha"
 }
 
 // Exit status of a git command, for the checks that answer yes/no rather than printing.

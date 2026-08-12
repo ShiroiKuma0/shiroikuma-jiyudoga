@@ -50,13 +50,22 @@ function gitSucceeds (...args) {
   }
 }
 
+// The timestamp carries HH-MM as well as the date (白い熊, 2026-08-12): a bare date ties whenever
+// two syncs land on one day, and the next field along is the random sha, so the newer build sorts
+// anywhere. Built from the raw epoch so it is UTC — `--date=format:` would render the commit's own
+// offset, which this file did until then. `+` opens each top-level group, the pin's own date, time
+// and sha staying dot-joined since all three describe one commit.
 function forkPin (ref) {
   const sha = gitOutput('merge-base', 'HEAD', ref).slice(0, 8)
   if (sha.length !== 8) {
     return ''
   }
-  const date = gitOutput('show', '-s', '--format=%cd', '--date=format:%Y-%m-%d', sha)
-  return date.length === 10 ? `.${date}.g${sha}` : `.g${sha}`
+  const epoch = gitOutput('show', '-s', '--format=%ct', sha)
+  // 2026-08-01T09:40:12.000Z -> 2026-08-01.09-40
+  const stamp = /^\d+$/.test(epoch)
+    ? new Date(parseInt(epoch, 10) * 1000).toISOString().slice(0, 16).replace('T', '.').replace(':', '-')
+    : ''
+  return stamp.length === 16 ? `+${stamp}.g${sha}` : `+g${sha}`
 }
 
 // The FreeTubeAndroid pin must name FreeTubeAndroid work, not history the two upstreams SHARE.
