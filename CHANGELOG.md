@@ -15,6 +15,27 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+011` — 2026-08-12
+
+Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
+upstream commits as `+010`. **Neither artifact changes functionally**: this release brings the
+fork's own documentation back in line with the version it has been building since `+008`.
+
+- **The versioning is now described as it is actually built.** Version strings moved to `+`-grouped,
+  minute-resolution UTC pins in `+008`, and every description of them stayed on the previous
+  dot-joined `.<date>.g<sha>` form: the README's versioning section, complete with an old-form
+  example; the headers of two of the three build entry points; and both project build skills, which
+  are what a fresh session reads before it builds or syncs anything. Two of those also still named
+  FreeTubeAndroid's `release` branch, abandoned for `development` on 2026-08-02.
+- **The README no longer describes the update check backwards.** It said the check sorts the
+  upstream pins ahead of the build counter — the rule `+010` inverted, and had to: pins identify the
+  commits a build sits on and cannot order builds, so both are now stripped from either side and the
+  verdict comes from the version and the `+NNN` counter alone.
+
+Earlier entries are left as published; each describes the form that shipped at its own version.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+010` — 2026-08-12
 
 Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two
