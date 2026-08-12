@@ -744,7 +744,7 @@ class FreeTubeJavaScriptInterface(
 
   // region Data Extraction
 
-  private fun getBotGuardScript(videoId: String, sessionContext: String, includeDebugMessage: Boolean = true): String {
+  private fun getBotGuardScript(videoId: String, sessionContext: String, initialAttestationData: String, ytConfig: String, includeDebugMessage: Boolean = true): String {
     val script = context.assets.readText("botGuardScript.js")
     val functionName = script.split("export{")[1].split(" as default};")[0]
     val exportSection = "export{${functionName} as default};"
@@ -754,16 +754,16 @@ class FreeTubeJavaScriptInterface(
       "(TOKEN_RESULT) => { Android.returnToken(TOKEN_RESULT) }"
     }
     val bakedScript =
-      script.replace(exportSection, "; ${functionName}(\"$videoId\", $sessionContext).then($then)")
+      script.replace(exportSection, "; ${functionName}(\"$videoId\", $sessionContext, $initialAttestationData, $ytConfig).then($then)")
     return bakedScript
   }
 
   @JavascriptInterface
-  fun generatePOToken(videoId: String, sessionContext: String): String {
+  fun generatePOToken(videoId: String, sessionContext: String, initialAttestationData: String, ytConfig: String): String {
     return Promise(coroutineScope) { resolve, reject ->
       webView.post {
         try {
-          val bgScript = getBotGuardScript(videoId, sessionContext)
+          val bgScript = getBotGuardScript(videoId, sessionContext, initialAttestationData, ytConfig)
           val bgWv = webView.generateBgWebview()
           bgWv.jsInterface.onReturnToken {
             run {
