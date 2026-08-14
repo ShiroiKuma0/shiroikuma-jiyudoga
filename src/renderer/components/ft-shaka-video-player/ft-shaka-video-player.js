@@ -656,8 +656,12 @@ export default defineComponent({
 
         // Electron doesn't like YouTube's vp9 VR video streams and throws:
         // "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Projection element is incomplete; ProjectionPoseYaw required."
-        // So use the AV1 and h264 codecs instead which it doesn't reject
-        preferredVideoCodecs: typeof props.vrProjection === 'string' ? ['av01', 'avc1'] : []
+        // So use the AV1 and h264 codecs instead which it doesn't reject.
+        // `preferredVideoCodecs` is deprecated in shaka 5 and warns on every load; these are the
+        // entries shaka's own migration builds from that list, so the behaviour is unchanged.
+        preferredVideo: typeof props.vrProjection === 'string'
+          ? ['av01', 'avc1'].map(codec => ({ label: '', role: '', codec, hdrLevel: '', layout: '' }))
+          : []
       }
     }
 
@@ -2779,7 +2783,7 @@ export default defineComponent({
           updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_PLAYING, Math.floor(videoElement.currentTime * 1000))
         })
         updateBufferInterval = setInterval(() => {
-          if (videoElement.buffered.length == 0) {
+          if (videoElement.buffered.length === 0) {
             updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_BUFFERING, Math.floor(videoElement.currentTime * 1000))
           }
         }, 0)

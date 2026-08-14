@@ -11,6 +11,20 @@ const EXPECTED_FILES = ['profiles.db', 'settings.db', 'history.db', 'playlists.d
 const EXPECTED_FILES_MAP = Object.fromEntries(EXPECTED_FILES.map((file) => { return [file, `${DATA_DIRECTORY}${file}`] }))
 
 /**
+ * A missing file is this read's documented normal case, not a fault worth reporting.
+ * `data-location.json` only exists once the data directory has been moved, yet it is read on
+ * every launch — so each launch logged a full Java FileNotFoundException stack trace, several
+ * screens of it, burying the console log. Stay quiet for that one outcome and keep warning
+ * about everything else, which is what the warning was there for.
+ * @param {unknown} exception
+ * @returns {boolean}
+ */
+function isFileNotFound(exception) {
+  const message = typeof exception === 'string' ? exception : (exception?.message ?? `${exception}`)
+  return message.includes('FileNotFoundException') || message.includes('ENOENT')
+}
+
+/**
  * a soft file read which returns '' if the file doesn't exist yet
  * @param {string} uri uri
  * @returns {Promise<string>} file contents or '' if no file was found
@@ -19,7 +33,9 @@ export async function readFile(uri) {
   try {
     return await awaitAsyncResult(android.readFile(uri))
   } catch (exception) {
-    console.warn(exception)
+    if (!isFileNotFound(exception)) {
+      console.warn(exception)
+    }
     return ''
   }
 }
