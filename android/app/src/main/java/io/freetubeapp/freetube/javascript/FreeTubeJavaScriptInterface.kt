@@ -748,33 +748,38 @@ class FreeTubeJavaScriptInterface(
 
   // region Data Extraction
 
-  private fun getBotGuardScript(videoId: String, sessionContext: String, initialAttestationData: String, ytConfig: String, includeDebugMessage: Boolean = true): String {
+  private fun getBotGuardScript(
+    videoId: String,
+    sessionContext: String,
+    initialAttestationData: String,
+    ytConfig: String
+  ): String {
     val script = context.assets.readText("botGuardScript.js")
     val functionName = script.split("export{")[1].split(" as default};")[0]
     val exportSection = "export{${functionName} as default};"
-    val then = if (includeDebugMessage) {
-      "(TOKEN_RESULT) => { console.log(`Your potoken is \${TOKEN_RESULT}`); Android.returnToken(TOKEN_RESULT) }"
-    } else {
-      "(TOKEN_RESULT) => { Android.returnToken(TOKEN_RESULT) }"
-    }
     val bakedScript =
-      script.replace(exportSection, "; ${functionName}(\"$videoId\", $sessionContext, $initialAttestationData, $ytConfig).then($then)")
+      script.replace(exportSection, "; ${functionName}(\"$videoId\", $sessionContext, $initialAttestationData, $ytConfig)")
     return bakedScript
   }
 
   @JavascriptInterface
-  fun generatePOToken(videoId: String, sessionContext: String, initialAttestationData: String, ytConfig: String): String {
+  fun generatePOToken(
+    videoId: String,
+    sessionContext: String,
+    initialAttestationData: String,
+    ytConfig: String
+  ): String {
     return Promise(coroutineScope) { resolve, reject ->
       webView.post {
         try {
           val bgScript = getBotGuardScript(videoId, sessionContext, initialAttestationData, ytConfig)
           val bgWv = webView.generateBgWebview()
 
-          // BotGuard only ever reports SUCCESS — it calls returnToken and nothing else. So any
-          // failure inside the attestation WebView (a script error, a blocked request) used to
-          // leave this promise pending for ever, and the watch page span on a token that was
-          // never coming. Time it out instead: the caller treats a missing content poToken as
-          // non-fatal and simply plays untokenised, which is far better than hanging.
+          // Upstream's rejectToken path reports the failures BotGuard itself throws, but a
+          // WebView that never runs the script at all — a blocked request, a load that dies —
+          // still reports nothing, and this promise would stay pending for ever with the watch
+          // page spinning on a token that was never coming. Time it out: the caller treats a
+          // missing content poToken as non-fatal and plays untokenised, far better than hanging.
           val settled = AtomicBoolean(false)
           val onTimeout = Runnable {
             if (settled.compareAndSet(false, true)) {
@@ -784,7 +789,7 @@ class FreeTubeJavaScriptInterface(
           }
           webView.postDelayed(onTimeout, POTOKEN_TIMEOUT_MS)
 
-          bgWv.jsInterface.onReturnToken {
+          bgWv.jsInterface.onReturn {
             run {
               webView.post {
                 if (settled.compareAndSet(false, true)) {
@@ -795,10 +800,33 @@ class FreeTubeJavaScriptInterface(
               }
             }
           }
+          bgWv.jsInterface.onReject {
+            run {
+              webView.post {
+                if (settled.compareAndSet(false, true)) {
+                  webView.removeCallbacks(onTimeout)
+                  reject(it)
+                  bgWv.destroy()
+                }
+              }
+            }
+          }
           webView.post {
             bgWv.loadDataWithBaseURL(
               "https://www.youtube.com/",
-              "<script>\n" +
+              "<!DOCTYPE html>" +
+                "<html lang=\"en\">" +
+                "<head>" +
+                "<title></title>" +
+                "</head>" +
+                "<body>" +
+                // We keep src/botGuardScript.js at upstream FreeTube's version rather than taking
+                // FreeTubeAndroid's script-tag rewrite of it: that file is shared with the desktop
+                // build, which runs it in an offscreen WebContentsView and works as it stands.
+                // Android's problem is only that the interpreter lives on www.google.com, so a
+                // cross-origin fetch cannot read the response back — so shim fetch here instead,
+                // loading it as a <script> and handing `new Function()` a harmless stub to run.
+                "<script>\n" +
                 "window.ofetch = window.fetch\n" +
                 "window.fetch = async (url, data) => {\n" +
                 "  if (url.startsWith('https://www.google.com/')) {\n" +
@@ -811,22 +839,26 @@ class FreeTubeJavaScriptInterface(
                 "     script.addEventListener('load', () => {\n" +
                 "       resolve({ text: () => '() => {}' })\n" +
                 "     })\n" +
-                // This document is nothing but two inline <script>s, so the shim runs while the
-                // parser is still in <head> and document.body is null. It only started mattering
-                // with FreeTube 0.25.2: BotGuard used to fetch its challenge from /att/get first,
-                // and that round trip gave parsing time to reach <body>. Since #9607 the challenge
-                // arrives as an argument, so the interpreter fetch lands here immediately.
+                // Defensive now that the document carries a real <body>: append to whatever node
+                // the parser has actually reached. Before this document grew one, document.body
+                // was null here and the append threw, hanging playback on a spinner.
                 "    const parent = document.body || document.head || document.documentElement\n" +
                 "    parent.appendChild(script)\n" +
                 "    })\n" +
                 "  }\n" +
+                // shouldInterceptRequest cannot see a request body, so pass it over the bridge and
+                // tag the request; BotGuardWebView writes it back out. Only the /att/get fallback
+                // needs this — GenerateIT is handed to the WebView untouched, body and all.
                 "  const id = crypto.randomUUID()\n" +
                 "  if (data && 'body' in data) {" +
                 "    Android.queueBody(id, data.body)\n" +
                 "    data.headers['x-fta-request-id'] = id\n" +
                 "  }" +
                 "  return await window.ofetch(url, data)\n" +
-                "}</script><script>${bgScript}</script>",
+                "}</script>" +
+                "<script>${bgScript}.then((TOKEN_RESULT) => { console.log(`Your potoken is \${TOKEN_RESULT}`); Android.returnToken(TOKEN_RESULT) }).catch((error) => { Android.rejectToken(error.toString()) })</script>" +
+                "</body>" +
+                "</html>",
               "text/html",
               "utf-8",
               null
