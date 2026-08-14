@@ -1,5 +1,8 @@
 <template>
-  <div v-if="usingAndroid && !usingRelease">
+  <!-- Kept in RELEASE builds too: our own builds ARE release builds, and the WebView's
+       console is otherwise unreachable — it never lands in logcat, and remote debugging
+       is off. This viewer is the only way to see a JS error on a real device. -->
+  <div v-if="usingAndroid">
     <FtPrompt
       v-if="shown"
       :label="t('Log Viewer.Console Log')"
@@ -15,7 +18,11 @@
           <div
             v-for="log in logsReversed"
             :key="log.key"
-            :class="log.level.toLowerCase()"
+            :class="[log.level.toLowerCase(), { selected: selectedKeys.has(log.key) }]"
+            role="button"
+            tabindex="0"
+            @click="toggleSelected(log.key)"
+            @keydown.enter.space.prevent="toggleSelected(log.key)"
           >
             <FontAwesomeIcon
               v-if="getFaIconFromLevel(log.level) !== null"
@@ -35,6 +42,18 @@
         <div class="actions-container">
           <FtFlexBox>
             <FtButton
+              :label="`Copy selected (${selectedKeys.size})`"
+              :text-color="null"
+              :background-color="null"
+              @click="copySelected"
+            />
+            <FtButton
+              label="Copy all"
+              :text-color="null"
+              :background-color="null"
+              @click="copyAll"
+            />
+            <FtButton
               :label="t('Close')"
               :text-color="null"
               :background-color="null"
@@ -49,6 +68,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import android from 'android'
 import store from '../../store/index'
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import FtPrompt from '../FtPrompt/FtPrompt.vue'
@@ -56,6 +76,7 @@ import FtButton from '../FtButton/FtButton.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { isColourDark } from '../../helpers/android/utils'
 import { getConsoleLogs } from '../../helpers/android/system'
+import { showToast } from '../../helpers/utils'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -64,8 +85,10 @@ const {
   logLimit
 } = defineProps({
   logLimit: {
+    // 50 dropped the interesting entry before it could be read: a single shaka
+    // stack trace is one entry, and the cause usually sits well above it.
     type: Number,
-    default: 50
+    default: 250
   }
 })
 
@@ -107,6 +130,29 @@ function onDarkModeEnabled() {
   }
 }
 
+/**
+ * Keeps the untouched text in `raw` alongside the HTML that gets rendered: the copy
+ * buttons need the original, and `content` is escaped and line-broken beyond recovery.
+ * Applied to the backfilled entries too, which previously reached v-html unescaped.
+ */
+function decorateLog(data) {
+  const raw = data.content ?? ''
+  return {
+    ...data,
+    raw,
+    content: raw
+      // sanitise html
+      .replaceAll('&', '&amp;')
+      .replaceAll('/', '&#47;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      // format text line breaks and tabs into html (for youtube.js errors)
+      .replaceAll('\n', '<br/>')
+      .replaceAll('\t', '&nbsp;&nbsp;')
+      .replaceAll('  ', '&nbsp;&nbsp;')
+  }
+}
+
 function onConsoleMessage({ data }) {
   if ('content' in data && data.content !== null) {
     if (data.content.indexOf('found in') === -1 && data.content.indexOf('---> <FtaLogViewer>') === -1) {
@@ -115,20 +161,46 @@ function onConsoleMessage({ data }) {
         if (logs.value.length > logLimit) {
           logs.value = logs.value.slice(logs.value.length - logLimit)
         }
-        data.content = data.content
-          // sanitise html
-          .replaceAll('&', '&amp;')
-          .replaceAll('/', '&#47;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;')
-          // format text line breaks and tabs into html (for youtube.js errors)
-          .replaceAll('\n', '<br/>')
-          .replaceAll('\t', '&nbsp;&nbsp;')
-          .replaceAll('  ', '&nbsp;&nbsp;')
-        logs.value.push(data)
+        logs.value.push(decorateLog(data))
       }
     }
   }
+}
+
+function toggleSelected(key) {
+  const next = new Set(selectedKeys.value)
+  if (next.has(key)) {
+    next.delete(key)
+  } else {
+    next.add(key)
+  }
+  selectedKeys.value = next
+}
+
+function formatLog(log) {
+  const timestamp = new Date(log.timestamp).toISOString()
+  const source = `${removeQueryString(log.sourceId)}:${log.lineNumber}`
+  return `[${timestamp}] ${log.level} ${source}\n${log.raw ?? ''}`
+}
+
+/** @param {object[]} entries newest first, as rendered */
+function copyLogs(entries, description) {
+  if (entries.length === 0) {
+    showToast('Tap entries to select them first')
+    return
+  }
+  // Oldest first once copied, so a pasted excerpt reads in the order things happened.
+  const text = entries.slice().reverse().map(formatLog).join('\n\n')
+  android.copyToClipboard('console log', text)
+  showToast(`${description}: ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} copied`)
+}
+
+function copySelected() {
+  copyLogs(logsReversed.value.filter(log => selectedKeys.value.has(log.key)), 'Selected')
+}
+
+function copyAll() {
+  copyLogs(logsReversed.value, 'All')
 }
 
 function hideLogViewer() {
@@ -136,9 +208,10 @@ function hideLogViewer() {
 }
 
 const usingAndroid = process.env.IS_ANDROID
-const usingRelease = process.env.IS_RELEASE
 const theme = ref(getThemeFromBody())
 const logs = ref([])
+/** Keys of the entries tapped for a partial copy. @type {import('vue').Ref<Set<string>>} */
+const selectedKeys = ref(new Set())
 
 const baseTheme = computed(function () {
   return store.getters.getBaseTheme
@@ -169,7 +242,7 @@ onMounted(() => {
     window.addEventListener('enabled-light-mode', onLightModeEnabled)
     window.addEventListener('enabled-dark-mode', onDarkModeEnabled)
     // when mounted, backfill the logs so far
-    logs.value.push(...getConsoleLogs())
+    logs.value.push(...getConsoleLogs().map(decorateLog))
     window.addEventListener('console-message', onConsoleMessage)
   }
 })

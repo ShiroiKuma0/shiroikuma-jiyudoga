@@ -23,6 +23,17 @@
 .logs > .warning,
 .logs > .error {
   padding: 10px;
+  cursor: pointer;
+}
+
+/* Tapped for a partial copy. Drawn inside the row so it cannot shift the layout,
+   and paired with a bar in the inline-start margin that survives every level's
+   own background colour. */
+.logs > .selected {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+  border-inline-start: 6px solid var(--primary-color);
+  padding-inline-start: 4px;
 }
 
 .logs > .log {

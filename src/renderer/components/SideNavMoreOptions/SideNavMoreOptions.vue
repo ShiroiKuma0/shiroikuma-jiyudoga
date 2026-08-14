@@ -116,7 +116,7 @@
         </p>
       </router-link>
       <a
-        v-if="usingAndroid && !usingRelease"
+        v-if="usingAndroid"
         class="navOption"
         :title="$t('Log Viewer.Console Log')"
         :aria-label="hideLabelsSideBar ? $t('Log Viewer.Console Log') : null"
@@ -250,7 +250,6 @@ const popularVisible = computed(() => {
 })
 
 const usingAndroid = process.env.IS_ANDROID
-const usingRelease = process.env.IS_RELEASE
 
 const showLogViewer = () => {
   store.dispatch('showLogViewer')
