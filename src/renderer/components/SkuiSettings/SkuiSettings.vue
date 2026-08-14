@@ -63,16 +63,203 @@
       </section>
 
       <!--
-        Video download: where the watch page's download button puts files and what
-        it calls them. The folder is asked for on the first download either way —
-        on Android with the SAF picker, on desktop from the main process — so this
-        section is where it gets reviewed and changed afterwards.
+        Device sync. Each device publishes ONE file describing its own state and reads
+        the other's; the desktop app carries both over ssh. The rows split by platform
+        because the phone's part is deliberately tiny — it has a folder and nothing
+        else, since it never reaches across and so can never hold the radio awake.
       -->
       <section class="skuiSection">
         <hr
           v-if="IS_ANDROID"
           class="skuiSectionRule"
         >
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Sync.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Sync.Description') }}
+        </p>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Enable') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Enable description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="syncEnabled"
+            @change="updateSyncEnabled($event.target.checked)"
+          >
+        </label>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Status') }}</span>
+            <span
+              class="skuiEntrySummary"
+              :class="{ skuiWarn: syncStatusIsProblem }"
+            >
+              {{ syncStatusText }}
+            </span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            :disabled="syncBusy"
+            @click="syncNow"
+          >
+            {{ syncBusy ? $t('SKUI.Sync.Syncing') : $t('SKUI.Sync.Sync now') }}
+          </button>
+        </div>
+
+        <!-- the phone: a real path, and the grant that makes it reachable -->
+        <template v-if="IS_ANDROID">
+          <div
+            v-if="!syncStorageGranted"
+            class="skuiEntryRow skuiIndent1"
+          >
+            <span class="skuiEntryText">
+              <span class="skuiEntrySummary skuiWarn">{{ $t('SKUI.Sync.No storage access') }}</span>
+            </span>
+            <button
+              class="skuiEntryAction"
+              type="button"
+              @click="grantSyncStorage"
+            >
+              {{ $t('SKUI.Sync.Grant access') }}
+            </button>
+          </div>
+
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Sync folder') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Sync folder description') }}</span>
+            </span>
+          </div>
+          <input
+            class="skuiEntryInput skuiIndent2"
+            type="text"
+            spellcheck="false"
+            :value="syncAndroidDir"
+            :aria-label="$t('SKUI.Sync.Sync folder')"
+            @change="updateSyncPath('updateSkuiSyncAndroidDir', $event.target.value, '/sdcard/jiyudoga-sync')"
+          >
+        </template>
+
+        <!-- the PC: it is the courier, so the ssh details live only here -->
+        <template v-else>
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone host') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Phone host description') }}</span>
+            </span>
+          </div>
+          <input
+            class="skuiEntryInput skuiIndent2"
+            type="text"
+            spellcheck="false"
+            :value="syncHost"
+            :aria-label="$t('SKUI.Sync.Phone host')"
+            @change="updateSyncText('updateSkuiSyncHost', $event.target.value)"
+          >
+
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone port') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Phone port description') }}</span>
+            </span>
+            <input
+              class="skuiEntryNumber"
+              type="number"
+              min="0"
+              max="65535"
+              :value="syncPort"
+              :aria-label="$t('SKUI.Sync.Phone port')"
+              @change="updateSyncPort($event.target.value)"
+            >
+          </div>
+
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Ssh arguments') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Ssh arguments description') }}</span>
+            </span>
+          </div>
+          <input
+            class="skuiEntryInput skuiIndent2"
+            type="text"
+            spellcheck="false"
+            :value="syncSshArgs"
+            :aria-label="$t('SKUI.Sync.Ssh arguments')"
+            @change="updateSyncText('updateSkuiSyncSshArgs', $event.target.value)"
+          >
+
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone folder') }}</span>
+            </span>
+          </div>
+          <input
+            class="skuiEntryInput skuiIndent2"
+            type="text"
+            spellcheck="false"
+            :value="syncRemoteDir"
+            :aria-label="$t('SKUI.Sync.Phone folder')"
+            @change="updateSyncPath('updateSkuiSyncRemoteDir', $event.target.value, '/sdcard/jiyudoga-sync')"
+          >
+
+          <div class="skuiEntryRow skuiIndent1">
+            <span class="skuiEntryText">
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Local folder') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Local folder default') }}</span>
+            </span>
+          </div>
+          <input
+            class="skuiEntryInput skuiIndent2"
+            type="text"
+            spellcheck="false"
+            :value="syncLocalDir"
+            :aria-label="$t('SKUI.Sync.Local folder')"
+            @change="updateSyncText('updateSkuiSyncLocalDir', $event.target.value)"
+          >
+        </template>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Sync.On start') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Sync.On start description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="syncOnStart"
+            @change="updateSyncFlag('updateSkuiSyncOnStart', $event.target.checked)"
+          >
+        </label>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Sync.After watch') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Sync.After watch description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="syncAfterWatch"
+            @change="updateSyncFlag('updateSkuiSyncAfterWatch', $event.target.checked)"
+          >
+        </label>
+      </section>
+
+      <!--
+        Video download: where the watch page's download button puts files and what
+        it calls them. The folder is asked for on the first download either way —
+        on Android with the SAF picker, on desktop from the main process — so this
+        section is where it gets reviewed and changed afterwards.
+      -->
+      <section class="skuiSection">
+        <hr class="skuiSectionRule">
         <h4 class="skuiSectionTitle">
           {{ $t('SKUI.Download.Section') }}
         </h4>
@@ -430,6 +617,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import android from 'android'
+import { hasStorageAccess, requestStorageAccess } from '../../helpers/android/sync'
+import { runSync } from '../../helpers/sync/index'
 
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import SkuiColorRow from './SkuiColorRow.vue'
@@ -479,6 +668,123 @@ function refreshBackupState() {
 }
 
 onMounted(refreshBackupState)
+
+// ---- Device sync ----
+
+const syncEnabled = computed(() => store.getters.getSkuiSyncEnabled)
+const syncOnStart = computed(() => store.getters.getSkuiSyncOnStart)
+const syncAfterWatch = computed(() => store.getters.getSkuiSyncAfterWatch)
+const syncAndroidDir = computed(() => store.getters.getSkuiSyncAndroidDir)
+const syncHost = computed(() => store.getters.getSkuiSyncHost)
+const syncPort = computed(() => store.getters.getSkuiSyncPort)
+const syncSshArgs = computed(() => store.getters.getSkuiSyncSshArgs)
+const syncRemoteDir = computed(() => store.getters.getSkuiSyncRemoteDir)
+const syncLocalDir = computed(() => store.getters.getSkuiSyncLocalDir)
+
+const syncBusy = ref(false)
+const syncStorageGranted = ref(true)
+
+function refreshSyncStorageState() {
+  if (!IS_ANDROID) { return }
+
+  syncStorageGranted.value = hasStorageAccess()
+}
+
+onMounted(refreshSyncStorageState)
+
+function grantSyncStorage() {
+  requestStorageAccess()
+}
+
+const syncStatusIsProblem = computed(() => {
+  const result = store.getters.getSkuiSyncLastResult
+
+  return result.startsWith('error') || result === 'no-peer' ||
+    result === 'no-storage-access' || result === 'no-directory'
+})
+
+const syncStatusText = computed(() => {
+  const result = store.getters.getSkuiSyncLastResult
+  const lastRun = store.getters.getSkuiSyncLastRun
+
+  if (result === '' || lastRun === 0) { return t('SKUI.Sync.Never') }
+
+  const when = new Date(lastRun).toLocaleString()
+
+  if (result.startsWith('error')) {
+    return t('SKUI.Sync.Failed', { message: result.replace(/^error:\s*/, '') })
+  }
+
+  if (result === 'no-peer') { return t('SKUI.Sync.No peer') }
+  if (result === 'no-storage-access') { return t('SKUI.Sync.No storage access') }
+  if (result === 'no-directory') { return t('SKUI.Sync.No directory') }
+
+  if (result.startsWith('ok:')) {
+    return t('SKUI.Sync.Merged', { count: result.slice(3), when })
+  }
+
+  return t('SKUI.Sync.Up to date', { when })
+})
+
+async function syncNow() {
+  syncBusy.value = true
+
+  try {
+    await runSync('manual')
+  } finally {
+    syncBusy.value = false
+    refreshSyncStorageState()
+  }
+}
+
+/**
+ * @param {boolean} value
+ */
+function updateSyncEnabled(value) {
+  store.dispatch('updateSkuiSyncEnabled', value)
+
+  if (value) {
+    refreshSyncStorageState()
+  }
+}
+
+/**
+ * @param {string} action
+ * @param {boolean} value
+ */
+function updateSyncFlag(action, value) {
+  store.dispatch(action, value)
+}
+
+/**
+ * @param {string} action
+ * @param {string} value
+ */
+function updateSyncText(action, value) {
+  store.dispatch(action, value.trim())
+}
+
+/**
+ * A path that has been emptied falls back to the default rather than to nothing: an
+ * empty sync folder would silently stop the sync with no visible cause.
+ * @param {string} action
+ * @param {string} value
+ * @param {string} fallback
+ */
+function updateSyncPath(action, value, fallback) {
+  store.dispatch(action, value.trim().replace(/\/+$/, '') || fallback)
+}
+
+/**
+ * @param {string} value
+ */
+function updateSyncPort(value) {
+  const parsed = Number.parseInt(value, 10)
+
+  // 0 is the useful default, not a rejected value: it means "say nothing about the
+  // port", which lets a Host block in ~/.ssh/config supply its own
+  store.dispatch('updateSkuiSyncPort', Number.isFinite(parsed) && parsed > 0 && parsed < 65536 ? parsed : 0)
+}
 
 // ---- Similar tab ----
 

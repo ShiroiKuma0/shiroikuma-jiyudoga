@@ -15,6 +15,10 @@ class History {
     return window.ftElectron.dbHistory(DBActions.GENERAL.FIND)
   }
 
+  static findForSync() {
+    return window.ftElectron.dbHistory(DBActions.HISTORY.FIND_FOR_SYNC)
+  }
+
   static upsert(record) {
     return window.ftElectron.dbHistory(DBActions.GENERAL.UPSERT, record)
   }
@@ -63,8 +67,8 @@ class Profiles {
     return window.ftElectron.dbProfiles(DBActions.PROFILES.ADD_CHANNEL, { channel, profileIds })
   }
 
-  static removeChannelFromProfiles(channelId, profileIds) {
-    return window.ftElectron.dbProfiles(DBActions.PROFILES.REMOVE_CHANNEL, { channelId, profileIds })
+  static removeChannelFromProfiles(channelId, profileIds, removedAt) {
+    return window.ftElectron.dbProfiles(DBActions.PROFILES.REMOVE_CHANNEL, { channelId, profileIds, removedAt })
   }
 
   static delete(id) {

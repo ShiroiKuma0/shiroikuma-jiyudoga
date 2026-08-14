@@ -63,6 +63,34 @@ export function mergeStarredVideos(base, incoming) {
 }
 
 /**
+ * Unions two lists of deletion tombstones, keeping the LATEST `at` per key — unlike
+ * `unionBy`, where first-seen wins. A tombstone is a claim about *when* something was
+ * removed, and the sync merge decides by comparing that instant against the far side's
+ * `addedAt` / `timeStarred`, so keeping the older of two claims would let a stale
+ * re-add win and the entry would come back.
+ * @param {any[]} [base]
+ * @param {any[]} [incoming]
+ * @param {string} idKey
+ */
+export function mergeTombstones(base, incoming, idKey) {
+  const latest = new Map()
+
+  for (const entry of [...(base ?? []), ...(incoming ?? [])]) {
+    const id = entry?.[idKey]
+
+    if (id == null) { continue }
+
+    const existing = latest.get(id)
+
+    if (existing == null || (entry.at ?? 0) > (existing.at ?? 0)) {
+      latest.set(id, { ...entry })
+    }
+  }
+
+  return Array.from(latest.values())
+}
+
+/**
  * Unions two tunings. Term weights and seed demerits are combined with max() rather
  * than by adding: importing the same backup twice must not inflate what the profile
  * has learned, and the entries those numbers count (rejected videos) are themselves

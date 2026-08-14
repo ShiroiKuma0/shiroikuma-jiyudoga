@@ -27,6 +27,7 @@ import io.freetubeapp.freetube.helpers.readBytes
 import io.freetubeapp.freetube.helpers.readText
 import io.freetubeapp.freetube.helpers.resolveAmbiguousUri
 import io.freetubeapp.freetube.helpers.writeBytes
+import io.freetubeapp.freetube.sync.SyncFiles
 import io.freetubeapp.freetube.webviews.FreeTubeWebView
 import java.io.File
 import java.net.HttpURLConnection
@@ -626,6 +627,63 @@ class FreeTubeJavaScriptInterface(
       val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
       clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
     }
+  }
+
+  // endregion
+
+  // region Device sync
+
+  /**
+   * Fork (白い熊 自由動画): the phone's side of the device sync is only ever these three
+   * calls — read the file the desktop published, publish our own, and copy the datastores
+   * aside before the first merge. No socket is opened here, by design: the desktop app is
+   * the courier, so nothing about syncing can hold the WiFi radio awake.
+   */
+  @JavascriptInterface
+  fun readSyncFile(directory: String, name: String): String {
+    val id = "${randomUUID()}"
+    coroutineScope.launch(Dispatchers.IO) {
+      try {
+        // an empty string rather than a rejection: the other device simply not having
+        // published yet is the ordinary state, not a failure
+        jsCommunicator.resolve(id, SyncFiles.read(directory, name) ?: "")
+      } catch (ex: SyncFiles.NoStorageAccess) {
+        jsCommunicator.reject(id, "no-storage-access")
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.message ?: ex.javaClass.simpleName)
+      }
+    }
+    return id
+  }
+
+  @JavascriptInterface
+  fun writeSyncFile(directory: String, name: String, contents: String): String {
+    val id = "${randomUUID()}"
+    coroutineScope.launch(Dispatchers.IO) {
+      try {
+        jsCommunicator.resolve(id, SyncFiles.write(directory, name, contents))
+      } catch (ex: SyncFiles.NoStorageAccess) {
+        jsCommunicator.reject(id, "no-storage-access")
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.message ?: ex.javaClass.simpleName)
+      }
+    }
+    return id
+  }
+
+  @JavascriptInterface
+  fun backupSyncDatastores(directory: String, stamp: String): String {
+    val id = "${randomUUID()}"
+    coroutineScope.launch(Dispatchers.IO) {
+      try {
+        jsCommunicator.resolve(id, SyncFiles.backupDatastores(context, directory, stamp))
+      } catch (ex: SyncFiles.NoStorageAccess) {
+        jsCommunicator.reject(id, "no-storage-access")
+      } catch (ex: Exception) {
+        jsCommunicator.reject(id, ex.message ?: ex.javaClass.simpleName)
+      }
+    }
+    return id
   }
 
   // endregion

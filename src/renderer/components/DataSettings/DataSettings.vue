@@ -163,7 +163,7 @@ import {
   writeFileWithPicker,
 } from '../../helpers/utils'
 import { processToBeAddedPlaylistVideo } from '../../helpers/playlists'
-import { mergeSimilarTuning, mergeStarredVideos } from '../../helpers/profileExtras'
+import { mergeSimilarTuning, mergeStarredVideos, mergeTombstones } from '../../helpers/profileExtras'
 
 import android from 'android'
 import { selectDataDirectory, getCurrentDataDirectory, DATA_DIRECTORY } from '../../helpers/android/storage'
@@ -400,6 +400,14 @@ function mergeProfileExtras(target, imported) {
   if (imported.similarTuning != null) {
     target.similarTuning = mergeSimilarTuning(target.similarTuning, imported.similarTuning)
   }
+
+  if (imported.subscriptionsRemoved != null) {
+    target.subscriptionsRemoved = mergeTombstones(target.subscriptionsRemoved, imported.subscriptionsRemoved, 'id')
+  }
+
+  if (imported.starredRemoved != null) {
+    target.starredRemoved = mergeTombstones(target.starredRemoved, imported.starredRemoved, 'videoId')
+  }
 }
 
 /**
@@ -428,7 +436,12 @@ function importFreeTubeSubscriptions(textDecode) {
   // demanded — a stock FreeTube export has neither, and must still import
   const optionalKeys = [
     'starredVideos',
-    'similarTuning'
+    'similarTuning',
+    // the device-sync tombstones (see renderer/helpers/sync/): an export that carried
+    // the subscriptions but not the record of what was unsubscribed would resurrect
+    // every removed channel the moment it was imported
+    'subscriptionsRemoved',
+    'starredRemoved'
   ]
 
   textDecode.forEach((profileData) => {
@@ -961,6 +974,9 @@ async function importFreeTubeWatchHistory(textDecode) {
     'lastViewedPlaylistType',
     'viewCount',
     'description',
+    // the device-sync modification stamp (see renderer/helpers/sync/) — carried through
+    // an export so a re-import brings the far side's real times, not the import's
+    'syncUpdatedAt',
   ]
 
   const ignoredKeys = [

@@ -9,6 +9,7 @@
           class="headingIcon"
         />
         {{ t('History.History') }}
+        <SkuiSyncButton />
       </h2>
       <FtInput
         v-show="fullData.length > 1"
@@ -93,6 +94,7 @@ import FtFlexBox from '../../components/ft-flex-box/ft-flex-box.vue'
 import FtInput from '../../components/FtInput/FtInput.vue'
 import FtSelect from '../../components/FtSelect/FtSelect.vue'
 import FtToggleSwitch from '../../components/FtToggleSwitch/FtToggleSwitch.vue'
+import SkuiSyncButton from '../../components/SkuiSyncButton.vue'
 
 import store from '../../store'
 

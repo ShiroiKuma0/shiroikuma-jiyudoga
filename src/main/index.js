@@ -30,6 +30,7 @@ import packageDetails from '../../package.json'
 import { handleOpenInExternalPlayer } from './externalPlayer'
 import { generatePoToken } from './poTokenGenerator'
 import { isFreeTubeUrl } from './utils'
+import * as deviceSync from './sync'
 
 const brotliDecompressAsync = promisify(brotliDecompress)
 
@@ -1566,6 +1567,42 @@ function runApp() {
     return await writeToChosenFolder(event, filename, arrayBuffer, 'downloadFolderPath')
   })
 
+  // 白い熊 自由動画 device sync: the renderer runs the whole merge, so all this
+  // exposes is the disk and the courier — see src/main/sync.js.
+  ipcMain.handle(IpcChannels.DEVICE_SYNC_READ_SNAPSHOT, async (event, fileName) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof fileName !== 'string') { return null }
+
+    return await deviceSync.readSnapshot(fileName)
+  })
+
+  ipcMain.handle(IpcChannels.DEVICE_SYNC_WRITE_SNAPSHOT, async (event, fileName, contents) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof fileName !== 'string' || typeof contents !== 'string') {
+      return null
+    }
+
+    return await deviceSync.writeSnapshot(fileName, contents)
+  })
+
+  ipcMain.handle(IpcChannels.DEVICE_SYNC_PULL_PEER, async (event, fileName, config) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof fileName !== 'string') { return 'no-peer' }
+
+    return await deviceSync.pullPeerSnapshot(fileName, config)
+  })
+
+  ipcMain.handle(IpcChannels.DEVICE_SYNC_PUSH_OWN, async (event, fileName, contents, config) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof fileName !== 'string' || typeof contents !== 'string') {
+      return 'no-peer'
+    }
+
+    return await deviceSync.pushOwnSnapshot(fileName, contents, config)
+  })
+
+  ipcMain.handle(IpcChannels.DEVICE_SYNC_BACKUP_DATASTORES, async (event, stamp) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof stamp !== 'string') { return null }
+
+    return await deviceSync.backupDatastores(stamp.replaceAll(/[^0-9_-]/g, ''))
+  })
+
   ipcMain.handle(IpcChannels.OPEN_IN_YOSUGA, async (event, filePath) => {
     if (!isFreeTubeUrl(event.senderFrame.url) || typeof filePath !== 'string') {
       return false
@@ -1838,6 +1875,9 @@ function runApp() {
         case DBActions.GENERAL.FIND:
           return await baseHandlers.history.find()
 
+        case DBActions.HISTORY.FIND_FOR_SYNC:
+          return await baseHandlers.history.findForSync()
+
         case DBActions.GENERAL.UPSERT:
           await baseHandlers.history.upsert(data)
           syncOtherWindows(
@@ -1943,7 +1983,7 @@ function runApp() {
           return null
 
         case DBActions.PROFILES.REMOVE_CHANNEL:
-          await baseHandlers.profiles.removeChannelFromProfiles(data.channelId, data.profileIds)
+          await baseHandlers.profiles.removeChannelFromProfiles(data.channelId, data.profileIds, data.removedAt)
           syncOtherWindows(
             IpcChannels.SYNC_PROFILES,
             event,

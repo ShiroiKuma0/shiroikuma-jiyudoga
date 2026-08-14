@@ -160,6 +160,57 @@ export default {
   },
 
   /**
+   * Device sync — reads a snapshot out of the local sync directory.
+   * @param {string} fileName
+   * @returns {Promise<string | null>} null when the file does not exist
+   */
+  deviceSyncReadSnapshot: async (fileName) => {
+    return await ipcRenderer.invoke(IpcChannels.DEVICE_SYNC_READ_SNAPSHOT, fileName)
+  },
+
+  /**
+   * Device sync — publishes this device's snapshot into the local sync directory.
+   * @param {string} fileName
+   * @param {string} contents
+   * @returns {Promise<string | null>} the absolute file path
+   */
+  deviceSyncWriteSnapshot: async (fileName, contents) => {
+    return await ipcRenderer.invoke(IpcChannels.DEVICE_SYNC_WRITE_SNAPSHOT, fileName, contents)
+  },
+
+  /**
+   * Device sync — fetches the phone's snapshot over ssh into the local directory.
+   * The peer settings travel with the call: only the renderer's store knows a setting
+   * that is still at its default, since the datastore holds no row until it changes.
+   * @param {string} fileName
+   * @param {{ host: string, port: number, args: string, remoteDir: string }} config
+   * @returns {Promise<'fetched' | 'absent' | 'no-peer'>}
+   */
+  deviceSyncPullPeer: async (fileName, config) => {
+    return await ipcRenderer.invoke(IpcChannels.DEVICE_SYNC_PULL_PEER, fileName, config)
+  },
+
+  /**
+   * Device sync — delivers this device's snapshot to the phone over ssh.
+   * @param {string} fileName
+   * @param {string} contents
+   * @param {{ host: string, port: number, args: string, remoteDir: string }} config
+   * @returns {Promise<'pushed' | 'no-peer'>}
+   */
+  deviceSyncPushOwn: async (fileName, contents, config) => {
+    return await ipcRenderer.invoke(IpcChannels.DEVICE_SYNC_PUSH_OWN, fileName, contents, config)
+  },
+
+  /**
+   * Device sync — copies the datastores aside before the first ever merge.
+   * @param {string} stamp `yyyy-MM-dd_HH-mm-ss`
+   * @returns {Promise<string | null>} the backup directory
+   */
+  deviceSyncBackupDatastores: async (stamp) => {
+    return await ipcRenderer.invoke(IpcChannels.DEVICE_SYNC_BACKUP_DATASTORES, stamp)
+  },
+
+  /**
    * Writes a downloaded video into the (once-asked) download folder.
    * @param {string} filename
    * @param {ArrayBuffer} contents

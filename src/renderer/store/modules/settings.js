@@ -334,6 +334,38 @@ const state = {
   // that many agreeing seeds (1 = keep everything)
   skuiSimilarSort: 'agreement',
   skuiSimilarMinAgreement: 1,
+  // Device sync (helpers/sync/): history, subscriptions and starred videos merge
+  // between the phone and the PC through one published JSON snapshot each. Every
+  // value below that names a machine is empty or generic by default — nothing about
+  // one particular setup belongs in the repository, and with no host the courier is
+  // simply inert.
+  skuiSyncEnabled: false,
+  // where the phone keeps the two snapshots. A plain path rather than a SAF tree,
+  // because ssh has no way to open a document uri
+  skuiSyncAndroidDir: '/sdcard/jiyudoga-sync',
+  // '' = <electron userData>/sync. Pointing this at a folder something else already
+  // synchronises (Syncthing, a mounted share) lets the ssh courier be left switched off
+  skuiSyncLocalDir: '',
+  // the phone, as the system `ssh` will resolve it — an alias out of ~/.ssh/config,
+  // `user@host`, or a bare address. Empty means there is no peer and nothing is sent
+  skuiSyncHost: '',
+  // 0 = say nothing about the port and let ssh read it from ~/.ssh/config. Passing one
+  // unconditionally overrode the config's own Port, and since known_hosts is keyed by
+  // host AND port, that turned a familiar phone into an unknown one — "Host key
+  // verification failed" under BatchMode, which cannot prompt
+  skuiSyncPort: 0,
+  // appended to the ssh argv verbatim, e.g. `-i ~/.ssh/id_ed25519`
+  skuiSyncSshArgs: '',
+  // the phone's directory as the PC must address it; kept apart from
+  // skuiSyncAndroidDir because only the phone knows whether its own path still holds
+  skuiSyncRemoteDir: '/sdcard/jiyudoga-sync',
+  skuiSyncOnStart: true,
+  skuiSyncAfterWatch: true,
+  // status, written by the sync itself: when it last ran, and how it went
+  skuiSyncLastRun: 0,
+  skuiSyncLastResult: '',
+  // set once the datastores have been copied aside, before the first ever merge
+  skuiSyncBackedUp: false,
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)
@@ -495,6 +527,17 @@ export const NON_TRANSFERABLE_SETTINGS = new Set([
   'studyFolderPath',
   'downloadDirectoryTree',
   'downloadFolderPath',
+  // device sync: every one of these describes THIS machine or its view of the other
+  // one, so carrying them into a backup would teach the far device to sync with itself
+  'skuiSyncAndroidDir',
+  'skuiSyncLocalDir',
+  'skuiSyncHost',
+  'skuiSyncPort',
+  'skuiSyncSshArgs',
+  'skuiSyncRemoteDir',
+  'skuiSyncLastRun',
+  'skuiSyncLastResult',
+  'skuiSyncBackedUp',
   /* Depends on process.env.IS_ELECTRON */
   // ProxySettings
   'useProxy',

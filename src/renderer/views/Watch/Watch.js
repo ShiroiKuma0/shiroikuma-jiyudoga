@@ -40,6 +40,7 @@ import {
   youtubeImageUrlToInvidious
 } from '../../helpers/api/invidious'
 import { getOriginalTitle } from '../../helpers/originalTitles'
+import { scheduleSync } from '../../helpers/sync/index'
 import { sortCaptions } from '../../helpers/player/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
 import { createUnplayableFormatFilter, isPlayableMimeType } from '../../helpers/player/codecSupport'
@@ -1401,6 +1402,12 @@ export default defineComponent({
         watchProgress: currentTime
       }
       this.updateWatchProgress(payload)
+
+      // 白い熊 自由動画: debounced, so leaving a video publishes ONE snapshot a few
+      // seconds after the last progress write rather than one per write. This is what
+      // makes a half-watched video resumable on the other device without waiting for
+      // the next launch; on the phone it is a local file write, so it costs no radio.
+      scheduleSync('watch')
     },
 
     handlePlaylistPersisting: function () {

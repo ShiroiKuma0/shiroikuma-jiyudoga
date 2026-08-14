@@ -138,6 +138,7 @@ import { loadLocale } from './i18n/index'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 import { applySkuiTheme, parseTheme } from './helpers/skui'
+import { registerSyncTriggers } from './helpers/sync/index'
 
 const route = useRoute()
 const router = useRouter()
@@ -220,6 +221,11 @@ onMounted(async () => {
       window.addEventListener('enabled-light-mode', updateTheme)
       window.addEventListener('enabled-dark-mode', updateTheme)
     }
+
+    // 白い熊 自由動画: history, subscriptions and starred videos converge with the
+    // other device from here. Inert unless the sync is switched on in the 白い熊
+    // settings page, and on the phone it never touches the network at all.
+    registerSyncTriggers()
 
     dataReady.value = true
 

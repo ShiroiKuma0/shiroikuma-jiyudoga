@@ -1,5 +1,26 @@
 import * as db from '../index'
 
+/**
+ * Fork (白い熊 自由動画): how long a deletion is remembered.
+ *
+ * The device-to-device sync (see `renderer/helpers/sync/`) merges two snapshots by
+ * taking the newer fact per record, so a *removed* record and one the other device
+ * never had look identical — an unsubscribe or a cleared history entry would simply
+ * come back on the next sync. Deletions therefore live on as tombstones and are only
+ * really dropped once both devices have certainly seen them.
+ */
+const SYNC_TOMBSTONE_TTL = 180 * 24 * 60 * 60 * 1000
+
+/**
+ * @param {import('@seald-io/nedb')} datastore
+ */
+function pruneTombstones(datastore) {
+  return datastore.removeAsync(
+    { _deleted: true, syncUpdatedAt: { $lt: Date.now() - SYNC_TOMBSTONE_TTL } },
+    { multi: true }
+  )
+}
+
 class Settings {
   static async find() {
     const currentLocale = await db.settings.findOneAsync({ _id: 'currentLocale' })
@@ -102,34 +123,65 @@ class Settings {
 }
 
 class History {
-  static find() {
-    return db.history.findAsync({}).sort({ timeWatched: -1 })
+  static async find() {
+    await pruneTombstones(db.history)
+
+    return db.history.findAsync({ _deleted: { $ne: true } }).sort({ timeWatched: -1 })
+  }
+
+  /**
+   * Fork (白い熊 自由動画): everything, tombstones included. Only the sync snapshot
+   * wants this — `find` deliberately hides the tombstones from the rest of the app.
+   */
+  static findForSync() {
+    return db.history.findAsync({})
   }
 
   static upsert(record) {
-    return db.history.updateAsync({ videoId: record.videoId }, record, { upsert: true })
+    return db.history.updateAsync(
+      { videoId: record.videoId },
+      // a full document replace, so a tombstone for a re-watched video is simply gone
+      { ...record, syncUpdatedAt: Date.now() },
+      { upsert: true }
+    )
   }
 
   static async overwrite(records) {
     await db.history.removeAsync({}, { multi: true })
 
-    await db.history.insertAsync(records)
+    const now = Date.now()
+
+    // a stamp the records already carry wins: an import brings the far side's own
+    // modification times, and those are what the merge has to compare against
+    await db.history.insertAsync(records.map((record) => ({ syncUpdatedAt: now, ...record })))
   }
 
   static updateWatchProgress(videoId, watchProgress) {
-    return db.history.updateAsync({ videoId }, { $set: { watchProgress } }, { upsert: true })
+    return db.history.updateAsync({ videoId }, { $set: { watchProgress, syncUpdatedAt: Date.now() } }, { upsert: true })
   }
 
   static updateLastViewedPlaylist(videoId, lastViewedPlaylistId, lastViewedPlaylistType, lastViewedPlaylistItemId) {
-    return db.history.updateAsync({ videoId }, { $set: { lastViewedPlaylistId, lastViewedPlaylistType, lastViewedPlaylistItemId } }, { upsert: true })
+    return db.history.updateAsync({ videoId }, { $set: { lastViewedPlaylistId, lastViewedPlaylistType, lastViewedPlaylistItemId, syncUpdatedAt: Date.now() } }, { upsert: true })
   }
 
   static delete(videoId) {
-    return db.history.removeAsync({ videoId })
+    // replaces the document rather than removing it, leaving a bare tombstone
+    return db.history.updateAsync(
+      { videoId },
+      { videoId, _deleted: true, syncUpdatedAt: Date.now() },
+      { upsert: true }
+    )
   }
 
-  static deleteAll() {
-    return db.history.removeAsync({}, { multi: true })
+  static async deleteAll() {
+    const records = await db.history.findAsync({ _deleted: { $ne: true } })
+    const now = Date.now()
+
+    await db.history.removeAsync({}, { multi: true })
+
+    if (records.length > 0) {
+      await db.history.insertAsync(records.map(({ videoId }) => ({ videoId, _deleted: true, syncUpdatedAt: now })))
+    }
   }
 }
 
@@ -161,16 +213,25 @@ class Profiles {
     }
   }
 
-  static removeChannelFromProfiles(channelId, profileIds) {
+  static removeChannelFromProfiles(channelId, profileIds, removedAt = Date.now()) {
+    // Fork (白い熊 自由動画): the `$push` is the tombstone that makes an unsubscribe
+    // survive a sync — without it the other device's snapshot just hands the channel
+    // back. `$push` creates the array when the profile has never had one. The caller
+    // supplies the stamp so the store's copy and this one cannot disagree.
+    const modifier = {
+      $pull: { subscriptions: { id: channelId } },
+      $push: { subscriptionsRemoved: { id: channelId, at: removedAt } }
+    }
+
     if (profileIds.length === 1) {
       return db.profiles.updateAsync(
         { _id: profileIds[0] },
-        { $pull: { subscriptions: { id: channelId } } }
+        modifier
       )
     } else {
       return db.profiles.updateAsync(
         { _id: { $in: profileIds } },
-        { $pull: { subscriptions: { id: channelId } } },
+        modifier,
         { multi: true }
       )
     }

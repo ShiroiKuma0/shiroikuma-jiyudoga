@@ -1402,6 +1402,54 @@ SKUI:
     Regenerate: Regenerate
     Token copied: Automation token copied to the clipboard
     Token regenerated: New automation token generated — update every pasted copy
+  Sync:
+    Section: Device sync
+    Description: >-
+      Keeps the watch history, the subscriptions of every profile and the starred videos
+      the same on this device and the other one. Each device publishes a single file
+      describing its own state; the desktop app carries the two files over ssh whenever it
+      is running, so a video half-watched on the phone resumes on the PC.
+    Enable: Sync with the other device
+    Enable description: >-
+      Nothing is read, written or sent until this is on.
+    Status: Status
+    Never: Never synced
+    Up to date: Up to date, {when}
+    Merged: '{count} changes merged, {when}'
+    No peer: No phone configured — nothing is being sent
+    No storage access: All-files access is needed to reach the sync folder
+    No directory: No sync folder set
+    Failed: 'Last sync failed: {message}'
+    Sync now: Sync now
+    Syncing: Syncing…
+    Toast up to date: Already in step with the other device
+    Toast merged: 'Synced: {count} changes merged'
+    Toast failed: The sync failed — see the 白い熊 UI settings for why
+    Grant access: Grant access
+    Sync folder: Sync folder on this phone
+    Sync folder description: >-
+      A real path rather than a picked folder, because the PC has to reach it over ssh.
+      Type the same path into the PC's "phone's sync folder" box.
+    Phone host: Phone, as ssh reaches it
+    Phone host description: >-
+      A host from your ~/.ssh/config, user{'@'}host, or a plain address. Left empty, nothing
+      is sent anywhere. Keys, aliases and agents are ssh's own business, not this app's.
+    Phone port: ssh port
+    Phone port description: >-
+      0 says nothing about the port and lets your ~/.ssh/config decide. Set one only to
+      override it — known_hosts is keyed by host and port together, so a port your config
+      does not use makes an already-trusted phone look like an unknown one.
+    Ssh arguments: Extra ssh arguments
+    Ssh arguments description: 'Appended to the command as-is, for example: -i ~/.ssh/id_ed25519'
+    Phone folder: The phone's sync folder
+    Local folder: Sync folder on this PC
+    Local folder default: Left empty, the app's own data folder is used
+    On start: Sync on opening the app
+    On start description: >-
+      And whenever it comes back to the front.
+    After watch: Sync after watching
+    After watch description: >-
+      A few seconds after a video is left, so its position is already on the other device.
   Feed filter:
     New filter: New filter
     Edit filter: Edit filter

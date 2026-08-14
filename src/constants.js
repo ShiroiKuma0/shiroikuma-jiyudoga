@@ -48,6 +48,15 @@ const IpcChannels = {
 
   WRITE_TO_STUDY_FOLDER: 'write-to-study-folder',
   OPEN_IN_YOSUGA: 'open-in-yosuga',
+
+  // 白い熊 自由動画 device sync — the disk and ssh half of it. Named apart from the
+  // SYNC_* channels above, which are about keeping two windows of one app in step.
+  DEVICE_SYNC_READ_SNAPSHOT: 'device-sync-read-snapshot',
+  DEVICE_SYNC_WRITE_SNAPSHOT: 'device-sync-write-snapshot',
+  DEVICE_SYNC_PULL_PEER: 'device-sync-pull-peer',
+  DEVICE_SYNC_PUSH_OWN: 'device-sync-push-own',
+  DEVICE_SYNC_BACKUP_DATASTORES: 'device-sync-backup-datastores',
+
   WRITE_TO_DOWNLOAD_FOLDER: 'write-to-download-folder',
 
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
@@ -71,6 +80,8 @@ const DBActions = {
   HISTORY: {
     UPDATE_WATCH_PROGRESS: 20,
     UPDATE_PLAYLIST: 21,
+    // 白い熊 自由動画: like FIND, but with the deletion tombstones the sync snapshot needs
+    FIND_FOR_SYNC: 22,
   },
 
   PROFILES: {

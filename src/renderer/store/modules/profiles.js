@@ -422,6 +422,12 @@ const actions = {
       channel.thumbnail = channel.thumbnail.replace(/^https?:\/\/[^/]+\/ggpht/, 'https://yt3.googleusercontent.com')
     }
 
+    // 白い熊 自由動画: stamped here rather than in the datastore handler so the store's
+    // own copy carries it too — `updateProfile` writes the whole profile document back
+    // from memory, and an unstamped copy would erase the stamp on the next star or
+    // thumbnail refresh. The sync merge weighs this against `subscriptionsRemoved.at`.
+    channel.addedAt = Date.now()
+
     try {
       await DBProfileHandlers.addChannelToProfiles(channel, profileIds)
       commit('addChannelToProfiles', { channel, profileIds })
@@ -431,9 +437,12 @@ const actions = {
   },
 
   async removeChannelFromProfiles({ commit }, { channelId, profileIds }) {
+    // 白い熊 自由動画: one stamp for the datastore's tombstone and the store copy alike
+    const removedAt = Date.now()
+
     try {
-      await DBProfileHandlers.removeChannelFromProfiles(channelId, profileIds)
-      commit('removeChannelFromProfiles', { channelId, profileIds })
+      await DBProfileHandlers.removeChannelFromProfiles(channelId, profileIds, removedAt)
+      commit('removeChannelFromProfiles', { channelId, profileIds, removedAt })
     } catch (errMessage) {
       console.error(errMessage)
     }
@@ -470,12 +479,15 @@ const actions = {
 
       const profileCopy = deepCopy(profile)
       profileCopy.starredVideos = [...(profileCopy.starredVideos ?? []), entry]
+      // starring again retires its own tombstone, so the array stays bounded
+      profileCopy.starredRemoved = (profileCopy.starredRemoved ?? []).filter((removed) => removed.videoId !== entry.videoId)
       await dispatch('updateProfile', profileCopy)
     }
   },
 
   async unstarVideo({ dispatch, state }, videoId) {
     const activeProfileIsMain = state.activeProfile === MAIN_PROFILE_ID
+    const removedAt = Date.now()
 
     for (const profile of state.profileList) {
       if (!activeProfileIsMain && profile._id !== state.activeProfile) { continue }
@@ -484,6 +496,12 @@ const actions = {
 
       const profileCopy = deepCopy(profile)
       profileCopy.starredVideos = profileCopy.starredVideos.filter((video) => video.videoId !== videoId)
+      // 白い熊 自由動画: the tombstone the sync merge weighs against the entry's
+      // `timeStarred` on the other device, so an unstar is not simply undone
+      profileCopy.starredRemoved = [
+        ...(profileCopy.starredRemoved ?? []).filter((removed) => removed.videoId !== videoId),
+        { videoId, at: removedAt }
+      ]
       await dispatch('updateProfile', profileCopy)
     }
   },
@@ -640,13 +658,21 @@ const mutations = {
     }
   },
 
-  removeChannelFromProfiles(state, { channelId, profileIds }) {
+  removeChannelFromProfiles(state, { channelId, profileIds, removedAt }) {
     for (const id of profileIds) {
       const profile = state.profileList.find(profile => profile._id === id)
 
       // use filter instead of splice in case the subscription appears multiple times
       // https://github.com/FreeTubeApp/FreeTube/pull/3468#discussion_r1179290877
       profile.subscriptions = profile.subscriptions.filter(channel => channel.id !== channelId)
+
+      // 白い熊 自由動画: mirror the datastore's tombstone into the store copy, or the
+      // next whole-document write from memory would drop it and the unsubscribe would
+      // be undone by the other device on the following sync
+      profile.subscriptionsRemoved = [
+        ...(profile.subscriptionsRemoved ?? []).filter(entry => entry.id !== channelId),
+        { id: channelId, at: removedAt }
+      ]
     }
   },
 
