@@ -42,6 +42,7 @@ import {
 import { getOriginalTitle } from '../../helpers/originalTitles'
 import { sortCaptions } from '../../helpers/player/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
+import { createUnplayableFormatFilter, isPlayableMimeType } from '../../helpers/player/codecSupport'
 import { useI18n } from 'vue-i18n'
 
 /**
@@ -1047,6 +1048,10 @@ export default defineComponent({
           }
         }
 
+        if (process.env.IS_ANDROID) {
+          this.logCodecSupport(result)
+        }
+
         this.isLoading = false
         this.updateTitle()
       } catch (err) {
@@ -1747,11 +1752,54 @@ export default defineComponent({
     },
 
     /**
+     * Android only. The WebView throws out of `addSourceBuffer` for some codec strings that
+     * shaka's own filtering already let through, which surfaces as the useless shaka error
+     * 3015 (MEDIA_SOURCE_OPERATION_THREW) and drops playback to legacy formats — leaving
+     * videos that have none unplayable. Name every codec the manifest offers and say which
+     * ones this device's MediaSource actually admits, so the culprit is identifiable from
+     * the console log rather than guessed at.
+     * @param {import('youtubei.js').YT.VideoInfo} videoInfo
+     */
+    logCodecSupport: function (videoInfo) {
+      try {
+        const unplayable = new Set()
+
+        for (const format of videoInfo.streaming_data?.adaptive_formats ?? []) {
+          if (format.mime_type && !isPlayableMimeType(format.mime_type)) {
+            unplayable.add(format.mime_type)
+          }
+        }
+
+        if (unplayable.size === 0) {
+          // Nothing was dropped, so nothing to explain — stay out of the log.
+          return
+        }
+
+        // warn, not log: the lint config allows only warn/error, and it stands out in the viewer
+        console.warn(
+          `[codec-support] manifest=${this.manifestMimeType} legacyFormats=${this.legacyFormats.length}\n` +
+          'dropped, unsupported by this platform\'s MediaSource:\n' +
+          [...unplayable].sort().join('\n')
+        )
+      } catch (error) {
+        console.error('[codec-support] probe failed', error)
+      }
+    },
+
+    /**
      * @param {import('youtubei.js').YT.VideoInfo} videoInfo
      * @param {boolean} includeThumbnails
      */
     createLocalDashManifest: async function (videoInfo, includeThumbnails = false) {
+      // Same reason as in SabrManifestParser: keep codecs this platform's MediaSource will
+      // refuse out of the manifest entirely. `format_filter` rejects the formats it returns
+      // true for.
+      const isUnplayable = createUnplayableFormatFilter(
+        (videoInfo.streaming_data?.adaptive_formats ?? []).map(format => format.mime_type)
+      )
+
       const xmlData = await videoInfo.toDash({
+        format_filter: (format) => isUnplayable(format.mime_type),
         manifest_options: {
           include_thumbnails: includeThumbnails,
         },

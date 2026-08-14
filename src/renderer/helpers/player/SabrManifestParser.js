@@ -1,6 +1,7 @@
 import shaka from 'shaka-player'
 import { parseWebmSegmentIndex } from './WebmSegmentIndexParser'
 import { parseMp4SegmentIndex } from './Mp4SegmentIndexParser'
+import { createUnplayableFormatFilter } from './codecSupport'
 
 /**
  * @typedef {{
@@ -170,7 +171,16 @@ class SabrManifestParser {
       fakeVideoFormatId = buildFormatId(worstVideoFormat)
     }
 
+    // Formats whose codec this platform's MediaSource will refuse at addSourceBuffer time are
+    // dropped here rather than left for shaka to filter — it does not always agree with
+    // MediaSource, and a variant that slips through takes playback down with error 3015.
+    const isUnplayable = createUnplayableFormatFilter(manifestData.formats.map(format => format.mimeType))
+
     for (const format of manifestData.formats) {
+      if (isUnplayable(format.mimeType)) {
+        continue
+      }
+
       if (format.mimeType.startsWith('audio/')) {
         if (format.xtags === 'CgcKAnZiEgEx') {
           // Workaround to reject certain xtags value to avoid reload
