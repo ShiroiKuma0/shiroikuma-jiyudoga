@@ -15,6 +15,65 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+017` — 2026-08-14
+
+Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — **both**
+upstreams synced. The headline is that Android video playback works again.
+
+- **Videos play on Android again.** Opening a subscription video left the watch page at `0:00`
+  with no duration and a Play button that did nothing; the console said `Unable to play DASH
+  formats. Reverting to legacy formats…`, and a video published that day has no legacy formats to
+  revert to. Underneath was shaka error 3015 (`MEDIA_SOURCE_OPERATION_THREW`) — its wrapper for an
+  exception thrown out of `addSourceBuffer` while the MediaSource was healthy, i.e. the WebView
+  refusing a codec. Measured on-device, every `video/mp4; codecs="av01.*"` comes back false from
+  `MediaSource.isTypeSupported` while avc1, vp9, opus and mp4a all come back true, and the device
+  carries no AV1 decoder. Those variants survived shaka's own filtering anyway, because that asks
+  MediaCapabilities, which reports AV1 as decodable in software — and `addSourceBuffer` is the one
+  that decides. FreeTube 0.25.2's SABR path made it certain to bite: `av01` is first in
+  `VIDEO_CODEC_PRIORITIES`, so AV1 was not merely offered but preferred. Both manifest builders now
+  ask MediaSource directly and drop what it refuses — but only while a playable format of the same
+  kind survives, since stripping a track type to nothing would trade a recoverable error for an
+  empty manifest. Older uploads were unaffected throughout, because they still carry a progressive
+  itag and quietly played on the fallback path, which is what made this look video-specific rather
+  than app-wide.
+- **The console log is readable, and shipped.** Every WebView console message was already captured,
+  but the viewer was gated behind `!IS_RELEASE` — which every build we ship is — so a JS error on a
+  real phone could not be seen at all: `ConsoleLogChromeClient` keeps the messages out of logcat,
+  and remote debugging is off. The gate was in three places (the sidebar entry, the "More" entry,
+  and the component's own root `v-if`, which would have rendered nothing even had the action been
+  reachable); all three are gone. Entries are now tappable to select, with **Copy selected** and
+  **Copy all** beside Close, copying through the native clipboard bridge — the shared helper needs
+  a secure context and `file://` is not one, so it could only ever report that it cannot reach the
+  clipboard. Copied text is the untouched original, oldest-first, each entry stamped with its time,
+  level and source. Retention went 50 → 250 entries, since one shaka stack trace is a single entry
+  and the cause sits well above it.
+- **Both upstreams synced.** FreeTube brings a Tamil translation update. FreeTubeAndroid brings
+  their own fix for the same 0.25.2 integrity-token breakage this fork had already fixed on
+  2026-08-12, so the merge keeps the stronger half of each: their `Promise`-based BotGuard
+  interface with a real reject path, their proper attestation document, and their
+  `spoofDesktopUserAgent` as the home for our desktop agent — against our 15-second timeout (now
+  guarding their reject path too, since `rejectToken` covers scripts that throw, not a WebView that
+  never runs one), our fetch shim, and our agent composed from the WebView's own Chrome version
+  with a fallback, so a user-agent that fails to match cannot silently leave the session on MWEB.
+  `src/botGuardScript.js` deliberately stays at FreeTube's version: it is shared with the desktop
+  build, and their rewrite swaps the interpreter fetch for a `<script>` tag with no error listener,
+  which would hang the deb's poToken path. Keeping it also means keeping `BotGuardWebView`'s
+  body-queueing, because that script still POSTs `/att/get` through fetch when the interpreter URL
+  is absent and `shouldInterceptRequest` cannot see a request body.
+- **The version carries both pins again.** FreeTubeAndroid merged FreeTube's `development` into
+  their branch, which moved our merge-base onto a FreeTube commit and tripped the shared-history
+  guard — a build made then would have dropped the FreeTubeAndroid pin entirely and sorted *below*
+  `+011` for an upstream-tracking updater, reading as a downgrade. Syncing their branch restores it.
+- **Two sources of console noise removed.** The Android soft file read is documented as returning
+  `''` when a file does not exist, but warned with the exception anyway — and `data-location.json`
+  only exists once the data directory has been moved, so every launch logged several screens of
+  Java `FileNotFoundException` stack trace, burying whatever the log was open for. That one outcome
+  is now silent; every other failure still warns. Separately, shaka 5's deprecated
+  `preferredVideoCodecs` warned on every load, and is migrated to `preferredVideo` using the exact
+  entries shaka's own compatibility shim builds, so the VR codec path is unchanged.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+011` — 2026-08-12
 
 Built on FreeTube `86401956` (2026-08-11) + FreeTubeAndroid `4623e4a6` (2026-08-06) — the same two

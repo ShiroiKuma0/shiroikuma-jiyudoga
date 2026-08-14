@@ -23,7 +23,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2+2026-08-11.21-55.g86401956+2026-08-06.17-02.g4623e4a6+011`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+017`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -203,6 +203,15 @@ client exists to avoid. Here every WebView refuses cookies outright — sending 
 storing — and anything an older build left behind is purged at launch. Nothing in the app
 logs in or reads a cookie, so nothing is lost. Verified on-device rather than assumed: an
 empty jar after a session of real playback.
+
+## 📋 A console you can actually read
+
+The Android layer captures every WebView console message, then hides the viewer in release
+builds — which is every build anyone actually runs, so a JS error on a real phone was
+invisible: nothing reaches logcat, and remote debugging is off. Here the **Console Log**
+entry stays in the sidebar, and the viewer is built for reporting rather than squinting:
+tap entries to select them, then copy those or the whole log to the clipboard, timestamped
+and in the order things happened. It is what found the codec bug fixed in `+017`.
 
 ## 🔄 Own update channel
 
