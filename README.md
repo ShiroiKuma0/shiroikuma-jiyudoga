@@ -14,16 +14,18 @@ additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
 button that writes chapter-preserving mkv files, original-language titles & descriptions, a
 **self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
-subscription feed into one-tap views, per-profile video **starring**, live grid zoom with tuning
-sliders, theatre mode on Android, full-width views, a sister-repo-style UI theming layer, and
-a **one-zip backup** of the whole app that a sister automation app can trigger unattended.
+subscription feed into one-tap views, per-profile video **starring**, an automatic **device sync**
+that keeps the watch history, subscriptions and starred videos the same on the phone and the PC,
+live grid zoom with tuning sliders, theatre mode on Android, full-width views, a sister-repo-style
+UI theming layer, and a **one-zip backup** of the whole app that a sister automation app can
+trigger unattended.
 Every release builds **both** artifacts:
 
 - **GNU/Linux amd64 `.deb`** (Electron; installable on Tuxedo OS / Ubuntu / Debian)
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+017`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+024`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -169,6 +171,27 @@ glyph preview, font-weight and UI-size sliders, and border / roundness / divider
 the way down to 0 — everything previewed live as you drag. The page itself is laid out like
 the futokxkb keyboard UI page: thin hairlines between sections and headings underlined to
 the width of the text, never the row. A long press on the hamburger opens it directly.
+
+## 🔁 Device sync — the phone and the PC keep the same history
+
+Watch half a video on the phone, sit down at the PC, and it resumes where you left it. The
+**watch history with its resume positions**, the **subscriptions of every profile** and your
+**starred videos** converge between the two devices, automatically: on opening the app, on
+returning to it, and a few seconds after you leave a video. A sync button sits in the
+Subscriptions and History headings for when you want it now.
+
+Each device publishes **one file** describing its own state and reads the other's — neither
+ever writes the other's, so there is nothing to conflict. The **desktop is the only device
+that reaches across**, over your own `ssh` (it reads `~/.ssh/config` itself; aliases, keys and
+agents stay yours), which means the phone never opens a socket and nothing here can keep its
+WiFi radio awake. It also means the PC can collect what the phone published **hours after the
+phone's app was closed** — the two never have to be awake at the same moment.
+
+Merging is per record, by when it was last modified, so the later watch position always wins
+rather than whichever arrived last. Deletions are remembered rather than inferred: unsubscribe
+a channel on one device and it **stays** unsubscribed instead of being handed back on the next
+sync. Everything lands through the app's ordinary machinery, so both sides update in place —
+**no restart**, unlike an import. Before the first merge, both databases are copied aside.
 
 ## 💾 One-zip backup, unattended if you want it
 

@@ -15,6 +15,55 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+024` — 2026-08-14
+
+Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
+upstream moved since `+017`. One feature: the phone and the PC now keep the same watch history,
+subscriptions and starred videos, without anyone exporting a zip.
+
+### Device sync
+
+- **History with watch progress, subscriptions across every profile, and starred videos now
+  converge between the phone and the PC.** A video begun on one device resumes at the right
+  position on the other; a channel subscribed on the PC appears on the phone. Playlists and
+  search history are deliberately out of scope for this pass.
+- **Each device publishes one snapshot of its own state and absorbs the other's** —
+  `jiyudoga-phone.json` and `jiyudoga-pc.json`, in `/sdcard/jiyudoga-sync` on the phone and the
+  app's own data folder on the PC. Neither device ever writes the other's file, so there is no
+  file-level conflict to resolve.
+- **The desktop is the only device that reaches across**, using the system `ssh` — one connection
+  per direction, with an atomic rename on the far side so the phone can never read a half-written
+  snapshot, and no dependency on `sftp-server`, which Termux does not always install. The phone
+  opens no network connection at all, so syncing cannot hold its WiFi radio awake.
+- **The two apps never have to be awake at the same moment.** Because the phone's snapshot is an
+  ordinary file on shared storage, the PC can collect what the phone published hours after the
+  phone's app was closed — the property that makes this converge in real use.
+- **Merging is last-writer-wins per record**, decided by a new modification stamp rather than by
+  which snapshot arrived last. The stamp had to be added because upstream's watch-progress write
+  never touched `timeWatched`, so a video watched *further* on one device looked *older* than the
+  same video on the other, and the stale position would have won.
+- **Deletions are remembered rather than inferred.** Unsubscribing a channel, unstarring a video
+  or clearing a history entry leaves a tombstone, so the removal propagates instead of the entry
+  being handed back by the other device on the next sync. Tombstones are pruned after 180 days and
+  ride along with profile export.
+- **Nothing is written unless it would actually change something.** Comparing content rather than
+  timestamps is what stops the two devices trading identical records back and forth forever, and
+  it means a settled pair syncs silently.
+- **No restart on either side** — the specific failing of the Export / Import route this replaces.
+  Everything is applied through the app's ordinary machinery, so the open window updates in place.
+- **Both databases are copied aside before the first merge**, once per device. Unioning two
+  databases that have never met is the one step that syncing again cannot undo.
+- **Triggers**: opening the app, returning to it, and about five seconds after the last
+  watch-progress write. No background polling and no timer.
+- **A sync button sits in the Subscriptions and History headings** — the two pages the sync is
+  actually about — spinning while it runs, reddening if the last attempt did not land, and
+  reporting what it merged. It is hidden entirely while the sync is switched off.
+- **Settings**: a 同期 section in the 白い熊 UI page. Every value that names a machine is empty or
+  generic by default and is excluded from backups, so nothing about one particular setup travels.
+  `ssh` reads `~/.ssh/config` itself, so host aliases, keys and agents remain the user's own; a
+  port is passed only when one is deliberately set, because forcing one overrides that config and
+  makes an already-trusted phone look like an unknown host.
+
 ## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+017` — 2026-08-14
 
 Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — **both**
