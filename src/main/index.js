@@ -596,7 +596,10 @@ function runApp() {
         requestHeaders['X-Youtube-Bootstrap-Logged-In'] = 'false'
       } else if (
         url.startsWith('https://www.youtube.com/watch') ||
-        (urlObj.origin === 'www.youtube.com' && urlObj.pathname === '/')
+        // fork fix: upstream compares URL.origin against a bare host, which never
+        // matches (origin carries the scheme), leaving the poToken home-page
+        // fallback without these navigate headers
+        (urlObj.origin === 'https://www.youtube.com' && urlObj.pathname === '/')
       ) {
         delete requestHeaders.Referer
         delete requestHeaders.Origin
