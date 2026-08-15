@@ -2789,6 +2789,19 @@ export default defineComponent({
         }, 0)
       }
 
+      // Lower the consecutive-error latch once playback demonstrably recovers. `handleError`
+      // raises it before emitting, so that a burst of errors cannot outrun the format fallback
+      // the first one sets off — but the only thing that ever lowers it again is a format
+      // switch. An error the Watch view deliberately declines to act on therefore leaves it
+      // raised for the rest of the video: the connection-lost path returns without switching
+      // formats, on the understanding that shaka will retry and resume by itself, and from
+      // that moment every further error on that video is swallowed in silence, including the
+      // fatal one that explains why it never came back. Playing again is proof the burst is
+      // over and the next error is news.
+      videoElement.addEventListener('playing', () => {
+        ignoreErrors = false
+      })
+
       const volume = sessionStorage.getItem('volume')
       if (volume !== null) {
         videoElement.volume = parseFloat(volume)
