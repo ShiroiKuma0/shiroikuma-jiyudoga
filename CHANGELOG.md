@@ -15,6 +15,30 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+026` — 2026-08-15
+
+Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
+upstream moved since `+017`. One fix, on both platforms: the stall that swallowed whole videos.
+
+### Playback
+
+- **A video that stops part-way now says why, instead of leaving a play button that does
+  nothing.** YouTube answers **401** on the media host when it invalidates a streaming session
+  mid-playback — session enforcement rather than a clean timeout, which is why it arrives well
+  before the streaming data's own expiry time and never looked like an expiry. FreeTube's error
+  handling recognised 429 and 403 and no other status, so a 401 fell straight through it into the
+  format fallback, which walked DASH → legacy → audio across formats that are every one of them
+  served from the session that had just been invalidated. Three dead formats later the player
+  simply sat there: controls intact, play button inert, not a word about what had happened, and
+  shaka no longer even retrying.
+- **401 is now handled where it belongs.** Watch progress is saved and the player reports
+  “YouTube watch session expired. Please reopen this video.” under the clock icon — the same
+  treatment a 403 past its expiry already received. Reopening the video fetches fresh streaming
+  data and picks up from where it stopped.
+- **The format cycle is skipped entirely for a 401**, because it could never have helped: all
+  three formats draw on the one session that just died, so falling back only spent them in turn
+  and buried the cause.
+
 ## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+025` — 2026-08-15
 
 Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
