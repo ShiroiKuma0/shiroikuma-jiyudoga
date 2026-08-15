@@ -1,8 +1,11 @@
 <template>
   <!-- Kept in RELEASE builds too: our own builds ARE release builds, and the WebView's
        console is otherwise unreachable — it never lands in logcat, and remote debugging
-       is off. This viewer is the only way to see a JS error on a real device. -->
-  <div v-if="usingAndroid">
+       is off. This viewer is the only way to see a JS error on a real device.
+       Desktop shows it as well: DevTools is reachable there, but only live, so it is no
+       help for a failure noticed after the fact — main keeps the same buffer, and writes
+       it to disk besides. -->
+  <div>
     <FtPrompt
       v-if="shown"
       :label="t('Log Viewer.Console Log')"
@@ -40,6 +43,12 @@
           </div>
         </div>
         <div class="actions-container">
+          <p
+            v-if="logPath"
+            class="log-path"
+          >
+            {{ logPath }}
+          </p>
           <FtFlexBox>
             <FtButton
               :label="`Copy selected (${selectedKeys.size})`"
@@ -76,7 +85,7 @@ import FtButton from '../FtButton/FtButton.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { isColourDark } from '../../helpers/android/utils'
 import { getConsoleLogs } from '../../helpers/android/system'
-import { showToast } from '../../helpers/utils'
+import { copyToClipboard, showToast } from '../../helpers/utils'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -191,8 +200,14 @@ function copyLogs(entries, description) {
   }
   // Oldest first once copied, so a pasted excerpt reads in the order things happened.
   const text = entries.slice().reverse().map(formatLog).join('\n\n')
-  android.copyToClipboard('console log', text)
-  showToast(`${description}: ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} copied`)
+  const message = `${description}: ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} copied`
+
+  if (usingAndroid) {
+    android.copyToClipboard('console log', text)
+    showToast(message)
+  } else {
+    copyToClipboard(text, { messageOnSuccess: message })
+  }
 }
 
 function copySelected() {
@@ -210,6 +225,10 @@ function hideLogViewer() {
 const usingAndroid = process.env.IS_ANDROID
 const theme = ref(getThemeFromBody())
 const logs = ref([])
+/** Desktop only — where main writes the on-disk copy, shown so it can be found later. */
+const logPath = ref('')
+/** @type {(() => void) | null} */
+let unsubscribeLog = null
 /** Keys of the entries tapped for a partial copy. @type {import('vue').Ref<Set<string>>} */
 const selectedKeys = ref(new Set())
 
@@ -237,13 +256,21 @@ const hidden = computed(() => {
   return !store.getters.getShowLogViewer
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (usingAndroid) {
     window.addEventListener('enabled-light-mode', onLightModeEnabled)
     window.addEventListener('enabled-dark-mode', onDarkModeEnabled)
     // when mounted, backfill the logs so far
     logs.value.push(...getConsoleLogs().map(decorateLog))
     window.addEventListener('console-message', onConsoleMessage)
+  } else if (process.env.IS_ELECTRON) {
+    // Desktop keeps the same buffer in the main process — a console message has to be caught
+    // there for the log to include the ones Chromium reports on the renderer's behalf, a 401
+    // on a media URL among them. The entries arrive in the same shape the WebView sends, so
+    // everything above this is shared.
+    logs.value.push(...(await window.ftElectron.getRendererLogs()).map(decorateLog))
+    unsubscribeLog = window.ftElectron.onRendererLogMessage(entry => onConsoleMessage({ data: entry }))
+    logPath.value = await window.ftElectron.getRendererLogPath()
   }
 })
 
@@ -252,6 +279,8 @@ onBeforeUnmount(() => {
     window.removeEventListener('enabled-light-mode', onLightModeEnabled)
     window.removeEventListener('enabled-dark-mode', onDarkModeEnabled)
     window.removeEventListener('console-message', onConsoleMessage)
+  } else {
+    unsubscribeLog?.()
   }
 })
 

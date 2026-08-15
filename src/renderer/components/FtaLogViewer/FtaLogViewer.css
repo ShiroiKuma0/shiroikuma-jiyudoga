@@ -19,6 +19,15 @@
   padding-block-start: 12px;
 }
 
+/* Desktop only: the path of the on-disk copy, so the log can be found after the app is shut. */
+.logs-wrapper .log-path {
+  margin-block: 0 8px;
+  font-family: monospace;
+  font-size: 11px;
+  opacity: 0.7;
+  overflow-wrap: anywhere;
+}
+
 .logs > .log,
 .logs > .warning,
 .logs > .error {

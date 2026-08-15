@@ -188,7 +188,6 @@
         </p>
       </router-link>
       <a
-        v-if="usingAndroid"
         class="navOption mobileHidden"
         :title="$t('Log Viewer.Console Log')"
         :aria-label="hideText ? $t('Log Viewer.Console Log') : null"
@@ -385,8 +384,6 @@ const settingsTitle = computed(() => {
 })
 
 const enableChannelLinks = computed(() => !store.getters.getDisableChannelLinks)
-
-const usingAndroid = process.env.IS_ANDROID
 
 // Long-press on the Settings entry opens the 白い熊 自由動画 UI section
 // directly (sister-repo convention: an instant path to the UI theming page).

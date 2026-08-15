@@ -31,6 +31,7 @@ import { handleOpenInExternalPlayer } from './externalPlayer'
 import { generatePoToken } from './poTokenGenerator'
 import { isFreeTubeUrl } from './utils'
 import * as deviceSync from './sync'
+import { attachRendererLog, flushRendererLog, getRendererLogPath, getRendererLogs } from './rendererLog'
 
 const brotliDecompressAsync = promisify(brotliDecompress)
 
@@ -1031,6 +1032,14 @@ function runApp() {
           }
     })
 
+    // Capture this window's console before anything else runs in it, so a failure during
+    // startup is in the log too rather than only the ones that happen once we are watching.
+    attachRendererLog(newWindow.webContents, (entry) => {
+      if (!newWindow.isDestroyed()) {
+        newWindow.webContents.send(IpcChannels.RENDERER_LOG_MESSAGE, entry)
+      }
+    })
+
     // region Ensure child windows use same options since electron 14
 
     // https://github.com/electron/electron/blob/14-x-y/docs/api/window-open.md#native-window-example
@@ -1556,6 +1565,16 @@ function runApp() {
 
     return filePath
   }
+
+  // Desktop console log — what the viewer backfills with when it opens, and where the
+  // on-disk copy lives for the failures nobody was watching for.
+  ipcMain.handle(IpcChannels.GET_RENDERER_LOGS, () => {
+    return getRendererLogs()
+  })
+
+  ipcMain.handle(IpcChannels.GET_RENDERER_LOG_PATH, () => {
+    return getRendererLogPath()
+  })
 
   // Study export (shiroikuma-yosuga hand-off)
   ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {
@@ -2324,6 +2343,9 @@ function runApp() {
     }
 
     await Promise.allSettled([
+      // Whatever is still buffered goes to disk before we exit — the last words before a
+      // quit are exactly the ones worth having.
+      flushRendererLog(),
       baseHandlers.compactAllDatastores(),
       session.defaultSession.clearCache(),
       session.defaultSession.clearStorageData({

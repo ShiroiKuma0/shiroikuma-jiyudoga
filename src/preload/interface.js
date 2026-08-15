@@ -160,6 +160,35 @@ export default {
   },
 
   /**
+   * Desktop console log — the entries main has kept, oldest first, for backfilling the viewer.
+   * @returns {Promise<object[]>}
+   */
+  getRendererLogs: async () => {
+    return await ipcRenderer.invoke(IpcChannels.GET_RENDERER_LOGS)
+  },
+
+  /**
+   * Where the on-disk copy of the console log lives.
+   * @returns {Promise<string>}
+   */
+  getRendererLogPath: async () => {
+    return await ipcRenderer.invoke(IpcChannels.GET_RENDERER_LOG_PATH)
+  },
+
+  /**
+   * Subscribes to console entries as main captures them.
+   * @param {(entry: object) => void} listener
+   * @returns {() => void} unsubscribe
+   */
+  onRendererLogMessage: (listener) => {
+    const wrapped = (_, entry) => listener(entry)
+
+    ipcRenderer.on(IpcChannels.RENDERER_LOG_MESSAGE, wrapped)
+
+    return () => ipcRenderer.removeListener(IpcChannels.RENDERER_LOG_MESSAGE, wrapped)
+  },
+
+  /**
    * Device sync — reads a snapshot out of the local sync directory.
    * @param {string} fileName
    * @returns {Promise<string | null>} null when the file does not exist

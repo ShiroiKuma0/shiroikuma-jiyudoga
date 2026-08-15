@@ -116,7 +116,6 @@
         </p>
       </router-link>
       <a
-        v-if="usingAndroid"
         class="navOption"
         :title="$t('Log Viewer.Console Log')"
         :aria-label="hideLabelsSideBar ? $t('Log Viewer.Console Log') : null"
@@ -248,8 +247,6 @@ const popularVisible = computed(() => {
   return !store.getters.getHidePopularVideos &&
     (store.getters.getBackendFallback || store.getters.getBackendPreference === 'invidious')
 })
-
-const usingAndroid = process.env.IS_ANDROID
 
 const showLogViewer = () => {
   store.dispatch('showLogViewer')

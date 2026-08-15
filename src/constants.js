@@ -57,6 +57,12 @@ const IpcChannels = {
   DEVICE_SYNC_PUSH_OWN: 'device-sync-push-own',
   DEVICE_SYNC_BACKUP_DATASTORES: 'device-sync-backup-datastores',
 
+  // 白い熊 自由動画 desktop console log — the renderer's console is captured in main, so it
+  // outlives a reload and a restart the way Android's log viewer never did.
+  GET_RENDERER_LOGS: 'get-renderer-logs',
+  GET_RENDERER_LOG_PATH: 'get-renderer-log-path',
+  RENDERER_LOG_MESSAGE: 'renderer-log-message',
+
   WRITE_TO_DOWNLOAD_FOLDER: 'write-to-download-folder',
 
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
