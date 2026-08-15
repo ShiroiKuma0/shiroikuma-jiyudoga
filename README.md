@@ -25,7 +25,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+024`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+025`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -177,8 +177,9 @@ the width of the text, never the row. A long press on the hamburger opens it dir
 Watch half a video on the phone, sit down at the PC, and it resumes where you left it. The
 **watch history with its resume positions**, the **subscriptions of every profile** and your
 **starred videos** converge between the two devices, automatically: on opening the app, on
-returning to it, and a few seconds after you leave a video. A sync button sits in the
-Subscriptions and History headings for when you want it now.
+returning to it, and a few seconds after you leave a video. A sync button — a straight ⇄ with the word
+beside it, so it is never mistaken for the feed-refresh button — sits in the Subscriptions and
+History headings for when you want it now.
 
 Each device publishes **one file** describing its own state and reads the other's — neither
 ever writes the other's, so there is nothing to conflict. The **desktop is the only device

@@ -15,6 +15,26 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+025` — 2026-08-15
+
+Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
+upstream moved since `+017`. One correction: an icon that said the wrong thing.
+
+### Device sync
+
+- **The sync control no longer wears the refresh button's glyph.** It was drawn with the same
+  circle of arrows FreeTube's feed-refresh button uses — which floats a few centimetres away on
+  the same screen, so two identical icons stood for two different actions: one merges state with
+  the other device, the other fetches new videos from YouTube. The circle of arrows is the
+  universal "reload" and belongs to the refresh button, so the sync control is the one that
+  moved: a straight **⇄** with the word **Sync** (同期 in Japanese) beside it, behind a hairline
+  that separates it from the grid sliders it shares the heading with.
+- **The glyph and the word are one button** — a single hit target, a single hover, so the word
+  is not a decoration you can click at and miss.
+- **The working state is a pulse rather than a spin.** A straight double arrow that rotates
+  reads as broken rather than as busy. The red mark for a sync that did not land is unchanged,
+  as is the motionless fallback when the system asks for reduced motion.
+
 ## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+024` — 2026-08-14
 
 Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
