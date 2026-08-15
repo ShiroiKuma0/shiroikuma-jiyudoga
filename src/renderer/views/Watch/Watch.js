@@ -1715,6 +1715,20 @@ export default defineComponent({
               this.errorMessage = '[BAD_HTTP_STATUS: 403] Potential causes: IP block or streaming URL deciphering failed'
             }
             return
+          case 401:
+            // YouTube invalidates the streaming session mid-playback and answers 401 on the
+            // media host. Unlike 403 there is no expiry check to make: the 401 arrives BEFORE
+            // `streamingDataExpiryDate` (it is po_token/session enforcement, not a clean
+            // timeout), so testing the expiry would only mislabel it. Falling through is worse
+            // than useless — every format is served from the one session that just became
+            // unauthorized, so the DASH -> legacy -> audio cycle below burns all three and
+            // strands the player on a dead session with a live-looking play button and no
+            // message at all. Fresh streaming data is the only cure, so say so and stop.
+            this.handleWatchProgressAutoSaveWhenProgressEnabled()
+
+            this.errorMessage = '[BAD_HTTP_STATUS: 401] YouTube watch session expired. Please reopen this video.'
+            this.customErrorIcon = ['fas', 'clock']
+            return
         }
       } else if (error.code === Code.VIDEO_ERROR) {
         if (this.activeFormat === 'legacy') {
