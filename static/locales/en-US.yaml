@@ -1420,6 +1420,7 @@ SKUI:
     No storage access: All-files access is needed to reach the sync folder
     No directory: No sync folder set
     Failed: 'Last sync failed: {message}'
+    Label: Sync
     Sync now: Sync now
     Syncing: Syncing…
     Toast up to date: Already in step with the other device

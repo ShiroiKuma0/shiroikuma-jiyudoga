@@ -1205,3 +1205,5 @@ SKUI:
   Font & UI size: フォントとUIの大きさ
   Font file: フォントファイル
   Only ttf and otf fonts are supported: ttf と otf のフォントのみ対応しています
+  Sync:
+    Label: 同期
