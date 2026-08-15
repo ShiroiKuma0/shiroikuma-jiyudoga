@@ -15,6 +15,58 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-15.10-22.g1e195258+2026-08-12.20-35.gc42fee2c+029` — 2026-08-15
+
+Built on FreeTube `1e195258` (2026-08-15) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the FreeTube
+pin moves for the first time since `+017`; FreeTubeAndroid has not moved. This entry also carries
+`+027` and `+028`, which were built and tested but never published.
+
+### Playback
+
+- **An error early in a video no longer silences every error after it.** The player raises an
+  “ignore errors” latch before it reports a failure, so that a burst cannot outrun the format
+  fallback the first error sets off — but only a format switch ever lowered it again. The
+  connection-lost path never switches formats: it returns and trusts shaka to retry, which leaves
+  the player mounted with the latch still up for the rest of the video. Every later error was
+  swallowed from then on, including the fatal one that would have explained why playback never
+  came back. The latch now drops on the video element's `playing` event — playback running again
+  is proof the burst is over and that the next error is news.
+
+### Diagnostics
+
+- **The desktop build keeps its renderer console now, on disk and in the app.** Warnings and errors
+  go to `<userData>/logs/renderer.log`, batched on a short timer, flushed on quit, capped at 2 MB
+  with one generation kept behind it; info and debug are dropped as third-party chatter. Until now
+  nothing survived a reload, let alone a restart, so a failure noticed minutes later had to be
+  caught red-handed to be diagnosed — which is exactly why the 401 that strands playback went
+  unseen for so many occurrences.
+- **Capture happens in the main process, not by wrapping `console` in the renderer.** `webContents`'
+  own `console-message` also carries what Chromium reports on the renderer's behalf, and “Failed to
+  load resource: the server responded with a status of 401” is one of those — the very line that
+  names an invalidated streaming session. No `console.*` wrapper would ever have seen it.
+- **The log viewer is no longer Android-only.** The most recent 250 entries stay in memory and feed
+  `FtaLogViewer` on desktop too, which also shows the file path so the rest of the log can be found
+  later. Its nav entry had been rendering the raw key `Log Viewer.Console Log` on Android all along —
+  there was no matching string in any locale file — so that string now exists.
+
+### Upstream
+
+- **FreeTube's poToken extraction falls back to the YouTube home page.** The watch-page HTML scrape
+  that seeds BotGuard is now a reusable helper, and when the watch page answers with a captcha the
+  session switches to scraping `https://www.youtube.com` instead, latching that choice for the rest
+  of the run on the assumption that one captcha means more will follow. Failure messages name which
+  page they came from.
+- **A fix to that fallback on our side.** Upstream gates the new home-page request on
+  `urlObj.origin === 'www.youtube.com'`, but `URL.origin` carries the scheme, so the test can never
+  be true and the request went out without the navigate-style headers (`Sec-Fetch-Dest: document`,
+  `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Site: none`, stripped `Referer`/`Origin`, timezone `PREF`
+  cookie) its watch-page counterpart has always had. We supply the scheme rather than compare the
+  bare host, which keeps the check https-only like the watch-page test beside it. Desktop only —
+  Android has no Electron main process — so the APK is functionally identical to `+028` and is
+  rebuilt only to keep the pair in lockstep.
+- Development-time lint dependencies bumped (`eslint-plugin-jsdoc` 64.1.0, `eslint-plugin-n`
+  18.3.0, `eslint-plugin-vuejs-accessibility` 2.6.0); no runtime effect.
+
 ## 白い熊 自由動画 `0.25.2+2026-08-12.19-51.g3fff3fd3+2026-08-12.20-35.gc42fee2c+026` — 2026-08-15
 
 Built on FreeTube `3fff3fd3` (2026-08-12) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
