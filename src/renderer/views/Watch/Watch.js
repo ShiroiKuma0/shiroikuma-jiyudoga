@@ -196,6 +196,12 @@ export default defineComponent({
       videoGenreIsMusic: false,
       /** @type {Date|null} */
       streamingDataExpiryDate: null,
+      // The video whose refused streaming session (HTTP 401) we have already rebuilt once.
+      // Held as an id rather than a flag because the rebuild goes through `reloadView`, which
+      // resets the state of the video it is reloading: a flag would either be wiped by the
+      // very reload it guards, or survive into the next video and suppress its first rebuild.
+      /** @type {string|null} */
+      unauthorizedReloadVideoId: null,
       currentPlaybackRate: null,
     }
   },
@@ -1449,6 +1455,11 @@ export default defineComponent({
       // Only used one time = remove after use
       this.oneTimeTimestamp = null
 
+      // A session that loaded is a session that was not refused, so the next 401 on this video
+      // is news and has earned a rebuild of its own — the same reasoning as the error latch the
+      // player lowers on `playing`.
+      this.unauthorizedReloadVideoId = null
+
       // will trigger again if you switch formats or change legacy quality
       // Check isUpcoming to avoid marking upcoming videos as watched if the user has only watched the trailer
       if (!this.videoPlayerLoaded && !this.isUpcoming) {
@@ -1716,18 +1727,35 @@ export default defineComponent({
             }
             return
           case 401:
-            // YouTube invalidates the streaming session mid-playback and answers 401 on the
-            // media host. Unlike 403 there is no expiry check to make: the 401 arrives BEFORE
-            // `streamingDataExpiryDate` (it is po_token/session enforcement, not a clean
-            // timeout), so testing the expiry would only mislabel it. Falling through is worse
-            // than useless — every format is served from the one session that just became
-            // unauthorized, so the DASH -> legacy -> audio cycle below burns all three and
-            // strands the player on a dead session with a live-looking play button and no
-            // message at all. Fresh streaming data is the only cure, so say so and stop.
+            // YouTube refuses the streaming session and answers 401 on the media host. Every
+            // sample we have caught (renderer.log, 2026-08-15/16) was the *init* segment of a
+            // session seconds old, at "loading dash/audio manifest ... in mounted" — so this is
+            // a refusal, not the expiry it used to be labelled as, and testing
+            // `streamingDataExpiryDate` (still in the future) would only mislabel it further.
+            //
+            // Falling through is worse than useless — every format is served from the one
+            // session that was just refused, so the DASH -> legacy -> audio cycle below burns
+            // all three and strands the player on a dead session with a live-looking play
+            // button and no message at all. Fresh streaming data is the only cure, and asking
+            // 白い熊 to go and get it by hand was never a cure at all: rebuild the session
+            // ourselves, which is exactly what SABR's own reload signal already does, keeping
+            // the position. Once per video, and re-armed by a successful load, so a refusal
+            // that survives its own rebuild reports rather than loops.
             this.handleWatchProgressAutoSaveWhenProgressEnabled()
 
-            this.errorMessage = '[BAD_HTTP_STATUS: 401] YouTube watch session expired. Please reopen this video.'
-            this.customErrorIcon = ['fas', 'clock']
+            if (this.unauthorizedReloadVideoId !== this.videoId) {
+              this.unauthorizedReloadVideoId = this.videoId
+
+              this.onPlayerReloadRequested('YouTube refused the streaming session, rebuilding it')
+                .catch((reloadError) => {
+                  console.error('Rebuilding the refused streaming session failed', reloadError)
+
+                  this.errorMessage = '[BAD_HTTP_STATUS: 401] YouTube refused this streaming session. Please reopen this video.'
+                })
+              return
+            }
+
+            this.errorMessage = '[BAD_HTTP_STATUS: 401] YouTube refused this streaming session, and refused the rebuilt one too. Please try again later.'
             return
         }
       } else if (error.code === Code.VIDEO_ERROR) {
@@ -2269,8 +2297,13 @@ export default defineComponent({
       this.startNextVideoInPip = uiState.startNextVideoInPip
     },
 
-    async onPlayerReloadRequested() {
-      showToast('Reloading player according to SABR request')
+    /**
+     * @param {string} [message] what to tell 白い熊 while the player is rebuilt. The event this
+     * is bound to carries no payload, so the SABR wording stays the default; the 401 path,
+     * which reloads for a reason of its own, passes its own.
+     */
+    async onPlayerReloadRequested(message = 'Reloading player according to SABR request') {
+      showToast(message)
 
       const timestamp = this.getTimestamp()
       if (timestamp > 0) {
