@@ -279,6 +279,44 @@ function createTimeoutController(callback, timeoutMs) {
 }
 
 /**
+ * Everything the log needs to tell one refusal from another. A bare "401" was all four
+ * occurrences of the refused streaming session ever left behind (renderer.log, 2026-08-15/16),
+ * which is not enough to tell a rejected proof-of-origin token from a session that had already
+ * run out: googlevideo names its reason in the response body, and the streaming URL carries the
+ * expiry the status does not.
+ * @param {Response} response
+ * @param {OperationInputs} operationInputs
+ * @param {CurrentState} currentState
+ * @param {Uint8Array[]} bodyChunks
+ */
+function logRefusedSabrResponse(response, operationInputs, currentState, bodyChunks) {
+  const body = bodyChunks.length > 0
+    ? new TextDecoder().decode(concatenateChunks(bodyChunks)).trim().slice(0, 500)
+    : ''
+
+  const expire = new URL(currentState.sabrStreamState.sabrUrl).searchParams.get('expire')
+
+  let expiry = '(none in the streaming URL)'
+
+  if (expire) {
+    const secondsLeft = Number(expire) - Math.round(Date.now() / 1000)
+
+    expiry = `${new Date(Number(expire) * 1000).toISOString()} — ${Math.abs(secondsLeft)}s ${secondsLeft < 0 ? 'ago' : 'left'}`
+  }
+
+  console.error(
+    'SABR request refused\n' +
+    `URI: ${operationInputs.uri}\n` +
+    `Status: ${response.status} ${response.statusText}\n` +
+    `Content-Type: ${response.headers.get('content-type') ?? '(none)'}\n` +
+    `Init segment: ${operationInputs.isInit}\n` +
+    `Request number: ${currentState.sabrStreamState.requestNumber}\n` +
+    `Streaming URL expiry: ${expiry}\n` +
+    `Body: ${body || '(empty)'}`
+  )
+}
+
+/**
  * @param {OperationInputs} operationInputs - readonly
  * @param {CurrentState} currentState - can be updated
  */
@@ -291,6 +329,12 @@ async function doRequest(
   let chunkedDataBuffer = null
   /** @type {Uint8Array[]} */
   const responseDataChunks = []
+  /**
+   * Filled only for a failed response, and bounded because a failure body is short and this
+   * is diagnostics: the reader below consumes the body, so it cannot be read again later.
+   * @type {Uint8Array[]}
+   */
+  const failureBodyChunks = []
   let segmentComplete = false
   let shouldRetry = false
   let shouldRetryDueToNextRequestPolicy = false
@@ -348,6 +392,10 @@ async function doRequest(
     let readObj = await reader.read()
 
     while (!readObj.done && !currentState.abortStatus.finished) {
+      if (!response.ok && failureBodyChunks.length < 8) {
+        failureBodyChunks.push(readObj.value)
+      }
+
       if (chunkedDataBuffer) {
         chunkedDataBuffer.append(readObj.value)
       } else {
@@ -596,6 +644,8 @@ async function doRequest(
       operationInputs.requestType,
     )
   } else {
+    logRefusedSabrResponse(response, operationInputs, currentState, failureBodyChunks)
+
     const severity = response.status === 401 || response.status === 403
       ? ShakaError.Severity.CRITICAL
       : ShakaError.Severity.RECOVERABLE
