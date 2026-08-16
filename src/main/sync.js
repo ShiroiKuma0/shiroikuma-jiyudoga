@@ -73,20 +73,56 @@ export async function readSnapshot(fileName) {
 }
 
 /**
+ * The tail of the write chain per snapshot file. Two entries at most — one per device — so
+ * there is nothing here to prune.
+ * @type {Map<string, Promise<unknown>>}
+ */
+const snapshotWrites = new Map()
+
+/** Makes each call's temp file its own, and never repeats within a run of the app. */
+let snapshotWriteCount = 0
+
+/**
  * Temp file then rename, so a reader — including the courier — can never pick up a
  * half-written snapshot.
+ *
+ * Both halves of that are per-call, because the writers can overlap: every window runs its
+ * own copy of the renderer's sync module, and the `running` guard there is per-window, so two
+ * windows publishing at once put two writers on ONE path. Sharing a fixed `.part` between
+ * them means the first rename moves the file out from under the second, which then fails with
+ * ENOENT on a directory that plainly exists (seen once, 2026-08-16 08:08:53). A private temp
+ * name makes each rename atomic on its own, and the queue below keeps the last completed
+ * snapshot the one that stands.
  * @param {string} fileName
  * @param {string} contents
  */
 export async function writeSnapshot(fileName, contents) {
   const directory = await localDirectory()
   const filePath = path.join(directory, path.basename(fileName))
-  const partPath = `${filePath}.part`
 
-  await asyncFs.writeFile(partPath, contents, 'utf-8')
-  await asyncFs.rename(partPath, filePath)
+  const write = async () => {
+    const partPath = `${filePath}.${process.pid}-${++snapshotWriteCount}.part`
 
-  return filePath
+    try {
+      await asyncFs.writeFile(partPath, contents, 'utf-8')
+      await asyncFs.rename(partPath, filePath)
+    } catch (error) {
+      // a private temp name is one file per failure, so it is on us to clear it away
+      await asyncFs.rm(partPath, { force: true })
+
+      throw error
+    }
+
+    return filePath
+  }
+
+  // a failed write must not poison the ones queued behind it
+  const previous = snapshotWrites.get(filePath) ?? Promise.resolve()
+  const current = previous.catch(() => {}).then(write)
+
+  snapshotWrites.set(filePath, current)
+
+  return await current
 }
 
 /**
