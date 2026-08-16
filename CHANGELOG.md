@@ -15,6 +15,48 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-15.10-22.g1e195258+2026-08-12.20-35.gc42fee2c+030` — 2026-08-16
+
+Built on FreeTube `1e195258` (2026-08-15) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
+upstream has moved since `+029`.
+
+### Playback
+
+- **A refused streaming session rebuilds itself instead of ending the video.** YouTube sometimes
+  answers 401 on the media host, and the renderer log that arrived in `+029` earned its keep within
+  a day: it caught four of them, and every one was the *init* segment of the first SABR request, at
+  mount time, on a session seconds old that had never served a byte. Nothing had expired, whatever
+  the old message said — the session was refused outright. The first refusal on a video now takes
+  the same path SABR's own reload signal already used: the watch page is fetched again, a fresh
+  proof-of-origin token minted, the session rebuilt, and playback resumed where it stood, announced
+  by a toast instead of a dead player. Once per video, since a video YouTube keeps refusing would
+  otherwise reload forever, and re-armed by a successful load, so a refusal half an hour into
+  playback still earns a rebuild of its own.
+- **The message left when even that fails describes what happened.** No more “YouTube watch session
+  expired. Please reopen this video.” under a clock icon on a session two seconds old, and no more
+  asking 白い熊 to do by hand what the app has already tried: it now says that YouTube refused the
+  streaming session and refused the rebuilt one too, and it appears only once that is true.
+
+### Diagnostics
+
+- **A refused SABR request records what it was refused for.** A bare status cannot separate a
+  rejected proof-of-origin token from a session that genuinely ran out, and a bare status was all
+  four 401s left behind. The plugin now logs, before it throws: the URI, the status and status text,
+  the content type, whether it was the init segment, the request number, the streaming URL's own
+  expiry as an absolute time plus how much is left or how long ago it passed — and up to 500
+  characters of the response body, which is where googlevideo tends to name its reason. The body has
+  to be caught as the read loop goes, since a response body cannot be read twice.
+
+### Device sync
+
+- **Two windows publishing at once no longer trip over each other's temp file.** A snapshot write
+  failed on 2026-08-16 with ENOENT renaming `sync/jiyudoga-pc.json.part` onto a directory that
+  plainly exists — the source was what had gone missing, because every writer shared the one `.part`
+  path and the first rename moved the file out from under the second. The overlap is real: each
+  window runs its own copy of the sync module, so the guard that stops a second run is per-window.
+  Each write now gets a temp file of its own, removed again if it fails, and writes to the same path
+  queue behind one another.
+
 ## 白い熊 自由動画 `0.25.2+2026-08-15.10-22.g1e195258+2026-08-12.20-35.gc42fee2c+029` — 2026-08-15
 
 Built on FreeTube `1e195258` (2026-08-15) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the FreeTube
