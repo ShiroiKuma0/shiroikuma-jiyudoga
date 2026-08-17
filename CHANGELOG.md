@@ -15,6 +15,26 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-16.17-51.g2f22917e+2026-08-12.20-35.gc42fee2c+031` — 2026-08-17
+
+Built on FreeTube `2f22917e` (2026-08-16) + FreeTubeAndroid `c42fee2c` (2026-08-12). An upstream
+sync and nothing else: **no fork code changed**, and for anyone running the app in English or
+Japanese this build behaves exactly like `+030`.
+
+- **FreeTube's Romanian translation, and only that.** The entire payload upstream had for us is one
+  Weblate commit — thirteen lines added and five removed in `static/locales/ro.yaml`, carrying
+  Romanian to 94.5 % (933 of 987 strings). It fills in the playlist toast, the two new
+  move-video-to-top/bottom commands, the URL-list export and the Catppuccin Latte theme names, and
+  rewords the playlist and history sort labels into the fuller "Data la care a fost creat (Cel mai
+  nou)" form. The merge into our layer was clean, as a locale file we never touch always will be.
+- **The FreeTube pin moves; the FreeTubeAndroid pin does not.** `1e195258` → `2f22917e` on their
+  side, while MarmadileManteater's `development` has not advanced since `c42fee2c` on 2026-08-12 —
+  a standing pin is exactly how that side reports "unchanged". `FORK_VERSION` stays `0.25.2`, so
+  the counter runs on rather than resetting, and both artifacts are rebuilt at the new version to
+  keep the deb and the APK in lockstep even though the deb is functionally untouched.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-15.10-22.g1e195258+2026-08-12.20-35.gc42fee2c+030` — 2026-08-16
 
 Built on FreeTube `1e195258` (2026-08-15) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
