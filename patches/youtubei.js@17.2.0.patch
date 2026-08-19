@@ -1,0 +1,23 @@
+diff --git a/dist/src/parser/classes/comments/CommentView.js b/dist/src/parser/classes/comments/CommentView.js
+index 727d2d1624c7921c34c8c696a71ab8ba3c670be0..4994c5e2f68a1d82912e5a4320dcf6f4d2f8eee7 100644
+--- a/dist/src/parser/classes/comments/CommentView.js
++++ b/dist/src/parser/classes/comments/CommentView.js
+@@ -77,10 +77,16 @@ export default class CommentView extends YTNode {
+                     a11y: comment.author.A11y
+                 };
+             }
++            let thumbs = comment.avatar?.image;
++            // 88 seems to be the default size for these.
++            // NOTE: This info is nowhere to be found in the response now, so had to hardcode it.
++            if (!thumbs && 'avatarThumbnailUrl' in comment.author) {
++                thumbs = { thumbnails: [{ url: comment.author.avatarThumbnailUrl, width: 88, height: 88 }] };
++            }
+             this.author = new Author({
+                 simpleText: comment.author.displayName,
+-                navigationEndpoint: comment.avatar.endpoint
+-            }, comment.author, comment.avatar.image, comment.author.channelId);
++                navigationEndpoint: comment.avatar?.endpoint || comment.author?.channelCommand
++            }, comment.author, thumbs, comment.author.channelId);
+         }
+         if (toolbar_state) {
+             this.is_hearted = toolbar_state.heartState === 'TOOLBAR_HEART_STATE_HEARTED';

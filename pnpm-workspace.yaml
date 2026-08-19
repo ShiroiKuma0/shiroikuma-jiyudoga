@@ -18,3 +18,4 @@ minimumReleaseAgeExclude:
 
 patchedDependencies:
   mediabunny: patches/mediabunny.patch
+  youtubei.js@17.2.0: patches/youtubei.js@17.2.0.patch

@@ -9,6 +9,7 @@ overrides:
 
 patchedDependencies:
   mediabunny: b775d7af227ff065a8ab5b9cae0e11580ac5046d9932062adbda62e7cacd9c2c
+  youtubei.js@17.2.0: f6e4e5812cde462b291e76b3a5976b4ade4043dc251e7f645bf52181d9dc16f9
 
 importers:
 
@@ -82,7 +83,7 @@ importers:
         version: 4.1.0(vue@3.5.41(typescript@6.0.3))
       youtubei.js:
         specifier: ^17.2.0
-        version: 17.2.0
+        version: 17.2.0(patch_hash=f6e4e5812cde462b291e76b3a5976b4ade4043dc251e7f645bf52181d9dc16f9)
     devDependencies:
       '@babel/core':
         specifier: ^8.0.1
@@ -10626,7 +10627,7 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  youtubei.js@17.2.0:
+  youtubei.js@17.2.0(patch_hash=f6e4e5812cde462b291e76b3a5976b4ade4043dc251e7f645bf52181d9dc16f9):
     dependencies:
       '@bufbuild/protobuf': 2.1.0
       fflate: 0.8.3
