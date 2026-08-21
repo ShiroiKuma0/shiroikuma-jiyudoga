@@ -98,6 +98,11 @@ function runApp() {
   let backendPreference = 'local'
   let backendFallback = true
 
+  // NOTE (fork): this is a NATIVE Electron menu, drawn by Chromium's views toolkit outside the
+  // web contents. It takes the platform/dark-theme chrome and CANNOT be given the fork's accent
+  // frame from CSS -- the popup border rule in src/renderer/helpers/skui.js reaches every IN-APP
+  // floating surface but stops at this boundary. Styling it would mean replacing it with an
+  // in-app HTML menu, which costs the native entries (Save Image As, spellcheck, editing).
   contextMenu({
     showSearchWithGoogle: false,
     showSaveImageAs: true,

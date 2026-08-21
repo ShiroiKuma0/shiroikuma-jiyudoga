@@ -278,9 +278,36 @@ export function applySkuiTheme(theme, customFonts = []) {
   const borderCss = dims.borderWidth > 0
     ? `border: ${dims.borderWidth}px solid ${c('border')} !important;`
     : 'border: none !important;'
+  // Every floating surface -- menu, dropdown, popover, dialog, toast, tooltip -- carries the
+  // fork's accent frame, so a thing that hovers over the page is always outlined and never a
+  // borderless slab on black. The width and colour are FIXED (2px / --primary-color) rather
+  // than skui's configurable border, deliberately: this is the same "modal language" the
+  // Export / Import info dialog and the download-progress box already hardcode, and letting
+  // half the popups follow a slider while the other half did not is exactly the drift this
+  // rule exists to remove. Transient HUD overlays inside the player (volume/seek indicator,
+  // stats-for-nerds) are NOT included -- they are readouts, not surfaces you act on.
+  // NOTE: the right-click context menu is a NATIVE Electron menu and cannot be reached from
+  // CSS at all; see the comment in src/main/index.js where it is built.
+  const popupSurfaces = [
+    '.promptCard',                 // every modal built on FtPrompt
+    '.iconDropdown',               // the ... menus on tiles, watch page, playlists
+    '.profileList',                // profile selector
+    '.profileDropdown',            // subscribe button
+    '.moreOptionContainer',        // side nav overflow
+    '.settingsMenu',               // settings jump menu
+    '.toast',                      // toasts
+    '.tooltip .text',              // tooltip bubbles
+    '.ft-input-component .list',   // search / input suggestions
+    '.skuiFeedFilter .filterPanel',
+    '.skuiGridControls .panel',
+    '.shaka-settings-menu',        // player settings + overflow menus
+    '.shaka-overflow-menu',
+  ].join(', ')
+
   rules.push(
     // content cards fill the window unframed; only settings sections keep the border
     `.settingsSection { ${borderCss} border-radius: ${dims.roundness}px !important; }`,
+    `${popupSurfaces} { border: 2px solid var(--primary-color) !important; box-sizing: border-box; }`,
     `.btn, .ft-input-component .ft-input, .select { border-radius: ${dims.roundness}px !important; }`,
     `.topNav { background-color: ${c('topBarBg')} !important; }`,
     `.topNav .navIcon, .topNav .navFilterIcon { color: ${c('topBarText')} !important; }`,
