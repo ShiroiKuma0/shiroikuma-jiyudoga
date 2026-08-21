@@ -1,3 +1,7 @@
+// MUST be the first import: it repairs `app.getPath('userData')` before the datastores
+// (imported below) read it at module-evaluation time. See the module for the why.
+import './userDataPath'
+
 import {
   app, BrowserWindow, dialog, Menu, ipcMain,
   powerSaveBlocker, screen, session, shell,
