@@ -15,6 +15,75 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-21.11-03.g8388d0ce+2026-08-12.20-35.gc42fee2c+036` — 2026-08-21
+
+Built on FreeTube `8388d0ce` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). The first
+release since `+031`, so it gathers everything built in between: comments load again, the desktop
+stops writing its profile into the wrong directory, every popup gains the fork's accent frame, and
+two upstream syncs land.
+
+### Fixes
+
+- **Comments load again.** Every comment fetch had been failing with `TypeError: Cannot read
+  properties of undefined (reading 'endpoint')`, leaving the watch page stuck on an empty "Click to
+  View Comments". YouTube dropped the `avatar` object from `commentEntityPayload` — the keys are now
+  key, properties, author, toolbar, readMoreLogging and loggingDirectives — while youtubei.js 17.2.0
+  still read `comment.avatar.endpoint` unguarded in `CommentView.applyMutations`. Because the throw
+  landed while mutations were being applied, it took out the whole fetch rather than one comment's
+  picture. Both pieces survive elsewhere in the payload: the channel link as `author.channelCommand`,
+  the picture as `author.avatarThumbnailUrl`, whose size the response no longer states at all.
+  youtubei.js 18.0.0 fixes precisely this, so the repair is that release's few lines backported as a
+  pnpm patch — including its hardcoded 88×88 — rather than a workaround of our own. Bumping to 18
+  instead would drag in its one breaking change, threaded comments, which upstream FreeTube has not
+  adapted to; it still pins `^17.2.0`. The patch key carries the version, so it drops out by itself
+  the day upstream moves off 17.2.0 rather than silently outliving its purpose.
+- **The desktop no longer starts from an empty subscription list.** Electron appends the app name to
+  the per-user config directory only when that name is ASCII, and ours is `白い熊 自由動画`. From
+  Electron 43 — which upstream reached in `9b4a94a1f` — `app.getPath('userData')` therefore returned
+  the config root *itself*: on 2026-08-19 a release build wrote all six nedb stores and the whole
+  Chromium profile straight into `~/.config` and opened on an empty subscription list, while the real
+  profile sat untouched one directory below. `app.getName()` was correct throughout; only the default
+  path derivation dropped it. The path is now repaired in a module imported before anything else in
+  the main process, which it has to be — the datastores read `app.getPath('userData')` at
+  module-evaluation time, and `setPath` must land before the app is ready. The repair is a no-op
+  unless the collapse has actually happened, and the path it restores is byte-identical to the one
+  older Electron produced, so an existing profile is picked up with no migration and nothing to
+  export or import.
+
+### UI & theming
+
+- **Every floating surface carries the fork's accent frame.** A thing that hovers over the page
+  should always be outlined, never a borderless slab on black. One rule now frames the modals, the
+  tile / watch / playlist ⋯ menus, the profile selector, the subscribe dropdown, the side-nav
+  overflow, the settings jump menu, toasts, tooltips, input suggestions, the feed-filter and
+  grid-controls panels, and the player's settings and overflow menus. The width and colour are fixed
+  at 2 px of the primary colour rather than following the UI layer's configurable border,
+  deliberately: that is the same modal language the Export / Import dialog and the download-progress
+  box already hardcode, and letting half the popups track a slider while the other half did not was
+  exactly the drift the rule exists to remove. Two things stay bare on purpose — the transient HUD
+  overlays inside the player (the volume/seek indicator, stats-for-nerds), which are readouts rather
+  than surfaces you act on, and the right-click context menu, which is a native Electron menu drawn
+  outside the web contents where CSS cannot reach it at all.
+
+### Upstream
+
+- **Two FreeTube syncs, neither touching a line of fork code.** Between them upstream shipped a
+  Flathub icon (`_icons/iconFlathub.svg`, their packaging asset), a French pass that swaps
+  "liste de lecture" for "playlist" throughout `fr-FR.yaml` — 92 lines each way and not one new
+  string — one new Romanian string (`Compact side navigation`), and three dependency bumps: `marked`
+  `^18.0.9` → `^18.0.10` plus the dependabot eslint group (`eslint-plugin-jsdoc` `^64.1.0` →
+  `^64.2.1`, `globals` `^17.9.0` → `^17.11.0`), the latter two being lint-only and never entering
+  either bundle. `package.json` conflicted only where our `mediabunny` line sits directly after
+  `marked`; `pnpm-lock.yaml` was regenerated from upstream's rather than hand-merged, and both
+  patched dependencies and the git-hosted nedb fork resolve unchanged.
+- **The FreeTube pin moves twice; the FreeTubeAndroid pin does not move at all.** `2f22917e` →
+  `3dc52db4` → `8388d0ce` on their side, while MarmadileManteater's `development` has not advanced
+  since `c42fee2c` on 2026-08-12 — we already sit on its tip, and a standing pin is exactly how that
+  side reports "unchanged". Neither upstream released, so `FORK_VERSION` stays `0.25.2` and the
+  counter runs on rather than resetting.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-16.17-51.g2f22917e+2026-08-12.20-35.gc42fee2c+031` — 2026-08-17
 
 Built on FreeTube `2f22917e` (2026-08-16) + FreeTubeAndroid `c42fee2c` (2026-08-12). An upstream

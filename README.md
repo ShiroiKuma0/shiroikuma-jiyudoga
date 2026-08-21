@@ -25,7 +25,7 @@ Every release builds **both** artifacts:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2+2026-08-16.17-51.g2f22917e+2026-08-12.20-35.gc42fee2c+031`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-21.11-03.g8388d0ce+2026-08-12.20-35.gc42fee2c+036`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -171,6 +171,11 @@ glyph preview, font-weight and UI-size sliders, and border / roundness / divider
 the way down to 0 — everything previewed live as you drag. The page itself is laid out like
 the futokxkb keyboard UI page: thin hairlines between sections and headings underlined to
 the width of the text, never the row. A long press on the hamburger opens it directly.
+
+Every floating surface is framed to match: the modals, the ⋯ menus, the profile selector, the
+subscribe dropdown, the settings jump menu, toasts, tooltips, input suggestions and the player's
+own menus all carry the accent border, so nothing hovering over the page is ever a borderless slab
+on black.
 
 ## 🔁 Device sync — the phone and the PC keep the same history
 
