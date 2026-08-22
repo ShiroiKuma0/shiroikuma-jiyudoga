@@ -22,6 +22,14 @@ const AbortableOperation = shaka.util.AbortableOperation
 const ShakaError = shaka.util.Error
 
 /**
+ * How many redirects one request may follow before we call it a loop. googlevideo moves a SABR
+ * session to the host that actually holds the media, normally once and at the very start; a
+ * stream that keeps redirecting is not going anywhere, and hammering it is exactly what earns
+ * the 401 that used to strand the video.
+ */
+const MAX_SABR_REDIRECTS = 5
+
+/**
  * @typedef OperationInputs
  * @type {object}
  * @property {string} uri
@@ -55,6 +63,7 @@ const ShakaError = shaka.util.Error
  * @property {number} cumulativeBackOffTimeMs
  * @property {number} cumulativeBackOffRequested
  * @property {number} cumulativeRetryDueToNextRequestPolicy
+ * @property {number} cumulativeRedirects
  */
 /**
  * @typedef SabrStreamState
@@ -338,6 +347,7 @@ async function doRequest(
   let segmentComplete = false
   let shouldRetry = false
   let shouldRetryDueToNextRequestPolicy = false
+  let shouldRetryDueToRedirect = false
 
   let invalidPoToken = false
   let error
@@ -422,8 +432,18 @@ async function doRequest(
             const sabrRedirect = decodePart(part, SabrRedirect)
             if (!sabrRedirect) break
 
-            currentState.sabrUrl = sabrRedirect.url
+            // The URL the next request reads lives on the stream state (`sabrStreamState.sabrUrl`,
+            // where doRequest picks it up); writing it to `currentState` — as this did from the
+            // day SABR arrived — created a dead property and left the retry pointed at the host
+            // that had just redirected us. googlevideo answers that loop with a 401 once it has
+            // seen enough of it, which is the refusal 白い熊 met on 2026-08-16, -20 and -22:
+            // request numbers 241, 102 and 103 on sessions a second and a half old (renderer.log).
+            currentState.sabrStreamState.sabrUrl = sabrRedirect.url
             shouldRetry = true
+            shouldRetryDueToRedirect = true
+
+            // The host, never the URL, which carries the session's signature.
+            console.warn(`Following SABR redirect to ${new URL(sabrRedirect.url).host}`)
             break
           }
           case UMPPartId.MEDIA_HEADER: {
@@ -583,6 +603,29 @@ async function doRequest(
     if (shouldRetryDueToNextRequestPolicy) {
       // Only count on actual retry to avoid counting false positive (when segmentComplete
       currentState.cumulativeRetryDueToNextRequestPolicy += 1
+    }
+
+    if (shouldRetryDueToRedirect) {
+      currentState.cumulativeRedirects += 1
+
+      if (currentState.cumulativeRedirects > MAX_SABR_REDIRECTS) {
+        console.error(
+          'SABR redirect loop\n' +
+          `URI: ${operationInputs.uri}\n` +
+          `Redirects followed: ${currentState.cumulativeRedirects - 1}\n` +
+          `Current host: ${new URL(currentState.sabrStreamState.sabrUrl).host}`
+        )
+
+        // Recoverable on purpose: shaka-player may still get the segment on its own retry, and
+        // if it cannot, Watch's format cycle falls back to the legacy URLs, which are plain
+        // googlevideo requests and owe SABR nothing.
+        throw createRecoverableNetworkError(
+          ShakaError.Code.HTTP_ERROR,
+          operationInputs.uri,
+          new Error(`Too many SABR redirects (${currentState.cumulativeRedirects - 1} followed)`),
+          operationInputs.requestType,
+        )
+      }
     }
 
     const { sabrContexts, unsentSabrContexts } = prepareSabrContexts(currentState.sabrStreamState)
@@ -879,6 +922,7 @@ export function setupSabrScheme(sabrData, getPlayer, getManifest, playerWidth, p
       cumulativeBackOffTimeMs: 0,
       cumulativeBackOffRequested: 0,
       cumulativeRetryDueToNextRequestPolicy: 0,
+      cumulativeRedirects: 0,
     }
 
     const pendingRequest = doRequest(opInputs, currentState)
