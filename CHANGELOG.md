@@ -15,6 +15,32 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+038` — 2026-08-22
+
+Built on FreeTube `9591c177` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube sync
+— FreeTubeAndroid brought nothing this round, so only the first pin moves.
+
+### Upstream
+
+- **The player falls back when legacy is the default format but the video has none.** Live streams,
+  post-live DVR and videos with an empty `legacyFormats` left the player sitting there instead of
+  reverting to DASH or audio (FreeTube #9644). The fallback cycle at the end of `handlePlayerError`
+  becomes a method of its own, `handleActiveFormatUnavailable`, and is now called after loading as
+  well as on an error. Our own 401 handling sits above that cycle and returns before it, so the two
+  do not interact — but the fix does strengthen what `+037`'s redirect cap falls back to.
+- **The channel tab accent colour no longer sticks on hover** (FreeTube #9507): it is applied in
+  `ChannelDetails.css` rather than on `Channel.vue`.
+- **Electron 43.3.0 → 43.4.0**, plus js-yaml 5.3.0 and terser 5.50.0 on the build side, and a
+  Romanian locale update.
+
+### Fork
+
+- Nothing of our own beyond the merge: the rebranded Romanian strings kept their names while the
+  eight new keys from the Weblate update came in, and the lockfile was rebuilt on upstream's with
+  our nedb git dependency, core-js, mediabunny and both patches intact.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-21.11-03.g8388d0ce+2026-08-12.20-35.gc42fee2c+037` — 2026-08-22
 
 Built on FreeTube `8388d0ce` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). One fix, for a
