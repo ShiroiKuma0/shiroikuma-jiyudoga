@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Canonical fork build for shiroikuma-jiyudoga: ALWAYS builds BOTH artifacts —
+# Canonical fork build for shiroikuma-jiyudoga: ALWAYS builds ALL THREE artifacts —
 #   1. GNU/Linux amd64 .deb   (Electron, electron-builder)
-#   2. Android arm64-v8a .apk (WebView wrapper, Gradle, signed release)
+#   2. Windows x64 .zip       (same Electron bundles, packaged for Windows 11)
+#   3. Android arm64-v8a .apk (WebView wrapper, Gradle, signed release)
 # copies them to ~/tmp/ with fork naming, then bumps BUILD_NUMBER.
 #
 # Fork versioning: versionName = <FORK_VERSION><FreeTube pin><FreeTubeAndroid pin>+<BUILD_NUMBER>,
@@ -66,13 +67,22 @@ PIN="$(fork_pin master)$(fork_pin_android android/development)"
 
 FORKVER="${VERSION}${PIN}+${PADDED}"
 
-echo ">>> Building shiroikuma-jiyudoga ${FORKVER} (deb + apk)"
+echo ">>> Building shiroikuma-jiyudoga ${FORKVER} (deb + win zip + apk)"
 
 # --- GNU/Linux amd64 .deb -------------------------------------------------
 pnpm run pack
 node _scripts/build-fork-deb.mjs
 DEB="build/shiroikuma-jiyudoga_${FORKVER}_amd64.deb"
 [ -f "$DEB" ] || { echo "!!! deb not found: $DEB" >&2; exit 1; }
+
+# --- Windows x64 .zip -----------------------------------------------------
+# Reuses the dist/ the deb just consumed, so no second desktop webpack run. The archive is built
+# by the .mjs itself rather than by an electron-builder `zip` target, because every file must sit
+# inside ONE top-level directory named after the artifact (白い熊, 2026-08-22) and ArchiveTarget
+# hardcodes the opposite for Windows.
+node _scripts/build-fork-win.mjs
+WINZIP="build/shiroikuma-jiyudoga_${FORKVER}_win-x64.zip"
+[ -f "$WINZIP" ] || { echo "!!! windows zip not found: $WINZIP" >&2; exit 1; }
 
 # --- Android arm64-v8a .apk ----------------------------------------------
 pnpm run pack:android
@@ -82,6 +92,7 @@ APK=android/app/build/outputs/apk/release/app-release.apk
 
 # --- Deliver to ~/tmp -----------------------------------------------------
 cp "$DEB" ~/tmp/
+cp "$WINZIP" ~/tmp/
 cp "$APK" ~/tmp/"shiroikuma-jiyudoga_${FORKVER}_arm64-v8a.apk"
 
 # --- Bump BUILD_NUMBER ----------------------------------------------------
@@ -91,6 +102,7 @@ VERSION_CODE=$(awk -F. -v n="$BUILD_NUMBER" \
   '{ r = (NF >= 4 ? $4 : 0); print ((($1*10000 + $2*100 + $3) * 10) + r) * 1000 + n }' <<< "$VERSION")
 
 echo ">>> ~/tmp/shiroikuma-jiyudoga_${FORKVER}_amd64.deb"
+echo ">>> ~/tmp/shiroikuma-jiyudoga_${FORKVER}_win-x64.zip"
 echo ">>> ~/tmp/shiroikuma-jiyudoga_${FORKVER}_arm64-v8a.apk"
 echo ">>> versionCode ${VERSION_CODE}"
 echo ">>> BUILD_NUMBER bumped to $((BUILD_NUMBER + 1))"
