@@ -2370,7 +2370,6 @@ function changeTab(tab) {
 
   if (newTabNode != null) {
     newTabNode.focus()
-    store.commit('setOutlinesHidden', false)
   }
 
   // the search tab stores its state (including the query) with `saveStateInRouter` instead
