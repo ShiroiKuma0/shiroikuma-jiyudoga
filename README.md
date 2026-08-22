@@ -19,13 +19,15 @@ that keeps the watch history, subscriptions and starred videos the same on the p
 live grid zoom with tuning sliders, theatre mode on Android, full-width views, a sister-repo-style
 UI theming layer, and a **one-zip backup** of the whole app that a sister automation app can
 trigger unattended.
-Every release builds **both** artifacts:
+Every release builds **all three** artifacts, always at the same version:
 
 - **GNU/Linux amd64 `.deb`** (Electron; installable on Tuxedo OS / Ubuntu / Debian)
+- **Windows x64 `.zip`** (the same Electron app, cross-built; extract the folder and run
+  `shiroikuma-jiyudoga.exe` — no installer, and the profile lives in `%APPDATA%`)
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+038`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -286,10 +288,10 @@ sits in the top bar beside the app name, wrapping only between its `+` groups.
   shape has changed twice, and rendering their timestamps in UTC moved one FreeTube commit's pin
   *backwards* by a day, which is exactly how a stale release once outranked the running build.
 
-  Both artifacts always carry the same version, even when only one upstream moved. (One cosmetic
-  exception: the `.deb`'s internal control field renders the pins' dates *and times* with `~`
-  instead of `-`, because electron-builder sanitises `-` for deb/rpm targets. The `+` group
-  separators pass through untouched, both filenames keep the hyphens, and the ordering is
+  All three artifacts always carry the same version, even when only one upstream moved. (One
+  cosmetic exception: the `.deb`'s internal control field renders the pins' dates *and times* with
+  `~` instead of `-`, because electron-builder sanitises `-` for deb/rpm targets. The `+` group
+  separators pass through untouched, all three filenames keep the hyphens, and the ordering is
   unaffected.)
 
   The build counter is zero-padded to three digits so releases and artifacts sort in build order,
@@ -326,7 +328,7 @@ DeArrow, Invidious support — goes to those projects. The code remains under
 ## Building
 
 ```bash
-_scripts/build-fork.sh   # builds BOTH: .deb (amd64) and signed .apk (arm64-v8a)
+_scripts/build-fork.sh   # builds ALL THREE: .deb (amd64), .zip (win-x64), signed .apk (arm64-v8a)
 ```
 
 See `CLAUDE.md` for the toolchain details (pnpm + Node 24, JDK 21, Android SDK).

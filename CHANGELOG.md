@@ -15,6 +15,52 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040` — 2026-08-22
+
+Built on FreeTube `9591c177` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). Neither
+upstream moved this round, so both pins stand where `+038` left them — this release is packaging
+work of our own.
+
+### Packaging
+
+- **A Windows x64 `.zip` joins the `.deb` and the APK — every release now carries all three, always
+  at one version.** The same Electron app the deb ships, cross-built from GNU/Linux; nothing in the
+  tree is a native module, so the only thing that changes is which Electron dist gets packaged. The
+  versionName comes from the same `_scripts/fork-version.js` the deb and the APK use, so the three
+  filenames, the exe's VERSIONINFO and the version in the app's top bar can never disagree.
+- **`zip` is the only Windows target, deliberately.** There is no `electron-updater` in this fork —
+  the in-app check just links to the releases page — and `freetube://` is claimed at runtime by
+  `app.setAsDefaultProtocolClient`, not by an installer's registry keys, so an NSIS installer would
+  buy nothing. It would also drag in Wine, because electron-builder builds the uninstaller by
+  *running* the installer under it. The zip path needs none: the exe's icon and version resources
+  are patched in pure JS.
+- **The archive holds one top-level directory named after the artifact.** Extracting it can never
+  scatter its 76 entries into whatever folder you happened to be in. electron-builder cannot do
+  this for Windows — its `ArchiveTarget` hardcodes the opposite — so the build packs the unpacked
+  tree itself, with electron-builder's own compression settings.
+- **The exe wears our icon and our name.** `shiroikuma-jiyudoga.exe`, with a freshly generated
+  `_icons/icon.ico` built from the fork's own black-and-yellow mark; upstream's `.ico` had been
+  deleted from this branch by the FreeTubeAndroid merge, and restoring it would have put FreeTube's
+  face on our build. The profile still lands in `%APPDATA%\shiroikuma-jiyudoga`.
+
+### Known behaviour on Windows
+
+- The build is **unsigned**, so Windows 11 shows a SmartScreen prompt on first run — "More info" →
+  "Run anyway".
+- **Study export** builds the subtitled `.mkv` exactly as it does on GNU/Linux, but the hand-off
+  reports "Yosuga Missing": `shiroikuma-yosuga` is a GNU/Linux binary. The file is still written to
+  the study folder.
+- **Device sync** needs an `ssh` client and keys set up on the Windows PC before it can reach the
+  phone.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+038` — 2026-08-22
 
 Built on FreeTube `9591c177` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube sync
