@@ -15,6 +15,35 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-21.11-03.g8388d0ce+2026-08-12.20-35.gc42fee2c+037` — 2026-08-22
+
+Built on FreeTube `8388d0ce` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). One fix, for a
+refusal that had left certain videos permanently unplayable.
+
+### Fixes
+
+- **YouTube stops refusing the streaming session.** Some videos — always the same ones — died on
+  their first segment with `[BAD_HTTP_STATUS: 401] YouTube refused this streaming session`, and
+  rebuilding the session, which `+031` added for exactly this error, was refused too. Neither the
+  proof-of-origin token nor an expired URL was at fault: the log's expiry line showed 5 h 59 m left,
+  and a rejected token takes a different path entirely. The tell was the request counter the same
+  release started printing — 241, 102 and 103 requests on sessions a second and a half old. The
+  player was hammering googlevideo about a hundred times before being cut off. googlevideo answers a
+  SABR request with a redirect when the media lives on another host, and `SabrSchemePlugin` assigned
+  that redirect to `currentState.sabrUrl` — a property that does not exist, since the URL every
+  request reads lives on `currentState.sabrStreamState`. The redirect was therefore dropped and each
+  retry went back to the host that had just issued it, unbounded, because only the NextRequestPolicy
+  retry is capped. A video whose media sits elsewhere is redirected every single time, which is why
+  the same ones failed on 2026-08-16, -20 and -22 and had never once reached the history. Following
+  the redirect for real is a one-word fix, and it comes with two guards: every redirect followed is
+  logged — the host only, since the URL carries the session's signature — and five redirects for one
+  request is a loop, past which the player reports it and throws recoverable, so shaka-player may
+  still land the segment on its own retry and, failing that, the watch page's format cycle reaches
+  the legacy URLs, which are plain googlevideo requests and owe SABR nothing. The bug is upstream
+  FreeTube's, present since SABR arrived (#8047) and still live at `8388d0ce`.
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-21.11-03.g8388d0ce+2026-08-12.20-35.gc42fee2c+036` — 2026-08-21
 
 Built on FreeTube `8388d0ce` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). The first
