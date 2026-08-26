@@ -2,7 +2,7 @@
   "name": "freetube",
   "productName": "白い熊 自由動画",
   "description": "A private YouTube client",
-  "version": "0.25.2",
+  "version": "0.25.3",
   "license": "AGPL-3.0-or-later",
   "main": "./dist/main.js",
   "private": true,
