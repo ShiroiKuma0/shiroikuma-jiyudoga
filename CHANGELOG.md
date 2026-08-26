@@ -15,6 +15,53 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.2+2026-08-26.07-51.ge7b555a9+2026-08-12.20-35.gc42fee2c+041` — 2026-08-26
+
+Built on FreeTube `e7b555a9` (2026-08-26) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
+sync: seventeen commits, of which the substance is threaded comment replies on a new YouTube.js
+major. FreeTubeAndroid did not move — we already sit on their development tip — so their pin
+stands where `+038` left it, and neither upstream released, so `FORK_VERSION` stays `0.25.2`.
+
+### From upstream FreeTube
+
+- **Comment replies are properly threaded now.** Replies nest recursively instead of flattening
+  into one list, so a conversation under a comment reads as a conversation. The comment section was
+  rebuilt around a new per-comment component, and reply counts, the "liked by the creator" heart
+  and the member badges were all reworked with it.
+- **YouTube.js 17.2.0 → 18.0.0.** The library FreeTube extracts YouTube with; the threaded-reply
+  work needed it. This is the change most worth an eye during normal use, since our **Similar** tab
+  and the **study export** both read YouTube through the same library.
+- **The Invidious instance setting explains itself.** Its tooltip now says that changing the
+  instance applies only to the current window unless you set it as the default — which is what it
+  always did, silently.
+- **Translation updates** for Japanese, German, Portuguese (Brazil), French, Czech, Estonian,
+  Polish, Italian, Hungarian and Turkish.
+
+### Fixes
+
+- **Japanese comment and like counts pluralise again.** Upstream's Japanese translation had a
+  fullwidth `｜` where the plural syntax needs an ASCII `|`, so "1 コメント｜{count} コメント" was
+  being shown literally rather than resolved. Fixed upstream this round and taken with the sync.
+- **The SABR redirect fix landed upstream.** FreeTube corrected the redirect writing its new URL to
+  a dead property — the same bug this fork fixed in `+037` after the streaming refusals of
+  2026-08-16, -20 and -22. Our version stays, since it also caps redirect loops and logs what
+  googlevideo actually said when it refuses; nothing changes in behaviour here.
+
+### Fork maintenance
+
+- **Our YouTube.js patch is gone, because upstream adopted it.** The fork carried a patch teaching
+  the comment parser to survive YouTube dropping the avatar entity from its responses; YouTube.js
+  18.0.0 ships that code verbatim, so the patch was deleted rather than rewritten. The mediabunny
+  patch that the study export's muxer depends on is unaffected.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.2+2026-08-26.07-51.ge7b555a9+2026-08-12.20-35.gc42fee2c+041_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.2+2026-08-26.07-51.ge7b555a9+2026-08-12.20-35.gc42fee2c+041_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.2+2026-08-26.07-51.ge7b555a9+2026-08-12.20-35.gc42fee2c+041_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-21.16-53.g9591c177+2026-08-12.20-35.gc42fee2c+040` — 2026-08-22
 
 Built on FreeTube `9591c177` (2026-08-21) + FreeTubeAndroid `c42fee2c` (2026-08-12). Neither
