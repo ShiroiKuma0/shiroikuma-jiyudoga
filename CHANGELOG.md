@@ -15,6 +15,37 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-08-26.10-19.ge6f16c45+2026-08-12.20-35.gc42fee2c+001` — 2026-08-26
+
+Built on FreeTube `e6f16c45` (2026-08-26) + FreeTubeAndroid `c42fee2c` (2026-08-12). A
+version-only sync: FreeTube's `development` opened the 0.25.3 cycle with a single commit that
+rewrites one line of `package.json` and touches nothing else, so **this build is functionally
+identical to `+041`**. It is published because `FORK_VERSION` tracks the higher of our two
+upstreams' versions, and that number moved.
+
+### Version identity
+
+- **`FORK_VERSION` 0.25.2 → 0.25.3**, following upstream commit `e6f16c45c` ("Bump package version
+  from 0.25.2 to 0.25.3"). No 0.25.3 build exists on FreeTube's side yet — their newest release is
+  still `v0.25.2-beta` (2026-08-11); this is the routine post-release bump that opens the next
+  development cycle.
+- **The build counter resets to `001`**, as it does on every `FORK_VERSION` change. The Android
+  `versionCode` still rises across that reset — `25020042` → `25030001` — because the formula gives
+  the respin component a digit of its own.
+- **FreeTubeAndroid did not move.** Their `development` tip is still `c42fee2c`, which is already
+  our merge-base, so their pin stands where `+038` left it. Their `0.25.1.1` respin tag now sits two
+  FreeTube patch levels behind, so the respin component stays dropped from `FORK_VERSION` — and
+  `25030001` > `25011021`, so this remains a rise rather than the phantom downgrade the respin
+  component exists to prevent.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-08-26.10-19.ge6f16c45+2026-08-12.20-35.gc42fee2c+001_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-26.10-19.ge6f16c45+2026-08-12.20-35.gc42fee2c+001_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-26.10-19.ge6f16c45+2026-08-12.20-35.gc42fee2c+001_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.2+2026-08-26.07-51.ge7b555a9+2026-08-12.20-35.gc42fee2c+041` — 2026-08-26
 
 Built on FreeTube `e7b555a9` (2026-08-26) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
