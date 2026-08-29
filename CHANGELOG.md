@@ -15,6 +15,81 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002` — 2026-08-29
+
+Built on FreeTube `37d7b682` (2026-08-29) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
+sync: thirty-six commits, of which six carry real behaviour, eleven are dependency and CI bumps and
+nineteen are Weblate translations. This is the first build with actual 0.25.3-cycle code in it —
+`+001` was the bare version bump. FreeTubeAndroid did not move (we already sit on their development
+tip), so their pin stands where `+038` left it, and neither upstream released, so `FORK_VERSION`
+stays `0.25.3`.
+
+### From upstream FreeTube
+
+- **The playlist panel on the watch page collapses now.** A header toggle folds the queue away when
+  you want the description and the recommendations instead of forty thumbnails, and the panel's
+  single-column breakpoint widened from 768 px to 1050 px, so it stops being a tall sidebar much
+  earlier.
+- **Removing a video from a playlist no longer leaves it tied to that playlist in your history.**
+  The association used to survive the removal, so the history entry kept offering to resume a
+  playlist the video was no longer in. Deleting a whole playlist clears it for every video at once.
+- **Navigating back to a video that has since left the playlist behaves.** Router history could
+  still carry the old `playlistId`; the watch page now checks the playlist actually contains the
+  video and drops the playlist context instead of showing a phantom queue.
+- **The Posts tab explains itself under RSS instead of vanishing.** YouTube publishes no RSS feed
+  for community posts, so the tab used to disappear silently when RSS feeds were enabled — it now
+  stays put and says why it is empty, naming the two settings that control it.
+- **The per-channel video limit caps at 15 while RSS is enabled**, matching what RSS can actually
+  return rather than letting the slider promise more.
+- **The playlist grab bar shows itself disabled while items are being deleted**, and hides entirely
+  below two items, the way the sort dropdown already did.
+- **Invidious playlists are no longer cut off at 200 videos** — the Invidious path now follows
+  continuations the way the local API does.
+- **Copying a YouTube URL from a playlist item produces a valid link.** The playlist parameter was
+  appended with `&` where the URL had no query string yet; it is `?` now.
+- **Dependency and toolchain bumps**: `vue-i18n` 11.4.9, `dompurify` 3.4.14, `marked` 18.0.11,
+  `js-yaml` 5.4.0, `sass` 1.103.1, `eslint` 10.9.1, plus stylelint-a11y, eslint-plugin-jsonc and
+  the CodeQL action group.
+- **Translations** refreshed in eleven languages — Breton, German, Estonian, French, Hungarian,
+  Italian, **Japanese**, Brazilian Portuguese, Turkish, and both Chinese scripts.
+
+### Fork adaptations
+
+- **The two new history handlers now stamp `syncUpdatedAt`.** Upstream's
+  `unsetLastViewedPlaylistForVideos` / `unsetLastViewedPlaylists` write history rows without going
+  through `updateWatchProgress`, so they arrived unstamped — and in this fork every mutation
+  restamps, or a locally edited record looks *older* than the peer's stale copy and loses the next
+  device-sync comparison it should win.
+- **`DBActions.HISTORY.FIND_FOR_SYNC` moved 22 → 24.** Upstream claimed 22 and 23 for its new unset
+  actions. The constant is referenced by name everywhere, and the codes are transient IPC values, so
+  nothing else changed.
+- **Our branding survived upstream's image and translation passes.** Upstream re-compressed 47
+  `_icons/` files; ours are the black-and-yellow 白い熊 自由動画 set and were kept. In the eleven
+  translated locales the newer upstream text was taken and the `FreeTube` → `白い熊 自由動画`
+  rebrand re-applied on top, so the fork picks up their *reworded* strings — the Invidious-instance
+  note, the French RSS wording — rather than freezing older copies of them.
+- **The Similar and Starred subscription tabs came through upstream's tab-bar rework**, which
+  dropped the RSS term from the visible-tab computation and moved `SubscriptionsPosts.vue` into its
+  own directory.
+
+### Version identity
+
+- **`FORK_VERSION` stays `0.25.3`** — neither upstream's version moved (FreeTube's `package.json`
+  is still 0.25.3, FreeTubeAndroid's newest tag is still `0.25.1.1`), so the counter runs on to
+  `002` rather than resetting. Android `versionCode` `25030002`.
+- **The FreeTube pin moves** `e6f16c45` (2026-08-26 10:19 UTC) → `37d7b682` (2026-08-29 15:51 UTC).
+  **The FreeTubeAndroid pin does not**: their `development` tip is still `c42fee2c`, already our
+  merge-base, and it remains outside `master`'s history, so the pin is emitted rather than
+  suppressed by the shared-history guard.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-08-26.10-19.ge6f16c45+2026-08-12.20-35.gc42fee2c+001` — 2026-08-26
 
 Built on FreeTube `e6f16c45` (2026-08-26) + FreeTubeAndroid `c42fee2c` (2026-08-12). A
