@@ -86,8 +86,10 @@ const DBActions = {
   HISTORY: {
     UPDATE_WATCH_PROGRESS: 20,
     UPDATE_PLAYLIST: 21,
+    UNSET_PLAYLIST_FOR_VIDEOS: 22,
+    UNSET_PLAYLISTS: 23,
     // 白い熊 自由動画: like FIND, but with the deletion tombstones the sync snapshot needs
-    FIND_FOR_SYNC: 22,
+    FIND_FOR_SYNC: 24
   },
 
   PROFILES: {

@@ -164,6 +164,34 @@ class History {
     return db.history.updateAsync({ videoId }, { $set: { lastViewedPlaylistId, lastViewedPlaylistType, lastViewedPlaylistItemId, syncUpdatedAt: Date.now() } }, { upsert: true })
   }
 
+  static unsetLastViewedPlaylistForVideos(videoIds, lastViewedPlaylistId) {
+    return db.history.updateAsync(
+      {
+        videoId: { $in: videoIds },
+        lastViewedPlaylistId: lastViewedPlaylistId
+      },
+      {
+        $unset: { lastViewedPlaylistId: '', lastViewedPlaylistType: '', lastViewedPlaylistItemId: '' },
+        // every mutation restamps, or a locally edited record looks older than the peer's stale copy
+        $set: { syncUpdatedAt: Date.now() }
+      },
+      { multi: true }
+    )
+  }
+
+  static unsetLastViewedPlaylists(lastViewedPlaylistIds) {
+    return db.history.updateAsync(
+      {
+        lastViewedPlaylistId: { $in: lastViewedPlaylistIds }
+      },
+      {
+        $unset: { lastViewedPlaylistId: '', lastViewedPlaylistType: '', lastViewedPlaylistItemId: '' },
+        $set: { syncUpdatedAt: Date.now() }
+      },
+      { multi: true }
+    )
+  }
+
   static delete(videoId) {
     // replaces the document rather than removing it, leaving a bare tombstone
     return db.history.updateAsync(

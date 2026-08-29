@@ -108,6 +108,8 @@ Subscriptions:
   Empty Posts: 現在、登録しているチャンネルには動画はありません。
   Empty Starred: このプロファイルにはまだスター付き動画がありません。視聴ページのスターボタンで動画にスターを付けると、ここに集まります。
   Similar Needs Videos: 類似動画は登録チャンネルの最近の動画から発見されます。先に「動画」タブを更新してから、ここに戻ってください。
+  Posts:
+    RSS Message: YouTube は投稿の RSS フィードを提供していません。投稿を表示するには "{rssSetting}" 設定を無効にするか、このタブを非表示にするには "{hideSetting}" 設定を有効にしてください。
 Trending:
   Trending: '急上昇'
   Trending Tabs: 急上昇のタブ
@@ -859,6 +861,8 @@ Video:
     'Remaining preroll-ad time: {remindingTimeSeconds}s': '残りのプレロール広告時間: {remindingTimeSeconds}秒'
     'Remaining SABR backoff time: {remindingTimeSeconds}s': '残りのSABRバックオフ時間: {remindingTimeSeconds}秒'
   Private: 非公開動画は、Googleアカウントでのログインと動画の所有権が必要なため、白い熊 自由動画では視聴できません。
+  Collapse Playlist: プレイリストを折りたたむ
+  Expand Playlist: プレイリストを展開する
 Playlist:
   #& About
   View Full Playlist: '完全な再生リストの表示'

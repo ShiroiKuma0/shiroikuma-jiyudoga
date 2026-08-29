@@ -115,7 +115,7 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/interactive-supports-focus -->
         <div
-          v-if="visibleTabs.includes('community')"
+          v-if="!hideSubscriptionsCommunity"
           ref="communityTab"
           class="tab"
           role="tab"
@@ -187,7 +187,7 @@ import SubscriptionsLive from '../../components/SubscriptionsLive.vue'
 import SubscriptionsShorts from '../../components/SubscriptionsShorts.vue'
 import SubscriptionsSimilar from '../../components/SubscriptionsSimilar.vue'
 import SubscriptionsStarred from '../../components/SubscriptionsStarred.vue'
-import SubscriptionsPosts from '../../components/SubscriptionsPosts.vue'
+import SubscriptionsPosts from '../../components/SubscriptionPosts/SubscriptionsPosts.vue'
 
 import store from '../../store/index'
 
@@ -209,11 +209,6 @@ const hideSubscriptionsLive = computed(() => {
 /** @type {import('vue').ComputedRef<boolean>} */
 const hideSubscriptionsCommunity = computed(() => {
   return store.getters.getHideSubscriptionsCommunity
-})
-
-/** @type {import('vue').ComputedRef<boolean>} */
-const useRssFeeds = computed(() => {
-  return store.getters.getUseRssFeeds
 })
 
 /** @type {import('vue').Ref<'videos' | 'shorts' | 'similar' | 'starred' | 'live' | 'community' | null>} */
@@ -254,8 +249,7 @@ const visibleTabs = computed(() => {
     tabs.push('live')
   }
 
-  // community does not support rss
-  if (!hideSubscriptionsCommunity.value && !useRssFeeds.value) {
+  if (!hideSubscriptionsCommunity.value) {
     tabs.push('community')
   }
 
