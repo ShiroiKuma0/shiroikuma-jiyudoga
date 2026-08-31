@@ -27,7 +27,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 

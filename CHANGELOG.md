@@ -15,6 +15,51 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003` — 2026-08-31
+
+Built on FreeTube `3363ea72` (2026-08-31) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
+sync of three commits, **all of them Weblate translations** — no code changed on either side. The
+build exists so the FreeTube base pin names the commit the fork actually sits on; for anyone
+running the app in English or Japanese nothing behaves differently from `+002` — only the version
+string itself is new.
+FreeTubeAndroid did not move, and neither upstream released, so `FORK_VERSION` stays `0.25.3`.
+
+### From upstream FreeTube
+
+- **Czech** gains the two playlist-panel strings from the 0.25.3 cycle (`Collapse Playlist` /
+  `Expand Playlist`) and the Posts tab's RSS explanation.
+- **Slovak** gains the same three, plus the pluralised `Replies Remaining` counter, a reworded
+  `Show More Replies`, and the Invidious-instance tooltip's new second sentence — the one saying a
+  changed instance applies to the current window only unless you make it the default.
+- **Vietnamese** retitles the thumbnail-preference setting from the bare English `Thumbnail` to a
+  proper Vietnamese label.
+
+### Fork adaptations
+
+- **Our branding survived all three conflicting hunks.** Upstream edited lines adjacent to the
+  `FreeTube` → `白い熊 自由動画` rebrand in `cs.yaml` and `sk.yaml`, so the merge conflicted in
+  three places: the Czech and Slovak `Video.Private` notice (upstream appended the two playlist
+  keys under it) and the Slovak general-settings tooltip block. Each was resolved by taking
+  upstream's newer text and re-applying the rebrand on top, so the fork picks up their *reworded*
+  strings rather than freezing older copies — the same rule the `+002` sync followed.
+
+### Version identity
+
+- **`FORK_VERSION` stays `0.25.3`** — FreeTube's `package.json` is still 0.25.3 and
+  FreeTubeAndroid's newest tag is still `0.25.1.1`, so the counter runs on to `003` rather than
+  resetting. Android `versionCode` `25030003`.
+- **The FreeTube pin moves** `37d7b682` (2026-08-29 15:51 UTC) → `3363ea72` (2026-08-31 17:00 UTC).
+  **The FreeTubeAndroid pin does not**: their `development` tip is still `c42fee2c`, already our
+  merge-base, and still outside `master`'s history, so the shared-history guard leaves it emitted.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-08-29.15-51.g37d7b682+2026-08-12.20-35.gc42fee2c+002` — 2026-08-29
 
 Built on FreeTube `37d7b682` (2026-08-29) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
