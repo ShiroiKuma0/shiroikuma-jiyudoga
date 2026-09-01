@@ -15,6 +15,53 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-01.04-52.ga7ee9f93+2026-08-12.20-35.gc42fee2c+004` — 2026-09-01
+
+Built on FreeTube `a7ee9f93` (2026-09-01) + FreeTubeAndroid `c42fee2c` (2026-08-12). A small
+FreeTube sync: two UI fixes and one translation. FreeTubeAndroid did not move, and neither
+upstream released, so `FORK_VERSION` stays `0.25.3`.
+
+### From upstream FreeTube
+
+- **The playlist index column stops clipping at three digits.** It was a hard 30 px everywhere, so
+  position `100.` onwards collided with the thumbnail beside it. The watch-page panel is now
+  `fit-content(50px)`, the playlist view `40px`, and the number itself keeps a 30 px floor — long
+  playlists number cleanly and short ones lose no space. (#9720)
+- **Long entries in a tag input truncate instead of overflowing their chip.** The plain-text branch
+  of the chip template never got the `name` class its styling targets, so a wordy entry ran past
+  the chip's edge. Visible in the “hide videos with these words in the title” list and in the
+  external-player argument list. (#9715)
+- **Traditional Chinese** gains the Posts tab's RSS explanation and the two playlist-panel strings
+  from the 0.25.3 cycle.
+
+### Fork adaptations
+
+- **Our branding survived the zh-TW conflict.** Upstream appended `Collapse Playlist` /
+  `Expand Playlist` directly under `Video.Private`, which the fork rebrands — one conflict,
+  resolved by taking upstream's new keys with the `FreeTube` → `白い熊 自由動画` substitution kept.
+  The file's twenty-five rebranded strings are unchanged.
+- **The full-width playlist patch merged clear of upstream's grid change.** Our two
+  `inline-size: 85%` removals in `Playlist.scss` sit about thirty lines above the
+  `grid-template-columns` line upstream edited, so both survive with no hand-resolution — the
+  playlist card still spans the full width *and* numbers its items with the new column.
+
+### Version identity
+
+- **`FORK_VERSION` stays `0.25.3`** — FreeTube's `package.json` is still 0.25.3 and
+  FreeTubeAndroid's newest tag is still `0.25.1.1`, so the counter runs on to `004`. Android
+  `versionCode` `25030004`.
+- **The FreeTube pin moves** `3363ea72` (2026-08-31 17:00 UTC) → `a7ee9f93` (2026-09-01 04:52 UTC).
+  **The FreeTubeAndroid pin does not**: their `development` tip is still `c42fee2c`, already our
+  merge-base and still outside `master`'s history, so the shared-history guard leaves it emitted.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-09-01.04-52.ga7ee9f93+2026-08-12.20-35.gc42fee2c+004_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-01.04-52.ga7ee9f93+2026-08-12.20-35.gc42fee2c+004_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-01.04-52.ga7ee9f93+2026-08-12.20-35.gc42fee2c+004_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-08-31.17-00.g3363ea72+2026-08-12.20-35.gc42fee2c+003` — 2026-08-31
 
 Built on FreeTube `3363ea72` (2026-08-31) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
