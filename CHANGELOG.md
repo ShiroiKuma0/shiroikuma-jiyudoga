@@ -15,6 +15,70 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006` — 2026-09-03
+
+Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube
+sync of three commits, **all of them Weblate translations** — no code changed on either side. For
+anyone running the app in English or Japanese nothing behaves differently from `+004`; the build
+exists so the FreeTube base pin names the commit the fork actually sits on. FreeTubeAndroid did not
+move, and neither upstream released, so `FORK_VERSION` stays `0.25.3`.
+
+### From upstream FreeTube
+
+- **Norwegian Nynorsk** gains 74 strings — by far the largest of the three, and structural rather
+  than incremental. Whole sections that had been falling back to English are now translated: the
+  search filters (duration bands, and the entire Features block — HD, subtitles, Creative Commons,
+  3D, live, 4K, 360, HDR, VR180, location), the complete Playlists vocabulary (creating, copying,
+  renaming, reordering, the add/remove-from-favourites pair, the de-duplicate and
+  remove-watched confirmations with their plural forms, total-duration), every playlist sort order,
+  the single-playlist view's toasts, the Posts tab's empty and load-more strings, the feed
+  last-updated line, and the search character-limit warning.
+- **Norwegian Bokmål** gains 24 strings from the 0.25.3 cycle: the settings import/export
+  vocabulary (the settings-file picker, the "unknown setting key" and "non-transferable setting
+  key" diagnostics, and the tooltip warning that OS-specific and experimental settings do not
+  travel), the screenshot-to-clipboard mode with its success and failure toasts, `Full Window
+  (Always On)` together with the tooltip explaining which default view modes persist across
+  videos, `Disable Channel Links`, the Posts tab's RSS explanation, the pluralised
+  `Replies Remaining` counter, `Loading replies`, the channel `View All` link, the two
+  playlist-panel strings, the `Video.Private` explanation, and a rewritten Invidious-instance
+  tooltip — now saying a changed instance applies to the current window only unless you make it
+  the default.
+- **Polish** gains 4 strings: the Posts tab's RSS explanation and the two playlist-panel strings
+  (`Collapse Playlist` / `Expand Playlist`).
+
+### Fork adaptations
+
+- **Our branding survived both conflicts.** The rebrand of the locale *values* from `FreeTube` to
+  `白い熊 自由動画` collided twice. In `nb-NO.yaml` upstream rewrote the Invidious-instance tooltip
+  we had rebranded — resolved by taking their new second sentence and re-applying the
+  substitution. In `pl.yaml` upstream appended `Collapse Playlist` / `Expand Playlist` directly
+  under the `Video.Private` line we rebrand, exactly as it did to Traditional Chinese in `+004` —
+  resolved by keeping our line and their two new keys.
+- **One newly arrived string was rebranded to match.** `nb-NO.yaml`'s `Video.Private` came in with
+  this sync still reading `FreeTube`, which would have left it the only un-rebranded locale value
+  across the three files. It now reads 白い熊 自由動画 like every other value; the English keys are
+  untouched, as they must be.
+
+### Version identity
+
+- **`FORK_VERSION` stays `0.25.3`** — FreeTube's `package.json` still reads 0.25.3 and
+  FreeTubeAndroid's newest tag is still `0.25.1.1`, so the counter runs on. Android `versionCode`
+  `25030006`.
+- **The FreeTube pin moves** `a7ee9f93` (2026-09-01 04:52 UTC) → `0997260b` (2026-09-02 10:51 UTC).
+  **The FreeTubeAndroid pin does not**: their `development` tip is still `c42fee2c`, already our
+  merge-base and still outside `master`'s history, so the shared-history guard leaves it emitted.
+- **The counter skips `005`.** That build was made from this same merge and was complete, but its
+  `.deb` and Windows `.zip` were removed from the staging directory before the release was cut, so
+  the set could no longer be published at one aligned version. `006` is the same tree rebuilt whole.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-01.04-52.ga7ee9f93+2026-08-12.20-35.gc42fee2c+004` — 2026-09-01
 
 Built on FreeTube `a7ee9f93` (2026-09-01) + FreeTubeAndroid `c42fee2c` (2026-08-12). A small
