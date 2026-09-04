@@ -15,6 +15,70 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+015` — 2026-09-04
+
+Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12) — **neither
+upstream moved since `+006`**, so both pins stand and `FORK_VERSION` stays `0.25.3`. Entirely the
+fork's own work: one playback fault that made certain videos unwatchable on the phone, and the
+tooling that finally made it diagnosable.
+
+### Playback survives a hardware decoder that gives up
+
+- **A VP9 keyframe too big for the decoder no longer ends the video.** Some Android hardware
+  decoders size their MediaCodec input buffers linearly from the stream's resolution — the Kirin
+  VP9 decoder allocates `width * height * 3 / 8`, exactly 777600 bytes for 1080p — and reject
+  outright any compressed frame that will not fit:
+
+  ```
+  [ERROR:media_codec_bridge_impl.cc(723)] Input buffer size 810850
+  exceeds MediaCodec input buffer capacity: 777600
+  ```
+
+  One heavy keyframe overruns that by a few percent and the video is stuck there for good:
+  Chromium cannot split a compressed frame across input buffers, so it fails the decode, tears the
+  codec down, rebuilds it from the keyframe *before* the offending one, and walks straight back
+  into it.
+
+- **Detected two ways, because the fault hides.** It ZEROES the playback clock rather than
+  rewinding it a second or two, and reaches shaka about a second later as
+  `MEDIA_SOURCE_OPERATION_FAILED` (3014) on the media request, carrying the failing itag in its
+  data. That error is the trigger; a backwards jump while the player is still loaded is the
+  fallback, `hasLoaded` being the honest discriminator since a genuine reload clears it first. The
+  frozen-clock case is **polled** rather than hung off `timeupdate` — an element fires that only
+  while its clock is moving, and a wedged decoder is precisely when it is not.
+
+- **Recovery is a rebuild, not a switch.** shaka settles on a single video codec family while
+  filtering the manifest, so `getVariantTracks()` never offers a second codec to switch to,
+  whatever the variant count says — 528, on the video that prompted this, and not one of them
+  h264. The codec is only choosable at load time, so the dead one is noted in `sessionStorage` and
+  the player is rebuilt with `preferredVideo` steering the fresh manifest onto h264. About a second
+  and a half, once per video (a rebuild that fails again reports rather than loops), and playback
+  resumes by itself rather than honouring the Autoplay Videos setting — it was running when the
+  decoder died.
+
+### Fixes
+
+- **A reload no longer throws away your place.** `getWatchedProgress` reads the position through
+  `hasLoaded` and returns 0 the moment that goes false — which is the state the player is always in
+  when a reload is requested, since falling over is what provokes it. The timestamp was therefore
+  dropped, and `startTimeSeconds` fell back to the stored watch progress, resuming the video
+  potentially minutes from where it had actually been playing. The Watch view now remembers the
+  last position reported while the player was healthy and reloads from that.
+
+### The console log can leave the phone
+
+- **Save all** and **Share all**, in the Console Log window. The WebView console never reaches
+  logcat and remote debugging is off, so the in-app viewer is the only way to read a failure after
+  the fact — and copying through the clipboard silently loses everything past its size limit.
+  **Save all** writes the full buffer to `jiyudoga-console-log_<yyyy-MM-dd_HH-mm-ss>.txt`;
+  **Share all** hands it to the system share sheet as a real file attachment, through a
+  non-exported `FileProvider` scoped to a single cache directory. Both re-read from the source
+  buffer rather than the capped set kept on screen, so what has already scrolled off the top is
+  still in the file. Android only for Share — desktop has no share sheet — and desktop's Save goes
+  through the ordinary file picker.
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006` — 2026-09-03
 
 Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12). A FreeTube

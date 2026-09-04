@@ -27,7 +27,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+006`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+015`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -235,6 +235,18 @@ storing — and anything an older build left behind is purged at launch. Nothing
 logs in or reads a cookie, so nothing is lost. Verified on-device rather than assumed: an
 empty jar after a session of real playback.
 
+## 🩹 Survives a decoder that gives up
+
+Some phones' hardware VP9 decoders size their MediaCodec input buffers from the stream's
+resolution — the Kirin one allocates exactly 777600 bytes for 1080p — and refuse any compressed
+frame that will not fit. A single unusually heavy keyframe is enough to end the video: the decode
+fails, the codec is rebuilt from the keyframe *before* the bad one, and playback walks straight
+back into it, for as long as you let it. Nothing above MediaSource explains why.
+
+The player watches for it — a frozen clock with data still buffered ahead, or the SourceBuffer
+append failure that follows about a second later — and rebuilds itself onto h264, keeping your
+place and resuming on its own. About a second and a half, once per video, and the stall is gone.
+
 ## 📋 A console you can actually read
 
 The Android layer captures every WebView console message, then hides the viewer in release
@@ -242,7 +254,11 @@ builds — which is every build anyone actually runs, so a JS error on a real ph
 invisible: nothing reaches logcat, and remote debugging is off. Here the **Console Log**
 entry stays in the sidebar, and the viewer is built for reporting rather than squinting:
 tap entries to select them, then copy those or the whole log to the clipboard, timestamped
-and in the order things happened. It is what found the codec bug fixed in `+017`.
+and in the order things happened. **Save all** writes the complete buffer — not merely the
+entries still on screen — to a stamped `.txt`, and **Share all** hands it to the system share
+sheet as a real file, which is how a failure on the phone reaches the desk without the clipboard
+quietly truncating it. It is what found the codec bug fixed in `+017`, and the decoder stall
+fixed in `+015`.
 
 ## 🔄 Own update channel
 
