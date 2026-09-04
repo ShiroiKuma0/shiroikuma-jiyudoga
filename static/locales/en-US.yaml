@@ -1276,6 +1276,12 @@ KeyboardShortcutPrompt:
   Skip to Previous Video: Skip to the previous video in a playlist
 Log Viewer:
   Console Log: Console Log
+  Save all: Save all
+  Share all: Share all
+  Log is empty: There is nothing in the log yet
+  Log saved: Console log saved
+  Log save failed: Could not save the log
+  Log share failed: Could not share the log
 SKUI:
   Title: 白い熊 自由動画 UI
   Sections:
@@ -1487,3 +1493,5 @@ SKUI:
     All Channels label description: >-
       What the profile holding every subscription is called in the bubble and the profile
       lists. Empty falls back to the translated name.
+  Player:
+    Decoder recovery: "This device's decoder could not play the video — switched to {codec}"

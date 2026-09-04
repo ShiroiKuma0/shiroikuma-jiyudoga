@@ -41,6 +41,16 @@ const HTTP_IN_HEX = 0x68747470
 
 const USE_OVERFLOW_MENU_WIDTH_THRESHOLD = 634
 
+/**
+ * In-memory mirror of the `sessionStorage` note recording which codec families have wedged this
+ * device's decoder on the video now playing. Recovery from the stall reloads the player and can
+ * tear the document down with it, so the durable copy is the stored one; this only saves parsing
+ * it on every variant decision. It is what the next `player.load()` reads to come back on a
+ * codec that works.
+ * @type {{ videoId: string, failed: string[] } | null}
+ */
+let decoderStallRecovery = null
+
 const RequestType = shaka.net.NetworkingEngine.RequestType
 const AdvancedRequestType = shaka.net.NetworkingEngine.AdvancedRequestType
 const TrackLabelFormat = shaka.ui.Overlay.TrackLabelFormat
@@ -654,14 +664,11 @@ export default defineComponent({
         // https://developer.mozilla.org/en-US/docs/Web/API/MediaCapabilities/decodingInfo
         preferredDecodingAttributes: format === 'dash' ? ['smooth', 'powerEfficient'] : [],
 
-        // Electron doesn't like YouTube's vp9 VR video streams and throws:
-        // "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Projection element is incomplete; ProjectionPoseYaw required."
-        // So use the AV1 and h264 codecs instead which it doesn't reject.
         // `preferredVideoCodecs` is deprecated in shaka 5 and warns on every load; these are the
         // entries shaka's own migration builds from that list, so the behaviour is unchanged.
-        preferredVideo: typeof props.vrProjection === 'string'
-          ? ['av01', 'avc1'].map(codec => ({ label: '', role: '', codec, hdrLevel: '', layout: '' }))
-          : []
+        preferredVideo: preferredVideoCodecs().map(
+          codec => ({ label: '', role: '', codec, hdrLevel: '', layout: '' })
+        )
       }
     }
 
@@ -1488,7 +1495,9 @@ export default defineComponent({
      * @param {string | undefined} label
      */
     function setDashQuality(quality, audioBandwidth, label) {
-      let variants = player.getVariantTracks()
+      // Codecs that have already stalled this device's decoder on this video are not candidates,
+      // however the quality was asked for — see the hardware decoder stall region.
+      let variants = variantsWithoutFailedCodecs(player.getVariantTracks())
 
       if (label) {
         variants = variants.filter(variant => variant.label === label)
@@ -2636,6 +2645,18 @@ export default defineComponent({
 
       logShakaError(error, context, props.videoId, details)
 
+      // A hardware decoder refusing a frame reaches shaka as a SourceBuffer append failure on
+      // the media request — MEDIA_SOURCE_OPERATION_FAILED, with a `sabr:video?formatId=248-...`
+      // in its data — roughly a second after the clock is zeroed. That is a direct signal, far
+      // better than inferring one from the clock, so it is the trigger of choice. Handling it
+      // here also gets in ahead of the Watch view's format ladder, which cannot help: a video
+      // with `legacyFormats=0` only gets a toast out of it.
+      if (process.env.IS_ANDROID &&
+        (error.code === ErrorCode.MEDIA_SOURCE_OPERATION_FAILED || error.code === ErrorCode.VIDEO_ERROR) &&
+        recoverFromDecoderStall(`shaka error ${error.code}`)) {
+        return
+      }
+
       // text related errors aren't serious (captions and seek bar thumbnails), so we should just log them
       // TODO: consider only emitting when the severity is crititcal?
       if (
@@ -2655,6 +2676,458 @@ export default defineComponent({
         }
       }
     }
+
+    // #region hardware decoder stall recovery
+
+    /*
+     * Some Android hardware decoders size their MediaCodec input buffers linearly from the
+     * stream's resolution — the Kirin VP9 decoder allocates width * height * 3 / 8, exactly
+     * 777600 bytes for 1080p — and reject outright any compressed frame too big to fit:
+     *
+     *   [ERROR:media_codec_bridge_impl.cc(723)] Input buffer size 810850
+     *   exceeds MediaCodec input buffer capacity: 777600
+     *
+     * An occasional heavy keyframe overruns that by a few percent. Chromium cannot split one
+     * compressed frame across input buffers, so it fails the decode, tears the codec down and
+     * re-creates it from the keyframe *before* the offending one — walking back into it, for as
+     * long as anyone lets it. None of this surfaces above MSE: no `error` event is fired and
+     * shaka never hears of it.
+     *
+     * Lowering the resolution is not the cure it looks like — the input buffer shrinks linearly
+     * with the pixel count while the keyframe does not, so the same picture can be a *larger*
+     * multiple of a smaller buffer. Changing codec is what settles it, and on this device the
+     * only alternative is h264: the console log shows every av01 variant dropped as unsupported
+     * by the platform's MediaSource, so the real choice is vp9 or avc1 and nothing else.
+     *
+     * WHAT IT ACTUALLY LOOKS LIKE, finally caught in the console log on 2026-09-04:
+     *
+     *   [decoder-stall] ignoring a 131.0s fall-back to 0.00s (too large ...); loaded=true
+     *   Player Error: MEDIA_SOURCE_OPERATION_FAILED (3014)
+     *     Data: sabr:video?formatId=248-...&resolution=1080&startTimeMs=186500&sq=37
+     *   Unable to play DASH formats. Reverting to legacy formats...
+     *
+     * itag 248 is vp9 1080p, so the failing stream is exactly the one the MediaCodec error
+     * names. Three things that guesswork had wrong, in order of how much they cost:
+     *
+     * - The clock is reset to ZERO, not rewound a couple of seconds. Judging a decoder fault by
+     *   the SIZE of the fall-back threw the real event away as "too large". `hasLoaded` is the
+     *   honest discriminator instead: a reload or a route change clears it first, so a backwards
+     *   jump while it is still true, with no seek in flight, is the decoder and nothing else.
+     * - It DOES surface to shaka, as MEDIA_SOURCE_OPERATION_FAILED (3014) on the media request —
+     *   a SourceBuffer append failure — about a second after the clock drops. That is a direct
+     *   signal and far better than inferring anything from the clock, so it is now the trigger.
+     * - The Watch view's answer to 3014 is the format ladder, which is useless here: this video
+     *   reports `legacyFormats=0`, so `enableLegacyFormat` toasts and returns, leaving nothing.
+     *   Handling it here, before the error escapes, is the only place a fix can work.
+     *
+     * AND WHY AN IN-PLACE SWITCH CANNOT WORK, which the next log made plain:
+     *
+     *   fell back 130.9s at 0.00s on vp9 1080p; known bad: vp9; loaded=true; variants=528
+     *   no other codec on offer; leaving playback alone
+     *
+     * 528 variants and not one avc1 among them. shaka's `chooseCodecsAndFilterManifest` settles
+     * on a SINGLE video codec family while the manifest is being filtered and drops the rest, so
+     * `getVariantTracks()` never offers a second codec to switch to — the tracks do not exist.
+     * The codec is therefore only choosable at LOAD time, through `preferredVideo`, which is why
+     * recovery ends in a deliberate reload: note the dead codec, ask for the player to be
+     * rebuilt, and `preferredVideoCodecs` steers the fresh manifest onto h264. The position
+     * survives because `onPlayerReloadRequested` carries it across (see Watch.js's
+     * `lastKnownPlaybackPosition`, which exists for exactly this).
+     *
+     * TWO EARLIER ATTEMPTS FAILED, both for reasons worth keeping written down.
+     *
+     * The first hung its detection on `timeupdate` — but a media element fires `timeupdate`
+     * only when `currentTime` CHANGES, and a wedged decoder is precisely the case where it
+     * stops changing. The detector could not observe the failure it existed for. Freezes are
+     * therefore polled on an interval now, and the poll is the primary signal: time not moving
+     * while playing, with data already buffered ahead, is a decode failure and nothing else
+     * (a network stall has no buffer ahead, which is what separates them).
+     *
+     * The second reacted by switching variants from inside shaka's `loaded` handler — that is,
+     * during `player.load()` — and by changing `activeFormat`, which the format watcher turns
+     * into `performFirstLoad()` at `props.startTime`. Between them those restarted the video
+     * and could leave the load wedged. So: nothing is mutated mid-load any more. The codec to
+     * avoid is recorded, and applied as CONFIGURATION before the next `player.load()`, where
+     * shaka filters the manifest down to the preferred family and vp9 never becomes a variant.
+     *
+     * The record lives in `sessionStorage`, not just in memory: the failure is accompanied by a
+     * document teardown ("Failed to execute 'exitFullscreen': Document not active"), and a
+     * document reload would take module state with it.
+     */
+
+    /** Playing, but the clock has not moved this long — with data buffered ahead. */
+    const STALL_FROZEN_MS = 3000
+
+    /** Buffer ahead of the playhead that separates a wedged decoder from a starved network. */
+    const STALL_BUFFER_AHEAD_SECONDS = 1
+
+    /** How often to look, since a frozen element reports nothing on its own. */
+    const STALL_POLL_MS = 1000
+
+    /** Smaller than this is jitter. There is deliberately no upper bound — see above. */
+    const STALL_REGRESSION_SECONDS = 0.5
+
+    const STALL_STORAGE_KEY = 'decoderStallCodecs'
+
+    let stallLastObserved = 0
+    let stallSeekPending = false
+    let stallLastAdvanceAt = 0
+    let stallFrozenHandled = false
+
+    /** Where playback had got to before the fault reset the clock, so it can be put back. */
+    let stallLastGoodPosition = 0
+
+    /**
+     * What is on screen, kept current as it changes rather than read when the fault is noticed —
+     * by then the player may be reloading and reporting no variants at all.
+     * @type {string | null}
+     */
+    let stallActiveCodec = null
+
+    /** @type {number | null} */
+    let stallActiveHeight = null
+
+    /**
+     * `avc1.4d401f`, `vp09.00.41.08` and `vp9` all reduce to the family that decides which
+     * MediaCodec instance ends up doing the work.
+     * @param {string} codec
+     */
+    function videoCodecFamily(codec) {
+      const family = codec.split('.')[0].toLowerCase()
+
+      return family === 'vp09' ? 'vp9' : family
+    }
+
+    /** @returns {string[]} codec families known to wedge this device on the video now playing */
+    function failedCodecsForThisVideo() {
+      if (decoderStallRecovery?.videoId === props.videoId) {
+        return decoderStallRecovery.failed
+      }
+
+      try {
+        const stored = JSON.parse(sessionStorage.getItem(STALL_STORAGE_KEY) ?? 'null')
+
+        if (stored?.videoId === props.videoId && Array.isArray(stored.failed)) {
+          decoderStallRecovery = stored
+          return stored.failed
+        }
+      } catch { }
+
+      return []
+    }
+
+    /**
+     * Resume playback after a rebuild this code asked for, once. Anything else — a fresh visit,
+     * a SABR reload, 白い熊 opening the video deliberately — keeps the Autoplay Videos setting's
+     * answer, which is why this is keyed to a flag we set rather than to the reload itself.
+     */
+    function resumeAfterDecoderRebuild() {
+      if (decoderStallRecovery?.videoId !== props.videoId || decoderStallRecovery.resumeAfterRebuild !== true) {
+        return
+      }
+
+      decoderStallRecovery = { ...decoderStallRecovery, resumeAfterRebuild: false }
+
+      try {
+        sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+      } catch { }
+
+      const videoElement = video.value
+
+      if (!videoElement || !videoElement.paused) {
+        return
+      }
+
+      console.warn(`[decoder-stall] ${props.videoId}: resuming playback after the rebuild`)
+
+      videoElement.play().catch((error) => {
+        console.error(`[decoder-stall] ${props.videoId}: could not resume after the rebuild`, error)
+      })
+    }
+
+    /** @param {string} family */
+    function rememberFailedCodec(family) {
+      const failed = failedCodecsForThisVideo()
+
+      if (failed.includes(family)) {
+        return failed
+      }
+
+      decoderStallRecovery = {
+        videoId: props.videoId,
+        failed: [...failed, family],
+        reloaded: decoderStallRecovery?.videoId === props.videoId ? decoderStallRecovery.reloaded === true : false
+      }
+
+      try {
+        sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+      } catch { }
+
+      return decoderStallRecovery.failed
+    }
+
+    /**
+     * Codec preference applied BEFORE `player.load()`. shaka uses it to filter the manifest down
+     * to one family, so a codec left out here never becomes a variant at all — which is why this
+     * replaces the mid-load variant switch that used to hang the player.
+     * @returns {string[]}
+     */
+    function preferredVideoCodecs() {
+      if (typeof props.vrProjection === 'string') {
+        // Electron doesn't like YouTube's vp9 VR video streams and throws
+        // "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Projection element is incomplete", so use av1/h264.
+        return ['av01', 'avc1']
+      }
+
+      const failed = failedCodecsForThisVideo()
+
+      if (failed.length === 0) {
+        return []
+      }
+
+      return ['avc1', 'av01', 'vp9'].filter(codec => !failed.includes(codec))
+    }
+
+    function refreshStallActiveCodec() {
+      const active = player?.getVariantTracks().find(track => track.active)
+
+      if (active?.videoCodec) {
+        stallActiveCodec = videoCodecFamily(active.videoCodec)
+        stallActiveHeight = active.height ?? null
+      }
+    }
+
+    /**
+     * Drop every variant whose codec has already wedged this device. Used by `setDashQuality`
+     * too, so a quality applied after a switch cannot put playback back on the failing decoder.
+     * @param {shaka.extern.Track[]} variants
+     * @returns {shaka.extern.Track[]}
+     */
+    function variantsWithoutFailedCodecs(variants) {
+      const failed = failedCodecsForThisVideo()
+
+      if (failed.length === 0) {
+        return variants
+      }
+
+      const usable = variants.filter(variant =>
+        variant.videoCodec && !failed.includes(videoCodecFamily(variant.videoCodec))
+      )
+
+      // Never hand back nothing: a video whose every codec has failed is better off playing
+      // badly than not at all.
+      return usable.length > 0 ? usable : variants
+    }
+
+    /** @returns {number} seconds of contiguous buffer ahead of `position`, 0 if none covers it */
+    function bufferedAheadOf(videoElement, position) {
+      const buffered = videoElement.buffered
+
+      for (let index = 0; index < buffered.length; index++) {
+        if (buffered.start(index) <= position + 0.1 && buffered.end(index) > position) {
+          return buffered.end(index) - position
+        }
+      }
+
+      return 0
+    }
+
+    /** @returns {shaka.extern.Track | null} */
+    function pickVariantAvoidingFailedCodecs() {
+      const tracks = player?.getVariantTracks() ?? []
+      const failed = failedCodecsForThisVideo()
+
+      const alternatives = tracks.filter(track =>
+        track.videoCodec && !failed.includes(videoCodecFamily(track.videoCodec))
+      )
+
+      if (alternatives.length === 0) {
+        return null
+      }
+
+      // h264 first: the one codec every Android device decodes in hardware, and its far more
+      // conservative keyframes are the least likely to overrun a buffer a second time.
+      const h264 = alternatives.filter(track => videoCodecFamily(track.videoCodec) === 'avc1')
+      const candidates = h264.length > 0 ? h264 : alternatives
+
+      // Never climb above the resolution that failed — a bigger frame is the last thing this
+      // decoder needs — but do not refuse to pick at all if that leaves nothing.
+      const atOrBelow = typeof stallActiveHeight === 'number'
+        ? candidates.filter(track => typeof track.height === 'number' && track.height <= stallActiveHeight)
+        : []
+      const shortlist = atOrBelow.length > 0 ? atOrBelow : candidates
+
+      shortlist.sort((a, b) => (b.height ?? 0) - (a.height ?? 0) || b.bandwidth - a.bandwidth)
+
+      return shortlist[0]
+    }
+
+    /**
+     * @param {string} why what was observed — the log line is the only trace this leaves
+     * @returns {boolean} whether playback was actually moved onto another codec
+     */
+    function recoverFromDecoderStall(why) {
+      const videoElement = video.value
+      const failed = stallActiveCodec ? rememberFailedCodec(stallActiveCodec) : failedCodecsForThisVideo()
+
+      console.warn(
+        `[decoder-stall] ${props.videoId}: ${why} at ${videoElement.currentTime.toFixed(2)}s on ` +
+        `${stallActiveCodec ?? 'an unknown codec'} ${stallActiveHeight ?? '?'}p; ` +
+        `known bad: ${failed.join(', ') || 'none'}; loaded=${hasLoaded.value}; ` +
+        `variants=${player?.getVariantTracks().length ?? 0}; ` +
+        `buffered ahead=${bufferedAheadOf(videoElement, videoElement.currentTime).toFixed(1)}s`
+      )
+
+      if (!hasLoaded.value) {
+        // A load is in flight — this is shaka or Chromium already rebuilding. Racing it is what
+        // restarted the video from zero last time. The note above survives in sessionStorage,
+        // and `preferredVideoCodecs` applies it to the load that is happening anyway.
+        return false
+      }
+
+      const track = pickVariantAvoidingFailedCodecs()
+
+      if (!track) {
+        // The expected case, not a failure: shaka filtered the manifest down to one codec family
+        // at load time, so there is nothing here to switch to. Rebuilding the player is the only
+        // way to change codec — `preferredVideoCodecs` reads the note above on the way back in.
+        if (decoderStallRecovery?.reloaded === true) {
+          console.error(
+            `[decoder-stall] ${props.videoId}: already rebuilt once for ${failed.join(', ')} and ` +
+            'it failed again; leaving playback alone rather than looping'
+          )
+          return false
+        }
+
+        // `resumeAfterRebuild` is consumed by the next `loaded`: the rebuilt player honours the
+        // Autoplay Videos setting, which is the wrong answer here — playback was running when
+        // the decoder died, and the rebuild is our doing, not a fresh visit to the video.
+        decoderStallRecovery = { ...decoderStallRecovery, reloaded: true, resumeAfterRebuild: true }
+
+        try {
+          sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+        } catch { }
+
+        console.warn(
+          `[decoder-stall] ${props.videoId}: no ${failed.join(', ')}-free variant in this ` +
+          'manifest (shaka filters to one codec family); requesting a rebuild onto h264'
+        )
+
+        showToast(t('SKUI.Player.Decoder recovery', { codec: 'avc1' }))
+        emit('player-reload-requested')
+
+        return true
+      }
+
+      const family = videoCodecFamily(track.videoCodec)
+
+      console.warn(`[decoder-stall] ${props.videoId}: switching to ${family} ${track.height ?? '?'}p`)
+
+      // `clearBuffer` drops what is already fetched — the frame that killed the decoder with it —
+      // and refills from the current position, so nothing is skipped. It also turns ABR off,
+      // which is wanted: left on, shaka would climb back onto the codec we just escaped.
+      player.selectVariantTrack(track, /* clearBuffer */ true)
+
+      stallActiveCodec = family
+      stallActiveHeight = track.height ?? null
+      stallLastAdvanceAt = performance.now()
+
+      showToast(t('SKUI.Player.Decoder recovery', { codec: family }))
+
+      // The fault does not rewind the clock, it ZEROES it. Put playback back where it was, now
+      // that the codec which could not decode that stretch is out of the way.
+      if (stallLastGoodPosition - videoElement.currentTime > 1) {
+        console.warn(
+          `[decoder-stall] ${props.videoId}: restoring position to ${stallLastGoodPosition.toFixed(2)}s`
+        )
+        videoElement.currentTime = stallLastGoodPosition
+      }
+
+      // The fault pauses the element itself, so a pause here is its doing, not 白い熊's.
+      if (videoElement.paused) {
+        videoElement.play().catch(() => { })
+      }
+
+      return true
+    }
+
+    /**
+     * The primary signal, and the one the first attempt could not see. A media element fires
+     * `timeupdate` only while `currentTime` changes, so a wedged decoder is invisible to it —
+     * this has to be polled. Time standing still while playing, with the buffer already filled
+     * past the playhead, is a decode failure: a network stall would have nothing buffered ahead.
+     */
+    function pollDecoderStall() {
+      const videoElement = video.value
+
+      if (!videoElement || videoElement.paused || videoElement.seeking || videoElement.ended || stallSeekPending) {
+        stallLastAdvanceAt = performance.now()
+        stallFrozenHandled = false
+        return
+      }
+
+      if (videoElement.currentTime !== stallLastObserved) {
+        stallLastObserved = videoElement.currentTime
+        stallLastAdvanceAt = performance.now()
+        stallFrozenHandled = false
+
+        if (videoElement.currentTime > 0) {
+          stallLastGoodPosition = videoElement.currentTime
+        }
+
+        return
+      }
+
+      if (stallFrozenHandled || performance.now() - stallLastAdvanceAt < STALL_FROZEN_MS) {
+        return
+      }
+
+      if (bufferedAheadOf(videoElement, videoElement.currentTime) < STALL_BUFFER_AHEAD_SECONDS) {
+        // Nothing to decode — that is the network's problem, and shaka's to retry.
+        return
+      }
+
+      stallFrozenHandled = true
+      recoverFromDecoderStall('playback frozen with buffer ahead')
+    }
+
+    /**
+     * Secondary signal: Chromium rewinding to the keyframe before the bad frame. Every backwards
+     * jump is LOGGED whatever its size — the silence after the last failure cost a whole round of
+     * guessing — but only one inside the window is acted on, since a jump of tens of seconds is a
+     * reload or a seek rather than a decoder rewind.
+     */
+    function handleDecoderStallTick() {
+      const videoElement = video.value
+
+      if (!videoElement || stallSeekPending || videoElement.seeking) {
+        return
+      }
+
+      const previous = stallLastObserved
+      const now = videoElement.currentTime
+      const fellBackBy = previous - now
+
+      stallLastObserved = now
+      stallLastAdvanceAt = performance.now()
+      stallFrozenHandled = false
+
+      // Never let the zeroed clock become the position we would restore to.
+      if (now > 0) {
+        stallLastGoodPosition = now
+      }
+
+      if (fellBackBy <= STALL_REGRESSION_SECONDS) {
+        return
+      }
+
+      // No upper bound: the fault zeroes the clock, and the version that dismissed a 131 s
+      // fall-back as "too large for a decoder rewind" threw away the only event that mattered.
+      // `recoverFromDecoderStall` gates on `hasLoaded`, which is the discriminator that holds.
+      recoverFromDecoderStall(`fell back ${fellBackBy.toFixed(1)}s`)
+    }
+
+    // #endregion hardware decoder stall recovery
 
     // #region seek bar markers
 
@@ -2766,6 +3239,7 @@ export default defineComponent({
       video.value.pause()
     }
     let updateBufferInterval = null
+    let decoderStallInterval = null
 
     onMounted(async () => {
       const videoElement = video.value
@@ -2783,6 +3257,17 @@ export default defineComponent({
         videoElement.addEventListener('timeupdate', () => {
           updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_PLAYING, Math.floor(videoElement.currentTime * 1000))
         })
+        videoElement.addEventListener('seeking', () => {
+          stallSeekPending = true
+        })
+        videoElement.addEventListener('seeked', () => {
+          stallSeekPending = false
+          stallLastObserved = videoElement.currentTime
+        })
+        videoElement.addEventListener('timeupdate', handleDecoderStallTick)
+        // Polled, not event-driven: a wedged element fires no `timeupdate`, because the clock
+        // it would report has stopped. See the hardware decoder stall region.
+        decoderStallInterval = setInterval(pollDecoderStall, STALL_POLL_MS)
         updateBufferInterval = setInterval(() => {
           if (videoElement.buffered.length === 0) {
             updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_BUFFERING, Math.floor(videoElement.currentTime * 1000))
@@ -2894,6 +3379,13 @@ export default defineComponent({
 
       player.addEventListener('loaded', handleLoaded)
 
+      if (process.env.IS_ANDROID) {
+        // Track what is on screen as it changes: when the decoder dies the player may already be
+        // reloading, and a reloading player cannot tell us which codec it was.
+        player.addEventListener('adaptation', refreshStallActiveCodec)
+        player.addEventListener('variantchanged', refreshStallActiveCodec)
+      }
+
       if (props.format !== 'legacy') {
         player.addEventListener('streaming', () => {
           if (props.format === 'dash') {
@@ -3003,6 +3495,17 @@ export default defineComponent({
     async function handleLoaded() {
       hasLoaded.value = true
       emit('loaded')
+
+      if (process.env.IS_ANDROID) {
+        // A load moves the position without a seek, so re-baseline before the watchdog reads the
+        // jump as a decoder rewind. Nothing is switched here: the codec this video has to avoid
+        // went into the configuration BEFORE this load, which is the whole point.
+        stallLastObserved = video.value?.currentTime ?? 0
+        stallLastAdvanceAt = performance.now()
+        stallFrozenHandled = false
+        refreshStallActiveCodec()
+        resumeAfterDecoderRebuild()
+      }
 
       // ideally we would set this in the `streaming` event handler, but for HLS this is only set to true after the loaded event fires.
       isLive.value = player.isLive()
@@ -3322,6 +3825,7 @@ export default defineComponent({
       window.removeEventListener('media-play', mediaPlay)
       window.removeEventListener('media-pause', mediaPause)
       clearInterval(updateBufferInterval)
+      clearInterval(decoderStallInterval)
     })
 
     // #endregion tear down

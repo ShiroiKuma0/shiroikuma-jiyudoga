@@ -9,6 +9,7 @@ import android.media.session.PlaybackState.STATE_PAUSED
 import android.os.Build
 import android.provider.Settings
 import android.webkit.JavascriptInterface
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.KeepAliveService
@@ -695,6 +696,40 @@ class FreeTubeJavaScriptInterface(
     context.startActivity(
       Intent(Intent.ACTION_VIEW, url.toUri())
     )
+  }
+
+  /**
+   * Hands a text file to the system share sheet. Written into the one cache directory
+   * `file_paths.xml` exposes, so the receiving app is granted that URI and nothing beside it.
+   * The console log is otherwise trapped on the device: it never reaches logcat, and copying it
+   * through the clipboard loses everything past the clipboard's size limit.
+   * @return an empty string on success, the failure reason otherwise
+   */
+  @JavascriptInterface
+  fun shareFile(fileName: String, mimeType: String, content: String): String {
+    return try {
+      val directory = File(context.cacheDir, "shared")
+      directory.mkdirs()
+
+      // Same name overwrites rather than accumulating: these are transient handover copies,
+      // and the cache is not where a kept file belongs.
+      val file = File(directory, fileName)
+      file.writeText(content)
+
+      val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+
+      val intent = Intent(Intent.ACTION_SEND).apply {
+        type = mimeType
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, fileName)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+      }
+
+      context.startActivity(Intent.createChooser(intent, null))
+      ""
+    } catch (exception: Exception) {
+      exception.message ?: "share failed"
+    }
   }
 
   @JavascriptInterface

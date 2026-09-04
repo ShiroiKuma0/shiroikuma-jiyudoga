@@ -1212,3 +1212,13 @@ SKUI:
   Only ttf and otf fonts are supported: ttf と otf のフォントのみ対応しています
   Sync:
     Label: 同期
+  Player:
+    Decoder recovery: この端末のデコーダーが再生できないため {codec} に切り替えました
+Log Viewer:
+  Console Log: コンソールログ
+  Save all: 全部保存
+  Share all: 全部共有
+  Log is empty: ログはまだ空です
+  Log saved: コンソールログを保存しました
+  Log save failed: ログを保存できませんでした
+  Log share failed: ログを共有できませんでした

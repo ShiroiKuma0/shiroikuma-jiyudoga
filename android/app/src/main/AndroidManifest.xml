@@ -126,6 +126,19 @@
 
     </activity>
 
+
+    <!-- Serves the console log to the system share sheet. Not exported: the receiving app is
+         granted the single URI the share intent carries, for as long as it holds it. -->
+    <provider
+      android:name="androidx.core.content.FileProvider"
+      android:authorities="${applicationId}.fileprovider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+    </provider>
+
   </application>
 
 </manifest>

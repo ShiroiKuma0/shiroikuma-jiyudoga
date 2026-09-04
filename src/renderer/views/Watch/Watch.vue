@@ -47,7 +47,7 @@
           class="videoPlayer"
           @error="handlePlayerError"
           @loaded="handleVideoLoaded"
-          @timeupdate="updateCurrentChapter"
+          @timeupdate="onPlayerTimeUpdate"
           @ended="handleVideoEnded"
           @toggle-theatre-mode="useTheatreMode = !useTheatreMode"
           @toggle-autoplay="toggleAutoplay"

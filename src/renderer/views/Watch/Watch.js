@@ -124,6 +124,8 @@ export default defineComponent({
       upcomingTimeLeft: null,
       /** @type {'dash' | 'audio' | 'legacy'} */
       activeFormat: 'legacy',
+      /** Last position the player reported while it was healthy. See `onPlayerTimeUpdate`. */
+      lastKnownPlaybackPosition: 0,
       thumbnail: '',
       videoId: '',
       videoTitle: '',
@@ -1349,6 +1351,23 @@ export default defineComponent({
     },
 
     /**
+     * `getWatchedProgress` reads the position through `hasLoaded`, and reports 0 the moment that
+     * goes false — which is precisely the state the player is in when a SABR reload is requested,
+     * since it is falling over that provokes the request. With no timestamp to carry across,
+     * `startTimeSeconds` falls back to the stored watch progress and the video resumes wherever
+     * it was last left, which can be minutes from where it was actually playing. Remember the
+     * live position while it is still readable, so the reload has something honest to use.
+     * @param {number} currentSeconds
+     */
+    onPlayerTimeUpdate: function (currentSeconds) {
+      if (currentSeconds > 0) {
+        this.lastKnownPlaybackPosition = currentSeconds
+      }
+
+      this.updateCurrentChapter(currentSeconds)
+    },
+
+    /**
      * @param {number} currentSeconds
      */
     updateCurrentChapter: function (currentSeconds) {
@@ -2325,7 +2344,10 @@ export default defineComponent({
     async onPlayerReloadRequested(message = 'Reloading player according to SABR request') {
       showToast(message)
 
-      const timestamp = this.getTimestamp()
+      // Falls back to the last position seen while the player was healthy: `getTimestamp` goes
+      // to 0 as soon as `hasLoaded` does, and that is the usual state when this fires.
+      const timestamp = this.getTimestamp() || Math.floor(this.lastKnownPlaybackPosition)
+
       if (timestamp > 0) {
         // Reload at the middle should restart at current timestamp
         try {

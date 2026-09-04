@@ -63,6 +63,19 @@
               @click="copyAll"
             />
             <FtButton
+              :label="t('Log Viewer.Save all')"
+              :text-color="null"
+              :background-color="null"
+              @click="saveAll"
+            />
+            <FtButton
+              v-if="usingAndroid"
+              :label="t('Log Viewer.Share all')"
+              :text-color="null"
+              :background-color="null"
+              @click="shareAll"
+            />
+            <FtButton
               :label="t('Close')"
               :text-color="null"
               :background-color="null"
@@ -85,7 +98,9 @@ import FtButton from '../FtButton/FtButton.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { isColourDark } from '../../helpers/android/utils'
 import { getConsoleLogs } from '../../helpers/android/system'
-import { copyToClipboard, showToast } from '../../helpers/utils'
+import { copyToClipboard, showToast, writeFileWithPicker } from '../../helpers/utils'
+import { requestSaveDialog } from '../../helpers/android/dialogs'
+import { writeFile } from '../../helpers/android/storage'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -216,6 +231,89 @@ function copySelected() {
 
 function copyAll() {
   copyLogs(logsReversed.value, 'All')
+}
+
+/**
+ * Everything the app still holds, not merely the `logLimit` entries this viewer kept for
+ * display — the point of writing it out is to keep what scrolling has already dropped.
+ * @returns {Promise<string>} oldest first, so the file reads in the order things happened
+ */
+async function getFullLogText() {
+  let entries
+
+  if (usingAndroid) {
+    entries = getConsoleLogs().map(decorateLog)
+  } else if (process.env.IS_ELECTRON) {
+    entries = (await window.ftElectron.getRendererLogs()).map(decorateLog)
+  } else {
+    entries = logs.value
+  }
+
+  return entries.map(formatLog).join('\n\n')
+}
+
+/** Stamped so repeat saves never collide, and sort in the order they were taken. */
+function logFileName() {
+  const now = new Date()
+  const pad = (value) => String(value).padStart(2, '0')
+  const stamp =
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_` +
+    `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
+
+  return `jiyudoga-console-log_${stamp}.txt`
+}
+
+async function saveAll() {
+  const text = await getFullLogText()
+
+  if (text.length === 0) {
+    showToast(t('Log Viewer.Log is empty'))
+    return
+  }
+
+  try {
+    if (usingAndroid) {
+      // Deliberately not `writeFileWithPicker`: it asks SAF for application/octet-stream, and
+      // SAF rewrites a new file's extension from the MIME type it was created with — which
+      // would land this .txt as a binary blob no reader opens by default.
+      const response = await requestSaveDialog(logFileName(), 'text/plain')
+
+      if (response.canceled) {
+        return
+      }
+
+      await writeFile(response.uri, text)
+    } else if (!await writeFileWithPicker(
+      logFileName(),
+      text,
+      t('Log Viewer.Console Log'),
+      'text/plain',
+      '.txt',
+      'console-log',
+      'downloads'
+    )) {
+      return
+    }
+
+    showToast(t('Log Viewer.Log saved'))
+  } catch (error) {
+    showToast(`${t('Log Viewer.Log save failed')}: ${error}`)
+  }
+}
+
+async function shareAll() {
+  const text = await getFullLogText()
+
+  if (text.length === 0) {
+    showToast(t('Log Viewer.Log is empty'))
+    return
+  }
+
+  const failure = android.shareFile(logFileName(), 'text/plain', text)
+
+  if (failure) {
+    showToast(`${t('Log Viewer.Log share failed')}: ${failure}`)
+  }
 }
 
 function hideLogViewer() {

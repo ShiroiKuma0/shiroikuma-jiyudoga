@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one directory `shareFile` writes into. A share hands another app a read grant, so it
+     covers exactly the file being handed over and nothing else in the app's storage. -->
+<paths>
+  <cache-path
+    name="shared"
+    path="shared/" />
+</paths>
