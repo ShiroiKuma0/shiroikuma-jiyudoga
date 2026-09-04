@@ -27,7 +27,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+015`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+016`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -207,9 +207,15 @@ Export / Import sits at the top of that page, in the Kōjiki flow: pick a backup
 tick what you want, and the **entire** app — every setting, sliced into ten logical groups,
 plus profiles with their subscriptions, stars and Similar tuning, playlists, watch history and search
 history — lands in a single timestamped `.zip`. Import merges it back and offers a restart.
-The same export runs **headlessly**: sister apps can fire a token-gated intent at it, and
-自由作業盤 backs up every app on the phone in one run, each reporting live counts and the
-path and size it wrote. The export core is native, so it works with no window open at all.
+The same export runs **headlessly**: sister apps can drive it directly, and 自由作業盤 backs
+up every app on the phone in one run, each reporting live counts and the path and size it
+wrote. The export core is native, so it works with no window open at all. There is also a
+**data door** — a provider 応用管理 can call to stream this app's state straight into its
+backup, and to put it back on a phone that has been wiped. It is open by default, because a
+pasted secret cannot survive the wipe it exists to recover from; what guards it instead is
+the caller's identity, checked by exact package name, by the uid the kernel reports, and
+against a pinned signing certificate. A token can still be required — one switch — for
+anyone who would rather have one.
 Every item states whether it starts ticked rather than leaving the picker to guess, and a
 中止 is a **real** cancel — the run unwinds at the next entry boundary and the half-written
 archive is deleted, so a stopped backup leaves the folder exactly as it found it.

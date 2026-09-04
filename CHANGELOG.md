@@ -15,6 +15,64 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+016` — 2026-09-04
+
+Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
+upstream moved since `+015`, so both pins stand and `FORK_VERSION` stays `0.25.3`. **Android-side
+work only**: nothing under the desktop half changed, but all three artifacts are published as
+usual, because one build produces the set and a release here has never carried a subset.
+
+### The automation door can now restore a wiped phone
+
+- **The gate opens by default, and the token became optional.** `automation_enabled` now defaults
+  ON and a new `automation_require_token` defaults OFF, both behind one `AutomationAuth.refuse()`.
+  The old 48-character secret was pasted by hand from this app's settings into the caller's — and
+  a pasted secret cannot survive a wipe, which is precisely the case 応用管理 exists to recover
+  from. A gate that only works once the phone is already set up is no gate for setting the phone
+  up. **A token sent to an app that does not require one is ignored, never refused**, because
+  tokens outlive the settings they were pasted for.
+- **A data door, guarded by who is calling rather than by a shared secret.** A `ContentProvider`
+  at `shiroikuma.jiyudoga.automation` answering `describe` / `export` / `import` / `cancel`. A
+  broadcast cannot tell you who sent it — that is what the secret was compensating for — so the
+  provider takes the caller's identity from the framework and checks three things: an **exact**
+  package name (never a `shiroikuma.*` prefix: any sideloaded app can call itself `shiroikuma.evil`,
+  and since the caller supplies the descriptor we write into, a prefix check would be strictly
+  weaker than the token it replaced), the uid the kernel reports, and a **pinned signing
+  certificate**. `import` exists only here — the older broadcast receiver is exported with no
+  permission, so an import there would let any app on the phone wipe this one's history and
+  profiles.
+- **The payload travels as a file descriptor the caller opens**, never a path. 応用管理 renames its
+  backup into place on commit and encrypts and checksums per file it knows about, so a file dropped
+  into that directory would be renamed out from under it, would sit in plaintext inside an
+  encrypted backup, and would be unverified rather than verified-and-failing.
+- **Progress and cancellation reach the new door too**, with the job id as the correlation id in
+  both `job_id` and `reply_id`, a 500 ms throttle and a 25-second heartbeat — an app silent for two
+  minutes is presumed dead and its slot failed. A cancel unwinds the same write loop the broadcast
+  door already used.
+
+### Two faults found in review, both live
+
+- **A retry with a stale job id would have killed the app mid-backup.** Once the provider calls
+  `startForegroundService`, the platform requires a matching `startForeground` whatever happens
+  next — so giving up early when the job id names nothing, which is the obvious shape and was the
+  shape shipped by the reference implementation, terminates the very app being backed up. Going
+  foreground is now the first thing the service does, before any early return, with every extra
+  read defensively; a stale id stops silently, since a reply would carry the id of a run already
+  over.
+- **The gate could fail open.** All four preference writes used `apply()`, which is asynchronous.
+  That was survivable while the gate defaulted to CLOSED — a lost write left automation off, the
+  safe direction. With v2 defaulting it OPEN, a lost write of `false` falls back to ON: the switch
+  reads off and the door stands open. All four now `commit()`.
+
+### Also
+
+- `<queries>` names **both** callers. Without the entry a reply's `setPackage` fails **silently**
+  on Android 11+ — the export runs, writes correctly, and is never heard of.
+- Capability discovery through three integer `<meta-data>` values, readable without waking the app,
+  because 白い熊 freezes apps aggressively and a frozen app cannot be asked anything.
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+015` — 2026-09-04
 
 Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12) — **neither
