@@ -1407,6 +1407,11 @@ SKUI:
     Automation export: Automation export
     Automation export description: >-
       Lets sister-app tasks trigger this app's export through the token-gated intent.
+    Require token: Use authorization token?
+    Require token description: >-
+      Off means any sister app may drive this app's automation. On means a caller must also
+      present the token below. Either way the data door checks the caller's identity and
+      signature.
     Automation token: Automation token
     All files access needed: >-
       Automation is on, but this app cannot write outside its own backup folder — grant

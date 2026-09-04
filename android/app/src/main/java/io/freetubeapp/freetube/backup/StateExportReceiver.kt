@@ -67,12 +67,11 @@ class StateExportReceiver : BroadcastReceiver() {
       }
     }
 
-    if (!AutomationAuth.isEnabled(app)) {
-      if (isCancel) finishQuietly() else reply("ERROR:automation disabled")
-      return
-    }
-    if (!AutomationAuth.matches(app, intent.getStringExtra("token"))) {
-      if (isCancel) finishQuietly() else reply("ERROR:bad token")
+    // ONE gate for both doors (contract v2 §2) — two checks written out at each entry point is
+    // how "disabled" and "bad token" drift apart. A token sent to an app that does not require
+    // one is ignored here, never refused.
+    AutomationAuth.refuse(app, intent.getStringExtra("token"))?.let { refusal ->
+      if (isCancel) finishQuietly() else reply(refusal)
       return
     }
 

@@ -6,6 +6,10 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+  <!-- The automation data door runs its export/import in a `specialUse` foreground service. At
+       targetSdk 34 the foregroundServiceType alone is not enough: without this the service throws
+       at startForeground. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
   <!-- Optional: lets the 保存復元 automation contract honour an absolute `path` extra
        (e.g. the shared 「[979] バックアップ」 folder). Without the grant the export falls
@@ -18,6 +22,10 @@
   <queries>
     <package android:name="shiroikuma.jisho" />
     <package android:name="shiroikuma.jiyusagyoban" />
+    <!-- 応用管理 drives the contract v2 restore. BOTH callers must be named: without the entry a
+         reply broadcast's setPackage fails SILENTLY on Android 11+ — the export runs, writes
+         correctly, and is never heard of. -->
+    <package android:name="shiroikuma.oyokanri" />
   </queries>
 
   <supports-screens
@@ -126,6 +134,32 @@
 
     </activity>
 
+
+    <!-- Contract v2 §2a: the data door. Exported with no permission, on purpose — a custom
+         permission would have to be `normal` (any app may hold it) or `signature` (impossible:
+         every app in this family has its own keystore), and neither buys anything the caller
+         check does not. AutomationCallers verifies the caller by exact package name, uid, and a
+         pinned signing certificate before anything else happens. -->
+    <provider
+      android:name=".automation.AutomationProvider"
+      android:authorities="${applicationId}.automation"
+      android:exported="true" />
+
+    <service
+      android:name=".automation.AutomationDataService"
+      android:exported="false"
+      android:foregroundServiceType="specialUse">
+      <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="Automation data export/import" />
+    </service>
+
+    <!-- Capability discovery. Read with MATCH_UNINSTALLED_PACKAGES | MATCH_DISABLED_COMPONENTS,
+         because a frozen app cannot be asked anything and 白い熊 freezes aggressively. An app
+         without these is simply not offered for data backup — that is the opt-out. -->
+    <meta-data android:name="shiroikuma.automation.contract" android:value="2" />
+    <meta-data android:name="shiroikuma.automation.format" android:value="1" />
+    <meta-data android:name="shiroikuma.automation.min_format" android:value="1" />
 
     <!-- Serves the console log to the system share sheet. Not exported: the receiving app is
          granted the single URI the share intent carries, for as long as it holds it. -->

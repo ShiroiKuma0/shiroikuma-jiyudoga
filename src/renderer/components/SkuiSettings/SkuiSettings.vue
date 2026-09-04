@@ -43,7 +43,22 @@
             @change="updateAutomationEnabled($event.target.checked)"
           >
         </label>
-        <div class="skuiEntryRow skuiIndent1">
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Require token') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Backup.Require token description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="automationRequiresToken"
+            @change="updateAutomationRequiresToken($event.target.checked)"
+          >
+        </label>
+        <div
+          v-if="automationRequiresToken"
+          class="skuiEntryRow skuiIndent1"
+        >
           <button
             class="skuiEntryText"
             type="button"
@@ -655,6 +670,11 @@ const panelOpen = ref(false)
 const backupDirectoryName = ref(null)
 const automationEnabled = ref(false)
 const automationToken = ref('')
+/**
+ * Contract v2: off by default. The token row is hidden while this is off — a 48-character secret
+ * sitting under a switch that ignores it invites 白い熊 to paste it somewhere it will do nothing.
+ */
+const automationRequiresToken = ref(false)
 
 // Queried on opening the page, and again whenever the panel writes something, so the
 // folder row and the panel's "last backup" line never show a stale answer.
@@ -665,6 +685,7 @@ function refreshBackupState() {
   backupDirectoryName.value = directory.tree ? directory.name : null
   automationEnabled.value = android.isAutomationEnabled()
   automationToken.value = android.getAutomationToken()
+  automationRequiresToken.value = android.automationRequiresToken()
 }
 
 onMounted(refreshBackupState)
@@ -964,6 +985,14 @@ const abbreviatedToken = computed(() => {
 function updateAutomationEnabled(enabled) {
   android.setAutomationEnabled(enabled)
   automationEnabled.value = enabled
+}
+
+/**
+ * @param {boolean} required
+ */
+function updateAutomationRequiresToken(required) {
+  android.setAutomationRequiresToken(required)
+  automationRequiresToken.value = required
 }
 
 function copyAutomationToken() {

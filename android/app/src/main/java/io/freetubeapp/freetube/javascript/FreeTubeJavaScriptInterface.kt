@@ -613,6 +613,13 @@ class FreeTubeJavaScriptInterface(
   fun isAutomationEnabled(): Boolean = AutomationAuth.isEnabled(context)
 
   @JavascriptInterface
+  fun automationRequiresToken(): Boolean = AutomationAuth.requiresToken(context)
+
+  @JavascriptInterface
+  fun setAutomationRequiresToken(required: Boolean) =
+    AutomationAuth.setRequiresToken(context, required)
+
+  @JavascriptInterface
   fun setAutomationEnabled(enabled: Boolean) = AutomationAuth.setEnabled(context, enabled)
 
   @JavascriptInterface
