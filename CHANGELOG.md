@@ -15,6 +15,61 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+017` — 2026-09-05
+
+Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12). An
+**upstream-sync release**: sixteen new FreeTube commits, no fork work of our own. The merge was
+textually clean end to end — no conflict, and nothing in our layer needed adapting — so what
+follows is upstream's news, plus what it cost us to verify. `FORK_VERSION` stays `0.25.3` (their
+`package.json` is unchanged and no new release tag landed in the range), so the counter simply
+runs on to `+017`.
+
+### From upstream FreeTube
+
+- **Stations are recognised and rendered** (#9620). YouTube's auto-generated station lockups used
+  to fall through the parser and vanish; `parseLockupView` now accepts `content_type: 'STATION'`,
+  finds the badge under `primary_thumbnail.overlays` when it is not at the top level, and recovers
+  the author from the avatar-stack text when the usual metadata row is empty. A station tile shows a
+  broadcast-tower glyph and the word "Station" where a duration would be, drops the upload time and
+  the view count in favour of a watching count, and is admitted to the watch page's Up Next feed.
+  They appear on channel home pages, in search results and in recommendations.
+- **Buttons that were unlabelled now say what they do** (#9699). Labels for the channel-details,
+  profile-manager, input and input-tags buttons, an `aria-label` and tooltip on the search toggle,
+  and a label on the search field's action button. `FtIconButton`'s `title` prop is now
+  **`required`** rather than defaulting to an empty string — a small API tightening with teeth,
+  since a call site that forgot one now warns at runtime.
+- **Dependencies.** `vue` 3.5.41 → 3.5.42, `vue-router` 5.2.0 → 5.3.0, `vue-i18n` 11.4.9 → 11.4.10,
+  `swiper` 14.1.0 → 14.2.0, `js-yaml` 5.4.0 → 5.4.1, `terser` 5.50.0 → 5.51.2, `lefthook` 2.1.10 →
+  2.1.12, and the webpack group — `webpack` 5.109.2 → 5.110.2, `webpack-cli` 7.2.2 → 7.2.3,
+  `css-loader` 7.1.4 → 7.1.5, `sass-loader` 17.0.0 → 17.0.1. Both bundles rebuild on the new
+  webpack, the android layer's `externals` mapping and `IS_ANDROID` pruning included.
+- **Translations.** Weblate: Azerbaijani (twice) and Romanian.
+
+### What it cost our layer
+
+- **Nothing was conflicted, and nothing was adapted.** The stations work lands in three files we
+  patch heavily — `FtListVideo.vue` (original titles via oEmbed, the gold star badge),
+  `helpers/api/local.js` (the Similar tab's `getLocalVideoRecommendations`) and `Watch.js` — and the
+  labels work in two more, `TopNav.vue` (our version string and the Android collapsed search) and
+  `FtProfileSelector.vue` (our row padding). Every one merged clean, and both `pnpm run pack` and
+  `pnpm run pack:android` compile with only the pre-existing asset-size warnings.
+- **The `required` title prop was checked rather than assumed.** All six of our own and patched
+  components that mount an `FtIconButton` — `SkuiGridControls.vue`, `WatchVideoInfo.vue` (star,
+  playlist, quick bookmark, watch progress, study export, external player, formats, download),
+  `FtListVideo.vue`, `FtProfileSelector.vue` and `TopNav.vue` — already pass a `:title`;
+  `SkuiSyncButton.vue` is a plain `<button>` and never touched the component. No warnings, no edits.
+- **`tower-broadcast` was already in the icon set**, registered in `main.js` for the Subscriptions
+  view, so the new station badge draws rather than leaving a gap — worth confirming, since the
+  upstream commit adds the glyph without adding the icon.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+017_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+017_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+017_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-02.10-51.g0997260b+2026-08-12.20-35.gc42fee2c+016` — 2026-09-04
 
 Built on FreeTube `0997260b` (2026-09-02) + FreeTubeAndroid `c42fee2c` (2026-08-12) — neither
