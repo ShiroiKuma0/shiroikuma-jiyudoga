@@ -15,6 +15,48 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+018` — 2026-09-10
+
+Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the same two
+upstream commits as `+017`; neither upstream was synced, so both pins stand still and only the
+counter moves. A **single-line fix release**: the station support that arrived with `+017` turned
+out to crash the watch page, and this is the guard that stops it.
+
+### Fixes
+
+- **The watch page no longer dies with `Cannot read properties of null (reading 'text')`.**
+  Upstream's stations work (#9620, `0f20fef83`) added a fallback that recovers a lockup's author
+  from its avatar stack when the usual metadata row yields nothing —
+  `metadata_rows[0].metadata_parts?.[0].avatar_stack.text?.text` — but `avatar_stack` is
+  `Parser.parseItem(part.avatarStack, AvatarStackView)`, which youtubei.js sets to **`null`** for
+  every lockup that is not a station. The last hop therefore threw a `TypeError` on ordinary
+  videos, and the guard is simply the optional chaining the rest of that function already uses.
+  Stations keep their author; everything else falls back to an undefined one, exactly as before
+  the merge.
+- **What actually triggered it, since the fallback was supposed to be station-only.** The author is
+  `null` far more often than that comment assumes: `VIEWS_OR_WATCHING_REGEX`
+  (`/views?|watching|waiting/i`) is **unanchored**, so it matches inside a channel *name* and any
+  such name is mistaken for a view-count line. The crash reproduces on any recommendation from a
+  channel called `…Review`, `Interview…`, or — the one that caught it here — the sumo channel
+  `ラグ相撲ch【sumo watching】`. That misclassification is upstream's and is left alone: it now
+  costs nothing worse than a blank author, and anchoring the regex on a leading digit would
+  misread YouTube's real `No views` string as a channel name.
+- **Scope.** `parseLockupView` also backs search results and playlist listings, so a single bad
+  tile took those down too, not just the watch page — and identically on Android, since it is the
+  same JS. On a profile with `backendFallback` **off** (as ours is) the raw `TypeError` is what the
+  watch page renders instead of the video; with it on, the local API silently falls back to
+  Invidious and the failure only shows up as a slower, degraded load.
+
+### Notes
+
+- Upstream has not fixed this: as of this build their `development` carries one newer commit on
+  `helpers/api/local.js` (`e2dfc55f4`, an unrelated null-id guard) and the null dereference is
+  still there.
+- Nothing else changed — no upstream sync, no fork work. All three artifacts are rebuilt at `+018`
+  so the deb, the Windows zip and the APK stay in lockstep.
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+017` — 2026-09-05
 
 Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12). An
