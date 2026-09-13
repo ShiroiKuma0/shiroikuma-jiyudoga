@@ -15,6 +15,103 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-13.14-42.gdddbe8cd+2026-09-13.13-31.gaf0ab865+001` — 2026-09-13
+
+Built on FreeTube `dddbe8cd` (2026-09-13) + FreeTubeAndroid `af0ab865` (2026-09-13). A
+**dual-upstream sync release**: sixty-nine new FreeTube commits, a FreeTubeAndroid `development`
+that moved only by merging FreeTube into itself, and a new FreeTubeAndroid release tag,
+`0.25.3.1`, that changes our version. No fork work of our own; the fork's first `0.25.3.1` build.
+
+### Version
+
+- **`FORK_VERSION` is `0.25.3.1` again, and the counter restarts at `+001`.** FreeTubeAndroid cut
+  `0.25.3.1` from its `release` branch on 2026-09-13 — their packaging respin of the FreeTube
+  `0.25.3` base we already sit on. Its Android content is the integrity-token / bgwebview refactor
+  (`d279666e6`), which `custom` has carried since the `1ab6541d6` merge of 2026-08-12, so nothing
+  of theirs is new in this build; what changes is the label. `FORK_VERSION` is the higher of the two
+  upstreams' versions, and `0.25.3.1 > 0.25.3` for dpkg and for the versionCode formula alike —
+  `25031001` against `+020`'s `25030021` — so the counter reset is a rise, not the phantom downgrade
+  the respin component exists to prevent. The in-app checker strips the pins and orders by
+  `FORK_VERSION` then counter, so it sees the same rise.
+- **Both pins moved.** FreeTube's to `dddbe8cd` (their development tip, the drag-and-drop commit);
+  FreeTubeAndroid's to `af0ab865`, their development tip, which is two merge commits of FreeTube's
+  development and nothing of their own — the pin records that we contain it, not that anything
+  changed. We keep following their `development`; `release` is never merged.
+
+### From upstream FreeTube
+
+- **Drag-and-drop reordering in playlists is easier to use** (#9591). Dragging near the top or
+  bottom edge scrolls three times faster than before, the auto-scroll zone is sized from the window
+  height rather than a fixed band, the grab bar is restyled with its icon centred, and a grid tile
+  that carries a grab bar drops its top padding so the spacing above and below the thumbnail reads
+  the same.
+- **"Disable Hardware Acceleration" in Experimental Settings** (#9571), desktop only. Toggling it
+  prompts for a restart, writes a marker file `experiment-disable-hardware-acceleration` into the
+  user-data directory, and the next launch passes `--disable-gpu`. The Replace-HTTP-Cache prompt was
+  generalised to serve both toggles and to revert *both* to their running state on Cancel.
+  Everything is behind `process.env.IS_ELECTRON`, so the WebView never sees it.
+- **Playlists say when unavailable videos are hidden** (#9608): a "1 unavailable video is hidden" /
+  "N unavailable videos are hidden" notice at the top and at the end of the list, so a playlist that
+  looks shorter than its count is explained rather than silently trimmed.
+- **Comments that are turned off say so** (#9752) — the comment section shows "Comments are turned
+  off" instead of the generic empty state — and **"Hide Comments" now applies to community posts**
+  as well as videos (#9725).
+- **`SabrSchemePlugin` is more defensive** (#9753): the stream-protection branch bails out when the
+  status is absent, and a SABR redirect without a URL is ignored instead of followed. Our own
+  redirect-loop guard and 401 diagnostics in that file are untouched and sit beside it.
+- **Fixes.** Tooltips line up with the dropdown arrow they belong to (#9714, `FtSelect`); opening an
+  invalid playlist now updates the window title (#9765); a channel home page with an unavailable clip
+  no longer trips on a grid video with no id (#9762); and the station author fallback is
+  optional-chained end to end (#9769) — **this is the very line our `+018` shipped as a fork fix**,
+  byte-identical, so the merge collapsed the two and our layer no longer carries it.
+- **A `v-if` hoisting refactor** across a dozen components (#9768) — `v-if` chains rewritten as
+  `v-if` / `v-else-if` / `v-else` under a hoisted parent: `SubscriptionsTabUi`, `App`,
+  `CommentSection`, `FtCommunityPost`, `FtShareButton`, `FtPlaylistAddVideoPrompt`, `PlaylistInfo`,
+  `ExternalPlayerSettings`, `WatchVideoPlaylist`, `History`, `UserPlaylists`, `Post`. No behaviour
+  change; see below for what it touched of ours.
+- **Locales.** Azerbaijani is now an enabled language (#9757) and Thai is added. Weblate updates for
+  Azerbaijani (many), Icelandic, French, Japanese, Turkish, Slovak, Czech, German, Hungarian, Italian,
+  Breton, Chinese (Simplified), Estonian, Portuguese (Brazil), Polish and Esperanto.
+- **Dependencies.** `dompurify` 3.4.14 → 3.4.15, `marked` 18.0.11 → 18.0.12, `vue-router` 5.3.0 →
+  5.3.1, **`electron-builder` 26.15.7 → 26.16.1** (the deb and the Windows zip build on it — both
+  came out the usual size and shape), `eslint` 10.9.1 → 10.10.0, `eslint-plugin-jsdoc` 64.3.3 →
+  64.3.6, `eslint-plugin-vue` 10.10.0 → 10.11.0, `globals` 17.11.0 → 17.12.0, `sass` 1.103.1 →
+  1.104.0, `webpack` 5.110.2 → 5.110.3. Electron itself stays at 43.4.0. A leftover of their removed
+  workflow was cleaned out of CI.
+
+### What it cost our layer
+
+- **Four conflicts on the FreeTube merge, none in code.** `package.json` and `pnpm-lock.yaml`
+  collided where the `dompurify` / `marked` bumps sit between our `core-js` and patched `mediabunny`
+  entries — the bumps were taken and our entries kept, along with the MarmadileManteater `nedb` git
+  dependency. The other two were `eo.yaml` and `is.yaml`: Weblate had reworded exactly the lines our
+  **"FreeTube → 白い熊 自由動画" rebrand** touches. Upstream's new text was taken and the rebrand
+  re-applied by script across **all** locale files — translation *values* only, keys untouched, the
+  invariant `320bcb898` set on 2026-07-21 — which also caught nineteen mentions in `az.yaml` and one
+  in `br.yaml` that earlier merges had let through unbranded. All 63 locale files still parse.
+- **Nothing was adapted.** The `v-if` refactor rewrote `SubscriptionsTabUi.vue`'s template while our
+  feed-filter caps live in its `<script setup>`; `App.vue` lost a redundant inner
+  `v-if="showUpdatesBanner"` that our copy also had; the new IPC channels landed beside our
+  study-folder, Yosuga and sync channels in `constants.js`, `preload/interface.js` and
+  `main/index.js`; `local.js`, `SabrSchemePlugin.js`, `History.vue`, `Playlist.scss` and
+  `FtPlaylistAddVideoPrompt.vue` each merged on separate hunks. Both `pnpm run pack` and
+  `pnpm run pack:android` compile with only the pre-existing asset-size warnings.
+- **The FreeTubeAndroid merge conflicted only on `README.md`** — their tree restores upstream's
+  README; the fork's own stays. No Android code moved.
+- The customization table was walked after both merges: app id, label, signing, the android stub
+  alias and `IS_ANDROID` defines, the guarded datastore require, original titles, grid zoom, theatre
+  mode, Similar and Starred tabs, study export, the Kotlin backup core, the top-bar version, the
+  update checker, device sync, the channel refresh bar and the integrity-token refactor are all in
+  place.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-13.14-42.gdddbe8cd+2026-09-13.13-31.gaf0ab865+001_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-13.14-42.gdddbe8cd+2026-09-13.13-31.gaf0ab865+001_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-13.14-42.gdddbe8cd+2026-09-13.13-31.gaf0ab865+001_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+020` — 2026-09-13
 
 Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the same two
