@@ -15,6 +15,47 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+020` — 2026-09-13
+
+Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the same two
+upstream commits as `+017` and `+018`; neither upstream was synced, so both pins stand still and
+only the counter moves. One fork feature, on the channel page. (`+019` was the same feature on the
+Videos tab alone; it was superseded on the phone before publishing and never released.)
+
+### Channel page
+
+- **A refresh bar on the Videos, Shorts and Live tabs.** A channel's lists are fetched once, when
+  the page opens, and nothing refetched them until a sort change — a channel left open never showed
+  what it had posted since. The channel page now carries the same floating bar the Subscriptions
+  and Trending pages have (`FtRefreshWidget`, fixed under the top bar's filter pills): a
+  "<tab> feed last updated: …" stamp on the left, the refresh button on the right, and the
+  **F5 / `r`** shortcut the button's tooltip advertises. It follows the current tab across
+  Videos, Shorts and Live — one button, one shortcut, refreshing whichever of the three is open —
+  and is absent from the other tabs (playlists, posts, about, …), whose lists do not grow the
+  same way. Disabled while the list is loading; the refreshed list is written into the
+  subscription feed cache exactly as the initial load is, so the Subscriptions page benefits too.
+- **Refreshing is what a sort change does, minus the sort change** — the list and its continuation
+  are cleared and the tab's own loader runs again, on either backend. Two things needed more:
+  - With the **local API**, youtubei.js hands back the page it already holds when the tab asked for
+    is the one the channel *landed* on (a channel without a home tab lands on its videos), so a
+    plain re-call refreshed such a channel to the same stale list. The refresh drops the cached
+    channel instance so the channel itself is refetched — one extra request on channels with a
+    home tab, in exchange for a refresh that refreshes on every channel.
+  - The **Shorts** tab's dates come from the channel's shorts feed, which `helpers/shortsPublished.js`
+    caches for the session; a short posted since the feed was read is not in that copy and would
+    have come back undated. A new `forgetShortsPublishedDates()` evicts the channel's entry before
+    the loader runs, so the feed is re-read and the new short gets its date.
+- Each of the three lists records its own fetch time in both the local and the Invidious path;
+  all three reset on navigation to another channel.
+
+### Notes
+
+- Files: `src/renderer/views/Channel/Channel.vue`, `src/renderer/helpers/shortsPublished.js`.
+- All three artifacts are rebuilt at `+020` so the deb, the Windows zip and the APK stay in
+  lockstep; the desktop builds carry the identical change.
+
+---
+
 ## 白い熊 自由動画 `0.25.3+2026-09-05.12-32.g0f20fef8+2026-08-12.20-35.gc42fee2c+018` — 2026-09-10
 
 Built on FreeTube `0f20fef8` (2026-09-05) + FreeTubeAndroid `c42fee2c` (2026-08-12) — the same two
