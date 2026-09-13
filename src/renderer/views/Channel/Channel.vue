@@ -251,6 +251,16 @@
         </FtAutoLoadNextPageWrapper>
       </div>
     </FtCard>
+    <!-- The same floating bar the Subscriptions and Trending pages have: each list is
+         fetched once, when the channel opens, so a channel left open needs a way to see
+         what it has posted since -->
+    <FtRefreshWidget
+      v-if="refreshableTabTitle && !isLoading && !errorMessage && (isFamilyFriendly || !showFamilyFriendlyOnly)"
+      :disable-refresh="isElementListLoading"
+      :last-refresh-timestamp="lastRefreshTimestamp"
+      :title="refreshableTabTitle"
+      @click="refreshCurrentTab"
+    />
     <FtCard
       v-if="errorMessage"
       class="card"
@@ -270,7 +280,7 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import autolinker from 'autolinker'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isNavigationFailure, NavigationFailureType, useRoute, useRouter } from 'vue-router'
 import { YTNodes } from 'youtubei.js'
@@ -284,6 +294,7 @@ import FtCard from '../../components/ft-card/ft-card.vue'
 import FtElementList from '../../components/FtElementList/FtElementList.vue'
 import FtFlexBox from '../../components/ft-flex-box/ft-flex-box.vue'
 import FtLoader from '../../components/FtLoader/FtLoader.vue'
+import FtRefreshWidget from '../../components/FtRefreshWidget/FtRefreshWidget.vue'
 import FtSelect from '../../components/FtSelect/FtSelect.vue'
 import FtButton from '../../components/FtButton/FtButton.vue'
 
@@ -295,12 +306,15 @@ import {
   showToast,
   getChannelPlaylistId,
   getIconForSortPreference,
+  getRelativeTimeFromDate,
   removeFromArrayIfExists
 } from '../../helpers/utils'
 import { isNullOrEmpty } from '../../helpers/strings'
+import { KeyboardShortcuts } from '../../../constants'
 import {
   cachedShortsPublishedDates,
   fetchShortsPublishedDates,
+  forgetShortsPublishedDates,
   withShortsPublishedDates
 } from '../../helpers/shortsPublished'
 import {
@@ -582,6 +596,7 @@ watch(route, () => {
   releaseContinuationData.value = null
   searchContinuationData.value = null
   communityContinuationData.value = null
+  listFetchedAt.value = { videos: null, shorts: null, live: null }
   showSearchBar.value = true
   showVideoSortBy.value = true
   showShortSortBy.value = true
@@ -1067,6 +1082,27 @@ const videoContinuationData = shallowRef(null)
 const showVideoSortBy = ref(true)
 const videoSortBy = ref('newest')
 
+// The tabs the refresh bar serves — the three lists a channel keeps adding to
+const REFRESHABLE_TABS = ['videos', 'shorts', 'live']
+
+// When each of those lists was last fetched — set by both API paths, shown in the bar
+/** @type {import('vue').Ref<{ videos: number | null, shorts: number | null, live: number | null }>} */
+const listFetchedAt = ref({ videos: null, shorts: null, live: null })
+
+const lastRefreshTimestamp = computed(() => {
+  return getRelativeTimeFromDate(listFetchedAt.value[currentTab.value], true)
+})
+
+// The bar's feed name — empty on every other tab, which is what hides the bar there
+const refreshableTabTitle = computed(() => {
+  switch (currentTab.value) {
+    case 'videos': return t('Global.Videos')
+    case 'shorts': return t('Global.Shorts')
+    case 'live': return t('Global.Live')
+    default: return ''
+  }
+})
+
 const filteredVideos = computed(() => {
   if (hideWatchedSubs.value) {
     return filterWatchedArray(latestVideos.value)
@@ -1148,6 +1184,8 @@ async function getChannelVideosLocal() {
       isElementListLoading.value = false
     }
 
+    listFetchedAt.value.videos = Date.now()
+
     if (isSubscribedInAnyProfile.value && latestVideos.value.length > 0 && videoSortBy.value === 'newest') {
       store.dispatch('updateSubscriptionVideosCacheByChannel', {
         channelId: id.value,
@@ -1223,6 +1261,7 @@ async function channelInvidiousVideos(sortByChanged = false) {
       latestVideos.value = latestVideos.value.concat(response.videos)
     } else {
       latestVideos.value = response.videos
+      listFetchedAt.value.videos = Date.now()
     }
     videoContinuationData.value = response.continuation || null
     isElementListLoading.value = false
@@ -1241,6 +1280,93 @@ async function channelInvidiousVideos(sortByChanged = false) {
     })
   }
 }
+
+/**
+ * Refetch the current tab's list from the network — what a sort change does, minus the
+ * sort change. Local API: youtubei.js hands back the page it already holds when the tab
+ * is the one the channel landed on (a channel without a home tab lands on its videos), so
+ * the channel itself is refetched too, or such a channel would refresh to the same list.
+ */
+function refreshCurrentTab() {
+  const tab = currentTab.value
+
+  if (!REFRESHABLE_TABS.includes(tab) || isLoading.value || isElementListLoading.value || errorMessage.value) {
+    return
+  }
+
+  const local = process.env.SUPPORTS_LOCAL_API && apiUsed === 'local'
+
+  isElementListLoading.value = true
+
+  if (local) {
+    channelInstance = null
+  }
+
+  switch (tab) {
+    case 'videos':
+      latestVideos.value = []
+      videoContinuationData.value = null
+
+      if (local) {
+        getChannelVideosLocal()
+      } else {
+        channelInvidiousVideos(true)
+      }
+      break
+    case 'shorts':
+      // the dates come from the channel's shorts feed, cached for the session — a short
+      // posted since is not in that copy
+      forgetShortsPublishedDates(id.value)
+      latestShorts.value = []
+      shortContinuationData.value = null
+
+      if (local) {
+        getChannelShortsLocal()
+      } else {
+        channelInvidiousShorts(true)
+      }
+      break
+    case 'live':
+      latestLive.value = []
+      liveContinuationData.value = null
+
+      if (local) {
+        getChannelLiveLocal()
+      } else {
+        channelInvidiousLive(true)
+      }
+      break
+  }
+}
+
+/**
+ * F5 / `r`, as on the Subscriptions and Trending pages — the refresh bar's tooltip
+ * advertises the shortcut, so it has to work here too
+ * @param {KeyboardEvent} event
+ */
+function refreshKeyboardShortcutHandler(event) {
+  if (document.activeElement.classList.contains('ft-input')) {
+    return
+  }
+  // Avoid handling events due to user holding a key (not released)
+  // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat
+  if (event.repeat) { return }
+
+  switch (event.key.toLowerCase()) {
+    case 'f5':
+    case KeyboardShortcuts.APP.SITUATIONAL.REFRESH:
+      refreshCurrentTab()
+      break
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', refreshKeyboardShortcutHandler)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', refreshKeyboardShortcutHandler)
+})
 
 const latestShorts = shallowRef([])
 const shortContinuationData = shallowRef(null)
@@ -1302,6 +1428,7 @@ async function getChannelShortsLocal() {
     latestShorts.value = withShortsPublishedDates(parsedShorts, dates)
     shortContinuationData.value = shortsTab.has_continuation ? shortsTab : null
     isElementListLoading.value = false
+    listFetchedAt.value.shorts = Date.now()
 
     if (isSubscribedInAnyProfile.value && latestShorts.value.length > 0 && shortSortBy.value === 'newest') {
       // As the shorts tab API response doesn't include the published dates,
@@ -1386,6 +1513,7 @@ async function channelInvidiousShorts(sortByChanged = false) {
       latestShorts.value = latestShorts.value.concat(shorts)
     } else {
       latestShorts.value = shorts
+      listFetchedAt.value.shorts = Date.now()
     }
     shortContinuationData.value = response.continuation || null
     isElementListLoading.value = false
@@ -1464,6 +1592,7 @@ async function getChannelLiveLocal() {
     latestLive.value = parseLocalChannelVideos(videos, id.value, channelName.value)
     liveContinuationData.value = liveTab.has_continuation ? liveTab : null
     isElementListLoading.value = false
+    listFetchedAt.value.live = Date.now()
 
     if (isSubscribedInAnyProfile.value && latestLive.value.length > 0 && liveSortBy.value === 'newest') {
       store.dispatch('updateSubscriptionLiveCacheByChannel', {
@@ -1527,6 +1656,7 @@ async function channelInvidiousLive(sortByChanged) {
       latestLive.value = latestLive.value.concat(response.videos)
     } else {
       latestLive.value = response.videos
+      listFetchedAt.value.live = Date.now()
     }
     liveContinuationData.value = response.continuation || null
     isElementListLoading.value = false

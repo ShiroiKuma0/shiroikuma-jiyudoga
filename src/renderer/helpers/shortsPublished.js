@@ -46,6 +46,16 @@ export function cachedShortsPublishedDates(channelId, sortBy) {
 }
 
 /**
+ * For a refresh of the channel's Shorts tab: a short posted since the feed was read is not
+ * in the cached map, and the refresh exists to show exactly that short — with its date.
+ * @param {string} channelId
+ */
+export function forgetShortsPublishedDates(channelId) {
+  dateCache.delete(cacheKey(channelId, 'newest'))
+  dateCache.delete(cacheKey(channelId, 'popular'))
+}
+
+/**
  * @param {string} channelId
  * @param {string} sortBy 'newest' | 'popular' | 'oldest' — 'popular' has its own feed, the
  *        others read the newest one
