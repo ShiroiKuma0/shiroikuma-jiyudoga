@@ -308,6 +308,12 @@ function runApp() {
     app.commandLine.appendSwitch('disable-http-cache')
   }
 
+  const DISABLE_HARDWARE_ACCELERATION_PATH = `${userDataPath}/experiment-disable-hardware-acceleration`
+  const disableHardwareAcceleration = existsSync(DISABLE_HARDWARE_ACCELERATION_PATH)
+  if (disableHardwareAcceleration) {
+    app.commandLine.appendSwitch('disable-gpu')
+  }
+
   const PLAYER_CACHE_PATH = `${userDataPath}/player_cache`
 
   // See: https://stackoverflow.com/questions/45570589/electron-protocol-handler-not-working-on-windows
@@ -592,7 +598,10 @@ function runApp() {
         requestHeaders['Sec-Fetch-Site'] = 'same-origin'
         requestHeaders['Sec-Fetch-Mode'] = 'same-origin'
         requestHeaders['X-Youtube-Bootstrap-Logged-In'] = 'false'
-      } else if (url.startsWith('https://www.youtube.com/watch')) {
+      } else if (
+        url.startsWith('https://www.youtube.com/watch') ||
+        (urlObj.origin === 'www.youtube.com' && urlObj.pathname === '/')
+      ) {
         delete requestHeaders.Referer
         delete requestHeaders.Origin
         requestHeaders['Sec-Fetch-Dest'] = 'document'
@@ -695,11 +704,11 @@ function runApp() {
 
           // Electron doesn't allow certain headers to be set:
           // https://www.electronjs.org/docs/latest/api/client-request#requestsetheadername-value
-          // also blacklist Origin and Referrer as we don't want to let YouTube know about them
-          const blacklistedHeaders = ['content-length', 'host', 'trailer', 'te', 'upgrade', 'cookie2', 'keep-alive', 'transfer-encoding', 'origin', 'referrer']
+          // also denylist Origin and Referrer as we don't want to let YouTube know about them
+          const denylistedHeaders = ['content-length', 'host', 'trailer', 'te', 'upgrade', 'cookie2', 'keep-alive', 'transfer-encoding', 'origin', 'referrer']
 
           for (const header of Object.keys(request.headers)) {
-            if (!blacklistedHeaders.includes(header.toLowerCase())) {
+            if (!denylistedHeaders.includes(header.toLowerCase())) {
               newRequest.setHeader(header, request.headers[header])
             }
           }
@@ -1594,6 +1603,28 @@ function runApp() {
     relaunch()
   })
 
+  ipcMain.handle(IpcChannels.GET_DISABLE_HARDWARE_ACCELERATION, (event) => {
+    if (isFreeTubeUrl(event.senderFrame.url)) {
+      return disableHardwareAcceleration
+    }
+  })
+
+  ipcMain.once(IpcChannels.TOGGLE_DISABLE_HARDWARE_ACCELERATION, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) {
+      return
+    }
+
+    if (disableHardwareAcceleration) {
+      await asyncFs.rm(DISABLE_HARDWARE_ACCELERATION_PATH)
+    } else {
+      // create an empty file
+      const handle = await asyncFs.open(DISABLE_HARDWARE_ACCELERATION_PATH, 'w')
+      await handle.close()
+    }
+
+    relaunch()
+  })
+
   function playerCachePathForKey(key) {
     // Remove path separators and period characters,
     // to prevent any files outside of the player_cache directory,
@@ -1773,6 +1804,24 @@ function runApp() {
             IpcChannels.SYNC_HISTORY,
             event,
             { event: SyncEvents.HISTORY.UPDATE_PLAYLIST, data }
+          )
+          return null
+
+        case DBActions.HISTORY.UNSET_PLAYLIST_FOR_VIDEOS:
+          await baseHandlers.history.unsetLastViewedPlaylistForVideos(data.videoIds, data.lastViewedPlaylistId)
+          syncOtherWindows(
+            IpcChannels.SYNC_HISTORY,
+            event,
+            { event: SyncEvents.HISTORY.UNSET_PLAYLIST_FOR_VIDEOS, data }
+          )
+          return null
+
+        case DBActions.HISTORY.UNSET_PLAYLISTS:
+          await baseHandlers.history.unsetLastViewedPlaylists(data)
+          syncOtherWindows(
+            IpcChannels.SYNC_HISTORY,
+            event,
+            { event: SyncEvents.HISTORY.UNSET_PLAYLISTS, data }
           )
           return null
 
