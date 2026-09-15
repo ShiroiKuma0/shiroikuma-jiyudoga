@@ -15,6 +15,91 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.18-20.g2aec8baa+2026-09-13.13-31.gaf0ab865+002` — 2026-09-15
+
+Built on FreeTube `2aec8baa` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). A
+**FreeTube-only sync release**: twenty-two new FreeTube commits — eight of substance, fourteen
+Weblate updates. FreeTubeAndroid's `development` has not moved since `+001`, so its pin stays where
+it was. No fork work of our own.
+
+### Version
+
+- **`FORK_VERSION` stays `0.25.3.1` and the counter runs on to `+002`** (versionCode `25031002`).
+  FreeTube's `package.json` still reads `0.25.3` and FreeTubeAndroid's newest tag is still
+  `0.25.3.1`, so the higher of the two is unchanged; there is no new release tag on either side.
+- **Only the FreeTube pin moved**, `dddbe8cd` → `2aec8baa`. The FreeTubeAndroid pin is byte-identical
+  to `+001`'s — which is exactly the "that upstream has not moved" signal the two pins exist to give.
+
+### From upstream FreeTube
+
+- **YouTube clip links open** (#9532, "initial support"). A `youtube.com/clip/<id>` URL — pasted
+  into the search box, passed on the command line, or arriving through the Android share intent —
+  is now recognised as its own URL type. The clip id is resolved to its video through YouTube's
+  `resolveURL` endpoint, and the clip's `ClipParams` protobuf (decoded with YouTube.js in a new
+  `helpers/api/shared.js`) yields its start and end time, title and metadata; the video then opens
+  **at the clip's start time**. The end is not yet enforced — playback simply continues past it,
+  which is why upstream calls it initial. The local API resolves it on both platforms (our Android
+  bundle compiles with `SUPPORTS_LOCAL_API` on); with Invidious preferred, the instance's `/clips`
+  endpoint is used instead, and each side falls back to the other under "Fallback to Non-Preferred
+  Backend on Failure".
+- **`youtube.com/show/VL<id>` links** (#9788) resolve to the playlist they name — a "show" is a
+  playlist under another path.
+- **Premieres are labelled "Premiere", not "Live"** (#9795): on subscription, channel and search
+  tiles the badge reads プレミア / Premiere for a video whose `is_premiere` flag is set — from the
+  local API's video objects, and from the `PREMIERE` badge in search results — under the same
+  broadcast-tower icon. New locale key `Video.Premiere`.
+- **Dates in Azerbaijani** (#9786): Chromium claims `Intl` support for `az` but ships no
+  translations, so relative times rendered as "-1 d". A new `getLocalesWithFallback()` in
+  `helpers/utils.js` sends such locales straight to `en`, and every `Intl.DateTimeFormat` /
+  `RelativeTimeFormat` call in `Watch.js`, `WatchVideoInfo.vue` and `ChannelAbout.vue` goes through
+  it, so all locales now share one fallback rule.
+- **The playlist header image is no longer stretched to 16:9** (#9805) — `object-fit: contain` on
+  `PlaylistInfo`'s thumbnail.
+- **Linux desktop-entry categories** (#9524): the `.desktop` file's `Categories=` grew from `Network`
+  to `AudioVideo;Video;Player;Feed;Network` — **this reaches our `.deb`**, whose
+  `build-fork-deb.mjs` spreads upstream's `linux` block, so on Tuxedo OS the app now files under
+  Multimedia / Video as well as Internet (verified in the built package's desktop file). The same
+  commit adds a commented-out flatpak target to `ebuilder.config.mjs` for unofficial local builds;
+  we do not use it.
+- **CI**: a workflow that optimises PNG and SVG files on push (#9719). It runs in their repository;
+  our own icons in `_icons/` are untouched.
+- **Locales.** Weblate updates for Indonesian, Slovak, Italian, Azerbaijani, Japanese, Hungarian,
+  Estonian, Turkish, Czech, Portuguese (Brazil), French and Chinese (Simplified). The Japanese
+  change is exactly the new `Premiere: プレミア` key.
+- **Dependencies.** `stylelint` 17.14.1 → 17.15.0, `postcss` 8.5.26 → 8.5.28,
+  `@double-great/stylelint-a11y` 3.5.2 → 3.5.3; `at-rule-prelude-no-invalid` now ignores `@mixin`.
+  Dev-only — nothing shipped changes.
+
+### What it cost our layer
+
+- **Two conflicts, both trivial.** `App.vue`: our `tapHighlight` computed sits exactly where
+  upstream inserted the `backendPreference` / `backendFallback` computeds its clip resolver needs —
+  both kept. `id.yaml`: Weblate reworded lines our **"FreeTube → 白い熊 自由動画" rebrand**
+  touches; upstream's text was taken and the rebrand re-applied by script (translation values
+  only, keys untouched), the script first being checked to reproduce the previous file from the
+  previous upstream one. The same sweep over the other 78 locale files found nothing to change.
+- **Nothing was adapted.** `TopNav.vue` gained the clip resolver on separate hunks from our top-bar
+  version and collapsed Android search; `FtListVideo.vue`'s new Premiere branch sits beside the
+  original-title resolution and the star badge; `local.js` took `getLocalClip` and the
+  `isPremiere` flag beside `getLocalVideoRecommendations`; `helpers/utils.js`, `Watch.js`,
+  `WatchVideoInfo.vue` and `store/modules/utils.js` each merged on separate hunks from our study
+  export, original titles, star toggle and log-viewer state. `package.json` / `pnpm-lock.yaml`
+  auto-merged with `core-js`, the pinned `mediabunny` and the MarmadileManteater `nedb` git
+  dependency intact. `pnpm run pack` and `pnpm run pack:android` both compile with only the
+  pre-existing asset-size warnings, and lefthook's stylelint / eslint pass on the merge commit.
+- The customization table was walked after the merge: app id, label, signing, the android stub
+  alias and `IS_ANDROID` defines, the guarded datastore require, original titles, grid zoom, theatre
+  mode, Similar and Starred tabs, study export, the Kotlin backup core, the top-bar version, the
+  update checker, device sync and the channel refresh bar are all in place.
+
+### Downloads
+
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-15.18-20.g2aec8baa+2026-09-13.13-31.gaf0ab865+002_arm64-v8a.apk` — Android (arm64-v8a, side-by-side install)
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-15.18-20.g2aec8baa+2026-09-13.13-31.gaf0ab865+002_amd64.deb` — GNU/Linux amd64 (Tuxedo OS / Ubuntu / Debian)
+- `shiroikuma-jiyudoga_0.25.3.1+2026-09-15.18-20.g2aec8baa+2026-09-13.13-31.gaf0ab865+002_win-x64.zip` — Windows x64 (extract, run `shiroikuma-jiyudoga.exe`)
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-13.14-42.gdddbe8cd+2026-09-13.13-31.gaf0ab865+001` — 2026-09-13
 
 Built on FreeTube `dddbe8cd` (2026-09-13) + FreeTubeAndroid `af0ab865` (2026-09-13). A
