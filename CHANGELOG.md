@@ -15,6 +15,52 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+003` — 2026-09-16
+
+Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). A
+**FreeTube-only sync release, and a small one**: two new FreeTube commits — one toolchain change
+and one Weblate update. FreeTubeAndroid's `development` has not moved since `+001`, so its pin
+stays where it was. No fork work of our own, and **no change to the app's behaviour**: apart from a
+single added German string, the shipped code is identical to `+002`. Published for the pin move and
+as a regression check on the rebuilt dependency tree.
+
+### Version
+
+- **`FORK_VERSION` stays `0.25.3.1` and the counter runs on to `+003`** (versionCode `25031003`).
+  FreeTube's `package.json` still reads `0.25.3` and FreeTubeAndroid's newest tag is still
+  `0.25.3.1`, so the higher of the two is unchanged; there is no new release tag on either side.
+- **Only the FreeTube pin moved**, `2aec8baa` → `a744ad4b`. The FreeTubeAndroid pin is byte-identical
+  to `+002`'s — the "that upstream has not moved" signal the two pins exist to give.
+
+### From upstream FreeTube
+
+- **pnpm 11, with `dedupePeers` enabled** (#9766). Upstream's CI moves `pnpm/action-setup` from
+  pnpm 10 to 11 across all four workflows, and `pnpm-workspace.yaml` uncomments `dedupePeers: true`
+  — it had been held back only until GitHub's dependabot shipped pnpm >= 10.33.0. The lockfile is
+  rewritten to the deduplicated peer-key form throughout (106 insertions, 105 deletions), collapsing
+  keys such as `vue@3.5.42(typescript@6.0.3)` to `vue@3.5.42` and
+  `eslint@10.10.0(jiti@2.7.0)(supports-color@10.2.2)` to `eslint@10.10.0`. **Not a single package
+  version changes** — this is purely how peers are keyed and hoisted. The `ci` script
+  (`pnpm install --frozen-lockfile`) is deleted from `package.json`, the workflows now calling that
+  command directly.
+- **German translation** brought back to 100 per cent (1003 of 1003 strings) by one added string in
+  `static/locales/de-DE.yaml`.
+
+### What it meant for our layer
+
+- **`package.json` was the only merge conflict**, and a mechanical one: the deleted `ci` script sat
+  directly beneath our `pack:android*` block, so upstream's context lines no longer matched.
+  Resolved by keeping our block and dropping `ci` with upstream.
+- **`pnpm-lock.yaml` merged cleanly and needed no regeneration** — `pnpm install` reported
+  "Lockfile is up to date, resolution step is skipped". Our fork entries came through the peer-key
+  rewrite untouched: the git-hosted `@seald-io/nedb`, `core-js`, the `mediabunny` patch and
+  `minimumReleaseAgeExclude`. Only `node_modules` restructured (+53 / -39 packages) under
+  `dedupePeers`, so all three artifacts are built against a deduplicated dependency tree.
+- **The local toolchain already satisfied the bump** — pnpm 11.15.1 and Node 24 — so nothing had to
+  be installed, and `pnpm-workspace.yaml` merged without conflict despite our four fork-only blocks
+  sitting below the line upstream touched.
+- Both bundles compile clean: `pnpm run pack` and `pnpm run pack:android`.
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.18-20.g2aec8baa+2026-09-13.13-31.gaf0ab865+002` — 2026-09-15
 
 Built on FreeTube `2aec8baa` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). A
