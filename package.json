@@ -51,8 +51,7 @@
     "pack:android:dev:core": "webpack --mode=development --config-node-env=development --config _scripts/webpack.android.config.js",
     "pack:android": "pnpm run pack:botGuardScript:android && pnpm run pack:android:core",
     "pack:android:dev": "pnpm run pack:botGuardScript:android && pnpm run pack:android:dev:core",
-    "checkforbadtemplates": "node _scripts/findMissingTemplates.mjs",
-    "ci": "pnpm install --frozen-lockfile"
+    "checkforbadtemplates": "node _scripts/findMissingTemplates.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",
