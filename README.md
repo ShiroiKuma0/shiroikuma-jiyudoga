@@ -16,7 +16,8 @@ button that writes chapter-preserving mkv files, original-language titles & desc
 **self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
 subscription feed into one-tap views, per-profile video **starring**, an automatic **device sync**
 that keeps the watch history, subscriptions and starred videos the same on the phone and the PC,
-live grid zoom with tuning sliders, theatre mode on Android, full-width views, a sister-repo-style
+persistent **tabs** on both platforms, live grid zoom with tuning sliders, theatre mode on
+Android, full-width views, a sister-repo-style
 UI theming layer, and a **one-zip backup** of the whole app that a sister automation app can
 trigger unattended.
 Every release builds **all three** artifacts, always at the same version:
@@ -27,7 +28,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+003`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+005`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -71,6 +72,50 @@ settings page:
 %(title)s %(upload_date)s (%(channel)s).%(ext)s
 → Monster Kettlebell Workout Motivation. Lift 100kg … 2022-07-02 (WestportBattlebells).mkv
 ```
+
+## 🗂️ Tabs — a drawer of folders, and they come back
+
+Several videos open at once, on the desktop **and** on the phone. A tab is a *place in the app* —
+a feed, a channel, a search, a watch page — which is exactly what a second window gave, so tabs
+replace the need to open several of them, and give Android something it never had at all.
+
+They are drawn as a drawer of manilla folders: rounded only at the top, a full-width accent edge
+that the closed folders sit behind, and the open one full height, painting its own bottom border in
+the page colour so it runs straight into the content below. The strip appears when a second tab is
+opened, so with one tab the app looks exactly as it always did.
+
+**Only the open folder is alive.** A background tab is a remembered route, title and scroll
+position, and nothing more — one video player at a time, which is what keeps this sane on a phone
+whose WebView is killed for far less. Switching back re-opens the page and it resumes from the watch
+progress the app already keeps, so switching tabs and restarting the app behave identically. That is
+also why **the tabs come back**: close the app, open it again, and the same set is there, on the
+same page, at the same scroll position.
+
+Back and forward walk tab switches and ordinary navigation together, in the order things actually
+happened — there is no second history to get out of step. `Ctrl`+`T` opens a tab, `Ctrl`+`Shift`+`W`
+closes one, `Ctrl`+`Tab` cycles, and middle-clicking any link opens it in the background.
+
+Tabs are **local to the device** — the phone's tabs are the phone's, and are never carried over by
+the device sync or a backup.
+
+---
+
+## 🖱️ A right-click menu that is ours — and a long-press menu on Android
+
+Opening a tab needs somewhere to ask from, and the old right-click menu could not be it: it was a
+**native** menu drawn by Chromium outside the page, which is why it never wore the app's accent
+frame however hard the theming layer tried — and on Android a long press on a video did nothing
+whatsoever.
+
+Right-clicking a video, channel or playlist now raises **our own** menu — framed and rounded like
+every other panel in the app — offering *Open in a New Tab*, *Open in a New Window*, the YouTube and
+Invidious links, and *Save Thumbnail As…*. On Android the same menu answers a **long press**, which
+is the first time the phone has had one.
+
+The platform keeps what only it can do: right-clicking a text field still gives you spellcheck and
+paste, and a loose image still gives you Save Image As.
+
+---
 
 ## 🈶 Original-language titles & descriptions
 

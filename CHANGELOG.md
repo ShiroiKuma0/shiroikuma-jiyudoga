@@ -15,6 +15,110 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+005` — 2026-09-18
+
+Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
+moved** — this is a pure fork release, and a large one: **tabs**, on both platforms and persistent
+across restarts, and the in-app context menu that opens them. `+004` was the same work before the
+tab strip was restyled as folders; it was built and delivered but never published.
+
+### Tabs
+
+- **A tab is a place in the app** — a feed, a channel, a search, a watch page — which is exactly
+  what a second window gave, so tabs replace the need to open several, and give Android something
+  it never had at all. New component `SkuiTabStrip.vue`, model in `helpers/skuiTabs.js`.
+- **Only the active tab is alive.** A background tab is a remembered route, title and scroll
+  position, nothing more. That is deliberate rather than lazy: a live watch page owns a Shaka
+  player, a comment section, the media session, the Android media notification and a pile of
+  document-level listeners, every one of which assumes it is the only one. Keeping several would
+  mean guarding all of those singletons and buffering several videos in a WebView that gets killed
+  for far less. Switching back re-opens the page, which resumes from the watch progress the app
+  already stores — so switching tabs and restarting the app behave identically, which is what makes
+  the persistence exact rather than approximate.
+- **The set survives a restart.** It is stored in a new `skuiTabs` setting (a JSON string, the
+  convention `skuiTheme` and `skuiFeedFilter` already follow) and written with the debounced
+  commit-then-persist pattern the grid sliders use. It is in `NON_TRANSFERABLE_SETTINGS`: which
+  pages this device happens to have open is session state, not a setting, and must not travel to
+  the other device with a backup or the sync.
+- **Only one window owns the list.** A satellite window opened by *Open in a New Window* asks main
+  over a new `IS_MAIN_WINDOW` channel whether it is the main window and, told no, shows no strip
+  and keeps its single tab out of the saved session — otherwise closing it would overwrite the
+  strip it was opened from.
+- **No per-tab history stacks.** A tab switch is an ordinary `router.push` carrying the tab's id in
+  the history entry's state; `afterEach` reads it back, and its absence means the user navigated
+  *inside* the tab that was already active. The existing back/forward arrows and the Android
+  hardware back button then walk tab switches and in-tab navigation together, in the order things
+  actually happened, with no second navigation implementation to keep in step with the first.
+- **Scroll is restored by waiting for the page**, not by the router's 500 ms `scrollBehavior`,
+  which fires while a watch page is still a loader a few hundred pixels tall and silently clamps
+  the seek to 0. The restore retries until the document is tall enough to hold the position, and
+  abandons the attempt the moment the reader scrolls themselves.
+- **The look is a drawer of manilla folders**: 14 px rounding on the top corners only, a 2 px accent
+  edge drawn full-width behind the tabs, closed folders held 2 px clear of it, and the open one at
+  full height painting its own bottom border in the page colour so it runs into the content below.
+  Closed folders carry a wash of the accent rather than a flat card colour, which in the default
+  theme resolves to the same black as the page and would leave them invisible. Neighbours overlap
+  by 2 px so they share one edge.
+- **The strip appears at the second tab**, so with one tab the app looks exactly as it always did; a
+  new `skuiTabsAlwaysShow` switch in the 白い熊 UI settings page pins it open. It takes its own
+  38 px row between the top bar and everything below, with the side nav's sticky offset and the
+  content's top margins doing arithmetic on a single `--sk-tabstrip-height` variable — every rule
+  gated on the strip actually being there, so a single-tab window's layout is untouched.
+- **Keyboard and mouse**: `Ctrl`+`T` opens a tab, `Ctrl`+`Shift`+`W` closes one, `Ctrl`+`Tab` and
+  `Ctrl`+`Shift`+`Tab` cycle, all listed in the keyboard-shortcut prompt. `Ctrl`+`W` is
+  deliberately absent — it is the Electron menu's own *Close Window* accelerator, which the browser
+  process acts on before the page ever sees the key. Middle-clicking an in-app link opens a
+  background tab.
+
+### The in-app context menu
+
+- **The right-click menu is ours now** (`SkuiContextMenu.vue`). The old one was a **native** Electron
+  menu drawn by Chromium's views toolkit outside the web contents, which is why the accent-frame
+  pass (`acae4ba0f`) had to record it as the one floating surface CSS could never reach. It now
+  wears the same frame as every other panel — 2 px of the accent colour, 16 px radius — and carries
+  *Open in a New Tab*, *Open in a New Window*, the YouTube and Invidious links, and, over a
+  thumbnail, *Save Thumbnail As…* and *Copy Thumbnail Address*.
+- **Android has a context menu for the first time.** A long press on a video tile previously ran no
+  app code whatsoever — no Kotlin `setOnLongClickListener`, no JS handler. It now raises the same
+  menu, driven from `pointerdown` and a timer and never from `contextmenu`, which the WebView fires
+  mid-hold and would use to steal the gesture: the lesson the feed-filter pills and the hamburger
+  long-press already record. The press target gets `touch-action`/`user-select`/
+  `-webkit-touch-callout` guards under an Android-only rule, so Chromium does not start a text
+  selection halfway through the hold.
+- **One pair of document-level listeners serves every surface.** Each target is already an
+  `<a href="#/…">`, so tiles, recommendations, search results, playlist rows and description links
+  are all covered without a single one of those components knowing the menu exists.
+- **The native menu keeps what only the platform can do** — spellcheck and the editing entries in
+  text fields, Save Image As on loose images. `shouldShowMenu` refuses in-app links in main, with
+  the same predicate the renderer uses, so exactly one menu ever appears. Upstream's
+  now-unreachable in-app-link entries are left exactly as they are rather than deleted: keeping the
+  upstream diff small is worth more than pruning dead code. Because our menu wins over a tile's
+  thumbnail it provides the two image entries itself, *Save Thumbnail As…* going through a new
+  `SAVE_IMAGE_AS` channel that hands the URL to `webContents.downloadURL` with no save path, which
+  is what makes Electron raise its own save dialog.
+
+### Fixes found by running it
+
+- **A watch page's title no longer lands on the tab you switched to.** Leaving a watch page awaits
+  the player's destruction in `beforeRouteLeave`, and the view keeps setting the app title
+  throughout that wait — long after the strip has moved on. Titles arriving mid-navigation are now
+  ignored.
+- **`Open in a New Window` from the menu no longer fails silently.** The menu reads its target back
+  out of reactive state, so it was handing a Vue `Proxy` to IPC, where it cannot be
+  structured-cloned; the send threw with nothing watching. The target is `markRaw`'d — it is
+  read-only data, and there was nothing there worth making reactive.
+- **Switching between two tabs holding the same page** now stamps the history entry directly rather
+  than asking the router for a navigation it refuses as a duplicate, which used to leave the entry
+  naming the tab being left and snap the strip back to it.
+
+### Version
+
+- **`FORK_VERSION` stays `0.25.3.1`**, the counter runs on to `+005` (versionCode `25031005`).
+  Neither upstream has moved since `+003`, so **both pins are byte-identical to that release** —
+  the "this upstream has not moved" signal the pins exist to give.
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+003` — 2026-09-16
 
 Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). A
