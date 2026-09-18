@@ -1,0 +1,171 @@
+/*
+ * The strip is its own full-width row directly under the top bar. It sticks below the bar so
+ * the open tabs stay reachable while a feed scrolls; below 680px the bar itself goes fixed, so
+ * the strip does too and App.css adds its height to the content's top margin instead.
+ *
+ * The height is a constant rather than something measured, because App.css has to do arithmetic
+ * with it for the side nav and the content margins -- see --sk-tabstrip-height there.
+ *
+ * The look is a drawer of manilla folders, which is the whole reason the geometry below is
+ * fussy: the tabs are rounded only at the top and rise out of a full-width accent edge that
+ * reads as the front of the folder. Inactive tabs stop short of that edge and stay behind it;
+ * the active one is full height and paints its own bottom border over it in the page colour, so
+ * it opens into the content below instead of being a box sitting on a line.
+ */
+.skuiTabStrip {
+  position: sticky;
+  inset-block-start: 60px;
+  z-index: 4;
+  inline-size: 100%;
+  block-size: var(--sk-tabstrip-height);
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--bg-color);
+  user-select: none;
+
+  /*
+   * Mandatory, the same lesson the top bar's version block records: the Android WebView loads
+   * the page scaled down and Chrome's font boosting then inflates small text in wide blocks --
+   * which in a row of fixed height means labels hanging out of it. The prefixed property is the
+   * one Blink actually implements.
+   */
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/*
+ * The folder edge. Drawn as a layer behind the tabs rather than as the strip's own border, so
+ * the active tab can cover its own slice of it without needing to overhang a scrolling box.
+ */
+.skuiTabStrip::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2px;
+  background-color: var(--primary-color);
+  z-index: 0;
+}
+
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+
+  /* only as wide as the folders themselves, so the + button follows them instead of being
+     pushed to the far edge; it shrinks and scrolls once they outgrow the row */
+  flex: 0 1 auto;
+  min-inline-size: 0;
+
+  /* the first folder's rounded corner would otherwise be cut off by the window edge */
+  padding-inline-start: 8px;
+  overflow: auto hidden;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  block-size: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 220px;
+  box-sizing: border-box;
+  padding-inline: 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--secondary-text-color);
+
+  /* a folder tab: rounded where it shows, square where it meets the drawer */
+  border: 2px solid var(--primary-color);
+  border-block-end: 0;
+  border-start-start-radius: 14px;
+  border-start-end-radius: 14px;
+
+  /* the manilla itself -- a wash of the accent rather than a flat card colour, which the
+     default theme leaves identical to the page behind it */
+  background-color: rgb(var(--accent-color-rgb, 255 255 0) / 10%);
+
+  /* short, and held clear of the folder edge, so it sits behind the drawer front */
+  block-size: calc(var(--sk-tabstrip-height) - 8px);
+  margin-block-end: 2px;
+  transition: background 0.15s ease-out;
+}
+
+/* neighbouring folders share one edge instead of drawing two */
+.tab + .tab {
+  margin-inline-start: -2px;
+}
+
+.tab:hover {
+  background-color: rgb(var(--accent-color-rgb, 255 255 0) / 20%);
+}
+
+/*
+ * The open folder: full height, page-coloured, and its bottom border paints over the drawer
+ * edge in that same colour -- which is what makes it read as continuous with the content below.
+ */
+.tab.active {
+  position: relative;
+  z-index: 2;
+  block-size: var(--sk-tabstrip-height);
+  margin-block-end: 0;
+  background-color: var(--bg-color);
+  border-block-end: 2px solid var(--bg-color);
+  color: var(--primary-text-color);
+  font-weight: 600;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close,
+.newTab {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.close {
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 50%;
+}
+
+.newTab {
+  inline-size: 36px;
+  block-size: calc(var(--sk-tabstrip-height) - 8px);
+  margin-block-end: 2px;
+  margin-inline-start: 6px;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.close:hover,
+.newTab:hover {
+  opacity: 1;
+  background-color: rgb(var(--accent-color-rgb, 255 255 0) / 25%);
+}
+
+.newTab:hover {
+  border-start-start-radius: 14px;
+  border-start-end-radius: 14px;
+}

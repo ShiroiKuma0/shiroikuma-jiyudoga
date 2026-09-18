@@ -1274,6 +1274,10 @@ KeyboardShortcutPrompt:
   Zoom Out: Zoom out
   Focus Search: Focus on the search bar
   Search in New Window: Search in a new window
+  New Tab: New tab
+  Close Tab: Close tab
+  Next Tab: Next tab
+  Previous Tab: Previous tab
   Last Frame: Previous frame (while paused)
   Next Frame: Next frame (while paused)
   Volume Up: Increase volume
@@ -1482,6 +1486,24 @@ SKUI:
     After watch: Sync after watching
     After watch description: >-
       A few seconds after a video is left, so its position is already on the other device.
+  Tabs:
+    Section: Tabs
+    Description: >-
+      Right-click a video on the desktop, or hold it on the phone, to open it in a tab beside
+      the one you are in. The strip appears once there is a second tab, and the open tabs come
+      back when the app is opened again.
+    New tab: New tab
+    Close tab: Close tab
+    Always show: Always show the tab strip
+    Always show description: >-
+      Keeps the strip visible even with a single tab open.
+  Menu:
+    Open in a new tab: Open in a New Tab
+    Open in a new window: Open in a New Window
+    Save thumbnail as: Save Thumbnail As…
+    Copy thumbnail address: Copy Thumbnail Address
+    Thumbnail address copied: Thumbnail address copied to the clipboard
+    Thumbnail save failed: The thumbnail could not be saved
   Feed filter:
     New filter: New filter
     Edit filter: Edit filter

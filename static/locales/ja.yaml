@@ -1160,6 +1160,10 @@ KeyboardShortcutPrompt:
   Large Rewind: 10秒巻き戻し / 現在の動画再生速度に基づいて動画を巻き戻す
   Close Window: ウィンドウを閉じる
   Search in New Window: 新しいウィンドウで検索
+  New Tab: 新しいタブ
+  Close Tab: タブを閉じる
+  Next Tab: 次のタブ
+  Previous Tab: 前のタブ
   Volume Down: 音量を下げる
   Last Frame: 前のフレーム (一時停止中)
   Next Frame: 次のフレーム (一時停止中)
@@ -1223,6 +1227,23 @@ SKUI:
   Font & UI size: フォントとUIの大きさ
   Font file: フォントファイル
   Only ttf and otf fonts are supported: ttf と otf のフォントのみ対応しています
+  Tabs:
+    Section: タブ
+    Description: >-
+      デスクトップでは動画を右クリック、スマホでは長押しすると、今のタブの隣に開きます。
+      タブが二つ以上になるとタブ列が現れ、開いていたタブは次回の起動時に戻ります。
+    New tab: 新しいタブ
+    Close tab: タブを閉じる
+    Always show: タブ列を常に表示
+    Always show description: >-
+      タブが一つだけでもタブ列を表示し続けます。
+  Menu:
+    Open in a new tab: 新しいタブで開く
+    Open in a new window: 新しいウィンドウで開く
+    Save thumbnail as: サムネイルを保存…
+    Copy thumbnail address: サムネイルのアドレスをコピー
+    Thumbnail address copied: サムネイルのアドレスをクリップボードにコピーしました
+    Thumbnail save failed: サムネイルを保存できませんでした
   Sync:
     Label: 同期
   Player:

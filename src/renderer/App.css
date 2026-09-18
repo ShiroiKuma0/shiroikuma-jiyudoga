@@ -12,6 +12,66 @@
   flex-wrap: wrap;
   font-family: Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   block-size: 100%;
+
+  /* the tab strip's row height -- read by the rules below, which only apply when it is there,
+     and by the strip's own folder geometry (an inactive tab is 8px shorter than this) */
+  --sk-tabstrip-height: 38px;
+}
+
+/*
+ * 白い熊 自由動画: on Android a long press on an in-app link opens our context menu, so the
+ * WebView must not claim the gesture first -- a tile title is a link over selectable text and
+ * Chromium would start a text-selection ActionMode, a callout, or a link drag halfway through
+ * the hold. Android only: the desktop keeps selectable titles, which _ft-list-item.scss asks
+ * for deliberately.
+ */
+.app.isAndroid a[href*='#/'] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/*
+ * 白い熊 自由動画: the tab strip takes a full-width row of its own between the 60px top bar and
+ * everything below it. Its height is declared above rather than in the component, because this
+ * file owns the arithmetic the rest of the layout does with it. Every rule that does that
+ * arithmetic is gated on :has(.skuiTabStrip), so with one tab and the strip unpinned none of
+ * them apply and the layout is untouched.
+ *
+ * The side nav sticks under the bar, so it has to start below the strip as well.
+ */
+@media only screen and (width >= 681px) {
+  .app:has(.skuiTabStrip) .sideNav {
+    inset-block-start: calc(60px + var(--sk-tabstrip-height));
+    block-size: calc(100vh - 60px - var(--sk-tabstrip-height));
+  }
+}
+
+/*
+ * Below 680px the top bar is fixed and the content clears it with a top margin instead of
+ * flowing after it, so the strip is fixed too and the same margins grow by its height. The
+ * side nav is a bottom bar at this width and needs nothing.
+ */
+@media only screen and (width <= 680px) {
+  .app:has(.skuiTabStrip) .skuiTabStrip {
+    position: fixed;
+  }
+
+  .app:has(.skuiTabStrip) .banner {
+    margin-block-start: calc(60px + var(--sk-tabstrip-height));
+  }
+
+  .app:has(.skuiTabStrip) .flexBox:not(:has(.banner-wrapper)) {
+    margin-block-start: calc(60px + var(--sk-tabstrip-height));
+  }
+
+  .app:has(.skuiTabStrip) .flexBox:has(.floatingRefreshSection) {
+    margin-block-start: calc(100px + var(--sk-tabstrip-height));
+  }
+
+  .app:has(.skuiTabStrip) .flexBox:has(.floatingRefreshSection):has(.banner-wrapper) {
+    margin-block-start: calc(60px + var(--sk-tabstrip-height));
+  }
 }
 
 .routerView {

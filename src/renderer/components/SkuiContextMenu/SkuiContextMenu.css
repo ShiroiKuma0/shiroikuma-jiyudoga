@@ -1,0 +1,70 @@
+/*
+ * The fork's modal language, hardcoded the way .skuiPanel and .skuiDownloadBox hardcode it:
+ * 2px of the accent colour and a 16px radius. skui adds the same frame through its popup-surface
+ * rule; it is declared here as well so the menu is right even before that style tag is written.
+ *
+ * `overflow: hidden` is not decoration -- without it a hovered item's fill paints over the
+ * rounded corners and squares them off again.
+ */
+.skuiContextMenu {
+  position: fixed;
+  z-index: 250;
+  background-color: var(--side-nav-color);
+  color: var(--secondary-text-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+  font-size: 14px;
+  min-inline-size: 180px;
+  max-inline-size: min(360px, calc(100vw - 16px));
+  user-select: none;
+
+  /* the Android WebView's font boosting would otherwise decide 14px means something else */
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.listItem {
+  cursor: pointer;
+  margin: 0;
+
+  /* 10px of padding on 14px text clears the 40px touch target Android wants */
+  padding-block: 10px;
+  padding-inline: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.2s ease-out;
+}
+
+.listItem:hover,
+.listItem:focus-visible {
+  background-color: var(--side-nav-hover-color);
+  color: var(--side-nav-hover-text-color);
+  transition: background 0.2s ease-in;
+}
+
+.listItem:active {
+  background-color: var(--side-nav-active-color);
+  color: var(--side-nav-active-text-color);
+  transition: background 0.1s ease-in;
+}
+
+.listItemDivider {
+  border-block-start: 1px solid var(--tertiary-text-color);
+  margin-block: 1px;
+  margin-inline: auto;
+
+  /* too "visible" at full strength against the accent frame */
+  opacity: 0.5;
+  inline-size: 95%;
+}

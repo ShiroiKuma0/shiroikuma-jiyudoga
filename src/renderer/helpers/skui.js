@@ -286,11 +286,13 @@ export function applySkuiTheme(theme, customFonts = []) {
   // half the popups follow a slider while the other half did not is exactly the drift this
   // rule exists to remove. Transient HUD overlays inside the player (volume/seek indicator,
   // stats-for-nerds) are NOT included -- they are readouts, not surfaces you act on.
-  // NOTE: the right-click context menu is a NATIVE Electron menu and cannot be reached from
-  // CSS at all; see the comment in src/main/index.js where it is built.
+  // The right-click menu over an in-app link is OUR HTML menu (.skuiContextMenu) and is framed
+  // here like everything else. The NATIVE Electron menu still handles text fields and loose
+  // images, and CSS cannot reach that one at all; see the comment in src/main/index.js.
   const popupSurfaces = [
     '.promptCard',                 // every modal built on FtPrompt
     '.iconDropdown',               // the ... menus on tiles, watch page, playlists
+    '.skuiContextMenu',            // right-click / long-press menu on in-app links
     '.profileList',                // profile selector
     '.profileDropdown',            // subscribe button
     '.moreOptionContainer',        // side nav overflow

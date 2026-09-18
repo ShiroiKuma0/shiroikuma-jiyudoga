@@ -69,7 +69,15 @@ const IpcChannels = {
   WRITE_TO_DOWNLOAD_FOLDER: 'write-to-download-folder',
 
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
-  OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result'
+  OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result',
+
+  // 白い熊 自由動画: the in-app context menu took thumbnails off the native menu, so it has to
+  // offer "Save Thumbnail As…" itself. Main shows Electron's own save dialog for it.
+  SAVE_IMAGE_AS: 'save-image-as',
+
+  // 白い熊 自由動画: only one window owns the tab strip. A window opened by "Open in a New
+  // Window" is a satellite and must not write the saved session out from under the main one.
+  IS_MAIN_WINDOW: 'is-main-window'
 }
 
 const DBActions = {
@@ -183,8 +191,15 @@ const KeyboardShortcuts = {
       SEARCH_IN_NEW_WINDOW: 'shift+enter',
       RESET_ZOOM: 'ctrl+0',
       ZOOM_IN: 'ctrl+plus',
-      ZOOM_OUT: 'ctrl+-'
+      ZOOM_OUT: 'ctrl+-',
 
+      // 白い熊 自由動画 tabs. NOT ctrl+W for closing one: that is the Electron menu's own
+      // "Close Window" accelerator, which the browser process acts on before the page ever
+      // sees the key -- binding it here would close the window instead of the tab.
+      NEW_TAB: 'ctrl+T',
+      CLOSE_TAB: 'ctrl+shift+W',
+      NEXT_TAB: 'ctrl+tab',
+      PREVIOUS_TAB: 'ctrl+shift+tab'
     },
     SITUATIONAL: {
       REFRESH: 'r',

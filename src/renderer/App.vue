@@ -7,10 +7,14 @@
       isLocaleRightToLeft: isLocaleRightToLeft,
       isSideNavOpen: isSideNavOpen,
       hideLabelsSideBar: hideLabelsSideBar && !isSideNavOpen,
-      noTapHighlight: !tapHighlight
+      noTapHighlight: !tapHighlight,
+      isAndroid: IS_ANDROID
     }"
   >
     <TopNav
+      :inert="isAnyPromptOpen"
+    />
+    <SkuiTabStrip
       :inert="isAnyPromptOpen"
     />
     <SideNav
@@ -99,6 +103,7 @@
       v-if="showCreatePlaylistPrompt"
     />
     <FtaLogViewer />
+    <SkuiContextMenu />
     <ft-toast />
     <ft-progress-bar
       v-if="showProgressBar"
@@ -125,6 +130,8 @@ import FtCreatePlaylistPrompt from './components/FtCreatePlaylistPrompt/FtCreate
 import FtKeyboardShortcutPrompt from './components/FtKeyboardShortcutPrompt/FtKeyboardShortcutPrompt.vue'
 import FtSearchFilters from './components/FtSearchFilters/FtSearchFilters.vue'
 import FtaLogViewer from './components/FtaLogViewer/FtaLogViewer.vue'
+import SkuiContextMenu from './components/SkuiContextMenu/SkuiContextMenu.vue'
+import SkuiTabStrip from './components/SkuiTabStrip/SkuiTabStrip.vue'
 import { vSaferHtml } from './directives/vSaferHtml.js'
 
 import store from './store/index'
@@ -139,7 +146,20 @@ import { getClipInvidious } from './helpers/api/invidious.js'
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 import { applySkuiTheme, parseTheme } from './helpers/skui'
+import { registerContextMenuTriggers, unregisterContextMenuTriggers } from './helpers/skuiContextMenu'
+import { resolveLinkTarget } from './helpers/skuiLinkTargets'
+import {
+  closeActiveTab,
+  cycleTab,
+  hydrateTabs,
+  openLandingTab,
+  openTab,
+  registerTabRouting,
+  routeForTab
+} from './helpers/skuiTabs'
 import { registerSyncTriggers } from './helpers/sync/index'
+
+const IS_ANDROID = !!process.env.IS_ANDROID
 
 const route = useRoute()
 const router = useRouter()
@@ -241,8 +261,19 @@ onMounted(async () => {
     }, 500)
   })
 
-  if (route.path === '/') {
-    router.replace({ path: landingPage.value })
+  // 白い熊 自由動画: bring back the tabs this device had open and land on the active one.
+  // This replaces upstream's plain jump to the landing page -- with no saved session that is
+  // exactly what it still does, only by way of a first tab.
+  const restoredTab = await hydrateTabs({
+    currentPath: route.path,
+    currentQuery: route.query,
+    landingPath: landingPage.value
+  })
+
+  registerTabRouting()
+
+  if (route.path !== restoredTab.path) {
+    router.replace(routeForTab(restoredTab))
   }
 
   setWindowTitle()
@@ -250,6 +281,9 @@ onMounted(async () => {
   document.addEventListener('keydown', handleKeyboardShortcuts)
   document.addEventListener('mousedown', handleMouseDown)
   document.addEventListener('dragstart', handleDragStart)
+
+  // 白い熊 自由動画: right-click (desktop) / long press (Android) on any in-app link
+  registerContextMenuTriggers()
 
   window.addEventListener('wheel', handleGridScaleWheel, { passive: false })
   window.addEventListener('touchstart', handleGridScaleTouchStart, { passive: true })
@@ -264,6 +298,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('dragstart', handleDragStart)
   document.removeEventListener('click', handleClick)
   document.removeEventListener('auxclick', handleAuxClick)
+
+  unregisterContextMenuTriggers()
 
   window.removeEventListener('wheel', handleGridScaleWheel)
   window.removeEventListener('touchstart', handleGridScaleTouchStart)
@@ -459,6 +495,30 @@ function handleKeyboardShortcuts(event) {
     store.commit('setIsKeyboardShortcutPromptShown', !isKeyboardShortcutPromptShown.value)
   }
 
+  // 白い熊 自由動画 tabs. Ctrl+W is deliberately absent -- see the note in src/constants.js.
+  if (event.ctrlKey && !event.altKey) {
+    switch (event.key.toLowerCase()) {
+      case 't':
+        if (!event.shiftKey) {
+          event.preventDefault()
+          openLandingTab()
+          return
+        }
+        break
+      case 'w':
+        if (event.shiftKey) {
+          event.preventDefault()
+          closeActiveTab()
+          return
+        }
+        break
+      case 'tab':
+        event.preventDefault()
+        cycleTab(event.shiftKey ? -1 : 1)
+        return
+    }
+  }
+
   if (event.key === 'Tab') {
     store.dispatch('showOutlines')
   }
@@ -520,7 +580,21 @@ function handleAuxClick(event) {
   // auxclick fires for all clicks not performed with the primary button
   // only handle the link click if it was the middle button,
   // otherwise the context menu breaks
-  if (isExternalLink(event) && event.button === 1) {
+  if (event.button !== 1) {
+    return
+  }
+
+  // 白い熊 自由動画: middle-clicking an in-app link opens it in a background tab, as it does
+  // in a browser -- the same thing the context menu's "Open in a New Tab" does
+  const tabTarget = resolveLinkTarget(event.target)
+
+  if (tabTarget !== null) {
+    event.preventDefault()
+    openTab({ path: tabTarget.path, query: tabTarget.query, title: tabTarget.title })
+    return
+  }
+
+  if (isExternalLink(event)) {
     handleLinkClick(event)
   }
 }

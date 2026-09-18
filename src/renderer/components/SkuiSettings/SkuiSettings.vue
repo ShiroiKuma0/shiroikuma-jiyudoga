@@ -383,6 +383,33 @@
       </section>
 
       <!--
+        Tabs: the strip normally earns its row only once there is something to switch
+        between, which is why the only thing to set here is whether to pin it open.
+      -->
+      <section class="skuiSection">
+        <hr class="skuiSectionRule">
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Tabs.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Tabs.Description') }}
+        </p>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Tabs.Always show') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Tabs.Always show description') }}</span>
+          </span>
+          <input
+            class="skuiEntrySwitch"
+            type="checkbox"
+            :checked="tabsAlwaysShow"
+            @change="updateTabsAlwaysShow($event.target.checked)"
+          >
+        </label>
+      </section>
+
+      <!--
         Similar tab: what the discovery feed has been taught in the active profile.
         Everything here is stored on the profile itself, so it travels with profile
         export/import like the starred videos do.
@@ -909,6 +936,17 @@ const allChannelsLabel = computed(() => store.getters.getSkuiAllChannelsLabel)
  */
 function updateAllChannelsLabel(value) {
   store.dispatch('updateSkuiAllChannelsLabel', value.trim())
+}
+
+// ---- tabs ----
+
+const tabsAlwaysShow = computed(() => store.getters.getSkuiTabsAlwaysShow)
+
+/**
+ * @param {boolean} value
+ */
+function updateTabsAlwaysShow(value) {
+  store.dispatch('updateSkuiTabsAlwaysShow', value)
 }
 
 // ---- video download ----

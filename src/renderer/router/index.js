@@ -148,9 +148,16 @@ const router = createRouter({
       setTimeout(() => {
         if (savedPosition !== null) {
           resolve(savedPosition)
-        } else {
-          resolve({ left: 0, top: 0 })
+          return
         }
+
+        // 白い熊 自由動画: switching to a tab is a fresh history entry, so there is no saved
+        // position to go back to -- the tab carries where it was left in the entry's own state.
+        // Read here rather than from the tabs helper, which would have the router and the
+        // helper importing each other.
+        const tabScroll = window.history.state?.skuiScroll
+
+        resolve({ left: 0, top: Number.isFinite(tabScroll) ? tabScroll : 0 })
       }, 500)
     })
   }

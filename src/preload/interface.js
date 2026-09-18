@@ -47,6 +47,24 @@ export default {
   },
 
   /**
+   * 白い熊 自由動画: "Save Thumbnail As…" in the in-app context menu, which replaced the native
+   * one over in-app links and so has to provide this itself.
+   * @param {string} url
+   * @returns {Promise<void>}
+   */
+  saveImageAs: (url) => {
+    return ipcRenderer.invoke(IpcChannels.SAVE_IMAGE_AS, url)
+  },
+
+  /**
+   * 白い熊 自由動画: whether this window is the one that owns the saved tab session.
+   * @returns {Promise<boolean>}
+   */
+  isMainWindow: () => {
+    return ipcRenderer.invoke(IpcChannels.IS_MAIN_WINDOW)
+  },
+
+  /**
    * @param {string} url
    */
   enableProxy: (url) => {

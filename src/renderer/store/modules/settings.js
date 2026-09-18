@@ -366,6 +366,14 @@ const state = {
   skuiSyncLastResult: '',
   // set once the datastores have been copied aside, before the first ever merge
   skuiSyncBackedUp: false,
+  // tabs: the open ones as [{ id, path, query, title, scrollY }] and which is active,
+  // so closing the app and opening it again lands back on the same set of pages.
+  // Only the main window writes this -- a window opened by "Open in a New Window" is a
+  // satellite with a single tab and must not overwrite the strip it was opened from
+  skuiTabs: '{}',
+  // the strip normally appears only once there is a second tab, so one tab looks like
+  // the app always did; this pins it open
+  skuiTabsAlwaysShow: false,
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)
@@ -538,6 +546,8 @@ export const NON_TRANSFERABLE_SETTINGS = new Set([
   'skuiSyncLastRun',
   'skuiSyncLastResult',
   'skuiSyncBackedUp',
+  // which pages this device happens to have open right now -- session state, not settings
+  'skuiTabs',
   /* Depends on process.env.IS_ELECTRON */
   // ProxySettings
   'useProxy',

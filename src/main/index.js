@@ -98,17 +98,45 @@ function runApp() {
   let backendPreference = 'local'
   let backendFallback = true
 
+  /** In-app routes the renderer's own context menu handles. Kept in step with the list in
+   *  src/renderer/helpers/skuiLinkTargets.js. */
+  const IN_APP_MENU_ROUTES = ['/watch', '/channel', '/playlist', '/hashtag', '/post']
+
+  /**
+   * @param {Electron.ContextMenuParams} parameters
+   * @param {Electron.WebContents} webContents
+   */
+  function isInAppRouteLink(parameters, webContents) {
+    if (!parameters.linkURL) { return false }
+
+    const [documentUrl, route] = parameters.linkURL.split('#')
+
+    if (documentUrl !== webContents.getURL().split('#')[0] || !route) { return false }
+
+    return IN_APP_MENU_ROUTES.some(prefix => route.startsWith(prefix))
+  }
+
   // NOTE (fork): this is a NATIVE Electron menu, drawn by Chromium's views toolkit outside the
-  // web contents. It takes the platform/dark-theme chrome and CANNOT be given the fork's accent
-  // frame from CSS -- the popup border rule in src/renderer/helpers/skui.js reaches every IN-APP
-  // floating surface but stops at this boundary. Styling it would mean replacing it with an
-  // in-app HTML menu, which costs the native entries (Save Image As, spellcheck, editing).
+  // web contents, so CSS cannot reach it and it can never wear the fork's accent frame.
+  //
+  // It is therefore no longer the menu for in-app links: `shouldShowMenu` below refuses those,
+  // and the renderer draws .skuiContextMenu instead -- framed, and available on Android, which
+  // has no native menu at all. What stays here is what only the platform can do: spellcheck and
+  // the editing entries in text fields, and Save Image As / Copy Image Address on loose images.
+  //
+  // Upstream's in-app-link entries below are now unreachable. They are left exactly as they are
+  // rather than deleted, because every line of them is upstream's and keeping the diff small is
+  // worth more than pruning dead code -- see "keep our changes a small, legible layer".
   contextMenu({
     showSearchWithGoogle: false,
     showSaveImageAs: true,
     showCopyImageAddress: true,
     showSelectAll: false,
     showCopyLink: false,
+    // The renderer calls preventDefault() on the same links, which should already stop Blink
+    // asking for this menu; refusing them here as well means exactly one menu appears even if
+    // that ever stops holding.
+    shouldShowMenu: (event, parameters) => !isInAppRouteLink(parameters, event.sender),
     prepend: (defaultActions, parameters, browserWindow) => [
       {
         label: 'Open in a New Window',
@@ -1743,6 +1771,39 @@ function runApp() {
       windowStartupUrl,
       searchQueryText
     })
+  })
+
+  // 白い熊 自由動画: "Save Thumbnail As…" from the in-app context menu. The native menu's own
+  // Save Image As still covers loose images; this covers the thumbnails our menu took over.
+  // Handing the URL to downloadURL without a save path is what makes Electron raise its own
+  // save dialog, exactly as the native entry did.
+  ipcMain.handle(IpcChannels.SAVE_IMAGE_AS, (event, url) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof url !== 'string') {
+      return
+    }
+
+    let parsed
+    try {
+      parsed = new URL(url)
+    } catch {
+      return
+    }
+
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return
+    }
+
+    event.sender.downloadURL(url)
+  })
+
+  // 白い熊 自由動画: the tab strip is the main window's. A satellite opened by "Open in a New
+  // Window" asks here and, told no, keeps its single tab out of the saved session.
+  ipcMain.handle(IpcChannels.IS_MAIN_WINDOW, (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) {
+      return false
+    }
+
+    return BrowserWindow.fromWebContents(event.sender) === mainWindow
   })
 
   ipcMain.on(IpcChannels.OPEN_IN_EXTERNAL_PLAYER, handleOpenInExternalPlayer)

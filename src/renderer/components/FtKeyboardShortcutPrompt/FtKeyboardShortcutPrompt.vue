@@ -133,6 +133,10 @@ const localizedShortcutNameToShortcutsMappings = computed(() => {
       'FOCUS_SEARCH_ALT',
     ]],
     [t('KeyboardShortcutPrompt.Search in New Window'), ['SEARCH_IN_NEW_WINDOW']],
+    [t('KeyboardShortcutPrompt.New Tab'), ['NEW_TAB']],
+    [t('KeyboardShortcutPrompt.Close Tab'), ['CLOSE_TAB']],
+    [t('KeyboardShortcutPrompt.Next Tab'), ['NEXT_TAB']],
+    [t('KeyboardShortcutPrompt.Previous Tab'), ['PREVIOUS_TAB']],
 
     [t('KeyboardShortcutPrompt.Refresh'), ['REFRESH']],
     [t('KeyboardShortcutPrompt.Focus Secondary Search'), ['FOCUS_SECONDARY_SEARCH']],
