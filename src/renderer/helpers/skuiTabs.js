@@ -33,6 +33,7 @@ import { reactive, watch } from 'vue'
 
 import router from '../router/index'
 import store from '../store/index'
+import { routeNamesItself, translateWindowTitle } from './strings'
 import { debounce } from './utils'
 
 /** A restored file this long is a runaway, not a session. */
@@ -278,16 +279,43 @@ function restoreScroll(targetY) {
 }
 
 /**
- * A tab with no name of its own -- one opened by the + button or Ctrl+T -- takes the page title
- * the app is already showing.
+ * The name a route gives itself -- empty for a page named by its CONTENT (a video, a channel, a
+ * search), whose name arrives later with the page's data.
+ *
+ * @param {import('vue-router').RouteLocationNormalized} route
+ * @returns {string}
+ */
+function routeOwnName(route) {
+  return routeNamesItself(route.path) ? translateWindowTitle(route.meta?.title) ?? '' : ''
+}
+
+/**
+ * What the page currently on screen calls itself: its route's own name where it has one, the
+ * app title otherwise.
+ *
+ * @param {import('vue-router').RouteLocationNormalized} route
+ * @returns {string}
+ */
+function nameForRoute(route) {
+  const own = routeOwnName(route)
+  if (own.length > 0) { return own }
+
+  const title = store.getters.getAppTitle
+
+  return typeof title === 'string' ? title : ''
+}
+
+/**
+ * A tab with no name of its own -- one opened by the + button or Ctrl+T -- takes the name of the
+ * page it is showing.
  *
  * @param {SkuiTab} tab
  */
 function adoptAppTitle(tab) {
-  const title = store.getters.getAppTitle
+  const name = nameForRoute(router.currentRoute.value)
 
-  if (typeof title === 'string' && title.length > 0) {
-    tab.title = title
+  if (name.length > 0) {
+    tab.title = name
     persist()
   }
 }
@@ -457,6 +485,11 @@ export function registerTabRouting() {
       tab.scrollY = 0
     }
 
+    // A page that names itself is named HERE, from the route it just landed on, rather than
+    // waiting for a title to arrive from somewhere.
+    const ownName = routeOwnName(to)
+    if (ownName.length > 0) { tab.title = ownName }
+
     persist()
   })
 
@@ -466,6 +499,16 @@ export function registerTabRouting() {
   // late on a watch page, once the video has loaded
   watch(() => store.getters.getAppTitle, (title) => {
     if (navigating) { return }
+
+    // A page that names itself can only ever be called that. Anything else arriving while it is
+    // on screen was fetched for a page that has since been left -- switch to a video and back
+    // before it loads, and its name landed on the feed you returned to (白い熊, 2026-09-19).
+    // The view that sets it late is guarded too (Watch.js `updateTitle`); this is the backstop.
+    // It is an equality rather than a blanket refusal because the route's own name is
+    // translated, and the locale loads after the first navigation: App.vue commits the name
+    // again once it does, and that commit has to be let through.
+    const ownName = routeOwnName(router.currentRoute.value)
+    if (ownName.length > 0 && title !== ownName) { return }
 
     const tab = activeTab()
 

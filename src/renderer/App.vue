@@ -140,7 +140,7 @@ import store from './store/index'
 
 import packageDetails from '../../package.json'
 import { debounce, openExternalLink, openInternalPath, showToast } from './helpers/utils'
-import { translateWindowTitle } from './helpers/strings'
+import { routeNamesItself, translateWindowTitle } from './helpers/strings'
 import { loadLocale } from './i18n/index'
 import { getLocalClip } from './helpers/api/local.js'
 import { getClipInvidious } from './helpers/api/invidious.js'
@@ -758,14 +758,9 @@ function enableOpenUrl() {
 }
 
 const windowTitle = computed(() => {
-  const routePath = route.path
-  if (
-    !routePath.startsWith('/channel/') &&
-    !routePath.startsWith('/watch/') &&
-    !routePath.startsWith('/hashtag/') &&
-    !routePath.startsWith('/playlist/') &&
-    !routePath.startsWith('/search/')
-  ) {
+  // the list of pages named by their own content lives in helpers/strings.js now, because the
+  // tab strip has to make exactly the same distinction
+  if (routeNamesItself(route.path)) {
     return translateWindowTitle(route.meta.title) ?? ''
   } else {
     return null

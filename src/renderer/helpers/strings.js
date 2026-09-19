@@ -57,6 +57,26 @@ export function translateWindowTitle(title) {
 }
 
 /**
+ * 白い熊 自由動画: whether a route names itself -- its title is the one its `meta.title` carries,
+ * translated, and nothing a view fetches can improve on it. The routes excluded below are named
+ * by their CONTENT instead: a video's, a channel's or a playlist's name arrives with the page's
+ * data, asynchronously and often long after the page was opened.
+ *
+ * The distinction is what keeps a late title off a page it does not belong to -- App.vue names
+ * the window with it, and helpers/skuiTabs.js names the tab.
+ *
+ * @param {string} path
+ * @returns {boolean}
+ */
+export function routeNamesItself(path) {
+  return !path.startsWith('/channel/') &&
+    !path.startsWith('/watch/') &&
+    !path.startsWith('/hashtag/') &&
+    !path.startsWith('/playlist/') &&
+    !path.startsWith('/search/')
+}
+
+/**
  * Returns the first user-perceived character,
  * respecting language specific rules and
  * emojis made up of multiple codepoints

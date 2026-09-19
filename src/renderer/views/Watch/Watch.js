@@ -2293,6 +2293,14 @@ export default defineComponent({
     },
 
     updateTitle: function () {
+      // 白い熊 自由動画: a video's information can arrive long after its page has been left --
+      // switch to a video and back to the feed before it loads and this fires with the feed on
+      // screen, naming the window, and the tab strip's active tab, after a video nobody is
+      // watching (白い熊, 2026-09-19). The page names itself only while it IS the page.
+      if (!this.$route.path.startsWith('/watch/') || this.$route.params.id !== this.videoId) {
+        return
+      }
+
       this.setAppTitle(this.videoTitle)
     },
 
