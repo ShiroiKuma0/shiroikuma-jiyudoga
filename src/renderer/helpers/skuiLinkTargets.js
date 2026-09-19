@@ -1,10 +1,11 @@
 /**
  * 白い熊 自由動画 — turning a link in the page into something the context menu can act on.
  *
- * Every place in the app that points at a video, channel, playlist, hashtag or post does it
- * with a `RouterLink`, i.e. an `<a href="…#/watch/…">`. That one shape is what lets a single
- * document-level listener serve tiles, recommendations, search results, playlist rows and
- * description links without any of those components knowing about the menu.
+ * Every place in the app that points anywhere inside it does so with a `RouterLink`, i.e. an
+ * `<a href="…#/watch/…">`. That one shape is what lets a single document-level listener serve
+ * tiles, recommendations, search results, playlist rows, description links -- and the side nav,
+ * whose entries are links to whole views and open in a tab of their own just as readily
+ * (白い熊, 2026-09-19) -- without any of those components knowing about the menu.
  *
  * The external-URL builders below mirror `transformURL` in `src/main/index.js`, which is what
  * the NATIVE context menu used before we took the in-app links off it. One deliberate
@@ -13,15 +14,18 @@
  * same link for the same video.
  */
 
+import router from '../router/index'
 import store from '../store/index'
+import { translateWindowTitle } from './strings'
 
-/** Route prefixes the menu knows how to talk about. Anything else is left to the browser. */
-const KNOWN_ROUTES = new Set(['watch', 'channel', 'playlist', 'hashtag', 'post'])
+/** Routes that name a piece of CONTENT, and so carry an id and an external equivalent. */
+const CONTENT_ROUTES = new Set(['watch', 'channel', 'playlist', 'hashtag', 'post'])
 
 /**
  * @typedef {object} SkuiLinkTarget
- * @property {'watch'|'channel'|'playlist'|'hashtag'|'post'} kind
- * @property {string} id the route parameter — video id, channel id, playlist id, …
+ * @property {'watch'|'channel'|'playlist'|'hashtag'|'post'|'page'} kind
+ * @property {string} id the route parameter — video id, channel id, playlist id, … — empty for
+ *   a `page`, which is a whole view rather than one thing in it
  * @property {string} path the in-app route path, ready for `router.push`
  * @property {{[key: string]: string}} query the in-app route query
  * @property {string} title best-effort label for the link, used to name a new tab
@@ -74,7 +78,12 @@ export function resolveLinkTarget(eventTarget) {
   const [routePath, queryString] = url.hash.slice(1).split('?')
   const [route, id] = routePath.split('/').filter(part => part.length > 0)
 
-  if (!KNOWN_ROUTES.has(route) || !id) { return null }
+  if (!route) { return null }
+
+  const isContent = CONTENT_ROUTES.has(route)
+
+  // a content route without its id is half a link and names nothing
+  if (isContent && !id) { return null }
 
   const query = {}
   for (const [key, value] of new URLSearchParams(queryString ?? '')) {
@@ -88,11 +97,11 @@ export function resolveLinkTarget(eventTarget) {
   const image = eventTarget.closest('img') ?? anchor.querySelector('img')
   const title = (anchor.textContent ?? '').trim() ||
     (image?.getAttribute('alt') ?? '').trim() ||
-    decodeURIComponent(id)
+    (isContent ? decodeURIComponent(id) : nameForPath(routePath))
 
   return {
-    kind: route,
-    id: decodeURIComponent(id),
+    kind: isContent ? route : 'page',
+    id: isContent ? decodeURIComponent(id) : '',
     path: routePath,
     query,
     title,
@@ -101,7 +110,24 @@ export function resolveLinkTarget(eventTarget) {
 }
 
 /**
- * The equivalent YouTube or Invidious URL for a target.
+ * What a whole view is called, for a link that shows no text of its own -- a side nav entry with
+ * its labels hidden, an icon-only shortcut. The route's own name, translated, exactly as the
+ * window title and the tab strip use it.
+ *
+ * @param {string} path
+ * @returns {string}
+ */
+function nameForPath(path) {
+  try {
+    return translateWindowTitle(router.resolve({ path }).meta?.title) || path
+  } catch {
+    return path
+  }
+}
+
+/**
+ * The equivalent YouTube or Invidious URL for a target. A `page` has none -- nothing outside the
+ * app answers to "the subscriptions feed" -- and the menu leaves those entries out for it.
  *
  * @param {SkuiLinkTarget} target
  * @param {boolean} toYouTube YouTube when true, the current Invidious instance when false

@@ -98,22 +98,24 @@ function runApp() {
   let backendPreference = 'local'
   let backendFallback = true
 
-  /** In-app routes the renderer's own context menu handles. Kept in step with the list in
-   *  src/renderer/helpers/skuiLinkTargets.js. */
-  const IN_APP_MENU_ROUTES = ['/watch', '/channel', '/playlist', '/hashtag', '/post']
-
   /**
+   * A link into our own page: the same document, with a route in the hash. EVERY one of those
+   * belongs to the renderer's own menu now (src/renderer/helpers/skuiLinkTargets.js), a feed or
+   * the settings as much as a video -- "open in a new tab" is exactly as useful there.
+   *
+   * The page's own URL comes from `pageURL`, not from the event's sender: a WebContents
+   * `context-menu` event carries no `sender`, and reaching through it for `getURL()` brought the
+   * whole main process down with an uncaught TypeError the first time a right-click landed on an
+   * in-app link the renderer does not swallow -- a side nav entry (白い熊, 2026-09-19).
+   *
    * @param {Electron.ContextMenuParams} parameters
-   * @param {Electron.WebContents} webContents
    */
-  function isInAppRouteLink(parameters, webContents) {
+  function isInAppRouteLink(parameters) {
     if (!parameters.linkURL) { return false }
 
     const [documentUrl, route] = parameters.linkURL.split('#')
 
-    if (documentUrl !== webContents.getURL().split('#')[0] || !route) { return false }
-
-    return IN_APP_MENU_ROUTES.some(prefix => route.startsWith(prefix))
+    return !!route && documentUrl === (parameters.pageURL ?? '').split('#')[0]
   }
 
   // NOTE (fork): this is a NATIVE Electron menu, drawn by Chromium's views toolkit outside the
@@ -136,7 +138,7 @@ function runApp() {
     // The renderer calls preventDefault() on the same links, which should already stop Blink
     // asking for this menu; refusing them here as well means exactly one menu appears even if
     // that ever stops holding.
-    shouldShowMenu: (event, parameters) => !isInAppRouteLink(parameters, event.sender),
+    shouldShowMenu: (event, parameters) => !isInAppRouteLink(parameters),
     prepend: (defaultActions, parameters, browserWindow) => [
       {
         label: 'Open in a New Window',

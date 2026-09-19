@@ -80,7 +80,9 @@ const entries = computed(() => {
     list.push({ action: 'newWindow', label: t('SKUI.Menu.Open in a new window') })
   }
 
-  if (!hideSharingActions.value) {
+  // A page -- a feed, the history, the settings -- can be opened in a tab or a window like any
+  // link, but nothing outside the app answers to it, so the sharing entries are not offered.
+  if (!hideSharingActions.value && target.kind !== 'page') {
     list.push(
       { type: 'divider' },
       { action: 'copyYouTube', label: t('Video.Copy YouTube Link') },
