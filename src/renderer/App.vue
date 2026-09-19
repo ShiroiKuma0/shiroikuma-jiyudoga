@@ -104,6 +104,7 @@
     />
     <FtaLogViewer />
     <SkuiContextMenu />
+    <SkuiTitleTooltip />
     <ft-toast />
     <ft-progress-bar
       v-if="showProgressBar"
@@ -132,6 +133,7 @@ import FtSearchFilters from './components/FtSearchFilters/FtSearchFilters.vue'
 import FtaLogViewer from './components/FtaLogViewer/FtaLogViewer.vue'
 import SkuiContextMenu from './components/SkuiContextMenu/SkuiContextMenu.vue'
 import SkuiTabStrip from './components/SkuiTabStrip/SkuiTabStrip.vue'
+import SkuiTitleTooltip from './components/SkuiTitleTooltip/SkuiTitleTooltip.vue'
 import { vSaferHtml } from './directives/vSaferHtml.js'
 
 import store from './store/index'
@@ -147,6 +149,7 @@ import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
 import { applySkuiTheme, parseTheme } from './helpers/skui'
 import { registerContextMenuTriggers, unregisterContextMenuTriggers } from './helpers/skuiContextMenu'
+import { registerTitleTooltipTriggers, unregisterTitleTooltipTriggers } from './helpers/skuiTitleTooltip'
 import { resolveLinkTarget } from './helpers/skuiLinkTargets'
 import {
   closeActiveTab,
@@ -285,6 +288,9 @@ onMounted(async () => {
   // 白い熊 自由動画: right-click (desktop) / long press (Android) on any in-app link
   registerContextMenuTriggers()
 
+  // 白い熊 自由動画: hovering a clamped title (desktop) floats it in full
+  registerTitleTooltipTriggers()
+
   window.addEventListener('wheel', handleGridScaleWheel, { passive: false })
   window.addEventListener('touchstart', handleGridScaleTouchStart, { passive: true })
   window.addEventListener('touchmove', handleGridScaleTouchMove, { passive: false })
@@ -300,6 +306,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('auxclick', handleAuxClick)
 
   unregisterContextMenuTriggers()
+  unregisterTitleTooltipTriggers()
 
   window.removeEventListener('wheel', handleGridScaleWheel)
   window.removeEventListener('touchstart', handleGridScaleTouchStart)

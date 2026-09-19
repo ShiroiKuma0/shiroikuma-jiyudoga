@@ -1,0 +1,29 @@
+/*
+ * The fork's modal language again: the accent colour on the foundation background, 2px of frame
+ * and a 16px radius. skui's popup-surface rule declares the same border, and it is repeated here
+ * so the bubble is framed even before that style tag is written.
+ *
+ * Unlike the menus, the TEXT is the accent colour too — this box exists to be read at a glance
+ * over a grid of thumbnails, so it is yellow on black rather than the body's softer text colour.
+ *
+ * `pointer-events: none` is not decoration: the bubble sits over the title it completes, and a
+ * box that took the pointer would steal the hover that raised it and flicker.
+ */
+.skuiTitleTooltip {
+  position: fixed;
+  z-index: 240;
+  background-color: var(--bg-color);
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+  padding-block: 8px;
+  padding-inline: 12px;
+  font-size: 15px;
+  line-height: 1.35;
+  max-inline-size: min(520px, calc(100vw - 16px));
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  user-select: none;
+}

@@ -293,6 +293,7 @@ export function applySkuiTheme(theme, customFonts = []) {
     '.promptCard',                 // every modal built on FtPrompt
     '.iconDropdown',               // the ... menus on tiles, watch page, playlists
     '.skuiContextMenu',            // right-click / long-press menu on in-app links
+    '.skuiTitleTooltip',           // the hover bubble that finishes a clamped title
     '.profileList',                // profile selector
     '.profileDropdown',            // subscribe button
     '.moreOptionContainer',        // side nav overflow
