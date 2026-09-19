@@ -48,6 +48,33 @@
 }
 
 /*
+ * The feed's refresh widget is fixed directly under the bar too (the fixed-top-bar mixin in
+ * scss-partials/_utils.scss), and the strip took that band away from it: the strip is z-index 4
+ * against the widget's 3, opaque, so with tabs open the refresh button was not merely hidden
+ * but unclickable (白い熊, 2026-09-19 -- "the refresh icon top-right is gone"). It starts below
+ * the strip instead, at every width: under 680px the strip is fixed as well, and the content
+ * margins above already reserve the widget's height beneath it.
+ *
+ * `:deep` because this file is scoped and the widget belongs to a component several levels
+ * down -- unlike the bar below it, which is a child of this template and carries our scope id.
+ */
+.app:has(.skuiTabStrip) :deep(.floatingRefreshSection) {
+  inset-block-start: calc(60px + var(--sk-tabstrip-height));
+}
+
+/*
+ * Everything that drops out of the top bar -- the profile list, the feed filter panel, the
+ * expanded search on Android -- is drawn inside the bar's own stacking context, which is
+ * z-index 4, exactly the strip's. A tie is broken by document order and the strip comes after
+ * the bar, so the strip painted over the first ~30px of every one of those panels. The bar
+ * (0-60px) and the strip (60px down) never overlap themselves, so lifting the bar above it
+ * costs nothing and gives its panels back.
+ */
+.app:has(.skuiTabStrip) .topNav {
+  z-index: 5;
+}
+
+/*
  * Below 680px the top bar is fixed and the content clears it with a top margin instead of
  * flowing after it, so the strip is fixed too and the same margins grow by its height. The
  * side nav is a bottom bar at this width and needs nothing.
