@@ -15,6 +15,78 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+009` — 2026-09-19
+
+Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
+moved** — a pure fork release. `+006` through `+008` were built and delivered while this work was
+tested; everything they carried is here.
+
+Living with the tab strip that shipped in `+005` turned up four things it had broken or never
+had; the hover bubble for clamped titles is the one piece here that has nothing to do with it.
+
+### Tabs
+
+- **Drag a tab to move it.** The two pointers are told apart deliberately: a **mouse** drag is a
+  drag from the first few pixels, the way every browser's tab strip behaves, while a **finger** has
+  to press and stay still first — a swipe along the strip scrolls it once the tabs outgrow the row,
+  and that gesture had to keep working. Once the finger is held, a non-passive `touchmove` handler
+  is what stops the scroller claiming the moves that follow; `touch-action` is read when a gesture
+  begins, long before it is clear which gesture it is. The strip reorders **live** under the
+  pointer — past a neighbour's *middle*, never its edge, so a tab resting on a boundary does not
+  flicker between two places — which means there is no floating ghost to animate back and the
+  folder never leaves the drawer. The click that ends a drag is swallowed, so rearranging never
+  switches tabs. The new order is persisted with the rest of the session.
+- **A tab is named by the page it holds.** A video's information arrives seconds after its page is
+  opened; switch to a video tab and back before it loads, and that late write landed with the feed
+  on screen and renamed the **active** tab — and the window — after a video nobody was watching.
+  Fixed at both ends: the watch page writes a title only while it is still the page on screen
+  (which mends the plain window title too, wrong the same way long before tabs existed), and a page
+  that names itself — a feed, the history, the settings — is named from its own route the moment
+  the navigation lands, so a foreign title arriving afterwards is refused. Which routes name
+  themselves is now one list, shared by the window title and the strip.
+
+### Fixes
+
+- **The feed's refresh button came back.** It is fixed directly under the top bar, and the strip
+  took that band: z-index 4 against its 3, opaque — not merely hidden but unclickable, which is
+  exactly how it looked (“the refresh icon top-right is gone”). It starts below the strip now, at
+  every width.
+- **The top bar's own panels came back too.** The profile list, the feed filter panel and Android's
+  expanded search all live inside the bar's stacking context, which tied with the strip's and lost
+  on document order — each was clipped by the strip's first ~30 px. The bar is lifted above it; the
+  two never overlap themselves, so nothing else changes.
+- **Right-clicking a side nav entry no longer kills the app.** The main process decided whether a
+  right-clicked link was an in-app one by reading `event.sender.getURL()`, and a WebContents
+  `context-menu` event carries no `sender` — so the read threw *in main*, and Electron put up “A
+  JavaScript error occurred in the main process”. It fired for every in-app link the renderer's own
+  menu did not claim, which is precisely the side nav. The page's URL now comes from the event's
+  own `pageURL`.
+
+### The context menu
+
+- **Every link into the app is a target now**, not only the ones naming a video, a channel, a
+  playlist, a hashtag or a post. Right-click a side nav entry — Subscriptions, Trending, History,
+  Playlists, Settings — and it opens in a tab of its own. A whole page carries no id and has no
+  YouTube or Invidious equivalent, so its menu offers *Open in a new tab* and *Open in a new
+  window* and nothing else; the new tab takes the link's own text, falling back to the route's
+  translated name when the nav labels are hidden.
+- With the renderer claiming every in-app link, the main process refuses every in-app link: the
+  route list the two sides had to keep in step is gone, and they cannot drift apart any more.
+
+### Titles
+
+- **A clamped title finishes itself on hover.** A grid tile caps its title at
+  `--sk-grid-title-lines` lines, so a long name ends in an ellipsis with no way to read the rest
+  short of opening the video. Hovering it floats the whole string above the tile — yellow text and
+  border on black, the accent frame every floating surface in the fork wears — flipping below only
+  when there is no room above. Driven from one pair of document-level listeners, like the context
+  menu: every title in the app is already an `<h3 class="h3Title">`, so no tile, row or view knows
+  this exists. It appears only for a title that is **actually** truncated, and it is desktop- and
+  mouse-only: Android has no hover, and a finger on a desktop touchscreen would raise a bubble
+  nothing would ever dismiss.
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+005` — 2026-09-18
 
 Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin

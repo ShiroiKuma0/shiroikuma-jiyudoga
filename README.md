@@ -16,7 +16,8 @@ button that writes chapter-preserving mkv files, original-language titles & desc
 **self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
 subscription feed into one-tap views, per-profile video **starring**, an automatic **device sync**
 that keeps the watch history, subscriptions and starred videos the same on the phone and the PC,
-persistent **tabs** on both platforms, live grid zoom with tuning sliders, theatre mode on
+persistent, drag-rearrangeable **tabs** on both platforms, live grid zoom with tuning sliders,
+theatre mode on
 Android, full-width views, a sister-repo-style
 UI theming layer, and a **one-zip backup** of the whole app that a sister automation app can
 trigger unattended.
@@ -28,7 +29,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+005`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+009`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -95,6 +96,12 @@ Back and forward walk tab switches and ordinary navigation together, in the orde
 happened — there is no second history to get out of step. `Ctrl`+`T` opens a tab, `Ctrl`+`Shift`+`W`
 closes one, `Ctrl`+`Tab` cycles, and middle-clicking any link opens it in the background.
 
+**Drag a tab to move it.** With a mouse that is a drag from the first few pixels, the way a
+browser's tab strip behaves; with a finger it is a press that stays still and then moves, because a
+plain swipe along the strip still has to scroll it. The strip reorders live under the pointer, so
+the tab is always already where it will land, and the order is remembered like everything else
+about a tab.
+
 Tabs are **local to the device** — the phone's tabs are the phone's, and are never carried over by
 the device sync or a backup.
 
@@ -111,6 +118,10 @@ Right-clicking a video, channel or playlist now raises **our own** menu — fram
 every other panel in the app — offering *Open in a New Tab*, *Open in a New Window*, the YouTube and
 Invidious links, and *Save Thumbnail As…*. On Android the same menu answers a **long press**, which
 is the first time the phone has had one.
+
+It answers on **every** link into the app, not only the ones that point at a video: right-click a
+side nav entry and the subscriptions feed, the history or the settings opens in a tab of its own.
+A whole page has no YouTube equivalent, so those entries are simply left off its menu.
 
 The platform keeps what only it can do: right-clicking a text field still gives you spellcheck and
 paste, and a loose image still gives you Save Image As.
@@ -197,6 +208,15 @@ sliders popup next to the Subscriptions heading tunes the bases the zoom multipl
 thumbnail width, title font size and **title max lines** (so big fonts don't make tiles
 arbitrarily tall) — plus a matching slider for the Profile Select row padding, right in the
 dropdown.
+
+## 🫧 Long titles finish themselves
+
+A tile caps its title at a few lines, so a long video name ends in an ellipsis with nowhere to read
+the rest. Hover it on the desktop and the whole name floats above the tile — yellow on black behind
+the accent frame every floating surface here wears. Only a title that is *actually* cut off raises
+one: a name that already fits is a name you can already read.
+
+---
 
 ## 🎭 Theatre mode everywhere
 
