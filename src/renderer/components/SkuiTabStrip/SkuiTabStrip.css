@@ -123,6 +123,19 @@
   font-weight: 600;
 }
 
+/*
+ * The folder being dragged. There is no ghost and no gap left behind -- the strip has already
+ * reordered under the pointer, so the tab is where it would land -- and this only has to say
+ * "you are holding this one": drawn above its neighbours, wearing a stronger wash of the accent
+ * than a hover does. The active tab keeps its page-coloured bottom border through it, so an open
+ * folder still reads as open while it is carried.
+ */
+.tab.dragged {
+  position: relative;
+  z-index: 3;
+  background-color: rgb(var(--accent-color-rgb, 255 255 0) / 30%);
+}
+
 .label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,4 +181,11 @@
 .newTab:hover {
   border-start-start-radius: 14px;
   border-start-end-radius: 14px;
+}
+
+/* while a tab is being carried, every part of the strip says so */
+.skuiTabStrip.dragging .tab,
+.skuiTabStrip.dragging .label,
+.skuiTabStrip.dragging .close {
+  cursor: grabbing;
 }

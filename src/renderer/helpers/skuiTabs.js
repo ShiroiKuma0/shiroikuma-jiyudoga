@@ -342,6 +342,25 @@ export function openTab(location, { activate = false } = {}) {
 }
 
 /**
+ * Put a tab somewhere else in the strip. The order is the reader's, so it is remembered like
+ * everything else about a tab.
+ *
+ * @param {string} id
+ * @param {number} index where it should land; anything outside the strip is pulled back into it
+ */
+export function moveTab(id, index) {
+  const from = tabsState.tabs.findIndex(tab => tab.id === id)
+  if (from === -1) { return }
+
+  const to = Math.max(0, Math.min(index, tabsState.tabs.length - 1))
+  if (to === from) { return }
+
+  const [tab] = tabsState.tabs.splice(from, 1)
+  tabsState.tabs.splice(to, 0, tab)
+  persist()
+}
+
+/**
  * @param {string} id
  */
 export function closeTab(id) {
