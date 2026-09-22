@@ -15,6 +15,69 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+012` — 2026-09-22
+
+Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
+moved** — a pure fork release. `+010` and `+011` were built and delivered while this work was
+tested; everything they carried is here.
+
+Three more things living with the tab strip turned up, and one colour.
+
+### Tabs
+
+- **The strip scrolls.** With enough tabs open, the ones off the end were simply out of reach on
+  the desktop. The fix is a **floor**, not the buttons: flex shrink happens before overflow, so
+  with no minimum a folder just squashed — twelve tabs in a 900 px strip measured 70 px apiece and
+  the row never outgrew itself, which left nothing to scroll and no title left either. A tab stops
+  shrinking at 120 px, below which it is padding and a close button, and the strip overflows from
+  there. A **wheel** anywhere over the strip then rolls it sideways (a mouse only says up and down,
+  and over a row that can only go sideways that is what it means; at either end the gesture is
+  handed back to the page), and a **chevron** appears at each end on the desktop — only while there
+  is something off that end, greyed once it is reached. A finger keeps its swipe and gets no
+  chevrons: the phone's strip has far less room to give. Whichever tab becomes the open one is
+  pulled into view, so `Ctrl`+`Tab`, and a tab opened beside one near the end, no longer land out
+  of sight.
+- **Back belongs to the tab you are in.** Opening a video in a new tab and pressing back jumped to
+  the tab it had been opened *from*, and out of a fullscreen video it did that instead of simply
+  leaving fullscreen. There is one history — the window's — and every tab's pages are in it,
+  interleaved in the order they were actually visited, so the entry behind a tab's first page is
+  not that tab's previous page at all. Every entry is now **tied to its tab**, and back and forward
+  mean *the nearest entry this tab left behind*, reached in **one** traversal over any other tab's
+  entries lying between, which are never rendered on the way. A tab that has been nowhere has both
+  arrows disabled and ignores the gesture entirely, rather than being a doorway into the tab beside
+  it. Out of a fullscreen video, any back gesture only leaves fullscreen.
+- **The list behind the arrows is the tab's own.** A long press or right-click on either arrow used
+  to offer the window's whole entry list — with tabs open that named other tabs' pages and jumped
+  to them when picked. It lists this tab's pages now, by the name each carried while it was on
+  screen.
+- **The phone's hardware back follows the same rule**, and at the bottom of a tab's own history it
+  backgrounds the app, the way back has always ended there. `MainActivity.onBack` can no longer
+  decide that alone — the WebView still having entries behind it says nothing about whether *this*
+  tab does — so the page calls a new `moveAppToBack` on the JS interface instead of leaving the
+  button dead.
+
+Two findings are worth recording, since both cost a rebuild to learn. Every back the window itself
+can make — `Alt`+`Left` through Electron's menu, the phone's hardware back — reaches the page as a
+**cancelable** traverse *before* the history moves, so one listener covers them all and no gesture
+needed a special case; the redirect it then asks for has to leave the event's own task or it is
+dropped while the cancellation is still happening. And the obvious home for the per-entry tab
+stamp, the entry's own Navigation API state, **does not survive**: vue-router calls
+`history.replaceState` on the page it is *leaving* to record its scroll position, and that wipes
+the navigation state of the slot it rewrites — every page lost its stamp the moment it was left,
+which is exactly the set back has to recognise. It hangs off the entry's `key` instead, the
+identifier of its slot, which survives the rewrite. A browser build without the Navigation API
+(Firefox, Safari) stands the whole thing down and keeps the arrows as they were; the desktop app
+and the phone's WebView are both Chromium.
+
+### UI
+
+- **The title over a fullscreen video wears the app's yellow** instead of upstream's flat white. It
+  is the theme's accent, so it follows the theme rather than pinning one colour into the player,
+  and the black wash behind it is untouched — that is what carries the contrast whatever the accent
+  is.
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+009` — 2026-09-19
 
 Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin

@@ -29,7 +29,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+009`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+012`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -92,9 +92,22 @@ progress the app already keeps, so switching tabs and restarting the app behave 
 also why **the tabs come back**: close the app, open it again, and the same set is there, on the
 same page, at the same scroll position.
 
-Back and forward walk tab switches and ordinary navigation together, in the order things actually
-happened — there is no second history to get out of step. `Ctrl`+`T` opens a tab, `Ctrl`+`Shift`+`W`
-closes one, `Ctrl`+`Tab` cycles, and middle-clicking any link opens it in the background.
+**Back belongs to the tab you are in.** There is one history — the window's — and every tab's pages
+are in it, interleaved in the order they were actually visited, so walking it straight lands in
+whatever tab was open before this one. Every entry is tied to its tab instead: back and forward
+mean *the nearest page this tab left behind*, reached in one jump over any other tab's pages lying
+between, which are never drawn on the way. A tab that has been nowhere — one just opened beside
+another — has both arrows greyed and ignores the gesture entirely, and the list behind a long press
+on either arrow names only this tab's pages. Out of a fullscreen video, back simply leaves
+fullscreen. On the phone the hardware back follows the same rule, and backgrounds the app once the
+tab has nowhere left to go. `Ctrl`+`T` opens a tab, `Ctrl`+`Shift`+`W` closes one, `Ctrl`+`Tab`
+cycles, and middle-clicking any link opens it in the background.
+
+**The strip scrolls once the folders outgrow it.** A folder shrinks with its neighbours only down
+to a width still worth reading, and from there the row overflows: a finger swipes it, a wheel
+anywhere over it rolls it sideways, and on the desktop a chevron appears at each end — only while
+there is something off that end. Whichever tab is opened is pulled into view, so `Ctrl`+`Tab` never
+lands on a folder you cannot see.
 
 **Drag a tab to move it.** With a mouse that is a drag from the first few pixels, the way a
 browser's tab strip behaves; with a finger it is a press that stays still and then moves, because a
