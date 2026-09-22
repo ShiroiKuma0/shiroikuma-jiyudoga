@@ -4,10 +4,21 @@
     class="skuiTabStrip"
     :class="{ dragging: draggingId !== '' }"
     role="tablist"
+    @wheel="handleWheel"
   >
+    <button
+      v-if="showScrollers"
+      class="scroller"
+      :disabled="!canScrollStart"
+      :title="t('SKUI.Tabs.Scroll tabs left')"
+      @click="scrollStrip(-1)"
+    >
+      <FontAwesomeIcon :icon="['fas', 'chevron-left']" />
+    </button>
     <div
       ref="tabsRow"
       class="tabs"
+      @scroll.passive="updateScrollState"
     >
       <div
         v-for="tab in tabs"
@@ -35,6 +46,15 @@
       </div>
     </div>
     <button
+      v-if="showScrollers"
+      class="scroller"
+      :disabled="!canScrollEnd"
+      :title="t('SKUI.Tabs.Scroll tabs right')"
+      @click="scrollStrip(1)"
+    >
+      <FontAwesomeIcon :icon="['fas', 'chevron-right']" />
+    </button>
+    <button
       class="newTab"
       :title="t('SKUI.Tabs.New tab')"
       @click="openLandingTab"
@@ -46,7 +66,7 @@
 
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import store from '../../store/index'
@@ -70,6 +90,147 @@ const visible = computed(() => tabsState.ready && (tabsState.tabs.length > 1 || 
 function labelFor(tab) {
   return tab.title.length > 0 ? tab.title : tab.path
 }
+
+/*
+ * Scrolling the strip.
+ *
+ * A folder shrinks with its neighbours only down to the floor the CSS gives it, and the row
+ * scrolls from there -- so with enough tabs open there is always something off the end. A finger
+ * swipes it. A wheel anywhere over the strip rolls it sideways. The desktop has neither, so a
+ * chevron appears at each end, and the open folder is pulled back into view whenever the strip
+ * moves to another one.
+ */
+
+/** How much of the visible row one press of a chevron travels... */
+const SCROLL_STEP_FRACTION = 0.8
+
+/** ...but never less than this, so a narrow strip still moves by a folder or so. */
+const MIN_SCROLL_STEP_PX = 120
+
+/** Sub-pixel row widths mean "at the end" is never exactly the last pixel. */
+const EDGE_TOLERANCE_PX = 1
+
+/** The breathing room a revealed folder keeps from the edge -- the row's own start padding. */
+const REVEAL_MARGIN_PX = 8
+
+const canScrollStart = ref(false)
+const canScrollEnd = ref(false)
+
+// the chevrons are the desktop's swipe; a finger already has one, and on the phone the two
+// buttons would be eating a strip that has far less room to give
+const showScrollers = computed(() =>
+  !process.env.IS_ANDROID && (canScrollStart.value || canScrollEnd.value)
+)
+
+function updateScrollState() {
+  const row = tabsRow.value
+
+  if (!row) {
+    canScrollStart.value = false
+    canScrollEnd.value = false
+    return
+  }
+
+  canScrollStart.value = row.scrollLeft > EDGE_TOLERANCE_PX
+  canScrollEnd.value = row.scrollLeft < row.scrollWidth - row.clientWidth - EDGE_TOLERANCE_PX
+}
+
+/**
+ * @param {number} direction -1 towards the first folder, 1 towards the last
+ */
+function scrollStrip(direction) {
+  const row = tabsRow.value
+  if (!row) { return }
+
+  row.scrollBy({
+    left: direction * Math.max(row.clientWidth * SCROLL_STEP_FRACTION, MIN_SCROLL_STEP_PX),
+    behavior: 'smooth'
+  })
+}
+
+/**
+ * A mouse wheel only says up and down, and over a row that can only go sideways that is what it
+ * means; a touchpad and a tilt wheel say sideways themselves, so whichever axis is the larger is
+ * the one being asked for.
+ *
+ * @param {WheelEvent} event
+ */
+function handleWheel(event) {
+  const row = tabsRow.value
+  if (!row) { return }
+
+  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+  if (delta === 0) { return }
+
+  // this app only ever sees pixels, both platforms being Chromium, but a wheel is allowed to
+  // report lines or pages and three of either would be a strip that barely twitches
+  const pixels = event.deltaMode === 1
+    ? delta * 16
+    : event.deltaMode === 2 ? delta * row.clientWidth : delta
+
+  const before = row.scrollLeft
+  row.scrollLeft = before + pixels
+
+  // claim the gesture only if the strip actually moved: at either end it belongs to the page
+  if (row.scrollLeft !== before) { event.preventDefault() }
+}
+
+/**
+ * Put the open folder where it can be seen -- switching tabs with Ctrl+Tab, or opening one next
+ * to a tab near the end, otherwise lands on a folder that is off the edge of a scrolled strip.
+ * Instantly, not smoothly: the strip should already be showing the tab by the time the page
+ * behind it changes.
+ */
+function revealActiveTab() {
+  const row = tabsRow.value
+  if (!row) { return }
+
+  const index = tabs.value.findIndex(tab => tab.id === activeId.value)
+  if (index === -1) { return }
+
+  const element = row.querySelectorAll('.tab')[index]
+  if (!element) { return }
+
+  // offsetLeft is measured from the row, which is the same origin scrollLeft counts from
+  const start = element.offsetLeft - REVEAL_MARGIN_PX
+  const end = element.offsetLeft + element.offsetWidth + REVEAL_MARGIN_PX - row.clientWidth
+
+  if (row.scrollLeft > start) {
+    row.scrollLeft = start
+  } else if (row.scrollLeft < end) {
+    row.scrollLeft = end
+  }
+}
+
+/** @type {ResizeObserver|null} */
+let rowObserver = null
+
+// the row only exists while the strip is visible, so the observer follows the element rather
+// than the component: a second tab opening is what brings both into being
+watch(tabsRow, (row) => {
+  rowObserver?.disconnect()
+  rowObserver = null
+
+  if (!row) {
+    updateScrollState()
+    return
+  }
+
+  rowObserver = new ResizeObserver(updateScrollState)
+  rowObserver.observe(row)
+
+  updateScrollState()
+  revealActiveTab()
+}, { immediate: true })
+
+// a tab opening, closing or finally learning its name all change how much there is to scroll;
+// the observer above sees the row resize, not the folders inside it
+watch(tabs, updateScrollState, { deep: true, flush: 'post' })
+
+watch(activeId, () => {
+  revealActiveTab()
+  updateScrollState()
+}, { flush: 'post' })
 
 /*
  * Dragging a tab along the strip reorders it.
@@ -249,7 +410,10 @@ function handleClick(tab) {
   activateTab(tab.id)
 }
 
-onBeforeUnmount(endPress)
+onBeforeUnmount(() => {
+  endPress()
+  rowObserver?.disconnect()
+})
 </script>
 
 <style scoped src="./SkuiTabStrip.css" />

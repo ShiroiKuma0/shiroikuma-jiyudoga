@@ -1494,6 +1494,8 @@ SKUI:
       back when the app is opened again.
     New tab: New tab
     Close tab: Close tab
+    Scroll tabs left: Scroll tabs left
+    Scroll tabs right: Scroll tabs right
     Always show: Always show the tab strip
     Always show description: >-
       Keeps the strip visible even with a single tab open.

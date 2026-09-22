@@ -75,8 +75,15 @@
   align-items: center;
   gap: 8px;
   flex: 0 1 auto;
-  min-inline-size: 0;
   max-inline-size: 220px;
+
+  /*
+   * The floor a folder shrinks to, and the whole reason the strip scrolls at all: flex shrink
+   * comes before overflow, so with no floor twelve tabs simply squashed to 70px apiece and the
+   * row never outgrew itself -- there was nothing to scroll and nothing left of the titles
+   * either. Below roughly this, a tab is padding and a close button.
+   */
+  min-inline-size: 120px;
   box-sizing: border-box;
   padding-inline: 14px;
   cursor: pointer;
@@ -143,7 +150,8 @@
 }
 
 .close,
-.newTab {
+.newTab,
+.scroller {
   background: none;
   border: 0;
   color: inherit;
@@ -172,13 +180,35 @@
   font-size: 14px;
 }
 
+/*
+ * The two chevrons that scroll the strip, desktop only -- a finger swipes it instead. They wear
+ * the + button's geometry, held the same 2px clear of the drawer edge, so the three buttons on
+ * the strip read as one set; they appear only while there is something off an end, and each
+ * greys out once that end is reached.
+ */
+.scroller {
+  inline-size: 26px;
+  block-size: calc(var(--sk-tabstrip-height) - 8px);
+  margin-block-end: 2px;
+  margin-inline: 2px;
+  color: var(--primary-color);
+  font-size: 13px;
+}
+
+.scroller:disabled {
+  cursor: default;
+  opacity: 0.25;
+}
+
 .close:hover,
-.newTab:hover {
+.newTab:hover,
+.scroller:enabled:hover {
   opacity: 1;
   background-color: rgb(var(--accent-color-rgb, 255 255 0) / 25%);
 }
 
-.newTab:hover {
+.newTab:hover,
+.scroller:enabled:hover {
   border-start-start-radius: 14px;
   border-start-end-radius: 14px;
 }

@@ -1234,6 +1234,8 @@ SKUI:
       タブが二つ以上になるとタブ列が現れ、開いていたタブは次回の起動時に戻ります。
     New tab: 新しいタブ
     Close tab: タブを閉じる
+    Scroll tabs left: タブを左へスクロール
+    Scroll tabs right: タブを右へスクロール
     Always show: タブ列を常に表示
     Always show description: >-
       タブが一つだけでもタブ列を表示し続けます。
