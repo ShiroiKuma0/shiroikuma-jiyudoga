@@ -637,6 +637,22 @@ class FreeTubeJavaScriptInterface(
     }
   }
 
+  /**
+   * Fork (白い熊 自由動画): send the app to the background, as the back button always has once
+   * there was nowhere left to go back to.
+   *
+   * `MainActivity.onBack` can no longer decide that on its own. Back is scoped to the open TAB
+   * now (helpers/skuiTabs), so the WebView still having entries behind it says nothing about
+   * whether THIS tab does: the page cancels the traversal when those entries belong to another
+   * tab, and at the bottom of its own history calls this instead of leaving the button dead.
+   */
+  @JavascriptInterface
+  fun moveAppToBack() {
+    context.runOnUiThread {
+      context.moveTaskToBack(true)
+    }
+  }
+
   // endregion
 
   // region Device sync

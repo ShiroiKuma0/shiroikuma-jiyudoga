@@ -16,12 +16,15 @@
  * stores — so switching tabs and restarting the app behave identically, and the persistence
  * below is honest rather than approximate.
  *
- * **There are no per-tab history stacks.** A tab switch is a normal `router.push` carrying the
- * tab's id in the history entry's state. `afterEach` reads it back: present means the entry was
- * a tab switch, absent means the user navigated inside the tab that was already active. The
- * existing back/forward arrows and the Android hardware back button then walk tab switches and
- * in-tab navigation together, in the order things actually happened, and land on the right tab
- * on the way — with no second navigation implementation to keep in step with the first.
+ * **There are no per-tab history stacks — the one history is read per tab instead.** A tab
+ * switch is a normal `router.push` carrying the tab's id in the history entry's state, and
+ * every entry is additionally tied, by its Navigation API key, to the tab it belongs to.
+ * Back and forward then mean "the nearest entry THIS tab left behind", and the window's own
+ * gestures — the arrows, Alt+Left, the phone's hardware back — are caught before they move and
+ * sent the same way. So a tab remembers where it has been without a second history
+ * implementation to keep in step with the first, and a tab that has been nowhere (one just
+ * opened beside another) has a back arrow that is simply disabled rather than a doorway into
+ * whatever tab was open before it. See the "where back goes" section below.
  *
  * **Only one window owns the list.** `skuiTabs` is an ordinary setting, so a write is broadcast
  * to every other window through SYNC_SETTINGS; nothing reads that value after boot, and a
@@ -59,7 +62,11 @@ export const tabsState = reactive({
   /** hydrated from the setting; nothing below does anything until this is true */
   ready: false,
   /** whether this window is the one that persists the list */
-  owns: false
+  owns: false,
+  /** whether the active tab has anywhere of its own to go back to... */
+  canBack: false,
+  /** ...or forward to; both drive the top bar's arrows */
+  canForward: false
 })
 
 /** @returns {SkuiTab|undefined} */
@@ -345,6 +352,10 @@ export function activateTab(id) {
     )
 
     if (tab.title.length === 0) { adoptAppTitle(tab) }
+
+    // no navigation happened, so `afterEach` will not fire: hand the entry over here instead
+    stampCurrentEntry(tab.title.length > 0 ? tab.title : undefined)
+    refreshTabHistoryReach()
     return
   }
 
@@ -437,6 +448,268 @@ export function openLandingTab() {
   openTab({ path: '/' + store.getters.getLandingPage }, { activate: true })
 }
 
+/*
+ * ---------------------------------------------------------------------------------------------
+ * Where "back" goes.
+ *
+ * There is one history — the window's — and every tab's pages are in it, interleaved in the
+ * order they were actually visited. Walking it straight is what tabs make wrong: the entry
+ * behind a video you opened in a new tab is not that tab's previous page, it is whatever the
+ * tab you opened it FROM was showing, so back used to jump to another tab (白い熊, 2026-09-20).
+ *
+ * So each entry is stamped with the tab it belongs to, and back and forward mean "the nearest
+ * entry this tab left behind" — reached in ONE traversal, over any other tab's entries lying
+ * between, which are never rendered on the way. A tab that has been nowhere has nothing behind
+ * it and its arrow is disabled; it never becomes a doorway into the tab it was opened beside.
+ *
+ * All of it rests on the Navigation API, because `history` alone cannot say ANYTHING about an
+ * entry the app is not standing on: `navigation.entries()` hands over the whole list with an
+ * identifier per entry, and a traversal names the entry it is about to land on before it lands.
+ * Firefox and Safari have none of it; in a browser build without the API everything here stands
+ * down and the arrows behave as they always did (the desktop app and the phone's WebView are
+ * both Chromium, so both have it).
+ *
+ * One listener covers every gesture the window itself can make — the top bar's arrows go
+ * through `goBackInTab` directly, but Alt+Left, the phone's hardware back button and anything
+ * else the platform wires to history all arrive as a cancelable `traverse`, before the history
+ * moves, and are redirected there too.
+ * ---------------------------------------------------------------------------------------------
+ */
+
+/** @type {Navigation|undefined} */
+const navigationApi = window.navigation
+
+/** Whether this build can scope back and forward to a tab at all. */
+export const hasTabHistory = navigationApi != null
+
+/** How many of the tab's own pages the arrows' dropdown lists. */
+const TAB_HISTORY_MENU_LIMIT = 15
+
+/** set while the traversal in flight is one WE asked for, which needs no second opinion */
+let traversing = false
+
+/**
+ * Which tab each history entry belongs to, and what its page is called, kept against the
+ * entry's `key` — the identifier of its SLOT in the history, which survives every rewrite of
+ * that slot.
+ *
+ * The obvious home for this is the entry's own Navigation API state, and that was the first
+ * attempt. It does not survive: vue-router calls `history.replaceState` on the page it is
+ * LEAVING (to record its scroll position) before pushing the new one, and a classic replace
+ * wipes the navigation state of the slot it rewrites. Every page therefore lost its stamp the
+ * moment it was left — the exact entries back has to recognise — and back sailed past them all
+ * to the last one the app had never navigated away from. The key stays put through all of it.
+ *
+ * @type {Map<string, { tab: string, label: string }>}
+ */
+const entryOwners = new Map()
+
+/** Past this the map is holding keys for entries the window has long since dropped. */
+const MAX_REMEMBERED_ENTRIES = 100
+
+/**
+ * @param {string} key
+ * @returns {string} the id of the tab the entry belongs to, empty for one we never stamped
+ */
+function tabOfEntry(key) {
+  return entryOwners.get(key)?.tab ?? ''
+}
+
+/**
+ * Stamp the entry the app is standing on with the tab it belongs to, and with what the page is
+ * called — the arrows' dropdown lists the tab's own pages by name, and an entry's name is only
+ * knowable while it is the one on screen.
+ *
+ * @param {string} [label]
+ */
+function stampCurrentEntry(label) {
+  if (!hasTabHistory || tabsState.activeId === '') { return }
+
+  const current = navigationApi.currentEntry
+  if (!current) { return }
+
+  entryOwners.set(current.key, {
+    tab: tabsState.activeId,
+    label: label ?? entryOwners.get(current.key)?.label ?? ''
+  })
+
+  if (entryOwners.size > MAX_REMEMBERED_ENTRIES) {
+    const alive = new Set(navigationApi.entries().map(entry => entry.key))
+
+    for (const key of entryOwners.keys()) {
+      if (!alive.has(key)) { entryOwners.delete(key) }
+    }
+  }
+}
+
+/**
+ * The nearest entry that way belonging to the active tab.
+ *
+ * @param {-1|1} direction
+ * @returns {NavigationHistoryEntry|null}
+ */
+function neighbourInTab(direction) {
+  if (!hasTabHistory) { return null }
+
+  const entries = navigationApi.entries()
+  const here = navigationApi.currentEntry?.index ?? -1
+
+  if (here < 0) { return null }
+
+  for (let index = here + direction; index >= 0 && index < entries.length; index += direction) {
+    if (tabOfEntry(entries[index].key) === tabsState.activeId) { return entries[index] }
+  }
+
+  return null
+}
+
+/**
+ * @param {NavigationHistoryEntry} entry
+ * @returns {boolean} whether the traversal was actually started
+ */
+function traverseToEntry(entry) {
+  let traversal
+
+  traversing = true
+
+  try {
+    traversal = navigationApi.traverseTo(entry.key)
+  } catch {
+    // the entry went away between reading the list and asking for it
+    traversing = false
+    return false
+  }
+
+  const done = () => { traversing = false }
+
+  traversal.committed.then(done, done)
+
+  // a traversal can be superseded by a later one; there is nothing here to do about that, but
+  // the rejection has to be taken or it surfaces as an unhandled one
+  traversal.finished.catch(() => {})
+
+  return true
+}
+
+/**
+ * A back gesture out of a fullscreen video means "leave fullscreen", and nothing else — it is
+ * the only way out that does not need the controls the video is covering.
+ *
+ * @returns {boolean} whether that is what just happened
+ */
+function leaveFullscreen() {
+  if (document.fullscreenElement == null) { return false }
+
+  document.exitFullscreen().catch(() => {})
+
+  return true
+}
+
+function refreshTabHistoryReach() {
+  tabsState.canBack = neighbourInTab(-1) !== null
+  tabsState.canForward = neighbourInTab(1) !== null
+}
+
+/**
+ * @returns {boolean} whether the gesture was answered
+ */
+export function goBackInTab() {
+  if (leaveFullscreen()) { return true }
+
+  const previous = neighbourInTab(-1)
+
+  return previous !== null && traverseToEntry(previous)
+}
+
+/**
+ * @returns {boolean} whether the gesture was answered
+ */
+export function goForwardInTab() {
+  const next = neighbourInTab(1)
+
+  return next !== null && traverseToEntry(next)
+}
+
+/**
+ * Jump straight to one of the tab's own pages, as picked from the arrows' dropdown.
+ *
+ * @param {string} key
+ */
+export function goToTabEntry(key) {
+  if (!hasTabHistory || key === navigationApi.currentEntry?.key) { return }
+
+  const entry = navigationApi.entries().find(candidate => candidate.key === key)
+
+  if (entry) { traverseToEntry(entry) }
+}
+
+/**
+ * The active tab's own pages, newest first, for the dropdown behind the arrows. Only this tab's
+ * — the list is the thing that used to offer another tab's pages by name.
+ *
+ * @returns {{ label: string, value: string, active: boolean }[]}
+ */
+export function tabHistoryOptions() {
+  if (!hasTabHistory) { return [] }
+
+  const here = navigationApi.currentEntry?.index ?? -1
+  const mine = navigationApi.entries().filter(entry => tabOfEntry(entry.key) === tabsState.activeId)
+
+  // a long-lived tab can outgrow the menu, so keep the window around where it is standing
+  const position = mine.findIndex(entry => entry.index === here)
+  const start = Math.max(0, Math.min(
+    position - (TAB_HISTORY_MENU_LIMIT >> 1),
+    mine.length - TAB_HISTORY_MENU_LIMIT
+  ))
+
+  return mine
+    .slice(start, start + TAB_HISTORY_MENU_LIMIT)
+    .reverse()
+    .map(entry => ({
+      label: entryOwners.get(entry.key)?.label || decodeURIComponent(entry.url.split('#')[1] ?? ''),
+      value: entry.key,
+      active: entry.index === here
+    }))
+}
+
+/**
+ * Every back and forward the window itself can make arrives here as a cancelable traversal,
+ * BEFORE the history moves — which is what lets it be sent somewhere else without the wrong
+ * page ever being rendered.
+ *
+ * @param {NavigateEvent} event
+ */
+function handleTraversal(event) {
+  if (event.navigationType !== 'traverse' || traversing || !event.cancelable) { return }
+
+  if (document.fullscreenElement != null) {
+    event.preventDefault()
+    leaveFullscreen()
+    return
+  }
+
+  const here = navigationApi.currentEntry?.index ?? -1
+  const there = event.destination.index
+
+  // already this tab's own page: exactly where back or forward should land
+  if (there < 0 || tabOfEntry(event.destination.key) === tabsState.activeId) { return }
+
+  event.preventDefault()
+
+  const target = neighbourInTab(there < here ? -1 : 1)
+
+  if (target !== null) {
+    // Out of the event, and out of the task it is dispatched in: a traversal started from
+    // inside the one it is replacing is dropped on the floor — the cancellation has not
+    // finished happening yet, so there is nothing yet to traverse from.
+    setTimeout(() => traverseToEntry(target), 0)
+  } else if (process.env.IS_ANDROID && event.userInitiated && there < here) {
+    // the phone's back button at the bottom of this tab's history: leave the app, the way back
+    // has always ended, rather than dying in 白い熊's hand
+    Android.moveAppToBack()
+  }
+}
+
 const rememberScrollSoon = debounce(() => {
   rememberScroll()
   persist()
@@ -490,8 +763,25 @@ export function registerTabRouting() {
     const ownName = routeOwnName(to)
     if (ownName.length > 0) { tab.title = ownName }
 
+    // the entry the app now stands on belongs to this tab -- that stamp is the whole of what
+    // back and forward read
+    stampCurrentEntry(tab.title.length > 0 ? tab.title : undefined)
+    refreshTabHistoryReach()
+
     persist()
   })
+
+  if (hasTabHistory) {
+    navigationApi.addEventListener('navigate', handleTraversal)
+
+    // a traversal that went through untouched still moved the tab's reach
+    navigationApi.addEventListener('currententrychange', refreshTabHistoryReach)
+
+    // the entry the app booted on gets no `afterEach` of its own when the restored tab is
+    // already the route the router resolved
+    stampCurrentEntry(activeTab()?.title || undefined)
+    refreshTabHistoryReach()
+  }
 
   window.addEventListener('scroll', rememberScrollSoon, { passive: true })
 
@@ -514,6 +804,7 @@ export function registerTabRouting() {
 
     if (tab && typeof title === 'string' && title.length > 0 && tab.title !== title) {
       tab.title = title
+      stampCurrentEntry(title)
       persist()
     }
   })

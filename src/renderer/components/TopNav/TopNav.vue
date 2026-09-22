@@ -154,6 +154,15 @@ import store from '../../store/index'
 
 import packageDetails from '../../../../package.json'
 
+import {
+  goBackInTab,
+  goForwardInTab,
+  goToTabEntry,
+  hasTabHistory,
+  tabHistoryOptions,
+  tabsState
+} from '../../helpers/skuiTabs'
+
 import { KeyboardShortcuts, MOBILE_WIDTH_THRESHOLD, SEARCH_RESULTS_DISPLAY_LIMIT } from '../../../constants'
 import { debounce, localizeAndAddKeyboardShortcutToActionTitle, openInternalPath } from '../../helpers/utils'
 import { translateWindowTitle } from '../../helpers/strings'
@@ -244,6 +253,12 @@ const forwardText = computed(() => {
   ) + navigationHistoryAddendum.value
 })
 
+/*
+ * 白い熊 自由動画: the arrows walk the ACTIVE TAB's own pages, never the window's whole history
+ * — see the "where back goes" section in helpers/skuiTabs. A click carries nothing and means
+ * one step; a pick from the dropdown carries the key of the page to jump straight to.
+ */
+
 /**
  * @param {number} offset
  */
@@ -255,22 +270,30 @@ function goToOffset(offset) {
 }
 
 /**
- * @param {number} [offset]
+ * @param {string|number} [entryKey]
  */
-function historyBack(offset) {
-  if (offset != null) {
-    goToOffset(offset)
+function historyBack(entryKey) {
+  if (typeof entryKey === 'string') {
+    goToTabEntry(entryKey)
+  } else if (hasTabHistory) {
+    goBackInTab()
+  } else if (entryKey != null) {
+    goToOffset(entryKey)
   } else {
     router.back()
   }
 }
 
 /**
- * @param {number} [offset]
+ * @param {string|number} [entryKey]
  */
-function historyForward(offset) {
-  if (offset != null) {
-    goToOffset(offset)
+function historyForward(entryKey) {
+  if (typeof entryKey === 'string') {
+    goToTabEntry(entryKey)
+  } else if (hasTabHistory) {
+    goForwardInTab()
+  } else if (entryKey != null) {
+    goToOffset(entryKey)
   } else {
     router.forward()
   }
@@ -346,52 +369,36 @@ const activeDataListProperties = computed(() => {
 const isArrowBackwardDisabled = ref(true)
 const isArrowForwardDisabled = ref(true)
 
-if (process.env.IS_ELECTRON || 'navigation' in window) {
-  watch(route, () => {
-    setNavigationHistoryDropdownOptions()
-
-    isArrowForwardDisabled.value = !window.navigation.canGoForward
-    isArrowBackwardDisabled.value = !window.navigation.canGoBack
-  }, { deep: true })
+/*
+ * 白い熊 自由動画: both the arrows' enabled state and the pages behind them come from the active
+ * tab, not from the window. Upstream asked Electron for the window's whole entry list, which
+ * with tabs open names pages belonging to other tabs and jumps to them when picked — the very
+ * thing the arrows must not do.
+ */
+if (hasTabHistory) {
+  watch([() => tabsState.canBack, () => tabsState.canForward, () => tabsState.activeId], () => {
+    isArrowBackwardDisabled.value = !tabsState.canBack
+    isArrowForwardDisabled.value = !tabsState.canForward
+    navigationHistoryDropdownOptions.value = tabHistoryOptions()
+  }, { immediate: true })
 } else {
-  // If the Navigation API isn't supported (Firefox and Safari)
-  // keep the back and forwards buttons always enabled
+  // Without the Navigation API (Firefox and Safari) there is no reading the history per tab,
+  // so the arrows stay enabled and walk the window's history as they always did.
   isArrowBackwardDisabled.value = false
   isArrowForwardDisabled.value = false
-}
-
-let navigationHistoryDropdownActiveEntry = null
-let isLoadingNavigationHistory = false
-let pendingNavigationHistoryLabel = null
-
-async function setNavigationHistoryDropdownOptions() {
-  if (process.env.IS_ELECTRON) {
-    isLoadingNavigationHistory = true
-    const dropdownOptions = await window.ftElectron.getNavigationHistory()
-
-    const activeEntry = dropdownOptions.find(option => option.active)
-
-    if (pendingNavigationHistoryLabel) {
-      activeEntry.label = pendingNavigationHistoryLabel
-    }
-
-    navigationHistoryDropdownOptions.value = dropdownOptions
-    navigationHistoryDropdownActiveEntry = activeEntry
-    isLoadingNavigationHistory = false
-  }
 }
 
 /** @type {import('vue').ComputedRef<string>} */
 const appTitle = computed(() => store.getters.getAppTitle)
 
-watch(appTitle, (value) => {
-  nextTick(() => {
-    if (isLoadingNavigationHistory) {
-      pendingNavigationHistoryLabel = value
-    } else if (navigationHistoryDropdownActiveEntry) {
-      navigationHistoryDropdownActiveEntry.label = value
-    }
-  })
+// a watch page names itself late, once the video has loaded, and the dropdown lists pages by
+// name -- so the list is rebuilt when the name it would have shown arrives
+watch(appTitle, () => {
+  if (hasTabHistory) {
+    nextTick(() => {
+      navigationHistoryDropdownOptions.value = tabHistoryOptions()
+    })
+  }
 })
 
 // Long press (or right click) on the hamburger opens the 白い熊 UI settings section
