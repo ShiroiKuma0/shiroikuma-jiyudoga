@@ -182,7 +182,11 @@
   left: 5px;
   max-width: calc(100% - 10px);
   font-size: xx-large;
-  color: #fff;
+
+  /* 白い熊 自由動画: the accent rather than upstream's flat white, so the title over a fullscreen
+     video is the same yellow as the rest of the app (白い熊, 2026-09-22) -- it keeps the black
+     wash behind it, which is what carries the contrast whatever the theme's accent is */
+  color: var(--primary-color);
   font-weight: normal;
   background-color: rgb(0 0 0 / 50%);
   border-radius: 5px;
