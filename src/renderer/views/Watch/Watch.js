@@ -112,6 +112,23 @@ export default defineComponent({
       startNextVideoInPip: false,
       isLoading: true,
       firstLoad: true,
+      /*
+       * Which load of this page is the live one.
+       *
+       * Loading a video is a long walk of awaits, and a second one can be asked for while the
+       * first is still walking: close the tab that is playing and the tab beside it starts
+       * loading, then click another tab and that one starts loading too -- both into this one
+       * component, which owns one player, one media session and one set of page state. The
+       * loser used to finish last and win, so the video that played was the tab 白い熊 had just
+       * left (白い熊, 2026-09-26).
+       *
+       * Every reload takes the next number and carries it through its awaits; a load that finds
+       * the number has moved on hands over instead of writing a video nobody asked for into the
+       * page that replaced it.
+       */
+      loadGeneration: 0,
+      /** the teardown of the current player while it is in flight; see `destroyPlayer` */
+      playerTeardown: null,
       useTheatreMode: false,
       videoPlayerLoaded: false,
       isFamilyFriendly: false,
@@ -402,11 +419,17 @@ export default defineComponent({
   },
   methods: {
     async reloadView() {
+      const generation = ++this.loadGeneration
+
       await this.handleRouteChange()
 
       if (this.$refs.player) {
         await this.destroyPlayer()
       }
+
+      // tearing the player down is a wait of its own, and another route change can arrive
+      // inside it -- the newer one is the one that was asked for last, so hand over to it
+      if (this.loadGeneration !== generation) { return }
 
       // react to route changes...
       this.videoId = this.$route.params.id
@@ -583,12 +606,18 @@ export default defineComponent({
     },
 
     getVideoInformationLocal: async function () {
+      const generation = this.loadGeneration
+
       if (this.firstLoad) {
         this.isLoading = true
       }
 
       try {
         const videoInfo = await getLocalVideoInfo(this.videoId)
+
+        // this page is loading something else now: see `loadGeneration`
+        if (this.loadGeneration !== generation) { return }
+
         const { info: result, poToken, clientInfo, adEndTimeUnixMs } = videoInfo
 
         const playabilityStatus = result.playability_status
@@ -842,7 +871,11 @@ export default defineComponent({
               result.streaming_data.adaptive_formats[0]?.cipher
             ) {
               try {
-                this.manifestSrc = await this.createLocalDashManifest(result, true)
+                const manifestSrc = await this.createLocalDashManifest(result, true)
+
+                if (this.loadGeneration !== generation) { return }
+
+                this.manifestSrc = manifestSrc
                 this.manifestMimeType = MANIFEST_TYPE_DASH
                 useRemoteManifest = false
               } catch (error) {
@@ -1048,7 +1081,11 @@ export default defineComponent({
               result.streaming_data.adaptive_formats[0]?.signature_cipher ||
               result.streaming_data.adaptive_formats[0]?.cipher
             ) {
-              this.manifestSrc = await this.createLocalDashManifest(result)
+              const manifestSrc = await this.createLocalDashManifest(result)
+
+              if (this.loadGeneration !== generation) { return }
+
+              this.manifestSrc = manifestSrc
               this.manifestMimeType = MANIFEST_TYPE_DASH
             } else {
               this.manifestSrc = null
@@ -1074,6 +1111,11 @@ export default defineComponent({
         this.updateTitle()
       } catch (err) {
         console.error(err)
+
+        // a video this page has already moved on from is not news, and its fallback would fetch
+        // the one now on screen a second time: see `loadGeneration`
+        if (this.loadGeneration !== generation) { return }
+
         if (this.backendPreference === 'local' && this.backendFallback && !err.toString().includes('private') && !err.toString().includes('unavailable')) {
           const errorMessage = this.t('Local API Error (Click to copy)')
           showToast(`${errorMessage}: ${err}`, 10000, () => {
@@ -1093,12 +1135,17 @@ export default defineComponent({
     },
 
     getVideoInformationInvidious: function () {
+      const generation = this.loadGeneration
+
       if (this.firstLoad) {
         this.isLoading = true
       }
 
       invidiousGetVideoInformation(this.videoId)
         .then(async result => {
+          // this page is loading something else now: see `loadGeneration`
+          if (this.loadGeneration !== generation) { return }
+
           if (result.error) {
             throw new Error(result.error)
           }
@@ -1263,7 +1310,11 @@ export default defineComponent({
               })
               ?.projectionType ?? null
 
-            this.manifestSrc = await this.createInvidiousDashManifest(result)
+            const manifestSrc = await this.createInvidiousDashManifest(result)
+
+            if (this.loadGeneration !== generation) { return }
+
+            this.manifestSrc = manifestSrc
             this.manifestMimeType = MANIFEST_TYPE_DASH
           }
 
@@ -1273,6 +1324,10 @@ export default defineComponent({
         })
         .catch(err => {
           console.error(err)
+
+          // likewise: see `loadGeneration`
+          if (this.loadGeneration !== generation) { return }
+
           if (process.env.SUPPORTS_LOCAL_API && this.backendPreference === 'invidious' && this.backendFallback) {
             const errorMessage = this.t('Invidious API Error (Click to copy)')
             showToast(`${errorMessage}: ${err}`, 10000, () => {
@@ -2341,10 +2396,21 @@ export default defineComponent({
     },
 
     destroyPlayer: async function() {
-      const uiState = await this.$refs.player.destroyPlayer()
-      this.startNextVideoInFullscreen = uiState.startNextVideoInFullscreen
-      this.startNextVideoInFullwindow = uiState.startNextVideoInFullwindow
-      this.startNextVideoInPip = uiState.startNextVideoInPip
+      // Two teardowns can be asked for at once -- a second tab click starts a navigation whose
+      // leave guard asks for this while the first navigation's is still waiting on it -- and the
+      // player has to come apart once, not twice. Both callers wait on the one teardown.
+      this.playerTeardown ??= this.$refs.player.destroyPlayer()
+
+      try {
+        const uiState = await this.playerTeardown
+
+        this.startNextVideoInFullscreen = uiState.startNextVideoInFullscreen
+        this.startNextVideoInFullwindow = uiState.startNextVideoInFullwindow
+        this.startNextVideoInPip = uiState.startNextVideoInPip
+      } finally {
+        // including when it threw: a teardown nobody can await again is not the one in flight
+        this.playerTeardown = null
+      }
     },
 
     /**

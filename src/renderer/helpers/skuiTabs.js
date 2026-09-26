@@ -328,6 +328,17 @@ function adoptAppTitle(tab) {
 }
 
 /**
+ * Which tab switch is the live one.
+ *
+ * A switch is not instant -- leaving a watch page waits for its player to be torn down -- so a
+ * second click can land with the first still in flight, and vue-router answers the first one's
+ * `push` by refusing it. Only the LAST click may act on that answer: an older one putting the
+ * strip back where it thought it was would leave the page on screen sitting in a tab nobody
+ * asked for.
+ */
+let activationSerial = 0
+
+/**
  * @param {string} id
  */
 export function activateTab(id) {
@@ -335,6 +346,9 @@ export function activateTab(id) {
 
   const tab = tabsState.tabs.find(candidate => candidate.id === id)
   if (!tab) { return }
+
+  const leaving = tabsState.activeId
+  const serial = ++activationSerial
 
   rememberScroll()
   tabsState.activeId = id
@@ -359,7 +373,26 @@ export function activateTab(id) {
     return
   }
 
-  router.push(routeForTab(tab))
+  // A navigation that did not happen -- refused by a guard, or thrown out of -- leaves the page
+  // where it was, and the strip has to go back with it. A navigation SUPERSEDED by another is
+  // refused in exactly the same way, and must be left alone: whatever moved the page next owns
+  // the strip now. Hence both tests -- the later CLICK is caught by the serial, and a
+  // navigation of any other kind by the page on screen no longer being the one we were leaving.
+  const settle = (failure) => {
+    if (failure == null || serial !== activationSerial || tabsState.activeId !== id) { return }
+
+    const previous = tabsState.tabs.find(candidate => candidate.id === leaving)
+    const current = router.currentRoute.value
+
+    if (!previous || previous.path !== current.path || !sameQuery(previous.query, current.query)) {
+      return
+    }
+
+    tabsState.activeId = leaving
+    persist()
+  }
+
+  router.push(routeForTab(tab)).then(settle, settle)
 }
 
 /**
@@ -422,6 +455,9 @@ export function closeTab(id) {
   const index = tabsState.tabs.findIndex(tab => tab.id === id)
   if (index === -1) { return }
 
+  // Closing a tab that is NOT the open one moves nothing else: no navigation, no page load,
+  // nothing for a switch already in flight to lose. That is what makes it safe to click the tab
+  // you want and THEN close the one you are done with.
   const wasActive = id === tabsState.activeId
   tabsState.tabs.splice(index, 1)
 
