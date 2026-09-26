@@ -374,6 +374,9 @@ const state = {
   // the strip normally appears only once there is a second tab, so one tab looks like
   // the app always did; this pins it open
   skuiTabsAlwaysShow: false,
+  // where a tab being opened lands: 'end' at the far right of the strip, so the tabs
+  // already open never move, or 'next' immediately after the tab it was opened from
+  skuiTabsNewTabPosition: 'end',
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)

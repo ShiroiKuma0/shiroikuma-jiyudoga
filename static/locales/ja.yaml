@@ -1230,8 +1230,13 @@ SKUI:
   Tabs:
     Section: タブ
     Description: >-
-      デスクトップでは動画を右クリック、スマホでは長押しすると、今のタブの隣に開きます。
+      デスクトップでは動画を右クリック、スマホでは長押しすると、別のタブで開きます。
       タブが二つ以上になるとタブ列が現れ、開いていたタブは次回の起動時に戻ります。
+    New tab position: 新しいタブを開く位置
+    New tab position description: >-
+      「一番右」なら開いているタブは動きません。読んでいるタブも、閉じる × も同じ場所に残ります。
+    At the far right: 一番右
+    Beside this one: 今のタブの隣
     New tab: 新しいタブ
     Close tab: タブを閉じる
     Scroll tabs left: タブを左へスクロール

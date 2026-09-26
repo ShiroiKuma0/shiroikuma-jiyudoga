@@ -383,8 +383,8 @@
       </section>
 
       <!--
-        Tabs: the strip normally earns its row only once there is something to switch
-        between, which is why the only thing to set here is whether to pin it open.
+        Tabs: where a new one lands, and whether the strip is pinned open -- it normally
+        earns its row only once there is something to switch between.
       -->
       <section class="skuiSection">
         <hr class="skuiSectionRule">
@@ -394,6 +394,21 @@
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Tabs.Description') }}
         </p>
+
+        <label class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Tabs.New tab position') }}</span>
+            <span class="skuiEntrySummary">{{ $t('SKUI.Tabs.New tab position description') }}</span>
+          </span>
+          <select
+            class="skuiEntrySelect"
+            :value="tabsNewTabPosition"
+            @change="updateTabsNewTabPosition($event.target.value)"
+          >
+            <option value="end">{{ $t('SKUI.Tabs.At the far right') }}</option>
+            <option value="next">{{ $t('SKUI.Tabs.Beside this one') }}</option>
+          </select>
+        </label>
 
         <label class="skuiEntryRow skuiIndent1">
           <span class="skuiEntryText">
@@ -941,6 +956,14 @@ function updateAllChannelsLabel(value) {
 // ---- tabs ----
 
 const tabsAlwaysShow = computed(() => store.getters.getSkuiTabsAlwaysShow)
+const tabsNewTabPosition = computed(() => store.getters.getSkuiTabsNewTabPosition)
+
+/**
+ * @param {string} value 'end' at the far right of the strip, 'next' after the current tab
+ */
+function updateTabsNewTabPosition(value) {
+  store.dispatch('updateSkuiTabsNewTabPosition', value)
+}
 
 /**
  * @param {boolean} value

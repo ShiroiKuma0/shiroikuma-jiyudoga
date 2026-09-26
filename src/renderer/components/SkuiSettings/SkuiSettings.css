@@ -152,6 +152,22 @@
   text-align: end;
 }
 
+/* a setting with two or three named answers -- worn like the number field, so a row
+   reads the same whichever kind of control ends it */
+.skuiEntrySelect {
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.85em;
+  max-inline-size: 11em;
+  padding-block: 0.2em;
+  padding-inline: 0.4em;
+}
+
 .skuiEntrySwitch {
   accent-color: var(--primary-color);
   flex: 0 0 auto;

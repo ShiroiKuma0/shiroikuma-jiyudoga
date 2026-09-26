@@ -1489,9 +1489,15 @@ SKUI:
   Tabs:
     Section: Tabs
     Description: >-
-      Right-click a video on the desktop, or hold it on the phone, to open it in a tab beside
-      the one you are in. The strip appears once there is a second tab, and the open tabs come
-      back when the app is opened again.
+      Right-click a video on the desktop, or hold it on the phone, to open it in a tab of its
+      own. The strip appears once there is a second tab, and the open tabs come back when the
+      app is opened again.
+    New tab position: Where a new tab opens
+    New tab position description: >-
+      At the far right nothing already open moves, so the tab you are reading — and the cross
+      you are reaching for — stay exactly where they were.
+    At the far right: At the far right
+    Beside this one: Beside the current tab
     New tab: New tab
     Close tab: Close tab
     Scroll tabs left: Scroll tabs left

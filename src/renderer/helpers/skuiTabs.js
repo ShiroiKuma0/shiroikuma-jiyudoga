@@ -363,16 +363,32 @@ export function activateTab(id) {
 }
 
 /**
+ * Where a tab being opened belongs.
+ *
+ * At the far right, by default: the strip grows at the end it is read to, and nothing already
+ * open moves -- which matters because the tab you are closing, and the ones either side of it,
+ * stay exactly where your hand left them. Beside the tab it was opened from is the other half
+ * of the setting, and is what every new tab here used to do.
+ *
+ * @returns {number}
+ */
+function indexForNewTab() {
+  if (store.getters.getSkuiTabsNewTabPosition !== 'next') { return tabsState.tabs.length }
+
+  const activeIndex = tabsState.tabs.findIndex(candidate => candidate.id === tabsState.activeId)
+
+  return activeIndex === -1 ? tabsState.tabs.length : activeIndex + 1
+}
+
+/**
  * @param {{ path: string, query?: object, title?: string }} location
  * @param {{ activate?: boolean }} [options]
  * @returns {SkuiTab}
  */
 export function openTab(location, { activate = false } = {}) {
   const tab = makeTab(location)
-  const activeIndex = tabsState.tabs.findIndex(candidate => candidate.id === tabsState.activeId)
 
-  // a new tab belongs next to the one it was opened from, the way every browser does it
-  tabsState.tabs.splice(activeIndex === -1 ? tabsState.tabs.length : activeIndex + 1, 0, tab)
+  tabsState.tabs.splice(indexForNewTab(), 0, tab)
   persist()
 
   if (activate) { activateTab(tab.id) }
