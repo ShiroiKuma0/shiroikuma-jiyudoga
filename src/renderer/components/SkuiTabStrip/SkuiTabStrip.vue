@@ -5,6 +5,7 @@
     :class="{ dragging: draggingId !== '' }"
     role="tablist"
     @wheel="handleWheel"
+    @pointerleave="releaseTabWidths"
   >
     <button
       v-if="showScrollers"
@@ -18,6 +19,7 @@
     <div
       ref="tabsRow"
       class="tabs"
+      :style="lockStyle"
       @scroll.passive="updateScrollState"
     >
       <div
@@ -33,13 +35,13 @@
         @click="handleClick(tab)"
         @keydown.enter="activateTab(tab.id)"
         @keydown.space.prevent="activateTab(tab.id)"
-        @auxclick.middle.prevent="closeTab(tab.id)"
+        @auxclick.middle.prevent="handleClose($event, tab.id)"
       >
         <span class="label">{{ labelFor(tab) }}</span>
         <button
           class="close"
           :title="t('SKUI.Tabs.Close tab')"
-          @click.stop="closeTab(tab.id)"
+          @click.stop="handleClose($event, tab.id)"
         >
           <FontAwesomeIcon :icon="['fas', 'times']" />
         </button>
@@ -92,6 +94,76 @@ function labelFor(tab) {
 }
 
 /*
+ * Closing one tab, then the next.
+ *
+ * A crowded strip divides its room between the folders, so closing one makes every other one
+ * wider: the crosses move, and a click already aimed at the next one lands on a folder instead
+ * and opens it -- a page load nobody asked for. So a close made with the pointer in the strip
+ * PINS the strip as it stands, and it re-fits itself the moment the pointer leaves (or a tab is
+ * opened). Every browser's tab strip behaves this way, and for this reason.
+ *
+ * Pinning the folder width is only two thirds of it. The strip has two other movers, and both
+ * were caught red-handed at 白い熊's own window width (白い熊, 2026-09-26): closing a folder can
+ * take the row from overflowing to fitting, which retires BOTH chevrons -- and the one at the
+ * start was holding every folder 30px to the right, so each cross jumped a quarter of a folder
+ * leftwards and the click landed in the body of the next tab. A row scrolled to its end
+ * likewise gets its scroll clamped as the content shortens, sliding the folders the other way.
+ * So the pin holds the chevrons as they were and puts the scroll back where it was too.
+ *
+ * The other half of holding the crosses still is in the CSS: a folder's width no longer follows
+ * its label, so a title arriving mid-load cannot move anything at all.
+ */
+
+/** the pinned folder width in px; 0 leaves the strip free to re-fit */
+const lockedWidth = ref(0)
+
+/** the chevrons as they were when the pin was taken; null while the strip is free */
+const lockedScrollers = ref(null)
+
+/** ...and where the row was scrolled to */
+let lockedScrollLeft = 0
+
+const lockStyle = computed(() =>
+  lockedWidth.value > 0
+    // the pinned width, and no give: a row free to shrink would just share its room out again
+    ? { '--sk-tab-width': `${lockedWidth.value}px`, '--sk-tab-shrink': '0' }
+    : null
+)
+
+function lockTabWidths() {
+  const row = tabsRow.value
+  // every folder is the same width, so the first one speaks for all of them
+  const folder = row?.querySelector('.tab')
+
+  if (!folder) { return }
+
+  lockedWidth.value = folder.getBoundingClientRect().width
+  lockedScrollers.value = canScrollStart.value || canScrollEnd.value
+  lockedScrollLeft = row.scrollLeft
+}
+
+function releaseTabWidths() {
+  lockedWidth.value = 0
+  lockedScrollers.value = null
+}
+
+// A folder ARRIVING is a strip that has to share its room again, whichever way it was opened --
+// and one LEAVING may have shortened the row past where it was scrolled to, which moves every
+// folder that is left. A strip that goes away entirely (back to a single tab) must not leave a
+// pin behind for the next one to wear.
+watch(() => tabs.value.length, (now, before) => {
+  if (now > before) {
+    releaseTabWidths()
+  } else if (lockedWidth.value > 0 && tabsRow.value) {
+    tabsRow.value.scrollLeft = lockedScrollLeft
+  }
+}, { flush: 'post' })
+
+watch(visible, (shown) => {
+  if (!shown) { releaseTabWidths() }
+})
+
+/*
  * Scrolling the strip.
  *
  * A folder shrinks with its neighbours only down to the floor the CSS gives it, and the row
@@ -116,11 +188,16 @@ const REVEAL_MARGIN_PX = 8
 const canScrollStart = ref(false)
 const canScrollEnd = ref(false)
 
-// the chevrons are the desktop's swipe; a finger already has one, and on the phone the two
-// buttons would be eating a strip that has far less room to give
-const showScrollers = computed(() =>
-  !process.env.IS_ANDROID && (canScrollStart.value || canScrollEnd.value)
-)
+// The chevrons are the desktop's swipe; a finger already has one, and on the phone the two
+// buttons would be eating a strip that has far less room to give. While the strip is pinned they
+// are whatever they were when it was pinned -- one arriving or leaving shifts every folder
+// sideways, which is the very thing the pin exists to prevent.
+const showScrollers = computed(() => {
+  if (process.env.IS_ANDROID) { return false }
+  if (lockedScrollers.value !== null) { return lockedScrollers.value }
+
+  return canScrollStart.value || canScrollEnd.value
+})
 
 function updateScrollState() {
   const row = tabsRow.value
@@ -396,6 +473,17 @@ function startPress(event, tab) {
       }
     }, TOUCH_HOLD_MS)
   }
+}
+
+/**
+ * @param {PointerEvent} event
+ * @param {string} id
+ */
+function handleClose(event, id) {
+  // a finger is not aiming at the next cross, and its pointer leaves the strip as it lifts
+  if (event.pointerType !== 'touch') { lockTabWidths() }
+
+  closeTab(id)
 }
 
 /**

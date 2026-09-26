@@ -74,8 +74,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 0 1 auto;
-  max-inline-size: 220px;
+
+  /*
+   * EVERY folder is the same width, and that width is never its label's business.
+   *
+   * This was `0 1 auto` -- a folder as wide as its own title, to a 220px cap -- and a title
+   * arrives LATE: a tab opened on a video is called `/watch/...` until the page loads and is
+   * renamed the moment it does. So the strip quietly re-laid itself out while a page loaded,
+   * and the cross 白い熊 was already reaching for slid out from under the pointer between the
+   * aim and the click -- landing it on the folder instead, which opened that tab again
+   * (白い熊, 2026-09-26). With one basis for all of them a folder's width can only change when
+   * a tab is opened or closed, or the window is resized.
+   *
+   * Both halves are overridable per strip, not per tab: closing a tab with the pointer still in
+   * the strip pins the width the folders HAD and takes their give away with it (see the lock in
+   * SkuiTabStrip.vue), so the next cross stays where the eye already is. Pinning the basis alone
+   * is not enough -- a crowded row divides the room it has, so five folders at any basis simply
+   * come out wider than six did.
+   */
+  flex: 0 var(--sk-tab-shrink, 1) var(--sk-tab-width, 220px);
 
   /*
    * The floor a folder shrinks to, and the whole reason the strip scrolls at all: flex shrink
@@ -143,7 +160,20 @@
   background-color: rgb(var(--accent-color-rgb, 255 255 0) / 30%);
 }
 
+/*
+ * The label takes ALL the room the cross does not, which is what fixes the cross in place.
+ *
+ * Sized to its text (the default) it left the cross sitting wherever the title happened to end
+ * -- so in a row of folders all the same width the crosses stood at eleven different offsets,
+ * 94 to 142px apart, and a title arriving mid-load slid its own folder's cross sideways. Closing
+ * a folder then put the next cross a dozen pixels from where the last one had been, which is
+ * exactly far enough to miss it and open that tab instead (白い熊, 2026-09-26). Filled, the cross
+ * sits a fixed distance from the folder's trailing edge, so the crosses stand at one pitch --
+ * the folder width -- and closing one leaves the next cross exactly where your hand already is.
+ */
 .label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -166,9 +196,24 @@
 }
 
 .close {
+  position: relative;
   inline-size: 18px;
   block-size: 18px;
   border-radius: 50%;
+}
+
+/*
+ * The cross's reach. Between the cross and the folder's edge lie the 14px of the folder's own
+ * end padding, and a click landing there is a miss that OPENS the tab -- a page load, and on a
+ * watch page a video. So that strip of folder answers to the cross, drawn as nothing and
+ * stopping exactly at the folder's border. It costs the same strip as a place to pick the tab
+ * up from for a drag, which is what the other 200-odd pixels of it are for.
+ */
+.close::after {
+  content: '';
+  position: absolute;
+  inset-block: -6px;
+  inset-inline: 0 -14px;
 }
 
 .newTab {
