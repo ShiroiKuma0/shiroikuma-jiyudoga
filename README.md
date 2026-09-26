@@ -29,7 +29,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+012`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+014`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -114,6 +114,24 @@ browser's tab strip behaves; with a finger it is a press that stays still and th
 plain swipe along the strip still has to scroll it. The strip reorders live under the pointer, so
 the tab is always already where it will land, and the order is remembered like everything else
 about a tab.
+
+**A new tab opens at the far right**, so nothing already open moves — or immediately beside the tab
+it came from, if that is what you prefer: the UI settings page offers both, and whichever you pick
+governs every new tab, the right-click menu and a middle-clicked link as much as `Ctrl`+`T`.
+
+**The strip holds still while your hand is in it.** Closing a folder used to re-lay the row out
+under the pointer, so the cross you were already reaching for slid away and the click opened that
+tab instead. Every folder is one width now, whatever its title, so a name arriving mid-load cannot
+shuffle anything; and a close made with the pointer still in the strip pins the strip as it stands
+— the widths, the chevrons and the scroll position alike — until the pointer leaves. So the next
+cross is exactly where the eye already is, and closing several in a row never opens one by mistake.
+The folder's own trailing padding answers to the cross, too, so a near miss still closes.
+
+**The tab you clicked last is the one that plays.** Closing the playing tab hands over to the tab
+beside it, and clicking a different tab a moment later used to leave two videos loading into one
+page — the loser finished last and won, so the video you heard was the tab you had just left. Each
+load now carries a number and stands down the moment it sees a newer one, so the page and the
+player always agree.
 
 Tabs are **local to the device** — the phone's tabs are the phone's, and are never carried over by
 the device sync or a backup.

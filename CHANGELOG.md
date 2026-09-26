@@ -15,6 +15,62 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+014` — 2026-09-26
+
+Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
+moved** — a pure fork release. `+013` was built and delivered while this was tested; everything it
+carried is here, plus the last of the three fixes below.
+
+Three things 白い熊 asked for about tabs, all of them about what happens between one click and the
+next.
+
+### Tabs
+
+- **A new tab opens at the far right.** Every new tab used to land immediately after the tab it was
+  opened from, the way a browser treats a link. At the far right nothing already open moves, which
+  is the point: the tab being read, and the folders either side of the one about to be closed, stay
+  where the hand left them. Both behaviours are available — a new **Where a new tab opens** setting
+  in the UI settings page, *At the far right* by default, *Beside the current tab* for what it used
+  to do — and whichever is chosen governs **every** new tab: the right-click menu, a middle-clicked
+  link, the `+` button and `Ctrl`+`T` alike, so there is no exception to remember.
+- **The strip holds still while your hand is in it.** Reaching for the next cross after closing a
+  tab kept opening that tab instead, because the strip re-laid itself out between the aim and the
+  click — and a fifth of a folder is all it takes. Three things were moving. A folder was as wide as
+  its own **title**, capped at 220 px, and a title arrives late (a tab opened on a video is called
+  `/watch/…` until the page loads), so the row shuffled while a page loaded; every folder is one
+  width now, so a label cannot move anything at all. Closing a folder in a crowded row made every
+  other one **wider**, since a row divides the room it has; a close made with the pointer in the
+  strip now pins the width the folders had and takes their give away with it, until the pointer
+  leaves or a tab arrives. And the one that survived the first attempt, found only by measuring at
+  白い熊's own window width: closing a folder can take the row from overflowing to fitting, which
+  retires **both chevrons** — and the one at the start had been holding every folder 30 px to the
+  right, so each cross jumped a quarter of a folder leftwards and the click landed in the body of
+  the next tab. A row scrolled near its end likewise gets its scroll clamped as the content
+  shortens, sliding the folders the other way. The pin now holds the chevrons as they were and puts
+  the scroll back too, so the strip is frozen whole rather than in part. Measured at 1366, 1500,
+  1700, 2100 and 2600 px, and with the row parked at its far end, every cross stays within half a
+  pixel of where it was and the pointer lands on the cross of the folder that moved in. The 14 px of
+  folder between a cross and its trailing edge answers to the cross as well, so a near miss closes
+  rather than opens.
+- **The tab you clicked last is the one that plays.** Closing the playing tab hands over to the tab
+  beside it, so the safe way out was to click the tab you wanted first and close the finished one
+  afterwards — and even that lost races: the video that ended up playing was often the tab the
+  *close* had activated, inside the page of the tab clicked afterwards. Loading a video is a long
+  walk of awaits and both loads walk it in the one watch page, which owns one player, one media
+  session and one set of page state; the loser finished last and won. Every reload now takes the
+  next number and carries it through its awaits, standing down the moment it sees the number has
+  moved on — including on the backend-fallback paths, which would otherwise have fetched the video
+  now on screen a second time. Caught on video: before, the page read *Rick Astley* while the
+  stream actually playing was 252 seconds long (Gangnam Style, the tab the close had activated);
+  after, page and player agree and the other player is never built at all. The orphan was audible
+  because a player component unmounted **without** being destroyed leaves its `<video>` detached
+  and still playing, which is also why two teardowns asked for at once now share one. Closing a tab
+  that is not the open one moves nothing else — no navigation, no page load — so 白い熊's order is
+  safe rather than merely lucky, and a tab switch refused because a later click superseded it no
+  longer drags the strip back to where it thought it was.
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+012` — 2026-09-22
 
 Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
