@@ -15,6 +15,90 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+015` — 2026-09-27
+
+Built on FreeTube `6afd60f1` (2026-09-26) + FreeTubeAndroid `af0ab865` (2026-09-13). A
+**FreeTube-only sync release**, and the largest since `+001`: 40 new FreeTube commits carrying one
+real feature, two fixes, a build-system change, eleven dependency bumps and seventeen Weblate
+updates. **FreeTubeAndroid has not moved at all** — its `development` tip *is* our merge-base, so
+that pin is byte-identical to `+014`'s. No fork work of our own in this one; the interesting part
+is what upstream's refactors did to our layer.
+
+### Version
+
+- **`FORK_VERSION` stays `0.25.3.1` and the counter runs on to `+015`** (versionCode `25031015`).
+  FreeTube's `package.json` still reads `0.25.3` — `v0.25.3-beta` of 2026-08-28 is still their
+  newest tag — and FreeTubeAndroid's newest tag is still `0.25.3.1`, so the higher of the two is
+  unchanged.
+- **Only the FreeTube pin moved**, `a744ad4b` → `6afd60f1`. The FreeTubeAndroid pin is unchanged,
+  which is the "that upstream has not moved" signal the two pins exist to give.
+
+### From upstream FreeTube
+
+- **SponsorBlock can be turned off per channel** (#9508). Any video tile's ⋮ menu gains *Disable
+  SponsorBlock on Channel* (and *Enable* again afterwards) whenever SponsorBlock is on, in the
+  subscription feed as well as everywhere else — the hide-channel block was restructured to make
+  room for it, so the option appears in places *Hide Channel* never did. The excluded channels are
+  a list in **Settings → SponsorBlock**, editable by channel ID (exact, case-sensitive match), and
+  exclusion **does not blind the player**: segments are still fetched and still drawn on the
+  seek bar, they are simply not skipped. A notice appears while newly added IDs are still being
+  resolved.
+- **The 'Hide text' setting no longer throws on Invidious results** (#9806). `FtListLazyWrapper`
+  reached for fields the Invidious shape does not carry, breaking the wrapper in several places at
+  once rather than hiding a single item.
+- **Babel is gone from the build** (#9829). `.babelrc`, `@babel/core`, `@babel/preset-env` and
+  `babel-loader` are deleted outright, and with them the `/\.js$/` transpile rule in the main,
+  renderer and web webpack configs — Electron 43 and today's browsers need none of it. 1271 lines
+  leave the lockfile.
+- **The local API's session factory was split in two** (#9826). `createInnertube` becomes
+  `createSession`, returning a bare youtubei.js `Session`, with a thin `createInnertube` wrapper
+  left on top for the callers that want a full `Innertube`; `parseLockupView` now parses each
+  view-count string inside the loop that finds it instead of carrying it out in a temporary, and
+  the channel and trending parsers allocate less. Along with it, `getRegions.mjs` got tidier.
+- **Playlists wear the `list` icon instead of `bookmark`** (#9797) — in the side nav and on the
+  Playlists page itself.
+- **The Matrix address became a space address** (`#freetube:` → `#freetubeapp:`, #9838). Invisible
+  here: our About page carries our own links and none of upstream's community rows.
+- **Dependency bumps**: vue 3.5.43, vue-i18n 11.4.12, marked 18.0.14, webpack 5.111.1, sass
+  1.104.1, js-yaml 5.4.2, lefthook 2.1.14, eslint 10.11.0 with eslint-plugin-unicorn **74 → 76**
+  and eslint-plugin-jsdoc 64.5.4, `@double-great/stylelint-a11y` 3.5.4. On the CI side, `cache-mode`
+  is set on all fifteen workflows, plus codeql-action, `pnpm/action-setup` 6.1.0 and
+  `setup-rust-toolchain` 2.0.0.
+- **Seventeen Weblate commits**: Breton, Turkish, Estonian, Chinese (Simplified and Traditional),
+  Swedish, Spanish, Norwegian Nynorsk, Polish, Portuguese, Ukrainian, Esperanto and Basque.
+  Swedish got a **full retranslation pass** — 316 lines — rather than a handful of new strings.
+
+### What it meant for our layer
+
+- **The babel removal had to be mirrored by hand.** Upstream deleted the `babel-loader` rule from
+  its own three webpack configs, but `_scripts/webpack.android.config.js` is **ours** — a copy the
+  FreeTubeAndroid graft brought in — so nothing upstream did could reach it, and the android bundle
+  would have failed on a loader that no longer exists. The rule is now gone there too, and
+  `pnpm run pack:android` compiles without babel.
+- **`FtListVideo.vue` keeps both sides' menu.** Upstream's two new cases sit beside our
+  *Stop seeding* entry from the Similar tab, and their restructured `dropdownOptions` merged with
+  our Similar block intact after theirs.
+- **Our `parseLockupView` hardening was re-applied on upstream's new shape.** The rewritten
+  view-count block landed exactly between our two optional-chaining patches; without them the
+  Similar tab throws on watch-next lockups, which carry neither `badges` nor a full
+  `metadata_rows`. `getLocalVideoRecommendations` is otherwise untouched by the session split — it
+  calls `createInnertube`, which survives as the wrapper.
+- **The new SponsorBlock settings needed no Export/Import work.** `sponsorBlockExcludedChannels`
+  and `sponsorBlockShowExcludedChannels` both match the `sponsorBlock` prefix in
+  `StateCategories`, so they file themselves into the SponsorBlock backup slice — the
+  "unknown keys can never silently drop" design paying for itself.
+- **The Spanish, Basque and Swedish conflicts were Weblate rewording our rebrand had touched**
+  (eleven hunks, seven of them Swedish). Upstream's new wording was taken and the value-side
+  `FreeTube` → `白い熊 自由動画` replacement re-applied on top, keys untouched — including the
+  declined forms Basque and Swedish need.
+- **`About.vue`, `README.md` and the issue template kept our versions**; `package.json` and
+  `pnpm-lock.yaml` keep `mediabunny`, `core-js` and the MarmadileManteater `@seald-io/nedb` git dep
+  beside the bumps.
+- **The eslint majors changed nothing for us**: unicorn 76 reports no new findings, and the only
+  errors in the tree are the nine pre-existing ones in grafted FreeTubeAndroid files, none of them
+  in anything this merge touched. Both bundles compile clean: `pnpm run pack` and
+  `pnpm run pack:android`.
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-15.22-51.ga744ad4b+2026-09-13.13-31.gaf0ab865+014` — 2026-09-26
 
 Built on FreeTube `a744ad4b` (2026-09-15) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
