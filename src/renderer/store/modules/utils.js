@@ -50,11 +50,15 @@ const state = {
     sports: '',
     podcasts: ''
   },
-  subscriptionFirstAutoFetchRunData: {
-    videos: false,
-    liveStreams: false,
-    shorts: false,
-    posts: false,
+  // 白い熊 自由動画: which VISIT to the subscriptions page each feed last fetched itself in.
+  // Upstream fetched once per window and remembered a plain `true`, so a feed opened hours
+  // later showed the list the app was started with (白い熊, 2026-09-28). See the tabs helper's
+  // `currentPageVisitId` for what counts as a visit.
+  subscriptionFeedAutoFetchVisit: {
+    videos: '',
+    liveStreams: '',
+    shorts: '',
+    posts: '',
   },
   appTitle: '',
   openPrompts: new Set()
@@ -167,17 +171,17 @@ const getters = {
     return state.lastPopularRefreshTimestamp
   },
 
-  getSubscriptionForVideosFirstAutoFetchRun(state) {
-    return state.subscriptionFirstAutoFetchRunData.videos === true
+  getSubscriptionForVideosLastAutoFetchVisit(state) {
+    return state.subscriptionFeedAutoFetchVisit.videos
   },
-  getSubscriptionForLiveStreamsFirstAutoFetchRun (state) {
-    return state.subscriptionFirstAutoFetchRunData.liveStreams === true
+  getSubscriptionForLiveStreamsLastAutoFetchVisit (state) {
+    return state.subscriptionFeedAutoFetchVisit.liveStreams
   },
-  getSubscriptionForShortsFirstAutoFetchRun (state) {
-    return state.subscriptionFirstAutoFetchRunData.shorts === true
+  getSubscriptionForShortsLastAutoFetchVisit (state) {
+    return state.subscriptionFeedAutoFetchVisit.shorts
   },
-  getSubscriptionForPostsFirstAutoFetchRun (state) {
-    return state.subscriptionFirstAutoFetchRunData.posts === true
+  getSubscriptionForPostsLastAutoFetchVisit (state) {
+    return state.subscriptionFeedAutoFetchVisit.posts
   },
   getAppTitle (state) {
     return state.appTitle
@@ -831,17 +835,17 @@ const mutations = {
     state.openPrompts.delete(id)
   },
 
-  setSubscriptionForVideosFirstAutoFetchRun (state) {
-    state.subscriptionFirstAutoFetchRunData.videos = true
+  setSubscriptionForVideosLastAutoFetchVisit (state, visitId) {
+    state.subscriptionFeedAutoFetchVisit.videos = visitId
   },
-  setSubscriptionForLiveStreamsFirstAutoFetchRun (state) {
-    state.subscriptionFirstAutoFetchRunData.liveStreams = true
+  setSubscriptionForLiveStreamsLastAutoFetchVisit (state, visitId) {
+    state.subscriptionFeedAutoFetchVisit.liveStreams = visitId
   },
-  setSubscriptionForShortsFirstAutoFetchRun (state) {
-    state.subscriptionFirstAutoFetchRunData.shorts = true
+  setSubscriptionForShortsLastAutoFetchVisit (state, visitId) {
+    state.subscriptionFeedAutoFetchVisit.shorts = visitId
   },
-  setSubscriptionForPostsFirstAutoFetchRun (state) {
-    state.subscriptionFirstAutoFetchRunData.posts = true
+  setSubscriptionForPostsLastAutoFetchVisit (state, visitId) {
+    state.subscriptionFeedAutoFetchVisit.posts = visitId
   }
 }
 

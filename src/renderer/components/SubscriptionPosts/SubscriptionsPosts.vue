@@ -35,6 +35,7 @@ import store from '../../store/index'
 import { copyToClipboard, getRelativeTimeFromDate, showToast } from '../../helpers/utils.js'
 import { getLocalChannelCommunity } from '../../helpers/api/local.js'
 import { invidiousGetCommunityPosts } from '../../helpers/api/invidious.js'
+import { currentPageVisitId } from '../../helpers/skuiTabs'
 
 const { t } = useI18n()
 
@@ -133,15 +134,19 @@ if (!subscriptionCacheReady.value) {
 
 if (!useRssFeeds.value) {
   onMounted(() => {
-    loadPostsFromRemoteFirstPerWindowSometimes()
+    loadPostsFromRemoteFirstPerVisitSometimes()
   })
 }
 
-function loadPostsFromRemoteFirstPerWindowSometimes() {
+function loadPostsFromRemoteFirstPerVisitSometimes() {
+  // 白い熊 自由動画: once per VISIT to the page rather than once per window -- opening the
+  // subscriptions anew is what asks for a current feed, switching back to it is not.
+  // See helpers/skuiTabs.js `currentPageVisitId`.
+  const visitId = currentPageVisitId()
+
   if (
     !fetchSubscriptionsAutomatically.value ||
-    // Only auto fetch once per window
-    store.getters.getSubscriptionForPostsFirstAutoFetchRun
+    store.getters.getSubscriptionForPostsLastAutoFetchVisit === visitId
   ) {
     loadPostsFromCacheSometimes()
     return
@@ -149,7 +154,7 @@ function loadPostsFromRemoteFirstPerWindowSometimes() {
 
   alreadyLoadedRemotely = true
   loadPostsForSubscriptionsFromRemote()
-  store.commit('setSubscriptionForPostsFirstAutoFetchRun')
+  store.commit('setSubscriptionForPostsLastAutoFetchVisit', visitId)
 }
 
 function loadPostsFromCacheSometimes() {

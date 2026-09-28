@@ -27,6 +27,7 @@ import {
 import { getInvidiousChannelVideos, invidiousFetch } from '../helpers/api/invidious'
 import { getLocalChannelVideos } from '../helpers/api/local'
 import { parseYouTubeRSSFeed, updateVideoListAfterProcessing } from '../helpers/subscriptions'
+import { currentPageVisitId } from '../helpers/skuiTabs'
 
 const { t } = useI18n()
 
@@ -126,14 +127,18 @@ if (!subscriptionCacheReady.value) {
 }
 
 onMounted(() => {
-  loadVideosFromRemoteFirstPerWindowSometimes()
+  loadVideosFromRemoteFirstPerVisitSometimes()
 })
 
-function loadVideosFromRemoteFirstPerWindowSometimes() {
+function loadVideosFromRemoteFirstPerVisitSometimes() {
+  // 白い熊 自由動画: once per VISIT to the page rather than once per window -- opening the
+  // subscriptions anew is what asks for a current feed, switching back to it is not.
+  // See helpers/skuiTabs.js `currentPageVisitId`.
+  const visitId = currentPageVisitId()
+
   if (
     !fetchSubscriptionsAutomatically.value ||
-    // Only auto fetch once per window
-    store.getters.getSubscriptionForVideosFirstAutoFetchRun
+    store.getters.getSubscriptionForVideosLastAutoFetchVisit === visitId
   ) {
     loadVideosFromCacheSometimes()
     return
@@ -141,7 +146,7 @@ function loadVideosFromRemoteFirstPerWindowSometimes() {
 
   alreadyLoadedRemotely = true
   loadVideosForSubscriptionsFromRemote()
-  store.commit('setSubscriptionForVideosFirstAutoFetchRun')
+  store.commit('setSubscriptionForVideosLastAutoFetchVisit', visitId)
 }
 
 function loadVideosFromCacheSometimes() {

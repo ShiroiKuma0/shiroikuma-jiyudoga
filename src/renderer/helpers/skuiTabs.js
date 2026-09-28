@@ -52,6 +52,7 @@ const SCROLL_DEBOUNCE_MS = 400
  * @property {{[key: string]: string}} query in-app route query
  * @property {string} title what the strip shows
  * @property {number} scrollY where the page was left
+ * @property {string} visitId which visit to its page the tab is in (see `currentPageVisitId`)
  */
 
 export const tabsState = reactive({
@@ -74,7 +75,8 @@ export function activeTab() {
   return tabsState.tabs.find(tab => tab.id === tabsState.activeId)
 }
 
-function newTabId() {
+/** An id for a tab, or for one visit to a page. */
+function newId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
@@ -83,7 +85,7 @@ function newTabId() {
  * @returns {SkuiTab}
  */
 function makeTab({ path, query = {}, title = '', scrollY = 0 }) {
-  return { id: newTabId(), path, query: normaliseQuery(query), title, scrollY }
+  return { id: newId(), path, query: normaliseQuery(query), title, scrollY, visitId: newId() }
 }
 
 /**
@@ -133,11 +135,13 @@ function restoreTab(raw) {
   if (typeof path !== 'string' || path.charAt(0) !== '/') { return null }
 
   return {
-    id: typeof id === 'string' && id.length > 0 ? id : newTabId(),
+    id: typeof id === 'string' && id.length > 0 ? id : newId(),
     path,
     query: normaliseQuery(typeof query === 'object' ? query : {}),
     title: typeof title === 'string' ? title : '',
-    scrollY: Number.isFinite(scrollY) ? scrollY : 0
+    scrollY: Number.isFinite(scrollY) ? scrollY : 0,
+    // a tab carried over from a previous session is being OPENED, whatever it was doing then
+    visitId: newId()
   }
 }
 
@@ -203,7 +207,8 @@ export async function hydrateTabs({ currentPath, currentQuery, landingPath }) {
  * Where the router should send the page for a tab. The tab's id rides in the history entry so
  * `afterEach` can tell a tab switch from ordinary navigation, and its scroll position rides
  * along so `scrollBehavior` can restore it without this module and the router importing each
- * other.
+ * other. So does the visit the tab is in, which is what stops the page it is showing being
+ * treated as freshly opened every time it is switched back to -- see `currentPageVisitId`.
  *
  * @param {SkuiTab} tab
  */
@@ -211,8 +216,37 @@ export function routeForTab(tab) {
   return {
     path: tab.path,
     query: tab.query,
-    state: { skuiTab: tab.id, skuiScroll: tab.scrollY }
+    state: { skuiTab: tab.id, skuiScroll: tab.scrollY, skuiVisit: tab.visitId }
   }
+}
+
+/**
+ * Which visit to the page on screen this is.
+ *
+ * A page that fetches itself when it is opened -- the subscription feeds -- has to tell being
+ * OPENED from being SHOWN AGAIN. A tab switched back to, and a page returned to with the back
+ * arrow, are the visit 白い熊 left: refetching there would throw away the list being read and
+ * the place reached in it. A new tab, or the sidebar, is a new visit, and a new visit is what
+ * makes a feed current -- without this the feed was fetched once per WINDOW, so a tab opened
+ * hours later showed the list the app had been started with (白い熊, 2026-09-28).
+ *
+ * The id lives in the history entry's own state, which is the only thing that survives all
+ * three ways of arriving: the browser hands it back on a traversal, `routeForTab` carries it
+ * into a tab switch, and an entry that has none is one just navigated to -- so it is given one
+ * here, the first time anything asks.
+ *
+ * @returns {string}
+ */
+export function currentPageVisitId() {
+  const existing = window.history.state?.skuiVisit
+
+  if (typeof existing === 'string' && existing.length > 0) { return existing }
+
+  const visitId = newId()
+
+  window.history.replaceState({ ...window.history.state, skuiVisit: visitId }, '')
+
+  return visitId
 }
 
 /**
@@ -361,7 +395,7 @@ export function activateTab(id) {
   // rather than ask for a navigation that cannot happen.
   if (current.path === tab.path && sameQuery(tab.query, current.query)) {
     window.history.replaceState(
-      { ...window.history.state, skuiTab: tab.id, skuiScroll: tab.scrollY },
+      { ...window.history.state, skuiTab: tab.id, skuiScroll: tab.scrollY, skuiVisit: tab.visitId },
       ''
     )
 
@@ -810,6 +844,10 @@ export function registerTabRouting() {
       tab.scrollY = 0
     }
 
+    // Which visit to its page this tab is now in: the one the entry already carried (a tab
+    // switch, or a page gone back to), or a new one for a page just navigated to.
+    tab.visitId = currentPageVisitId()
+
     // A page that names itself is named HERE, from the route it just landed on, rather than
     // waiting for a title to arrive from somewhere.
     const ownName = routeOwnName(to)
@@ -834,6 +872,11 @@ export function registerTabRouting() {
     stampCurrentEntry(activeTab()?.title || undefined)
     refreshTabHistoryReach()
   }
+
+  // The app boots straight into a page, which asks for its visit before the tabs are hydrated;
+  // the tab it turns out to belong to takes that visit rather than handing out a second one.
+  const booted = activeTab()
+  if (booted) { booted.visitId = currentPageVisitId() }
 
   window.addEventListener('scroll', rememberScrollSoon, { passive: true })
 
