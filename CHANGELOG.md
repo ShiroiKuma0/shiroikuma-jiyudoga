@@ -15,6 +15,36 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+016` — 2026-09-28
+
+Built on FreeTube `6afd60f1` (2026-09-26) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
+moved** — a pure fork release, and a single fix: opening the subscriptions in a new tab showed the
+feed the app had been started with.
+
+### Subscriptions
+
+- **A feed opened anew is fetched anew.** Opening the subscriptions in a new tab, hours into a
+  session, listed videos from 14 hours earlier — the page's own banner said so (白い熊,
+  2026-09-28). Upstream fetches each subscription feed **once per window**: the first mount sets a
+  flag that is never cleared, and every mount after it reads the cache. That is sound while a
+  window is one page at a time, and wrong the moment a tab is a place in the app — a tab is opened
+  in order to *see* something, and what it landed on had been assembled before the session. The
+  flag becomes a **visit**: every history entry carries an id for the visit to the page it holds,
+  and a feed fetches unless the id it recorded is this one. A new tab, and a page reached from the
+  side nav, are new visits; a tab switched back to, and a page returned to with the back arrow, are
+  the visit you left — and there the list being read, and the place reached in it, survive, which
+  is the whole reason not to refetch. The id lives in the entry's own history state, the one thing
+  that survives all three ways of arriving: the browser hands it back on a traversal, a tab switch
+  carries it in the route it asks for, and an entry that has none is one just navigated to, so it
+  is given one the first time anything asks — which is also how the entry the app boots on is
+  covered, the page on screen reaching it before the tabs are hydrated. **Videos**, **Shorts**,
+  **Live** and **Posts** each keep their own record, so clicking through them inside one visit
+  fetches each once rather than once per click. The **Similar** tab is left as it was: its session
+  cache is assembled from seeds only as fresh as the Videos feed, so refetching it per visit would
+  buy little for a great deal of network.
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+015` — 2026-09-27
 
 Built on FreeTube `6afd60f1` (2026-09-26) + FreeTubeAndroid `af0ab865` (2026-09-13). A

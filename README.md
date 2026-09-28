@@ -29,7 +29,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+015`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+016`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -132,6 +132,12 @@ beside it, and clicking a different tab a moment later used to leave two videos 
 page — the loser finished last and won, so the video you heard was the tab you had just left. Each
 load now carries a number and stands down the moment it sees a newer one, so the page and the
 player always agree.
+
+**A feed opened in a new tab is fetched anew.** The subscriptions used to be fetched once per run
+of the app, so a tab opened hours later showed the list the app had been started with. Opening the
+page is what asks for a current feed now — a new tab, or the side nav — while a tab switched back
+to, and a page returned to with the back arrow, keep the list being read and the place reached in
+it.
 
 Tabs are **local to the device** — the phone's tabs are the phone's, and are never carried over by
 the device sync or a backup.
