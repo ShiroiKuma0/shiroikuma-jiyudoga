@@ -15,6 +15,47 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-02.12-13.g60e9d7fa+2026-09-13.13-31.gaf0ab865+017` — 2026-10-02
+
+Built on FreeTube `60e9d7fa` (2026-10-02) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
+pin moved** — 30 commits of FreeTube `development` merged, no new FreeTube release (its
+`package.json` still reads `0.25.3`), so `FORK_VERSION` and the counter both carry on.
+FreeTubeAndroid had nothing new.
+
+### From FreeTube
+
+- **Channel Playlists tab:** empty entries are filtered out instead of showing as blank tiles.
+- **Player:** the shaka-player CSS patch that swaps its Google-Fonts Roboto for the bundled font
+  was silently not being applied; it is now. The player's error link points at shaka's current
+  documentation URL and prints error objects in full.
+- **Community posts with several images:** Swiper's stylesheets are now bundled as ordinary asset
+  files rather than a hand-concatenated `swiper-<version>.css`.
+- **youtubei.js 18.0.0 → 18.1.0**, plus dompurify, fast-uri, sass, webpack-dev-middleware and the
+  ESLint plugins.
+- **Translations:** Weblate updates for Japanese, German, French, Spanish, Czech, Italian,
+  Hungarian, Turkish, Norwegian Nynorsk, Portuguese (Brazil), Azerbaijani, Esperanto and Chinese
+  (Traditional). The retranslated Spanish strings keep the 白い熊 自由動画 name.
+
+### Android build
+
+- **The Android bundle follows FreeTube's new build tooling.** Upstream replaced
+  `copy-webpack-plugin` with webpack's built-in `output.copy` and the separate CSS/JSON minimizers
+  with the single `minimizer-webpack-plugin`, and dropped the old packages — which our own
+  Android webpack config still required, so the APK would no longer have built. Ported by hand:
+  static files and the shaka-player locales are copied by `output.copy` (the locales now minified),
+  one minimizer handles CSS, JSON and JS, Swiper's CSS loads as asset files, and the Android CSS
+  gets the same Roboto fix as the desktop — it had the same silently-skipped patch.
+
+### Downloads
+
+| Platform | File |
+| --- | --- |
+| Android (arm64-v8a) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-02.12-13.g60e9d7fa+2026-09-13.13-31.gaf0ab865+017_arm64-v8a.apk` |
+| GNU/Linux (amd64 deb) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-02.12-13.g60e9d7fa+2026-09-13.13-31.gaf0ab865+017_amd64.deb` |
+| Windows x64 (zip) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-02.12-13.g60e9d7fa+2026-09-13.13-31.gaf0ab865+017_win-x64.zip` |
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-09-26.12-18.g6afd60f1+2026-09-13.13-31.gaf0ab865+016` — 2026-09-28
 
 Built on FreeTube `6afd60f1` (2026-09-26) + FreeTubeAndroid `af0ab865` (2026-09-13). **Neither pin
