@@ -1,7 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const JsonMinimizerPlugin = require('json-minimizer-webpack-plugin')
+const MinimizerPlugin = require('minimizer-webpack-plugin')
 
 const isDevMode = process.env.NODE_ENV === 'development'
 
@@ -37,9 +36,22 @@ const config = {
   // webpack defaults to only optimising the production builds, so having this here is fine
   optimization: {
     minimizer: [
-      '...', // extend webpack's list instead of overwriting it
-      new JsonMinimizerPlugin({
-        exclude: /\/locales\/.*\.json/
+      new MinimizerPlugin({
+        test: /\.js(?:on)?(\?.*)?$/i,
+        minify: [
+          {
+            implementation: MinimizerPlugin.jsonMinify
+          },
+          {
+            implementation: MinimizerPlugin.terserMinify,
+            options: {
+              compress: {
+                // webpack sets passes to 2 in its default minimizer config too
+                passes: 2
+              }
+            }
+          }
+        ]
       })
     ]
   },
@@ -58,26 +70,23 @@ const config = {
     filename: '[name].js',
     libraryTarget: 'commonjs2',
     path: path.join(__dirname, '../dist'),
-    publicPath: ''
+    publicPath: '',
+    copy: isDevMode
+      ? undefined
+      : [
+          {
+            from: 'static',
+            to: 'static',
+            globOptions: {
+              ignore: [
+                '**/.*',
+                'static/{locales,pwabuilder-sw.js,manifest.json}'
+              ]
+            }
+          }
+        ]
   },
   target: 'electron-main',
-}
-
-if (!isDevMode) {
-  config.plugins.push(
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: path.join(__dirname, '../static'),
-          to: path.join(__dirname, '../dist/static'),
-          globOptions: {
-            dot: true,
-            ignore: ['**/.*', '**/locales/**', '**/pwabuilder-sw.js', '**/manifest.json', '**/dashFiles/**', '**/storyboards/**'],
-          },
-        },
-      ]
-    })
-  )
 }
 
 module.exports = config
