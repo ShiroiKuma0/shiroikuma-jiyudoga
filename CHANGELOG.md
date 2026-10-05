@@ -15,6 +15,37 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+018` — 2026-10-05
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
+pin moved** — 8 commits of FreeTube `development` merged, no new FreeTube release (its
+`package.json` still reads `0.25.3`), so `FORK_VERSION` and the counter both carry on.
+FreeTubeAndroid had nothing new.
+
+### From FreeTube
+
+- **Electron 43.4.0 → 44.3.0** — a major runtime upgrade for the desktop builds (the `.deb` and the
+  Windows `.zip`), bringing a newer Chromium. The Android APK runs on the system WebView and is
+  unaffected.
+- **Context menu “Copy Link” / “Copy YouTube Link” / “Copy Invidious Link”** now write through
+  Electron 44's new clipboard API (`ClipboardItem`), still carrying the link text as a bookmark
+  alongside the plain URL; `electron-context-menu` moves to 5.x.
+- **armv7l (32-bit ARM) desktop builds dropped upstream.** This fork never built them, so nothing
+  changes here.
+- **electron-builder 26.16.1 → 26.17.0** (it packs our `.deb` and Windows build), plus the webpack
+  group, cssnano, sass, swiper and lefthook.
+- **Translations:** Weblate update for Icelandic.
+
+### Downloads
+
+| Platform | File |
+| --- | --- |
+| Android (arm64-v8a) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+018_arm64-v8a.apk` |
+| GNU/Linux (amd64 deb) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+018_amd64.deb` |
+| Windows x64 (zip) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+018_win-x64.zip` |
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-02.12-13.g60e9d7fa+2026-09-13.13-31.gaf0ab865+017` — 2026-10-02
 
 Built on FreeTube `60e9d7fa` (2026-10-02) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
