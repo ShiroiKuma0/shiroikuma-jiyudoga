@@ -104,6 +104,21 @@ function withAlpha(c, a) {
 }
 
 /**
+ * Black or white, whichever reads better ON the given fill (WCAG relative
+ * luminance, crossover at L = 0.179 where both contrasts are equal).
+ * @param {number[]} c [r, g, b, a]
+ * @returns {number[]}
+ */
+function textOn(c) {
+  const lin = (v) => {
+    const s = v / 255
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  const luminance = 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+  return luminance > 0.179 ? [0, 0, 0, 1] : [255, 255, 255, 1]
+}
+
+/**
  * Inheritance resolver — mirrors the sister forks' themeDefault():
  * every non-foundation slot's default is computed from a foundation color.
  * @param {string} slotKey
@@ -240,6 +255,11 @@ export function applySkuiTheme(theme, customFonts = []) {
     '--primary-color-hover': cssRgba(withAlpha(colors.accent, Math.max(0, colors.accent[3] - 0.2))),
     '--primary-color-active': cssRgba(withAlpha(colors.accent, Math.max(0, colors.accent[3] - 0.35))),
     '--accent-color-rgb': `${colors.accent[0]} ${colors.accent[1]} ${colors.accent[2]}`,
+    // Text drawn ON an accent fill (subscribe button, secondary icon buttons). Upstream takes
+    // these from the mainColor / secColor classes, which know nothing of our accent: a fresh
+    // install keeps Red / Blue and so paints white on our yellow (seen on Windows, 2026-10-04).
+    '--text-with-main-color': cssRgba(textOn(colors.accent)),
+    '--text-with-accent-color': cssRgba(textOn(colors.accent)),
     '--link-color': c('linkColor'),
     '--link-visited-color': c('linkColor'),
     '--card-bg-color': c('cardBg'),
