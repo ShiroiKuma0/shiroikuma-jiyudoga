@@ -15,6 +15,34 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019` — 2026-10-11
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
+upstream commits as `+018`. Neither upstream moved; this release is a fork-side fix.
+
+### Fixes
+
+- **No more white-on-yellow buttons on a fresh install (seen on Windows).** The skui theme filled
+  the subscribe / unsubscribe button and the watch page's secondary icon buttons (study export,
+  share) with its accent colour, but the text and icons drawn on them still took their colour
+  from FreeTube's own *Main Color* / *Secondary Color* settings. Those default to Red and Blue,
+  both of which mean white text — so an install that never touched them showed white on yellow.
+  The theme now sets the on-accent text colour itself: black or white, whichever reads better on
+  the accent (WCAG relative luminance), on every platform and regardless of those two settings.
+  This covers every place FreeTube draws text on an accent fill — the subscribe button, primary
+  and secondary icon buttons, the notification banner, chapter and live-chat highlights, the
+  proxy-settings test result and our feed-filter chips.
+
+### Downloads
+
+| Platform | File |
+| --- | --- |
+| Android (arm64-v8a) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019_arm64-v8a.apk` |
+| GNU/Linux (amd64 deb) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019_amd64.deb` |
+| Windows x64 (zip) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019_win-x64.zip` |
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+018` — 2026-10-05
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
