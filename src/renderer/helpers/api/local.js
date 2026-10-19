@@ -15,6 +15,7 @@ import {
   getRelativeTimeFromDate,
 } from '../utils'
 import { parseVideoClipsParams } from './shared'
+import { accountFetch, hasYoutubeAccount } from '../youtube-account'
 
 const TRACKING_PARAM_NAMES = [
   'utm_source',
@@ -715,6 +716,52 @@ export async function getLocalVideoInfo(id) {
     }
   }
 
+  // 白い熊 自由動画: still age-gated — ask again as the imported YouTube account, if
+  // there is one (helpers/youtube-account.js). Only this one player request is
+  // signed in; everything else about the video stays anonymous.
+  /** @type {'used' | 'none' | 'signed-out' | 'refused' | 'failed' | null} */
+  let accountState = null
+
+  const ageGated = (info.playability_status.status === 'UNPLAYABLE' || info.playability_status.status === 'LOGIN_REQUIRED') &&
+    info.playability_status.reason === 'Sign in to confirm your age'
+
+  if (ageGated && !await hasYoutubeAccount()) {
+    accountState = 'none'
+  } else if (ageGated) {
+    try {
+      const account = await getAccountPlayerResponse(id, player.signature_timestamp, contentPoToken)
+
+      if (account.signedOut) {
+        accountState = 'signed-out'
+      } else {
+        const accountInfo = new YT.VideoInfo([{ data: account.playerResponse }, nextResponse], htmlExtracts.session.actions, cpn)
+
+        if (accountInfo.playability_status.status === 'OK' && accountInfo.streaming_data) {
+          info.playability_status = accountInfo.playability_status
+          info.streaming_data = accountInfo.streaming_data
+          // the age-gated answer carries no SABR config (its ustreamer config lives here)
+          info.player_config = accountInfo.player_config
+          info.basic_info.start_timestamp = accountInfo.basic_info.start_timestamp
+          info.basic_info.duration = accountInfo.basic_info.duration
+          info.captions = accountInfo.captions
+          info.storyboards = accountInfo.storyboards
+
+          hasTrailer = false
+          trailerIsAgeRestricted = false;
+
+          ({ clientName, clientVersion, osName, osVersion } = account.context.client)
+          accountState = 'used'
+        } else {
+          console.warn('Signed-in player request refused:', accountInfo.playability_status)
+          accountState = 'refused'
+        }
+      }
+    } catch (error) {
+      console.error('Signed-in player request failed', error)
+      accountState = 'failed'
+    }
+  }
+
   const clientInfo = {
     clientName: Constants.CLIENT_NAME_IDS[clientName],
     clientVersion,
@@ -724,7 +771,7 @@ export async function getLocalVideoInfo(id) {
 
   if ((info.playability_status.status === 'UNPLAYABLE' && (!hasTrailer || trailerIsAgeRestricted)) ||
     info.playability_status.status === 'LOGIN_REQUIRED') {
-    return { info, poToken: undefined, clientInfo }
+    return { info, poToken: undefined, clientInfo, accountState }
   }
 
   if (hasTrailer && info.playability_status.status !== 'OK') {
@@ -793,7 +840,68 @@ export async function getLocalVideoInfo(id) {
     poToken: contentPoToken,
     clientInfo,
     adEndTimeUnixMs,
+    accountState
   }
+}
+
+/**
+ * The player response of an age-restricted video, requested as the imported
+ * YouTube account. The watch page is fetched first, signed in, for the account's
+ * own InnerTube context: the anonymous one carries a visitor that has never
+ * seen this account. Its `LOGGED_IN` flag is also the one reliable sign that
+ * YouTube still honours the exported session.
+ * @param {string} videoId
+ * @param {number} signatureTimestamp
+ * @param {string | undefined} poToken
+ * @returns {Promise<{ signedOut: true } | { signedOut: false, playerResponse: object, context: object }>}
+ */
+async function getAccountPlayerResponse(videoId, signatureTimestamp, poToken) {
+  const page = await accountFetch(`https://www.youtube.com/watch?v=${videoId}&bpctr=9999999999&has_verified=1`)
+
+  const ytConfigStr = page.body.match(/ytcfg\.set\(({.+?})\);/s)?.[1]
+  if (!ytConfigStr) {
+    throw new Error(`Could not find ytcfg in the signed-in watch page (HTTP ${page.status})`)
+  }
+
+  const ytConfig = JSON.parse(ytConfigStr)
+
+  if (!ytConfig.LOGGED_IN || page.signedOut) {
+    return { signedOut: true }
+  }
+
+  const context = deepCopy(ytConfig.INNERTUBE_CONTEXT)
+  delete context.clickTracking
+
+  const response = await accountFetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Visitor-Id': context.client.visitorData,
+      'X-Youtube-Client-Name': '1',
+      'X-Youtube-Client-Version': context.client.clientVersion
+    },
+    body: JSON.stringify({
+      context,
+      videoId,
+      racyCheckOk: true,
+      contentCheckOk: true,
+      playbackContext: {
+        contentPlaybackContext: {
+          vis: 0,
+          splay: false,
+          lactMilliseconds: '-1',
+          signatureTimestamp
+        }
+      },
+      ...(poToken ? { serviceIntegrityDimensions: { poToken } } : {})
+    })
+  })
+
+  if (response.status !== 200) {
+    throw new Error(`Signed-in /player answered HTTP ${response.status}`)
+  }
+
+  return { signedOut: false, playerResponse: JSON.parse(response.body), context }
 }
 
 /**

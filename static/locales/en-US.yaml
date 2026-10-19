@@ -1353,6 +1353,59 @@ SKUI:
   Font & UI size: Font & UI size
   Font file: Font file
   Only ttf and otf fonts are supported: Only ttf and otf fonts are supported
+  Account:
+    Section: YouTube account
+    Description: >-
+      Age-restricted videos only play for a signed-in, age-verified YouTube account. Import
+      the cookies of such an account, exported from a browser as cookies.txt (the format
+      yt-dlp reads), and the watch page uses them for exactly those videos: everything else
+      stays anonymous. The cookies are your login, so they stay on this device only — they
+      are not part of Export / Import or device sync.
+    Cookies: Cookies
+    None: None imported
+    Imported: Imported {when}
+    Signed out status: Imported {when} — YouTube has signed this session out; export it again
+    Import: Import cookies.txt…
+    Import done: YouTube cookies imported
+    No login cookies: This file holds no signed-in YouTube session
+    Import failed: 'Importing the cookies failed: {message}'
+    Forget: Forget
+    Forget description: Deletes the imported cookies from this device
+    Dialog:
+      Title: Import YouTube cookies
+      Expired title: The YouTube cookies have stopped working
+      Expired: >-
+        YouTube no longer accepts the imported cookies, so age-restricted videos cannot play.
+        Export a new set and import it.
+      Age restricted title: This video is age-restricted
+      Age restricted: >-
+        YouTube plays it only to a signed-in, age-verified account. Import the cookies of
+        such an account and it plays here — they are used for age-restricted videos only.
+      Private: >-
+        The cookies MUST come from a PRIVATE window. In a normal window Firefox keeps
+        refreshing the YouTube session, and an exported copy stops working within minutes.
+      Step allow: >-
+        Once: in Firefox, open about:addons → YT-DLP Cookie Exporter and set “Run in Private
+        Windows” to Allow — otherwise it exports the normal window’s cookies.
+      Step window: >-
+        Open a new private window (Ctrl+Shift+P), sign in to YouTube there with the
+        age-verified account and open any video.
+      Step export: Click the YT-DLP Cookie Exporter button and save the cookies.txt.
+      Step close: Close the private window WITHOUT signing out — signing out kills the exported session too.
+      Step import: Import that cookies.txt here.
+      Step import phone: Copy that cookies.txt to the phone and import it here.
+      Later: Later
+    Hint: To watch it here, import the cookies of an age-verified account in the 白い熊 UI settings.
+    Signed out: >-
+      This video is age-restricted, and YouTube has signed out the session in your imported
+      cookies. Export them again (from a private window) and import them in the 白い熊 UI
+      settings.
+    Refused: >-
+      This video is age-restricted, and YouTube refused it to the account in your imported
+      cookies too — the account is probably not age-verified.
+    Failed: >-
+      This video is age-restricted, and asking for it with your imported cookies failed. The
+      log has the details.
   Download:
     Section: Video download
     Description: >-

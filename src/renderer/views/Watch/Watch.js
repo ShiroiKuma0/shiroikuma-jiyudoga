@@ -14,6 +14,7 @@ import WatchVideoPlaylist from '../../components/WatchVideoPlaylist/WatchVideoPl
 import WatchVideoRecommendations from '../../components/WatchVideoRecommendations/WatchVideoRecommendations.vue'
 import FtAgeRestricted from '../../components/FtAgeRestricted/FtAgeRestricted.vue'
 import SkuiDownloadProgress from '../../components/SkuiDownloadProgress.vue'
+import SkuiAccountCookies from '../../components/SkuiAccountCookies.vue'
 import SkuiDownloadSubtitles from '../../components/SkuiDownloadSubtitles.vue'
 import { calculateColorLuminance } from '../../helpers/colors'
 import {
@@ -86,6 +87,7 @@ export default defineComponent({
     'watch-video-playlist': WatchVideoPlaylist,
     'watch-video-recommendations': WatchVideoRecommendations,
     'ft-age-restricted': FtAgeRestricted,
+    SkuiAccountCookies,
     SkuiDownloadProgress,
     SkuiDownloadSubtitles
   },
@@ -158,6 +160,8 @@ export default defineComponent({
       downloadState: null,
       // the subtitle picker shown before a download of a video that has captions
       downloadSubtitlePicker: false,
+      /** @type {'missing' | 'expired' | null} */
+      accountCookiesDialog: null,
       /** @type {AbortController | null} */
       downloadAbort: null,
       license: '',
@@ -493,6 +497,7 @@ export default defineComponent({
       this.manifestMimeType = MANIFEST_TYPE_DASH
       this.sabrData = null
       this.sabrFormats = []
+      this.accountCookiesDialog = null
       this.legacyFormats = []
       this.adaptiveFormats = []
       this.captions = []
@@ -625,7 +630,7 @@ export default defineComponent({
         // this page is loading something else now: see `loadGeneration`
         if (this.loadGeneration !== generation) { return }
 
-        const { info: result, poToken, clientInfo, adEndTimeUnixMs } = videoInfo
+        const { info: result, poToken, clientInfo, adEndTimeUnixMs, accountState } = videoInfo
 
         const playabilityStatus = result.playability_status
         this.playabilityStatus = playabilityStatus.status
@@ -824,8 +829,17 @@ export default defineComponent({
             return
           } else if (playabilityStatus.reason === 'Sign in to confirm your age' || (result.has_trailer && result.getTrailerInfo() === null)) {
             // Age-restricted videos can only be watched while logged into a Google account that is age-verified
-            // so there is no point trying any other backends as it will always fail
-            this.errorMessage = this.t('Video.AgeRestricted')
+            // so there is no point trying any other backends as it will always fail.
+            // 白い熊 自由動画: unless an imported account got it — then say why that did not work
+            this.errorMessage = {
+              'signed-out': () => this.t('SKUI.Account.Signed out'),
+              refused: () => this.t('SKUI.Account.Refused'),
+              failed: () => this.t('SKUI.Account.Failed')
+            }[accountState]?.() ?? `${this.t('Video.AgeRestricted')} ${this.t('SKUI.Account.Hint')}`
+            // no cookies, or a dead session: walk through getting them right here
+            if (accountState === 'none' || accountState === 'signed-out') {
+              this.accountCookiesDialog = accountState === 'none' ? 'missing' : 'expired'
+            }
             this.isLoading = false
             this.updateTitle()
             return
@@ -2288,6 +2302,11 @@ export default defineComponent({
       } else {
         this.downloadSubtitlePicker = true
       }
+    },
+
+    onAccountCookiesImported: function () {
+      this.accountCookiesDialog = null
+      this.reloadView()
     },
 
     startVideoDownloadWithSubtitles: function (subtitleTracks) {

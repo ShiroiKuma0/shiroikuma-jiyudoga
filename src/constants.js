@@ -72,6 +72,12 @@ const IpcChannels = {
   DOWNLOAD_FILE_FINISH: 'download-file-finish',
   DOWNLOAD_FILE_ABORT: 'download-file-abort',
 
+  // the YouTube account used for age-restricted videos: the cookies stay in main
+  YOUTUBE_ACCOUNT_STATUS: 'youtube-account-status',
+  YOUTUBE_ACCOUNT_IMPORT: 'youtube-account-import',
+  YOUTUBE_ACCOUNT_FORGET: 'youtube-account-forget',
+  YOUTUBE_ACCOUNT_FETCH: 'youtube-account-fetch',
+
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
   OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result',
 

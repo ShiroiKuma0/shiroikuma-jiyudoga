@@ -352,6 +352,65 @@
       </section>
 
       <!--
+        YouTube account: a browser's exported cookies, used only to play age-restricted
+        videos. The cookies themselves stay in the main process / Kotlin, so all this
+        section can see is whether there are any and whether YouTube still honours them.
+      -->
+      <section class="skuiSection">
+        <hr class="skuiSectionRule">
+        <h4 class="skuiSectionTitle">
+          {{ $t('SKUI.Account.Section') }}
+        </h4>
+        <p class="skuiEntrySummary skuiIndent1">
+          {{ $t('SKUI.Account.Description') }}
+        </p>
+
+        <div class="skuiEntryRow skuiIndent1">
+          <span class="skuiEntryText">
+            <span class="skuiEntryTitle">{{ $t('SKUI.Account.Cookies') }}</span>
+            <span
+              class="skuiEntrySummary"
+              :class="{ skuiWarn: accountStatusIsProblem }"
+            >
+              {{ accountStatusText }}
+            </span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            :disabled="accountBusy"
+            @click="accountDialogOpen = true"
+          >
+            {{ $t('SKUI.Account.Import') }}
+          </button>
+        </div>
+
+        <SkuiAccountCookies
+          v-if="accountDialogOpen"
+          :expired="accountStatus.present && accountStatus.signedOut"
+          @imported="onAccountImported"
+          @close="accountDialogOpen = false"
+        />
+
+        <div
+          v-if="accountStatus.present"
+          class="skuiEntryRow skuiIndent1"
+        >
+          <span class="skuiEntryText">
+            <span class="skuiEntrySummary">{{ $t('SKUI.Account.Forget description') }}</span>
+          </span>
+          <button
+            class="skuiEntryAction"
+            type="button"
+            :disabled="accountBusy"
+            @click="forgetAccountCookies"
+          >
+            {{ $t('SKUI.Account.Forget') }}
+          </button>
+        </div>
+      </section>
+
+      <!--
         Subscriptions: the filter itself lives in the top bar (the funnel next to the
         profile bubble), because it is a view you switch while browsing. What belongs
         here is the one profile name the app owns rather than the user.
@@ -676,8 +735,10 @@ import { useRouter } from 'vue-router'
 import android from 'android'
 import { hasStorageAccess, requestStorageAccess } from '../../helpers/android/sync'
 import { runSync } from '../../helpers/sync/index'
+import { forgetYoutubeCookies, getYoutubeAccountStatus } from '../../helpers/youtube-account'
 
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
+import SkuiAccountCookies from '../SkuiAccountCookies.vue'
 import SkuiColorRow from './SkuiColorRow.vue'
 import SkuiExportImport from './SkuiExportImport.vue'
 import SkuiFontRow from './SkuiFontRow.vue'
@@ -743,6 +804,50 @@ const syncPort = computed(() => store.getters.getSkuiSyncPort)
 const syncSshArgs = computed(() => store.getters.getSkuiSyncSshArgs)
 const syncRemoteDir = computed(() => store.getters.getSkuiSyncRemoteDir)
 const syncLocalDir = computed(() => store.getters.getSkuiSyncLocalDir)
+
+const accountStatus = ref({ present: false, importedAt: 0, signedOut: false })
+const accountBusy = ref(false)
+const accountDialogOpen = ref(false)
+
+async function refreshAccountStatus() {
+  try {
+    accountStatus.value = await getYoutubeAccountStatus()
+  } catch (error) {
+    console.error('reading the YouTube account status failed', error)
+  }
+}
+
+onMounted(refreshAccountStatus)
+
+const accountStatusIsProblem = computed(() => accountStatus.value.present && accountStatus.value.signedOut)
+
+const accountStatusText = computed(() => {
+  const { present, importedAt, signedOut } = accountStatus.value
+
+  if (!present) { return t('SKUI.Account.None') }
+
+  const when = new Date(importedAt).toLocaleString()
+  return signedOut ? t('SKUI.Account.Signed out status', { when }) : t('SKUI.Account.Imported', { when })
+})
+
+/**
+ * @param {import('../../helpers/youtube-account').YoutubeAccountStatus} status
+ */
+function onAccountImported(status) {
+  accountStatus.value = status
+  accountDialogOpen.value = false
+}
+
+async function forgetAccountCookies() {
+  accountBusy.value = true
+
+  try {
+    await forgetYoutubeCookies()
+  } finally {
+    accountBusy.value = false
+    await refreshAccountStatus()
+  }
+}
 
 const syncBusy = ref(false)
 const syncStorageGranted = ref(true)

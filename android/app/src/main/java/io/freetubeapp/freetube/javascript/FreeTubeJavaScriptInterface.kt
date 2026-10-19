@@ -14,6 +14,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import io.freetubeapp.freetube.KeepAliveService
+import io.freetubeapp.freetube.account.YoutubeAccount
 import io.freetubeapp.freetube.activities.FreeTubeActivity
 import io.freetubeapp.freetube.backup.AutomationAuth
 import io.freetubeapp.freetube.backup.BackupWriter
@@ -437,6 +438,63 @@ class FreeTubeJavaScriptInterface(
     }.addJsCommunicator(jsCommunicator)
   }
 
+  // endregion
+
+  // region YouTube account (age-restricted videos) — see account/YoutubeAccount.kt
+
+  /** @return `{ present, importedAt, signedOut }` as JSON */
+  @JavascriptInterface
+  fun youtubeAccountStatus(): String = YoutubeAccount.status(context).toString()
+
+  /**
+   * Picks a cookies.txt and stores its YouTube login.
+   * @return a js promise id resolving to the status JSON, or `USER_CANCELED`
+   */
+  @JavascriptInterface
+  fun importYoutubeCookies(): String {
+    return Promise(coroutineScope) { resolve, reject ->
+      context.launchIntent(
+        Intent(Intent.ACTION_GET_CONTENT)
+          .addCategory(Intent.CATEGORY_OPENABLE)
+          .setType("*/*")
+      ).then { result ->
+        val uri = result?.data?.data
+        if (result?.resultCode != Activity.RESULT_OK || uri == null) {
+          resolve("USER_CANCELED")
+        } else {
+          CoroutineScope(Dispatchers.IO).launch {
+            try {
+              val text = context.contentResolver.openInputStream(uri)
+                ?.use { it.readBytes().toString(Charsets.UTF_8) }
+                ?: throw Exception("Could not read the file")
+              resolve(YoutubeAccount.import(context, text).toString())
+            } catch (ex: Exception) {
+              reject(ex.message ?: ex.javaClass.name)
+            }
+          }
+        }
+      }
+    }.addJsCommunicator(jsCommunicator)
+  }
+
+  @JavascriptInterface
+  fun forgetYoutubeCookies() = YoutubeAccount.forget(context)
+
+  /**
+   * Sends one request to www.youtube.com as the account.
+   * @param init `{ method?, headers?, body? }` as JSON
+   * @return a js promise id resolving to `{ status, contentType, body, signedOut }` as JSON
+   */
+  @JavascriptInterface
+  fun youtubeAccountFetch(url: String, init: String): String {
+    return Promise<String, String> { resolve, reject ->
+      try {
+        resolve(YoutubeAccount.fetch(context, url, JSONObject(init)).toString())
+      } catch (ex: Exception) {
+        reject(ex.message ?: ex.javaClass.name)
+      }
+    }.addJsCommunicator(jsCommunicator)
+  }
   // endregion
 
   // region Study export (jisho hand-off)

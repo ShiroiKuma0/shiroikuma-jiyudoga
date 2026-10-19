@@ -36,6 +36,7 @@ import { handleOpenInExternalPlayer } from './externalPlayer'
 import { generatePoToken } from './poTokenGenerator'
 import { isFreeTubeUrl } from './utils'
 import * as deviceSync from './sync'
+import * as youtubeAccount from './youtubeAccount'
 import { attachRendererLog, flushRendererLog, getRendererLogPath, getRendererLogs } from './rendererLog'
 
 const brotliDecompressAsync = promisify(brotliDecompress)
@@ -604,7 +605,10 @@ function runApp() {
 
     const fixedUserAgent = session.defaultSession.getUserAgent()
       .split(' ')
-      .filter(part => !part.includes('Electron') && !part.includes(packageDetails.productName))
+      // 白い熊 自由動画: the productName holds a space, so its halves arrive as separate
+      // parts and the includes() check never matched them — the app name leaked into
+      // every request. Non-ASCII parts are what is left of it (and break hand-built headers)
+      .filter(part => !part.includes('Electron') && !part.includes(packageDetails.productName) && /^[\x20-\x7e]*$/.test(part))
       .join(' ')
     session.defaultSession.setUserAgent(fixedUserAgent)
 
@@ -1741,6 +1745,46 @@ function runApp() {
 
   ipcMain.handle(IpcChannels.DOWNLOAD_FILE_ABORT, async (event, id) => {
     await discardDownloadFile(id)
+  })
+
+  // 白い熊 自由動画: the YouTube account for age-restricted videos — see src/main/youtubeAccount.js
+  ipcMain.handle(IpcChannels.YOUTUBE_ACCOUNT_STATUS, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) { return null }
+
+    return await youtubeAccount.getAccountStatus()
+  })
+
+  ipcMain.handle(IpcChannels.YOUTUBE_ACCOUNT_IMPORT, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) { return null }
+
+    const dialogOptions = {
+      defaultPath: app.getPath('downloads'),
+      properties: ['openFile'],
+      filters: [{ name: 'cookies.txt', extensions: ['txt'] }, { name: '*', extensions: ['*'] }]
+    }
+
+    const window = BrowserWindow.fromWebContents(event.sender)
+    const result = window
+      ? await dialog.showOpenDialog(window, dialogOptions)
+      : await dialog.showOpenDialog(dialogOptions)
+
+    if (result.canceled || result.filePaths.length === 0) { return null }
+
+    return await youtubeAccount.importCookies(await asyncFs.readFile(result.filePaths[0], 'utf8'))
+  })
+
+  ipcMain.handle(IpcChannels.YOUTUBE_ACCOUNT_FORGET, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) { return }
+
+    await youtubeAccount.forgetCookies()
+  })
+
+  ipcMain.handle(IpcChannels.YOUTUBE_ACCOUNT_FETCH, async (event, url, init) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof url !== 'string' || typeof init !== 'object' || init === null) {
+      throw new Error('Invalid account request')
+    }
+
+    return await youtubeAccount.accountFetch(url, init, session.defaultSession.getUserAgent(), proxyUrl)
   })
 
   // 白い熊 自由動画 device sync: the renderer runs the whole merge, so all this

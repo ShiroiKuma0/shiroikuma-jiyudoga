@@ -161,6 +161,13 @@
         @save-watched-progress="handleWatchProgressManualSave"
         @study-export="handleStudyExport"
       />
+      <SkuiAccountCookies
+        v-if="accountCookiesDialog !== null"
+        :expired="accountCookiesDialog === 'expired'"
+        :age-restricted="accountCookiesDialog === 'missing'"
+        @imported="onAccountCookiesImported"
+        @close="accountCookiesDialog = null"
+      />
       <SkuiDownloadSubtitles
         v-if="downloadSubtitlePicker"
         :tracks="captions"

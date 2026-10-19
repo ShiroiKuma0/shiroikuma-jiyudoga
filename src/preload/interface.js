@@ -305,6 +305,38 @@ export default {
     return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_ABORT, id)
   },
 
+  /**
+   * @returns {Promise<{ present: boolean, importedAt: number, signedOut: boolean }>}
+   */
+  youtubeAccountStatus: async () => {
+    return await ipcRenderer.invoke(IpcChannels.YOUTUBE_ACCOUNT_STATUS)
+  },
+
+  /**
+   * Asks for a cookies.txt with the file picker and stores its YouTube login.
+   * @returns {Promise<{ present: boolean, importedAt: number, signedOut: boolean } | null>} null when cancelled
+   */
+  youtubeAccountImport: async () => {
+    return await ipcRenderer.invoke(IpcChannels.YOUTUBE_ACCOUNT_IMPORT)
+  },
+
+  /**
+   * @returns {Promise<void>}
+   */
+  youtubeAccountForget: async () => {
+    return await ipcRenderer.invoke(IpcChannels.YOUTUBE_ACCOUNT_FORGET)
+  },
+
+  /**
+   * Sends a request to www.youtube.com signed in as the imported account.
+   * @param {string} url
+   * @param {{ method?: string, headers?: Record<string, string>, body?: string }} init
+   * @returns {Promise<{ status: number, contentType: string, body: string, signedOut: boolean }>}
+   */
+  youtubeAccountFetch: async (url, init) => {
+    return await ipcRenderer.invoke(IpcChannels.YOUTUBE_ACCOUNT_FETCH, url, init)
+  },
+
   relaunch: () => {
     ipcRenderer.send(IpcChannels.RELAUNCH_REQUEST)
   },

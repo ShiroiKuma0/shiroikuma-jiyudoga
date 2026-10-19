@@ -1259,6 +1259,37 @@ SKUI:
     Copy thumbnail address: サムネイルのアドレスをコピー
     Thumbnail address copied: サムネイルのアドレスをクリップボードにコピーしました
     Thumbnail save failed: サムネイルを保存できませんでした
+  Account:
+    Section: YouTube アカウント
+    Description: '年齢制限のある動画は、ログイン済みで年齢確認を済ませた YouTube アカウントでしか再生できません。そのアカウントの Cookie をブラウザーから cookies.txt（yt-dlp が読む形式）として書き出して読み込むと、視聴ページはその動画に限って使います。それ以外はすべて匿名のままです。Cookie はログインそのものなので、この端末にだけ保存され、エクスポート／インポートや端末同期には含まれません。'
+    Cookies: Cookie
+    None: 未読み込み
+    Imported: '{when} に読み込み'
+    Signed out status: '{when} に読み込み — YouTube がこのセッションをログアウトしました。書き出し直してください'
+    Import: cookies.txt を読み込む…
+    Import done: YouTube の Cookie を読み込みました
+    No login cookies: このファイルにはログイン済みの YouTube セッションがありません
+    Import failed: 'Cookie の読み込みに失敗しました: {message}'
+    Forget: 削除
+    Forget description: 読み込んだ Cookie をこの端末から削除します
+    Dialog:
+      Title: YouTube の Cookie を読み込む
+      Expired title: YouTube の Cookie が使えなくなりました
+      Expired: 'YouTube が読み込んだ Cookie を受け付けなくなったため、年齢制限のある動画を再生できません。新しく書き出して読み込んでください。'
+      Age restricted title: この動画は年齢制限があります
+      Age restricted: 'YouTube はログイン済みで年齢確認を済ませたアカウントにしか再生しません。そのアカウントの Cookie を読み込むとここで再生できます。Cookie は年齢制限のある動画にだけ使われます。'
+      Private: 'Cookie は必ずプライベートウィンドウから書き出してください。通常のウィンドウでは Firefox が YouTube のセッションを更新し続けるため、書き出した Cookie は数分で使えなくなります。'
+      Step allow: '最初に一度だけ: Firefox で about:addons → YT-DLP Cookie Exporter を開き、「プライベートウィンドウでの実行」を「許可」にします。許可しないと通常のウィンドウの Cookie が書き出されます。'
+      Step window: '新しいプライベートウィンドウ（Ctrl+Shift+P）を開き、年齢確認済みのアカウントで YouTube にログインして、どれかの動画を開きます。'
+      Step export: YT-DLP Cookie Exporter のボタンを押して cookies.txt を保存します。
+      Step close: 'ログアウトせずにプライベートウィンドウを閉じます。ログアウトすると書き出したセッションも無効になります。'
+      Step import: その cookies.txt をここで読み込みます。
+      Step import phone: その cookies.txt をスマートフォンにコピーして、ここで読み込みます。
+      Later: 後で
+    Hint: ここで見るには、白い熊 UI 設定で年齢確認済みアカウントの Cookie を読み込んでください。
+    Signed out: 'この動画は年齢制限があり、読み込んだ Cookie のセッションは YouTube にログアウトされています。（プライベートウィンドウから）書き出し直して、白い熊 UI 設定で読み込んでください。'
+    Refused: 'この動画は年齢制限があり、読み込んだ Cookie のアカウントでも YouTube に拒否されました。アカウントが年齢確認を済ませていない可能性があります。'
+    Failed: 'この動画は年齢制限があり、読み込んだ Cookie での取得に失敗しました。詳細はログにあります。'
   Sync:
     Label: 同期
   Player:
