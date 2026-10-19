@@ -15,6 +15,72 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024` — 2026-10-19
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
+upstream commits as `+019`. Neither upstream moved; this release is fork-side work. (`+020`–`+023`
+were test builds and were never published, so their changes are all listed here.)
+
+### Major features
+
+- **Age-restricted videos play — through your own account, for those videos only.** Import the
+  `cookies.txt` of a signed-in, age-verified YouTube account (UI settings › YouTube account). When
+  YouTube answers *"Sign in to confirm your age"* and the embedded-player retry fails as well, the
+  watch page fetches that video page and repeats the player request signed in as the account, then
+  plays and downloads from the answer. Browsing, search, recommendations and every other request
+  stay anonymous.
+  - The cookies never reach the page code: the desktop main process and the Android Kotlin layer
+    store them (desktop: owner-only `youtube-account.json` in the profile; Android: the no-backup
+    storage), send the signed requests (`SAPISIDHASH` authorization, the account's own InnerTube
+    context) and save the values YouTube refreshes. They are not part of Export / Import or device
+    sync.
+  - **A dialog explains how to get cookies that last**: they must come from a **private** Firefox
+    window, exported with YT-DLP Cookie Exporter (allowed to run in private windows), and the window
+    closed without signing out — a normal window's copy dies within minutes as Firefox refreshes the
+    session. It opens from the settings' import button, by itself when an age-restricted video meets
+    no imported cookies, and when YouTube has signed the imported session out. Importing from the
+    dialog reloads the video.
+  - Clear messages on the video when YouTube signs the session out, refuses the account (likely not
+    age-verified) or the request fails; the settings section shows when the cookies were imported
+    and turns red once YouTube has signed them out.
+- **Download with embedded subtitles.** The download button first lists the video's subtitle tracks
+  (the last choice is ticked again); the ticked ones go into the mkv as named, language-tagged SRT
+  tracks (`S_TEXT/UTF8`), the first one default. Auto-generated captions have their rolling overlap
+  removed so each line shows once. Tracks that cannot be fetched are named in the finished message.
+- **Downloads stream over SABR and straight to disk — no size limit.** Many videos are now served
+  only over SABR, which left the download with nothing it could fetch ("No downloadable format
+  available"). It now reuses the player's own SABR session, picks the highest resolution and frame
+  rate (VP9 before H.264 before AV1, SDR over HDR, the original audio track — no dubs, audio
+  descriptions or compressed-range copies), and remuxes the streams **while they arrive**, writing
+  the file as it goes: a hidden `.part` file renamed on completion on the desktop, positional writes
+  into the SAF folder on Android. Memory stays flat for any length (an 853 MB, 52-minute film in about
+  three minutes), and progress counts up live. A stream that ends short of the video's length is
+  discarded instead of saved as complete. If SABR fails, the previous direct-URL ladder runs, with
+  its 700 MB in-memory cap.
+
+### Fixes
+
+- **Android download and study export work again.** The FreeTubeAndroid merge of 2026-08-01
+  silently dropped two Kotlin bridge methods both features call; they are restored.
+- **The app no longer announces itself to YouTube.** The user-agent cleanup that should strip the
+  app's name compared against `白い熊 自由動画` as a whole, but the agent is split at spaces and the
+  name contains one — so `白い熊 自由動画/<version>` went out with every desktop request. The app now
+  identifies as plain Chrome.
+- **Downloaded audio is tagged with the spoken language**, from the SABR format or the
+  auto-generated track — no longer from the first subtitle track, which could be an auto-translation.
+- **Chapters are written by the muxer itself**, ahead of the first cluster, instead of being spliced
+  into the finished file in memory.
+
+### Downloads
+
+| Platform | File |
+| --- | --- |
+| Android (arm64-v8a) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024_arm64-v8a.apk` |
+| GNU/Linux (amd64 deb) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024_amd64.deb` |
+| Windows x64 (zip) | `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024_win-x64.zip` |
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019` — 2026-10-11
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two

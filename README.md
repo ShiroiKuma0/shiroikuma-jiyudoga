@@ -12,7 +12,9 @@ grafted on and maintained against the current FreeTube development tip, plus **m
 additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
-button that writes chapter-preserving mkv files, original-language titles & descriptions, a
+button that streams chapter-preserving mkv files with your pick of embedded subtitles straight
+to disk, **age-restricted videos** played through your own account's exported cookies,
+original-language titles & descriptions, a
 **self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
 subscription feed into one-tap views, per-profile video **starring**, an automatic **device sync**
 that keeps the watch history, subscriptions and starred videos the same on the phone and the PC,
@@ -29,7 +31,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+019`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -48,22 +50,24 @@ opens automatically: **shiroikuma-jisho** on Android (via intent), **shiroikuma-
 (our Memento fork) on the desktop. Replay line by line, tap words for dictionary lookups —
 from news feed to language lesson in one tap.
 
-## ⬇️ Download videos — as mkv, with the chapters intact
+## ⬇️ Download videos — as mkv, with chapters and subtitles
 
-A download button sits beside the share icon on every watch page. It grabs the best
-video-only and audio-only streams YouTube will hand over — the `bestvideo+bestaudio` of
-`yt-dlp`, and the reason the output is Matroska, since YouTube pairs mp4/AVC video with
-WebM/Opus audio, a combination mp4 cannot legally hold — and passthrough-remuxes them into
-one file without re-encoding a single frame. When a session serves playback over SABR and
-hands out no fetchable stream URLs, it falls back through Invidious to the muxed progressive
-stream rather than failing.
+A download button sits beside the share icon on every watch page. It first asks which of the
+video's **subtitle tracks** to embed (your last choice is ticked again), then fetches the
+video the way the player does — over the player's own **SABR** session, the only route
+YouTube still serves many videos by — picking the `bestvideo+bestaudio` of `yt-dlp`: the
+highest resolution and frame rate, VP9 before H.264 before AV1 (which many phones decode in
+software), SDR over HDR, and the original audio track rather than a dub or a description.
+The streams are passthrough-remuxed into Matroska **while they arrive** and written straight
+to disk, so a 2-hour film needs no more memory than a 2-minute clip and there is no size
+limit. A stream that ends short of the video's length is thrown away rather than saved as
+if it were complete; if SABR fails altogether, the old direct-URL ladder takes over.
 
-The point of the exercise is **chapters**. YouTube's chapter markers are written into the
-file as a real Matroska `Chapters` element, so mpv, VLC and mpvEx list them, mark them on the
-seekbar and jump between them. Getting that right meant hand-building the EBML and putting it
-*ahead of the first cluster* — players parse level-1 elements only that far and resolve
-anything later through a fixed-size SeekHead — then correcting every byte offset the
-insertion shifts.
+The subtitles go in as real **SRT tracks** (mkvmerge-style `S_TEXT/UTF8`), named and
+language-tagged, the first one default — with the rolling overlap of YouTube's
+auto-generated captions removed, so each line shows once. YouTube's **chapter** markers are
+written as a real Matroska `Chapters` element *ahead of the first cluster*, where mpv, VLC
+and mpvEx look for them, so they list, mark the seekbar and jump.
 
 Files land in a folder you're asked for once (SAF picker on Android, native picker on the
 desktop) under a **`yt-dlp` style filename template** you can edit, previewed live in the UI
@@ -331,6 +335,22 @@ leave it, keep it on and playback survives being backgrounded at the cost of the
 notification and of Android never letting the app doze. Flipping the switch starts or stops
 the service immediately, so the notification comes and goes with it.
 
+## 🔞 Age-restricted videos — with your own account, and only for them
+
+YouTube plays an age-restricted video only to a signed-in, age-verified account, and the app
+never signs in. Instead it can borrow one: export that account's cookies from a **private**
+Firefox window (YT-DLP Cookie Exporter — the dialog walks you through it) and import the
+`cookies.txt` in the UI settings. From then on, when YouTube answers *"Sign in to confirm your
+age"*, just that one video page and player request are repeated as the account, and the video
+plays — and downloads — like any other. Browsing, search, recommendations and every other video
+stay anonymous.
+
+The cookies are the login, so the page code never sees them: the desktop's main process and the
+Android Kotlin layer keep them, send the signed requests and save the values YouTube refreshes.
+They stay out of the backup zip and device sync. When YouTube stops accepting them, the video
+opens the same dialog again to say so and walk you through a fresh export — as it does the
+first time an age-restricted video meets no cookies at all.
+
 ## 🍪 No YouTube tracking cookies on Android
 
 FreeTube reads the YouTube watch page directly to start a video, and YouTube answers that
@@ -339,8 +359,9 @@ friends, two of them dated years out. The desktop app throws them away in Electr
 response hook; the Android layer had no equivalent, so on a phone they were kept and
 replayed on every request afterwards, which is exactly the tracking identity a private
 client exists to avoid. Here every WebView refuses cookies outright — sending as well as
-storing — and anything an older build left behind is purged at launch. Nothing in the app
-logs in or reads a cookie, so nothing is lost. Verified on-device rather than assumed: an
+storing — and anything an older build left behind is purged at launch. The one exception is
+deliberate and yours: the cookies of an account you import for age-restricted videos, kept
+outside the WebView and sent only for those. Verified on-device rather than assumed: an
 empty jar after a session of real playback.
 
 ## 🩹 Survives a decoder that gives up
