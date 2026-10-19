@@ -156,10 +156,16 @@
         class="watchVideo"
         :class="{ theatreWatchVideo: useTheatreMode }"
         @change-format="handleFormatChange"
-        @download-video="handleVideoDownload"
+        @download-video="openVideoDownload"
         @pause-player="pausePlayer"
         @save-watched-progress="handleWatchProgressManualSave"
         @study-export="handleStudyExport"
+      />
+      <SkuiDownloadSubtitles
+        v-if="downloadSubtitlePicker"
+        :tracks="captions"
+        @start="startVideoDownloadWithSubtitles"
+        @cancel="downloadSubtitlePicker = false"
       />
       <SkuiDownloadProgress
         v-if="downloadState !== null"

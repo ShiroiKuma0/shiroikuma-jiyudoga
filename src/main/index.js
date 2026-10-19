@@ -26,6 +26,7 @@ import { extractExpiryTimestamp, ImageCache } from './ImageCache'
 import { constants as fsConstants, existsSync } from 'fs'
 import asyncFs from 'fs/promises'
 import { promisify } from 'util'
+import { randomUUID } from 'crypto'
 import { brotliDecompress } from 'zlib'
 
 import contextMenu from 'electron-context-menu'
@@ -1562,24 +1563,14 @@ function runApp() {
     return true
   })
 
-  // Mirrors WRITE_TO_DEFAULT_FOLDER but with a folder setting of its own, asked
-  // for once on first write, and returns the absolute file path so the renderer
-  // can act on the written file afterwards.
   /**
+   * The folder behind a chosen-folder setting, asking for it on first use (or
+   * when access was lost).
    * @param {Electron.IpcMainInvokeEvent} event
-   * @param {string} filename
-   * @param {ArrayBuffer} arrayBuffer
    * @param {'studyFolderPath' | 'downloadFolderPath'} settingId
-   * @returns {Promise<string | null>}
+   * @returns {Promise<string | null>} normalized path, null when the prompt was cancelled
    */
-  async function writeToChosenFolder(event, filename, arrayBuffer, settingId) {
-    if (
-      !isFreeTubeUrl(event.senderFrame.url) ||
-      typeof filename !== 'string' ||
-      !(arrayBuffer instanceof ArrayBuffer)) {
-      return null
-    }
-
+  async function resolveChosenFolder(event, settingId) {
     const folderPath = (await baseHandlers.settings._findOne(settingId))?.value
 
     let directory
@@ -1599,7 +1590,31 @@ function runApp() {
       }
     }
 
-    directory = path.normalize(directory)
+    return path.normalize(directory)
+  }
+
+  // Mirrors WRITE_TO_DEFAULT_FOLDER but with a folder setting of its own, asked
+  // for once on first write, and returns the absolute file path so the renderer
+  // can act on the written file afterwards.
+  /**
+   * @param {Electron.IpcMainInvokeEvent} event
+   * @param {string} filename
+   * @param {ArrayBuffer} arrayBuffer
+   * @param {'studyFolderPath' | 'downloadFolderPath'} settingId
+   * @returns {Promise<string | null>}
+   */
+  async function writeToChosenFolder(event, filename, arrayBuffer, settingId) {
+    if (
+      !isFreeTubeUrl(event.senderFrame.url) ||
+      typeof filename !== 'string' ||
+      !(arrayBuffer instanceof ArrayBuffer)) {
+      return null
+    }
+
+    const directory = await resolveChosenFolder(event, settingId)
+    if (directory === null) {
+      return null
+    }
 
     const filePath = path.resolve(directory, filename)
 
@@ -1637,9 +1652,95 @@ function runApp() {
     return await writeToChosenFolder(event, filename, arrayBuffer, 'studyFolderPath')
   })
 
-  // Download button
-  ipcMain.handle(IpcChannels.WRITE_TO_DOWNLOAD_FOLDER, async (event, filename, arrayBuffer) => {
-    return await writeToChosenFolder(event, filename, arrayBuffer, 'downloadFolderPath')
+  // Download button: the renderer muxes and this writes, position by position, so a
+  // video of any length streams to disk. It goes into a hidden `.part` file next to
+  // its destination (short, so a 255-byte filename cannot overflow) and is renamed
+  // only on finish; abort, or the window going away, deletes it.
+  /** @type {Map<string, { handle: import('fs/promises').FileHandle, partPath: string, finalPath: string }>} */
+  const downloadFiles = new Map()
+
+  /**
+   * @param {string} id
+   */
+  async function discardDownloadFile(id) {
+    const entry = downloadFiles.get(id)
+    if (!entry) { return }
+    downloadFiles.delete(id)
+
+    await entry.handle.close().catch(() => {})
+    await asyncFs.unlink(entry.partPath).catch(() => {})
+  }
+
+  ipcMain.handle(IpcChannels.DOWNLOAD_FILE_OPEN, async (event, filename) => {
+    if (!isFreeTubeUrl(event.senderFrame.url) || typeof filename !== 'string') {
+      return null
+    }
+
+    const directory = await resolveChosenFolder(event, 'downloadFolderPath')
+    if (directory === null) {
+      return null
+    }
+
+    const finalPath = path.resolve(directory, filename)
+
+    // Ensure that we are only writing inside of the expected directory
+    if (path.dirname(finalPath) !== directory.replace(/\/$/, '')) {
+      throw new Error('Invalid save location')
+    }
+
+    const id = randomUUID()
+    const partPath = path.join(directory, `.jiyudoga-${id}.part`)
+
+    try {
+      await asyncFs.mkdir(directory, { recursive: true })
+      const handle = await asyncFs.open(partPath, 'w')
+      downloadFiles.set(id, { handle, partPath, finalPath })
+    } catch (error) {
+      console.error('opening the download file failed', error)
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error('Failed to save')
+    }
+
+    event.sender.once('destroyed', () => { discardDownloadFile(id) })
+
+    return id
+  })
+
+  ipcMain.handle(IpcChannels.DOWNLOAD_FILE_WRITE, async (event, id, position, data) => {
+    const entry = downloadFiles.get(id)
+    if (!entry || !Number.isSafeInteger(position) || position < 0 || !(data instanceof Uint8Array)) {
+      throw new Error('Invalid download write')
+    }
+
+    let written = 0
+    while (written < data.byteLength) {
+      const { bytesWritten } = await entry.handle.write(data, written, data.byteLength - written, position + written)
+      written += bytesWritten
+    }
+  })
+
+  ipcMain.handle(IpcChannels.DOWNLOAD_FILE_FINISH, async (event, id) => {
+    const entry = downloadFiles.get(id)
+    if (!entry) {
+      throw new Error('Invalid download file')
+    }
+    downloadFiles.delete(id)
+
+    try {
+      await entry.handle.close()
+      await asyncFs.rename(entry.partPath, entry.finalPath)
+    } catch (error) {
+      console.error('finishing the download file failed', error)
+      await asyncFs.unlink(entry.partPath).catch(() => {})
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error('Failed to save')
+    }
+
+    return entry.finalPath
+  })
+
+  ipcMain.handle(IpcChannels.DOWNLOAD_FILE_ABORT, async (event, id) => {
+    await discardDownloadFile(id)
   })
 
   // 白い熊 自由動画 device sync: the renderer runs the whole merge, so all this

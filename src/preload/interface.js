@@ -269,13 +269,40 @@ export default {
   },
 
   /**
-   * Writes a downloaded video into the (once-asked) download folder.
+   * Opens a downloaded video's file in the (once-asked) download folder; it is
+   * written as it is muxed and only appears under its real name on finish.
    * @param {string} filename
-   * @param {ArrayBuffer} contents
-   * @returns {Promise<string | null>} the absolute file path, null when the folder prompt was cancelled
+   * @returns {Promise<string | null>} a handle id, null when the folder prompt was cancelled
    */
-  writeToDownloadFolder: async (filename, contents) => {
-    return await ipcRenderer.invoke(IpcChannels.WRITE_TO_DOWNLOAD_FOLDER, filename, contents)
+  downloadFileOpen: async (filename) => {
+    return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_OPEN, filename)
+  },
+
+  /**
+   * @param {string} id
+   * @param {number} position
+   * @param {Uint8Array} data
+   * @returns {Promise<void>}
+   */
+  downloadFileWrite: async (id, position, data) => {
+    return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_WRITE, id, position, data)
+  },
+
+  /**
+   * @param {string} id
+   * @returns {Promise<string>} the absolute path of the finished file
+   */
+  downloadFileFinish: async (id) => {
+    return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_FINISH, id)
+  },
+
+  /**
+   * Closes and deletes an unfinished download.
+   * @param {string} id
+   * @returns {Promise<void>}
+   */
+  downloadFileAbort: async (id) => {
+    return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_ABORT, id)
   },
 
   relaunch: () => {

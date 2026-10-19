@@ -112,7 +112,8 @@ const title = computed(() => {
 const body = computed(() => {
   switch (props.stage) {
     case 'done':
-      return props.fileName
+      // a note such as a subtitle track that could not be fetched rides below the name
+      return props.message === '' ? props.fileName : `${props.fileName}\n\n${props.message}`
     case 'failed':
       return props.message
     case 'muxing':

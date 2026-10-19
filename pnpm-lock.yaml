@@ -9,7 +9,7 @@ overrides:
   uuid@<11.1.1: '>=11.1.1'
 
 patchedDependencies:
-  mediabunny: b775d7af227ff065a8ab5b9cae0e11580ac5046d9932062adbda62e7cacd9c2c
+  mediabunny: e55aa0fe269712a33656eb373a0afddfef2e6643ceba33be094cc6cd754abad0
 
 importers:
 
@@ -56,7 +56,7 @@ importers:
         version: 18.0.14
       mediabunny:
         specifier: 1.50.9
-        version: 1.50.9(patch_hash=b775d7af227ff065a8ab5b9cae0e11580ac5046d9932062adbda62e7cacd9c2c)
+        version: 1.50.9(patch_hash=e55aa0fe269712a33656eb373a0afddfef2e6643ceba33be094cc6cd754abad0)
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -7637,7 +7637,7 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  mediabunny@1.50.9(patch_hash=b775d7af227ff065a8ab5b9cae0e11580ac5046d9932062adbda62e7cacd9c2c):
+  mediabunny@1.50.9(patch_hash=e55aa0fe269712a33656eb373a0afddfef2e6643ceba33be094cc6cd754abad0):
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.12
       '@types/dom-webcodecs': 0.1.13

@@ -1,12 +1,14 @@
 // Download button (Android): fetches the streams, remuxes them into a single
-// Matroska file with chapters, and writes it into the user-chosen download
-// folder. The folder is asked for with the SAF picker on the first download and
-// remembered afterwards, the same way the study folder works.
+// Matroska file with chapters and subtitles, and writes it into the user-chosen
+// download folder while it is being muxed — positional writes through the
+// Kotlin bridge, so a long video never sits in the WebView's memory. The folder
+// is asked for with the SAF picker on the first download and remembered
+// afterwards, the same way the study folder works.
 
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
-import { writeFile } from './storage'
-import { VideoDownloadError, buildDownloadFile } from '../download-common'
+import { blobToBase64 } from './utils'
+import { VideoDownloadError, runDownload } from '../download-common'
 import { buildDownloadFilename } from '../download-filename'
 import store from '../../store/index'
 
@@ -29,62 +31,72 @@ async function ensureDownloadDirectory() {
 }
 
 /**
+ * Creates (or replaces) the output file and opens it for positional writes.
+ * SAF derives a document's extension from its MIME type, so there is no `.part`
+ * stage here: the file carries its real name from the start and is deleted
+ * again if the download does not complete.
+ * @param {string} tree
+ * @param {string} fileName
+ * @returns {import('../download-mux').DownloadSink}
+ */
+function openAndroidSink(tree, fileName) {
+  const id = android.openDownloadFile(tree, fileName)
+
+  if (!id) {
+    throw new VideoDownloadError('write-failed', 'could not create the file')
+  }
+
+  return {
+    write: async (position, data) => {
+      // the bridge only carries strings
+      await awaitAsyncResult(android.writeDownloadFile(id, position, await blobToBase64(new Blob([data]))))
+    },
+    finish: async () => {
+      if (!android.closeDownloadFile(id)) {
+        throw new Error('closing the downloaded file failed')
+      }
+      return fileName
+    },
+    abort: async () => {
+      android.abortDownloadFile(id)
+    }
+  }
+}
+
+/**
  * Runs the whole download: stream selection → fetch → mkv remux with chapters
- * → write into the download folder.
+ * and subtitles → written into the download folder as it is muxed.
  * @param {object} input
  * @param {object[]} [input.adaptiveFormats]
  * @param {object[]} [input.legacyFormats]
  * @param {string} input.videoId
+ * @param {object | null} [input.sabrData]
+ * @param {import('../download-sabr').DownloadSabrFormat[]} [input.sabrFormats]
  * @param {string} input.title
  * @param {string} input.channel
  * @param {number} [input.published]
  * @param {{ title: string, startSeconds: number, endSeconds?: number }[]} [input.chapters]
  * @param {string} [input.language]
+ * @param {import('../download-subtitles').SubtitleTrackChoice[]} [input.subtitleTracks]
  * @param {(stage: string, fraction: number, detail?: object) => void} [input.onProgress]
  * @param {AbortSignal} [input.signal]
- * @returns {Promise<{ fileName: string, resolution: string, separateStreams: boolean }>}
+ * @returns {Promise<{ fileName: string, resolution: string, failedSubtitles: string[] }>}
  */
-export async function downloadVideoAndroid({
-  adaptiveFormats,
-  legacyFormats,
-  videoId,
-  title,
-  channel,
-  published,
-  chapters,
-  language,
-  onProgress,
-  signal
-}) {
+export async function downloadVideoAndroid({ title, channel, published, videoId, ...rest }) {
   const tree = await ensureDownloadDirectory()
 
-  const { blob, resolution, separateStreams } = await buildDownloadFile({
-    adaptiveFormats,
-    legacyFormats,
+  const { location, resolution, failedSubtitles } = await runDownload({
+    ...rest,
     videoId,
-    chapters,
-    language,
-    onProgress,
-    signal
+    openSink: async (resolution) => {
+      const fileName = buildDownloadFilename(
+        store.getters.getDownloadFilenameTemplate,
+        { title, channel, published, videoId, resolution, ext: 'mkv' },
+        store.getters.getDownloadMaxFilenameBytes
+      )
+      return openAndroidSink(tree, fileName)
+    }
   })
 
-  const fileName = buildDownloadFilename(
-    store.getters.getDownloadFilenameTemplate,
-    { title, channel, published, videoId, resolution, ext: 'mkv' },
-    store.getters.getDownloadMaxFilenameBytes
-  )
-
-  onProgress?.('writing', 0)
-
-  try {
-    const fileUri = android.createOrReplaceFileInTree(tree, fileName)
-    await writeFile(fileUri, blob)
-  } catch (error) {
-    console.error('writing the downloaded video failed', error)
-    throw new VideoDownloadError('write-failed', String(error))
-  }
-
-  onProgress?.('writing', 1)
-
-  return { fileName, resolution, separateStreams }
+  return { fileName: location, resolution, failedSubtitles }
 }

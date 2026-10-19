@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.session.PlaybackState.STATE_PAUSED
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.provider.Settings
 import android.webkit.JavascriptInterface
 import androidx.core.content.FileProvider
@@ -31,10 +32,14 @@ import io.freetubeapp.freetube.helpers.writeBytes
 import io.freetubeapp.freetube.sync.SyncFiles
 import io.freetubeapp.freetube.webviews.FreeTubeWebView
 import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.charset.Charset
 import java.util.UUID.randomUUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -156,6 +161,108 @@ class FreeTubeJavaScriptInterface(
   fun createFileInTree(tree: String, fileName: String): String? {
     val directory = DocumentFile.fromTreeUri(context, tree.toUri())
     return directory?.createFile("*/*", fileName)?.uri?.toString()
+  }
+
+  // Both added with the study export (b66ebdb9b) and lost in the FreeTubeAndroid 0.25.1.1
+  // merge (0e23a04d8), which left the study export calling methods that no longer existed.
+  @JavascriptInterface
+  fun createOrReplaceFileInTree(tree: String, fileName: String): String {
+    val directory = DocumentFile.fromTreeUri(context, tree.toUri())!!
+    directory.findFile(fileName)?.delete()
+    return directory.createFile("*/*", fileName)!!.uri.toString()
+  }
+
+  @JavascriptInterface
+  fun deleteFileInTree(tree: String, fileName: String): Boolean {
+    val directory = DocumentFile.fromTreeUri(context, tree.toUri()) ?: return false
+    return directory.findFile(fileName)?.delete() ?: false
+  }
+  // endregion
+
+  // region Download files
+  // The download button muxes in JS while the video arrives and writes the result here,
+  // position by position (the muxer seeks back to fill in sizes once it knows them), so a
+  // long video never has to fit in the WebView's memory.
+  private class DownloadFile(
+    val document: DocumentFile,
+    val descriptor: ParcelFileDescriptor,
+    val channel: FileChannel
+  )
+
+  private val downloadFiles = ConcurrentHashMap<String, DownloadFile>()
+
+  /**
+   * Creates (or replaces) a file in the tree and opens it for positional writes.
+   * @return a handle id, "" when the file could not be created
+   */
+  @JavascriptInterface
+  fun openDownloadFile(tree: String, fileName: String): String {
+    return try {
+      val directory = DocumentFile.fromTreeUri(context, tree.toUri()) ?: return ""
+      directory.findFile(fileName)?.delete()
+      val document = directory.createFile("*/*", fileName) ?: return ""
+      val descriptor = context.contentResolver.openFileDescriptor(document.uri, "rw")
+      if (descriptor == null) {
+        document.delete()
+        return ""
+      }
+      val id = "${randomUUID()}"
+      downloadFiles[id] = DownloadFile(document, descriptor, FileOutputStream(descriptor.fileDescriptor).channel)
+      id
+    } catch (ex: Exception) {
+      ""
+    }
+  }
+
+  /**
+   * Writes base64 (optionally a data url) at a byte position.
+   * @return a js promise id
+   */
+  @OptIn(ExperimentalEncodingApi::class)
+  @JavascriptInterface
+  fun writeDownloadFile(id: String, position: Double, content: String): String {
+    return Promise<String, String> { resolve, reject ->
+      val file = downloadFiles[id]
+      if (file == null) {
+        reject("Unknown download file")
+      } else {
+        try {
+          val base64 = content.substringAfter("base64,")
+          val buffer = ByteBuffer.wrap(Base64.decode(base64))
+          var offset = position.toLong()
+          while (buffer.hasRemaining()) {
+            offset += file.channel.write(buffer, offset)
+          }
+          resolve("")
+        } catch (ex: Throwable) {
+          reject(ex.toString())
+        }
+      }
+    }.addJsCommunicator(jsCommunicator)
+  }
+
+  @JavascriptInterface
+  fun closeDownloadFile(id: String): Boolean {
+    val file = downloadFiles.remove(id) ?: return false
+    return try {
+      file.channel.force(true)
+      file.channel.close()
+      file.descriptor.close()
+      true
+    } catch (ex: Exception) {
+      false
+    }
+  }
+
+  @JavascriptInterface
+  fun abortDownloadFile(id: String) {
+    val file = downloadFiles.remove(id) ?: return
+    try {
+      file.channel.close()
+      file.descriptor.close()
+    } catch (_: Exception) {
+    }
+    file.document.delete()
   }
   // endregion
 

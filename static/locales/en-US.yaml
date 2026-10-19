@@ -1357,8 +1357,9 @@ SKUI:
     Section: Video download
     Description: >-
       The download button on the watch page saves the video as a Matroska file with its
-      chapters embedded, so players like mpv can jump between them. The best separate video
-      and audio streams are used where YouTube offers them, otherwise the muxed stream.
+      chapters and any subtitles you pick embedded, so players like mpv can jump between
+      them. It fetches the best video and audio the way the player does and writes the file
+      while it arrives, so there is no size limit; the muxed stream is the fallback.
     Download folder: Download folder
     No download directory set: No download directory set
     Choose…: Choose…
@@ -1381,6 +1382,11 @@ SKUI:
     Download Failed: The download failed — try again later
     Too Large: This video is too large to download in one piece
     Write Failed: The file could not be written to the download folder
+    Subtitles Title: Download video
+    Subtitles Body: Tick the subtitles to embed in the file as SRT tracks.
+    Download With Subtitles: 'Download with {count} subtitle track | Download with {count} subtitle tracks'
+    Download Without Subtitles: Download without subtitles
+    Subtitles Missing: 'Not embedded — could not be fetched: {tracks}'
   Similar:
     Section: Similar tab
     Description: >-

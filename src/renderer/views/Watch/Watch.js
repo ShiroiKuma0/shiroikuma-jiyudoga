@@ -14,6 +14,7 @@ import WatchVideoPlaylist from '../../components/WatchVideoPlaylist/WatchVideoPl
 import WatchVideoRecommendations from '../../components/WatchVideoRecommendations/WatchVideoRecommendations.vue'
 import FtAgeRestricted from '../../components/FtAgeRestricted/FtAgeRestricted.vue'
 import SkuiDownloadProgress from '../../components/SkuiDownloadProgress.vue'
+import SkuiDownloadSubtitles from '../../components/SkuiDownloadSubtitles.vue'
 import { calculateColorLuminance } from '../../helpers/colors'
 import {
   buildChaptersVttFile,
@@ -85,7 +86,8 @@ export default defineComponent({
     'watch-video-playlist': WatchVideoPlaylist,
     'watch-video-recommendations': WatchVideoRecommendations,
     'ft-age-restricted': FtAgeRestricted,
-    SkuiDownloadProgress
+    SkuiDownloadProgress,
+    SkuiDownloadSubtitles
   },
   beforeRouteLeave: async function (to, from, next) {
     this.handleRouteChange()
@@ -154,6 +156,8 @@ export default defineComponent({
       studyExportRunning: false,
       /** @type {{ stage: string, fraction: number, received: number, total: number, fileName: string, message: string } | null} */
       downloadState: null,
+      // the subtitle picker shown before a download of a video that has captions
+      downloadSubtitlePicker: false,
       /** @type {AbortController | null} */
       downloadAbort: null,
       license: '',
@@ -178,6 +182,8 @@ export default defineComponent({
       manifestMimeType: MANIFEST_TYPE_DASH,
       /** @type {SabrData | null} */
       sabrData: null,
+      // the SABR session's adaptive formats, for the download button (frozen, not reactive)
+      sabrFormats: [],
       legacyFormats: [],
       // adaptive (video-only / audio-only) formats, kept for the download
       // button; empty when the session serves playback over SABR, which hands
@@ -486,6 +492,7 @@ export default defineComponent({
       this.manifestSrc = null
       this.manifestMimeType = MANIFEST_TYPE_DASH
       this.sabrData = null
+      this.sabrFormats = []
       this.legacyFormats = []
       this.adaptiveFormats = []
       this.captions = []
@@ -1972,6 +1979,34 @@ export default defineComponent({
         clientInfo
       }
 
+      // what the download button's own SABR session chooses from (googlevideo SabrFormat
+      // fields, plus fps and the colour transfer for its picker)
+      this.sabrFormats = Object.freeze(videoInfo.streaming_data.adaptive_formats.map((format) => Object.freeze({
+        itag: format.itag,
+        lastModified: format.last_modified_ms,
+        xtags: format.xtags,
+        width: format.width,
+        height: format.height,
+        fps: format.fps,
+        mimeType: format.mime_type,
+        bitrate: format.bitrate,
+        averageBitrate: format.average_bitrate,
+        quality: format.quality,
+        qualityLabel: format.quality_label,
+        audioQuality: format.audio_quality,
+        audioTrackId: format.audio_track?.id,
+        approxDurationMs: format.approx_duration_ms,
+        contentLength: format.content_length,
+        isDrc: format.is_drc,
+        language: format.language,
+        isOriginal: format.is_original,
+        isDubbed: format.is_dubbed,
+        isAutoDubbed: format.is_auto_dubbed,
+        isDescriptive: format.is_descriptive,
+        isSecondary: format.is_secondary,
+        colorTransfer: format.color_info?.transfer_characteristics
+      })))
+
       /** @type {import('../../helpers/player/SabrManifestParser').SabrManifest} */
       const sabrManifest = {
         // Different formats have different durations and
@@ -2244,7 +2279,23 @@ export default defineComponent({
       }
     },
 
-    handleVideoDownload: async function () {
+    openVideoDownload: function () {
+      if ((!process.env.IS_ANDROID && !process.env.IS_ELECTRON) || this.downloadState !== null) { return }
+
+      // nothing to choose from — straight to the download, as before subtitles existed
+      if (this.captions.length === 0) {
+        this.handleVideoDownload([])
+      } else {
+        this.downloadSubtitlePicker = true
+      }
+    },
+
+    startVideoDownloadWithSubtitles: function (subtitleTracks) {
+      this.downloadSubtitlePicker = false
+      this.handleVideoDownload(subtitleTracks)
+    },
+
+    handleVideoDownload: async function (subtitleTracks = []) {
       if ((!process.env.IS_ANDROID && !process.env.IS_ELECTRON) || this.downloadState !== null) { return }
 
       const controller = new AbortController()
@@ -2263,15 +2314,22 @@ export default defineComponent({
           ? (await import('../../helpers/android/video-download')).downloadVideoAndroid
           : (await import('../../helpers/video-download-desktop')).downloadVideoDesktop
 
-        const { fileName } = await downloadVideo({
+        const { fileName, failedSubtitles } = await downloadVideo({
           adaptiveFormats: this.adaptiveFormats,
           legacyFormats: this.legacyFormats,
           videoId: this.videoId,
+          // plain copies: the SABR request encoder gets no Vue proxies
+          sabrData: this.sabrData ? { ...this.sabrData, clientInfo: { ...this.sabrData.clientInfo } } : null,
+          sabrFormats: this.sabrFormats,
           title: this.videoTitle,
           channel: this.channelName,
           published: this.videoPublished,
           chapters: this.videoChapters,
-          language: this.captions[0]?.language,
+          // the spoken language: the auto-generated track is always in it, while the first
+          // track in the list may be an auto-translation into the UI language
+          language: (this.captions.find((track) => track.id?.startsWith('a.')) ??
+            this.captions.find((track) => !track.isAutotranslated))?.language,
+          subtitleTracks,
           signal: controller.signal,
           onProgress: (stage, fraction, detail) => {
             if (this.downloadState === null) { return }
@@ -2292,7 +2350,9 @@ export default defineComponent({
           received: 0,
           total: 0,
           fileName,
-          message: ''
+          message: failedSubtitles.length > 0
+            ? this.t('SKUI.Download.Subtitles Missing', { tracks: failedSubtitles.join(', ') })
+            : ''
         }
       } catch (error) {
         console.error('video download failed', error)

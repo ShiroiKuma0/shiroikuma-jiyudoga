@@ -389,6 +389,9 @@ const state = {
   downloadFilenameTemplate: '%(title)s %(upload_date)s (%(channel)s).%(ext)s',
   // filesystems cap a single path component at 255 bytes
   downloadMaxFilenameBytes: 255,
+  // subtitle tracks ticked in the download dialog last time, as comma-separated
+  // keys ("ja" manual, "a:ja" auto-generated, "t:ja" auto-translated) — preselected next time
+  downloadSubtitleChoice: '',
   useDeArrowTitles: false,
   useDeArrowThumbnails: false,
   deArrowThumbnailGeneratorUrl: 'https://dearrow-thumb.ajay.app',

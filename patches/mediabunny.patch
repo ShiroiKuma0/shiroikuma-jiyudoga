@@ -38,7 +38,7 @@ index 42eeea93c04d41ad4441fa576bb53a76c165f1a5..0d1a4d74513923a28f0ee497c698959c
  export function assertDefinedSize(size) {
      if (size === undefined) {
 diff --git a/dist/modules/src/matroska/matroska-muxer.js b/dist/modules/src/matroska/matroska-muxer.js
-index 005afdec768568c3abd769994aa0d9b4217a0ca5..42825e7e27333e4b3d7b613db60b14f867f454c5 100644
+index 005afdec768568c3abd769994aa0d9b4217a0ca5..e646c00bea7120dd6732f49886dae1d55c7f18c8 100644
 --- a/dist/modules/src/matroska/matroska-muxer.js
 +++ b/dist/modules/src/matroska/matroska-muxer.js
 @@ -202,7 +202,7 @@ export class MatroskaMuxer extends Muxer {
@@ -50,7 +50,17 @@ index 005afdec768568c3abd769994aa0d9b4217a0ca5..42825e7e27333e4b3d7b613db60b14f8
                          ? { id: EBMLId.CodecPrivate, data: toUint8Array(trackData.codecPrivate) }
                          : null,
                      { id: EBMLId.CodecDelay, data: 0 },
-@@ -780,7 +780,7 @@ export class MatroskaMuxer extends Muxer {
+@@ -520,6 +520,9 @@ export class MatroskaMuxer extends Muxer {
+                 // makes more sense, and FFmpeg agrees (argumentum ad ffmpegum fallacy)
+                 this.attachmentsElement,
+                 this.tagsElement,
++                // shiroikuma-jiyudoga: a complete, pre-encoded Chapters element (Uint8Array), placed
++                // ahead of the first Cluster where ffmpeg and mkvtoolnix parse it
++                this.format._options.chaptersElement ?? null,
+             ],
+         };
+         this.segment = segment;
+@@ -780,7 +783,7 @@ export class MatroskaMuxer extends Muxer {
              });
              const body = textEncoder.encode(bodyText);
              const additions = `${cue.settings ?? ''}\n${cue.identifier ?? ''}\n${cue.notes ?? ''}`;

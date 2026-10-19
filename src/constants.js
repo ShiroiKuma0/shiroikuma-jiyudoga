@@ -66,7 +66,11 @@ const IpcChannels = {
   GET_RENDERER_LOG_PATH: 'get-renderer-log-path',
   RENDERER_LOG_MESSAGE: 'renderer-log-message',
 
-  WRITE_TO_DOWNLOAD_FOLDER: 'write-to-download-folder',
+  // download button: the file is written while it is muxed (open → write… → finish | abort)
+  DOWNLOAD_FILE_OPEN: 'download-file-open',
+  DOWNLOAD_FILE_WRITE: 'download-file-write',
+  DOWNLOAD_FILE_FINISH: 'download-file-finish',
+  DOWNLOAD_FILE_ABORT: 'download-file-abort',
 
   OPEN_IN_EXTERNAL_PLAYER: 'open-in-external-player',
   OPEN_IN_EXTERNAL_PLAYER_RESULT: 'open-in-external-player-result',

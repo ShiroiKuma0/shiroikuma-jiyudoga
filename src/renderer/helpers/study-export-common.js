@@ -44,40 +44,48 @@ export function pickCaptionTrack(captions) {
 }
 
 /**
+ * Fetches one format of a timedtext track, retrying once.
+ * @param {string} trackUrl the authorized timedtext url from the watch page
+ * @param {string} format the timedtext `fmt` value, e.g. 'json3' or 'srt'
+ * @returns {Promise<string | null>} the body, or null when nothing usable came back
+ */
+export async function fetchCaptionFormat(trackUrl, format) {
+  const url = new URL(trackUrl)
+  url.searchParams.set('fmt', format)
+
+  // repair URLs authorized without a real poToken (potc=1&pot=undefined)
+  if (!url.searchParams.get('pot') || url.searchParams.get('pot') === 'undefined') {
+    url.searchParams.delete('pot')
+    url.searchParams.delete('potc')
+  }
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+    try {
+      const response = await fetch(url.toString())
+      if (response.ok) {
+        const text = await response.text()
+        if (text.trim() !== '') {
+          return text
+        }
+      }
+    } catch (error) {
+      console.error(`caption ${format} fetch failed`, error)
+    }
+  }
+  return null
+}
+
+/**
  * Fetches the caption track as json3 (word-level timing), falling back to
  * srt (cue-level — proven to work even when json3 is refused).
  * @param {string} trackUrl the authorized timedtext url from the watch page
  * @returns {Promise<{ json3?: string, srt?: string }>}
  */
 export async function fetchCaptionData(trackUrl) {
-  const fetchFormat = async (format) => {
-    const url = new URL(trackUrl)
-    url.searchParams.set('fmt', format)
-
-    // repair URLs authorized without a real poToken (potc=1&pot=undefined)
-    if (!url.searchParams.get('pot') || url.searchParams.get('pot') === 'undefined') {
-      url.searchParams.delete('pot')
-      url.searchParams.delete('potc')
-    }
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-      try {
-        const response = await fetch(url.toString())
-        if (response.ok) {
-          const text = await response.text()
-          if (text.trim() !== '') {
-            return text
-          }
-        }
-      } catch (error) {
-        console.error(`caption ${format} fetch failed`, error)
-      }
-    }
-    return null
-  }
+  const fetchFormat = (format) => fetchCaptionFormat(trackUrl, format)
 
   const json3 = await fetchFormat('json3')
   if (json3 !== null) {
