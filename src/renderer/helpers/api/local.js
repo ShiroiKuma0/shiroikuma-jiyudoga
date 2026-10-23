@@ -372,6 +372,40 @@ export async function getLocalSearchResults(query, filters, safetyMode) {
 }
 
 /**
+ * 白い熊 自由動画: what YouTube Music knows about a track beyond its streams, for
+ * the tags of a downloaded song (helpers/download-music.js): the square cover
+ * art at its original size, and the lyrics. Either is null when YouTube Music
+ * has none — or when its request fails, which never fails the download.
+ * @param {string} videoId
+ * @returns {Promise<{ coverUrl: string | null, lyrics: string | null }>}
+ */
+export async function getLocalMusicTrackExtras(videoId) {
+  const innertube = await createInnertube()
+
+  const [player, lyrics] = await Promise.allSettled([
+    // the YTMUSIC client's player answer carries the album cover; the WEB one only video frames
+    innertube.actions.execute('/player', { videoId, client: 'YTMUSIC' }),
+    innertube.music.getLyrics(videoId)
+  ])
+
+  let coverUrl = null
+  const thumbnails = player.status === 'fulfilled' ? player.value.data?.videoDetails?.thumbnail?.thumbnails : null
+  const largest = (thumbnails ?? []).reduce((a, b) => ((b.width ?? 0) > (a?.width ?? 0) ? b : a), null)
+  if (largest?.url) {
+    const url = new URL(largest.url)
+    // googleusercontent sizes the image by the `=w544-h544-…` suffix; `=s0` is the original upload
+    coverUrl = url.hostname.endsWith('.googleusercontent.com') || url.hostname.endsWith('.ggpht.com')
+      ? largest.url.replace(/=[^/=]*$/, '=s0')
+      : largest.url
+  }
+
+  return {
+    coverUrl,
+    lyrics: lyrics.status === 'fulfilled' ? (lyrics.value?.description?.toString().trim() || null) : null
+  }
+}
+
+/**
  * @param {YT.Search | SerializedContinuation} continuationData
  */
 export async function getLocalSearchContinuation(continuationData) {
@@ -671,6 +705,10 @@ export async function getLocalVideoInfo(id) {
 
   const cpn = Utils.generateRandomString(16)
 
+  // 白い熊 自由動画: youtubei.js drops this field; MUSIC_VIDEO_TYPE_ATV marks a YouTube
+  // Music track, which the download saves as audio only (helpers/download-music.js)
+  const musicVideoType = playerResponse.data?.videoDetails?.musicVideoType ?? null
+
   const info = new YT.VideoInfo([playerResponse, nextResponse], htmlExtracts.session.actions, cpn)
 
   // Some time would be used for parsing and maybe additional requests so end time should be calculated sooner to reduce actual waiting time
@@ -840,7 +878,8 @@ export async function getLocalVideoInfo(id) {
     poToken: contentPoToken,
     clientInfo,
     adEndTimeUnixMs,
-    accountState
+    accountState,
+    musicVideoType
   }
 }
 

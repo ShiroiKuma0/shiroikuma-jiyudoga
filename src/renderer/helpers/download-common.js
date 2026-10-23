@@ -21,6 +21,7 @@ import { fetchRangedBlob } from './ranged-download'
 import { muxDownloadMkv } from './download-mux'
 import { openSabrDownload } from './download-sabr'
 import { fetchDownloadSubtitles } from './download-subtitles'
+import { runMusicDownload } from './download-music'
 
 // Only the ranged-URL path holds its streams in renderer memory (the SABR path
 // and every output are streamed), so this caps that path alone.
@@ -177,7 +178,7 @@ export async function buildDownloadPlans({ adaptiveFormats, legacyFormats, video
  * @param {number} videoEndSeconds
  * @param {number} durationSeconds
  */
-function isComplete(videoEndSeconds, durationSeconds) {
+export function isComplete(videoEndSeconds, durationSeconds) {
   if (!(durationSeconds > 0)) { return true }
   return videoEndSeconds >= durationSeconds - Math.max(COMPLETENESS_SLACK_SECONDS, durationSeconds * 0.005)
 }
@@ -187,7 +188,7 @@ function isComplete(videoEndSeconds, durationSeconds) {
  * failure that no other source can fix, so it ends the attempt outright.
  * @param {import('./download-mux').DownloadSink} sink
  */
-function guardSink(sink) {
+export function guardSink(sink) {
   const guarded = {
     writeError: null,
     write: async (position, data) => {
@@ -216,7 +217,8 @@ function guardSink(sink) {
  * @param {{ title: string, startSeconds: number, endSeconds?: number }[]} [input.chapters]
  * @param {string} [input.language]
  * @param {import('./download-subtitles').SubtitleTrackChoice[]} [input.subtitleTracks] caption tracks to embed
- * @param {(resolution: string) => Promise<import('./download-mux').DownloadSink>} input.openSink opens the output file
+ * @param {object | null} [input.musicTags] set for a YouTube Music track: only its audio is saved, as Ogg Opus with these tags (download-music.js)
+ * @param {(resolution: string, ext: string) => Promise<import('./download-mux').DownloadSink>} input.openSink opens the output file
  * @param {(stage: 'downloading' | 'muxing' | 'writing', fraction: number, detail?: { received: number, total: number }) => void} [input.onProgress]
  * @param {AbortSignal} [input.signal]
  * @returns {Promise<{ location: string, resolution: string, source: string, failedSubtitles: string[] }>}
@@ -230,10 +232,15 @@ export async function runDownload({
   chapters = [],
   language,
   subtitleTracks = [],
+  musicTags = null,
   openSink,
   onProgress,
   signal
 }) {
+  if (musicTags !== null) {
+    return await runMusicDownload({ adaptiveFormats, sabrData, sabrFormats, videoId, tags: musicTags, openSink, onProgress, signal })
+  }
+
   // small and quick next to the streams, so fetched first — a cancel or an
   // unfetchable track shows up before hundreds of megabytes have been pulled
   const { subtitles, failed: failedSubtitles } = await fetchDownloadSubtitles(subtitleTracks)
@@ -247,7 +254,7 @@ export async function runDownload({
    * @returns {Promise<string>} the sink's final name or path
    */
   const muxInto = async (resolution, muxInput, durationSeconds) => {
-    const sink = guardSink(await openSink(resolution))
+    const sink = guardSink(await openSink(resolution, 'mkv'))
 
     try {
       const { videoEndSeconds } = await muxDownloadMkv({ language, ...muxOptions, ...muxInput, sink, durationSeconds })

@@ -11,6 +11,7 @@
 // directly, so the file is remuxed while it arrives and never held in memory.
 
 import { SabrStream } from 'googlevideo/sabr-stream'
+import { EnabledTrackTypes } from 'googlevideo/utils'
 import { ALL_FORMATS, Input, ReadableStreamSource } from 'mediabunny'
 
 /**
@@ -72,9 +73,11 @@ export function pickSabrAudio(formats) {
  * @param {object} input
  * @param {{ url: string, poToken: string, ustreamerConfig: string, clientInfo: object }} input.sabrData
  * @param {DownloadSabrFormat[]} input.formats
+ * @param {boolean} [input.audioOnly] fetch the audio alone (a music track); `videoInput` is then null
+ * @param {DownloadSabrFormat[]} [input.audioPool] the formats the audio is picked from, when narrower than `formats`
  * @param {(received: number) => void} [input.onBytes] running total over both streams
  * @returns {Promise<{
- *   videoInput: Input,
+ *   videoInput: Input | null,
  *   audioInput: Input,
  *   video: DownloadSabrFormat,
  *   audio: DownloadSabrFormat,
@@ -83,15 +86,22 @@ export function pickSabrAudio(formats) {
  *   abort: () => void
  * }>}
  */
-export async function openSabrDownload({ sabrData, formats, onBytes }) {
-  const video = pickSabrVideo(formats)
-  const audio = pickSabrAudio(formats)
+export async function openSabrDownload({ sabrData, formats, audioOnly = false, audioPool, onBytes }) {
+  // audio only: SabrStream still wants a video format, which it then marks as
+  // already buffered and never requests — the smallest one will do
+  const video = audioOnly
+    ? formats.filter((format) => (format.mimeType ?? '').startsWith('video/'))
+      .sort((a, b) => (a.height ?? 0) - (b.height ?? 0) || (a.bitrate ?? 0) - (b.bitrate ?? 0))[0] ?? null
+    : pickSabrVideo(formats)
+  const audio = pickSabrAudio(audioPool ?? formats)
 
   if (video === null || audio === null) {
     throw new Error('no SABR video/audio format to download')
   }
 
-  const durationMs = Math.min(Number(video.approxDurationMs) || Infinity, Number(audio.approxDurationMs) || Infinity)
+  const durationMs = audioOnly
+    ? Number(audio.approxDurationMs) || Infinity
+    : Math.min(Number(video.approxDurationMs) || Infinity, Number(audio.approxDurationMs) || Infinity)
 
   const stream = new SabrStream({
     // SabrStream calls this as its own method; the browser's fetch throws "Illegal
@@ -109,9 +119,12 @@ export async function openSabrDownload({ sabrData, formats, onBytes }) {
     console.warn('SABR download: the server asked for a player reload; the session is no longer usable')
   })
 
+  // the unused video stream is left alone rather than cancelled: SabrStream
+  // closes it when it finishes, which throws on a cancelled stream
   const { videoStream, audioStream } = await stream.start({
     videoFormat: video,
-    audioFormat: audio
+    audioFormat: audio,
+    enabledTrackTypes: audioOnly ? EnabledTrackTypes.AUDIO_ONLY : EnabledTrackTypes.VIDEO_AND_AUDIO
   })
 
   let received = 0
@@ -124,11 +137,11 @@ export async function openSabrDownload({ sabrData, formats, onBytes }) {
   }))
 
   return {
-    videoInput: new Input({ formats: ALL_FORMATS, source: new ReadableStreamSource(counted(videoStream)) }),
+    videoInput: audioOnly ? null : new Input({ formats: ALL_FORMATS, source: new ReadableStreamSource(counted(videoStream)) }),
     audioInput: new Input({ formats: ALL_FORMATS, source: new ReadableStreamSource(counted(audioStream)) }),
     video,
     audio,
-    totalBytes: (Number(video.contentLength) || 0) + (Number(audio.contentLength) || 0),
+    totalBytes: (audioOnly ? 0 : Number(video.contentLength) || 0) + (Number(audio.contentLength) || 0),
     durationSeconds: isFinite(durationMs) ? durationMs / 1000 : 0,
     abort: () => stream.abort()
   }

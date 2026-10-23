@@ -47,6 +47,7 @@ async function openDesktopSink(fileName) {
  * @param {{ title: string, startSeconds: number, endSeconds?: number }[]} [input.chapters]
  * @param {string} [input.language]
  * @param {import('./download-subtitles').SubtitleTrackChoice[]} [input.subtitleTracks]
+ * @param {object | null} [input.musicTags] a YouTube Music track: saves its audio alone, as Ogg Opus (.opus)
  * @param {(stage: string, fraction: number, detail?: object) => void} [input.onProgress]
  * @param {AbortSignal} [input.signal]
  * @returns {Promise<{ fileName: string, filePath: string, resolution: string, failedSubtitles: string[] }>}
@@ -57,10 +58,10 @@ export async function downloadVideoDesktop({ title, channel, published, videoId,
   const { location, resolution, failedSubtitles } = await runDownload({
     ...rest,
     videoId,
-    openSink: (resolution) => {
+    openSink: (resolution, ext) => {
       fileName = buildDownloadFilename(
         store.getters.getDownloadFilenameTemplate,
-        { title, channel, published, videoId, resolution, ext: 'mkv' },
+        { title, channel, published, videoId, resolution, ext },
         store.getters.getDownloadMaxFilenameBytes
       )
       return openDesktopSink(fileName)

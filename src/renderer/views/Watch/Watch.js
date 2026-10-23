@@ -48,6 +48,7 @@ import { sortCaptions } from '../../helpers/player/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
 import { createUnplayableFormatFilter, isPlayableMimeType } from '../../helpers/player/codecSupport'
 import { useI18n } from 'vue-i18n'
+import { isMusicTrack, parseMusicTags } from '../../helpers/download-music'
 
 /**
  * @typedef {{
@@ -155,6 +156,8 @@ export default defineComponent({
       videoDescriptionHtml: '',
       // raw plain description (basic_info/Invidious) for the jisho study export
       plainVideoDescription: '',
+      // `videoDetails.musicVideoType` (local API only): MUSIC_VIDEO_TYPE_ATV is a YouTube Music track
+      musicVideoType: null,
       studyExportRunning: false,
       /** @type {{ stage: string, fraction: number, received: number, total: number, fileName: string, message: string } | null} */
       downloadState: null,
@@ -236,6 +239,10 @@ export default defineComponent({
     }
   },
   computed: {
+    // a YouTube Music track: the download saves the song alone, as Ogg Opus (.opus)
+    isMusicTrack: function () {
+      return isMusicTrack({ musicVideoType: this.musicVideoType, channel: this.channelName, description: this.plainVideoDescription })
+    },
     historyEntry: function () {
       return this.$store.getters.getHistoryCacheById[this.videoId]
     },
@@ -497,6 +504,7 @@ export default defineComponent({
       this.manifestMimeType = MANIFEST_TYPE_DASH
       this.sabrData = null
       this.sabrFormats = []
+      this.musicVideoType = null
       this.accountCookiesDialog = null
       this.legacyFormats = []
       this.adaptiveFormats = []
@@ -630,7 +638,7 @@ export default defineComponent({
         // this page is loading something else now: see `loadGeneration`
         if (this.loadGeneration !== generation) { return }
 
-        const { info: result, poToken, clientInfo, adEndTimeUnixMs, accountState } = videoInfo
+        const { info: result, poToken, clientInfo, adEndTimeUnixMs, accountState, musicVideoType } = videoInfo
 
         const playabilityStatus = result.playability_status
         this.playabilityStatus = playabilityStatus.status
@@ -646,6 +654,7 @@ export default defineComponent({
         }
 
         this.adEndTimeUnixMs = adEndTimeUnixMs
+        this.musicVideoType = musicVideoType
 
         this.isFamilyFriendly = result.basic_info.is_family_safe
 
@@ -2296,8 +2305,9 @@ export default defineComponent({
     openVideoDownload: function () {
       if ((!process.env.IS_ANDROID && !process.env.IS_ELECTRON) || this.downloadState !== null) { return }
 
-      // nothing to choose from — straight to the download, as before subtitles existed
-      if (this.captions.length === 0) {
+      // nothing to choose from — straight to the download, as before subtitles existed;
+      // a music track is saved as audio alone, which carries no subtitles
+      if (this.captions.length === 0 || this.isMusicTrack) {
         this.handleVideoDownload([])
       } else {
         this.downloadSubtitlePicker = true
@@ -2333,6 +2343,10 @@ export default defineComponent({
           ? (await import('../../helpers/android/video-download')).downloadVideoAndroid
           : (await import('../../helpers/video-download-desktop')).downloadVideoDesktop
 
+        const musicTags = this.isMusicTrack
+          ? parseMusicTags({ title: this.videoTitle, channel: this.channelName, description: this.plainVideoDescription })
+          : null
+
         const { fileName, failedSubtitles } = await downloadVideo({
           adaptiveFormats: this.adaptiveFormats,
           legacyFormats: this.legacyFormats,
@@ -2340,8 +2354,9 @@ export default defineComponent({
           // plain copies: the SABR request encoder gets no Vue proxies
           sabrData: this.sabrData ? { ...this.sabrData, clientInfo: { ...this.sabrData.clientInfo } } : null,
           sabrFormats: this.sabrFormats,
-          title: this.videoTitle,
-          channel: this.channelName,
+          // a music track is named after the song and its artist, not the "… - Topic" channel
+          title: musicTags?.title ?? this.videoTitle,
+          channel: musicTags?.artist ?? this.channelName,
           published: this.videoPublished,
           chapters: this.videoChapters,
           // the spoken language: the auto-generated track is always in it, while the first
@@ -2349,6 +2364,7 @@ export default defineComponent({
           language: (this.captions.find((track) => track.id?.startsWith('a.')) ??
             this.captions.find((track) => !track.isAutotranslated))?.language,
           subtitleTracks,
+          musicTags,
           signal: controller.signal,
           onProgress: (stage, fraction, detail) => {
             if (this.downloadState === null) { return }
