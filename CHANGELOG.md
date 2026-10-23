@@ -15,6 +15,57 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028` — 2026-10-23
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
+upstream commits as `+024`. Neither upstream moved; this release is fork-side work. (`+025`–`+027`
+were test builds and were never published, so their changes are all listed here.)
+
+### Major features
+
+- **YouTube Music search.** A new **Type** in the search filters, *YouTube Music*, turns the search
+  page into what music.youtube.com shows for the query — fetched through the same InnerTube
+  endpoint as every other request, only as the YTMUSIC client.
+  - **YouTube Music's category chips** — Songs, Albums, Videos, Community / Featured playlists,
+    Episodes, Artists, Profiles, Podcasts — plus *All*; translated (English, Japanese) where known,
+    YouTube's own text otherwise. A chip runs that category's own search and pages on, 20 results a
+    page, with *Fetch more results* and automatic loading.
+  - **All** shows the top result card (song, album or artist), then the mixed list grouped into its
+    categories in the order YouTube Music sends them; each category heading opens its chip.
+  - **Every result is an ordinary tile**: songs, videos and episodes open the watch page, albums
+    open as their own `OLAK5uy_…` playlist (with the release year beside the artist), community
+    playlists and podcasts as playlists, artists and profiles as channels.
+  - The chosen chip is part of the page address and results are kept for the session, so coming
+    back from a song restores the chip and every page already loaded.
+- **A YouTube Music track downloads as the song alone — tagged, with cover art and lyrics.** A track
+  YouTube Music publishes (an *Art Track*: the audio over one still image, from an
+  *"<artist> - Topic"* channel) is recognised from the player response's `musicVideoType`
+  (`MUSIC_VIDEO_TYPE_ATV`), with the Topic channel and YouTube's *"Provided to YouTube by …"*
+  description as the fallback on the Invidious path. Official music videos still download as mkv.
+  For such a track the download button skips the subtitle picker and:
+  - fetches **only the audio** — over SABR in audio-only mode (the video stream is never
+    requested), Opus preferred, then the direct audio URL;
+  - passes YouTube's **Opus stream through into Ogg Opus without re-encoding**, saved as **`.opus`**
+    (the standard extension for Ogg Opus) — KDE treats any `.ogg` as Ogg Vorbis, so Elisa and Dolphin
+    read no tags at all from an Opus file named `.ogg`; only a track that has no Opus stream is saved
+    as AAC in `.m4a`;
+  - **tags it from YouTube's release credits**: title, artists, album and release date (a `℗` year
+    alone is written as just the year, not as 1 January);
+  - embeds YouTube Music's **square album cover at its original size** (e.g. 1400×1400) as the front
+    cover — falling back to the centre square of the video thumbnail, which on these tracks is the
+    cover between two bars — and the **lyrics** (LyricFind, as YouTube Music shows them) as `LYRICS`;
+    a missing cover or lyrics, or a failed request for them, never stops the download;
+  - names the file after the song and its artist rather than the Topic channel, e.g.
+    `Tramvaj 2017-07-26 (Tři Sestry).opus`.
+
+### Artifacts
+
+- `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028_amd64.deb` — GNU/Linux amd64
+- `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028_win-x64.zip` — Windows x64 (extract the folder, run `shiroikuma-jiyudoga.exe`)
+- `shiroikuma-jiyudoga_0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028_arm64-v8a.apk` — Android arm64-v8a
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024` — 2026-10-19
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two

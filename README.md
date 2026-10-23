@@ -13,7 +13,9 @@ additions**: a one-tap **language-study export** (subtitled mkv into
 [shiroikuma-jisho](https://github.com/ShiroiKuma0/shiroikumanojisho) /
 [shiroikuma-yosuga](https://github.com/ShiroiKuma0/shiroikuma-yosuga)), a **video download**
 button that streams chapter-preserving mkv files with your pick of embedded subtitles straight
-to disk, **age-restricted videos** played through your own account's exported cookies,
+to disk, a **YouTube Music** search with its categories whose songs download as tagged
+`.opus` files with cover art and lyrics, **age-restricted videos** played through your own
+account's exported cookies,
 original-language titles & descriptions, a
 **self-teaching** channel-discovery **Similar** tab, **feed-filter pills** that carve a flooded
 subscription feed into one-tap views, per-profile video **starring**, an automatic **device sync**
@@ -31,7 +33,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+024`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -76,6 +78,25 @@ settings page:
 ```
 %(title)s %(upload_date)s (%(channel)s).%(ext)s
 → Monster Kettlebell Workout Motivation. Lift 100kg … 2022-07-02 (WestportBattlebells).mkv
+```
+
+## 🎵 YouTube Music — search its catalogue, keep the song
+
+Set the search filter's **Type** to **YouTube Music** and the search page becomes what
+music.youtube.com shows for your query: the **top result**, then everything grouped into
+**Songs, Albums, Videos, Playlists, Artists, Profiles, Podcasts and Episodes**, with YouTube
+Music's own category chips to narrow it to one and page on. Every result opens where you'd
+expect — a song on the watch page, an album as its playlist, an artist as a channel — and
+coming back keeps your category and the pages you had loaded.
+
+On a YouTube Music track, the download button saves **the song, not a video of its cover**:
+YouTube's own Opus audio, passed through untouched into an Ogg Opus **`.opus`** file and
+tagged from YouTube's release credits — title, artists, album, date — with the album's
+**cover art at its original size** and the **lyrics** embedded, named after the song and the
+artist:
+
+```
+Tramvaj 2017-07-26 (Tři Sestry).opus      ← cover 1400×1400 · lyrics · 25:01 · 1993
 ```
 
 ## 🗂️ Tabs — a drawer of folders, and they come back
