@@ -1294,6 +1294,23 @@ SKUI:
     Label: 同期
   Player:
     Decoder recovery: この端末のデコーダーが再生できないため {codec} に切り替えました
+  Music:
+    Type: YouTube Music
+    Heading: YouTube Music
+    All: すべて
+    Top result: トップの検索結果
+    No Results: YouTube Music で何も見つかりませんでした
+    Categories:
+      Songs: 曲
+      Videos: 動画
+      Albums: アルバム
+      Artists: アーティスト
+      Profiles: プロフィール
+      Playlists: 再生リスト
+      Community playlists: コミュニティの再生リスト
+      Featured playlists: おすすめの再生リスト
+      Podcasts: ポッドキャスト
+      Episodes: エピソード
 Log Viewer:
   Console Log: コンソールログ
   Save all: 全部保存

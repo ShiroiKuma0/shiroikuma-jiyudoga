@@ -1,4 +1,4 @@
-import { ClientType, Constants, Innertube, Misc, Mixins, Parser, Platform, Player, Session, UniversalCache, Utils, YT, YTNodes } from 'youtubei.js'
+import { ClientType, Constants, Innertube, Misc, Mixins, Parser, Platform, Player, Session, UniversalCache, Utils, YT, YTMusic, YTNodes } from 'youtubei.js'
 import Autolinker from 'autolinker'
 import { parseLooseJSON } from 'bgutils-js/utils'
 
@@ -369,6 +369,21 @@ export async function getLocalSearchResults(query, filters, safetyMode) {
   const response = await innertube.search(query, convertSearchFilters(filters))
 
   return handleSearchResponse(response)
+}
+
+/**
+ * 白い熊 自由動画: a YouTube Music search — helpers/music-search.js turns it into
+ * list items. Goes through the same InnerTube endpoint as every other request,
+ * only as the YTMUSIC client.
+ * @param {string} query
+ * @param {string | undefined} params a category chip's search params; none → the mixed top results
+ * @param {boolean} safetyMode
+ */
+export async function getLocalMusicSearch(query, params, safetyMode) {
+  const innertube = await createInnertube({ safetyMode })
+  const response = await innertube.actions.execute('/search', { query, params, client: 'YTMUSIC' })
+
+  return new YTMusic.Search(response, innertube.actions, !!params)
 }
 
 /**

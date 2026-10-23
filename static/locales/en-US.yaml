@@ -1611,3 +1611,20 @@ SKUI:
       lists. Empty falls back to the translated name.
   Player:
     Decoder recovery: "This device's decoder could not play the video — switched to {codec}"
+  Music:
+    Type: YouTube Music
+    Heading: YouTube Music
+    All: All
+    Top result: Top result
+    No Results: Nothing found on YouTube Music
+    Categories:
+      Songs: Songs
+      Videos: Videos
+      Albums: Albums
+      Artists: Artists
+      Profiles: Profiles
+      Playlists: Playlists
+      Community playlists: Community playlists
+      Featured playlists: Featured playlists
+      Podcasts: Podcasts
+      Episodes: Episodes

@@ -105,7 +105,9 @@ const TYPE_VALUES = [
   'shorts',
   'channel',
   'playlist',
-  'movie'
+  'movie',
+  // 白い熊 自由動画: searches YouTube Music instead (SkuiMusicSearch)
+  'music'
 ]
 
 const DURATION_VALUES = [
@@ -156,7 +158,8 @@ const typeLabels = computed(() => [
   t('Global.Shorts'),
   t('Search Filters.Type.Channels'),
   t('Playlists'),
-  t('Search Filters.Type.Movies')
+  t('Search Filters.Type.Movies'),
+  t('SKUI.Music.Type')
 ])
 
 const durationLabels = computed(() => [
@@ -199,13 +202,13 @@ watch(timeValue, (value) => {
   store.commit('setSearchTime', value)
 })
 
-/** @type {import('vue').Ref<'all' | 'video' | 'shorts' | 'channel' | 'playlist' | 'movie'>} */
+/** @type {import('vue').Ref<'all' | 'video' | 'shorts' | 'channel' | 'playlist' | 'movie' | 'music'>} */
 const typeValue = ref(searchSettings.type)
 
 watch(typeValue, (value) => {
   if (value === 'shorts') {
     durationValue.value = ''
-  } else if (value === 'channel' || value === 'playlist') {
+  } else if (value === 'channel' || value === 'playlist' || value === 'music') {
     timeValue.value = ''
     durationValue.value = ''
     if (featuresValue.value.length > 0) {

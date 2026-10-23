@@ -1,0 +1,86 @@
+.card {
+  margin-block: 0 60px;
+  margin-inline: auto;
+}
+
+.headingIcon {
+  color: var(--primary-color);
+}
+
+/* the category chips, as YouTube Music lays them out: one row of round pills,
+   wrapping on a narrow screen */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+
+.chip {
+  padding-block: 6px;
+  padding-inline: 14px;
+  border: 1px solid var(--tertiary-text-color);
+  border-radius: 999px;
+  background: none;
+  color: var(--primary-text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  border-color: var(--primary-color);
+}
+
+.chip.selected {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: var(--text-with-main-color);
+}
+
+.message {
+  color: var(--tertiary-text-color);
+}
+
+.section + .section {
+  margin-block-start: 24px;
+}
+
+.sectionHeading {
+  margin-block: 0 8px;
+}
+
+.sectionLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sectionLink:hover,
+.sectionLink:focus-visible {
+  color: var(--primary-color);
+}
+
+.sectionLink svg {
+  font-size: 0.75em;
+  color: var(--primary-color);
+}
+
+.getNextPage {
+  background-color: var(--search-bar-color);
+  inline-size: 100%;
+  block-size: 45px;
+  line-height: 45px;
+  text-align: center;
+  cursor: pointer;
+  margin-block-start: 16px;
+}
+
+.getNextPage:hover,
+.getNextPage:focus {
+  background-color: var(--side-nav-hover-color);
+  color: var(--side-nav-hover-text-color);
+}

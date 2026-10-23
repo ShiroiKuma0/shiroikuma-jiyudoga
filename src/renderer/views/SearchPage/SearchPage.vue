@@ -1,7 +1,11 @@
 <template>
   <div>
+    <SkuiMusicSearch
+      v-if="isMusicSearch"
+      :query="processedQuery"
+    />
     <FtLoader
-      v-if="isLoading"
+      v-else-if="isLoading"
       :fullscreen="true"
     />
     <FtCard
@@ -46,6 +50,7 @@ import FtLoader from '../../components/FtLoader/FtLoader.vue'
 import FtCard from '../../components/ft-card/ft-card.vue'
 import FtElementList from '../../components/FtElementList/FtElementList.vue'
 import FtAutoLoadNextPageWrapper from '../../components/FtAutoLoadNextPageWrapper.vue'
+import SkuiMusicSearch from '../../components/SkuiMusicSearch/SkuiMusicSearch.vue'
 
 import store from '../../store'
 
@@ -76,6 +81,9 @@ const shownResults = shallowRef([])
 
 const query = ref('')
 const processedQuery = computed(() => query.value.trim())
+
+// 白い熊 自由動画: the YouTube Music search (type filter "YouTube Music") is its own view
+const isMusicSearch = computed(() => route.query.type === 'music')
 
 /** @type {import('vue').ComputedRef<any[]>} */
 const sessionSearchHistory = computed(() => store.getters.getSessionSearchHistory)
@@ -159,6 +167,14 @@ function checkSearchCache(payload) {
   if (payload.query.length > SEARCH_CHAR_LIMIT) {
     console.warn(`Search character limit is: ${SEARCH_CHAR_LIMIT}`)
     showToast(t('Search character limit', { searchCharacterLimit: SEARCH_CHAR_LIMIT }))
+    return
+  }
+
+  // SkuiMusicSearch runs and caches its own search
+  if (payload.searchSettings.type === 'music') {
+    if (rememberSearchHistory.value) {
+      updateSearchHistoryEntry()
+    }
     return
   }
 
