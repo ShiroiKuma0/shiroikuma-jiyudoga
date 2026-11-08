@@ -33,7 +33,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+029`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -196,7 +196,8 @@ YouTube silently translates video titles — and descriptions — server-side in
 language: a Japanese or Russian video shows up with a machine-translated English title and
 description. This fork restores the **original text everywhere**: every visible video tile
 resolves its untranslated title through YouTube's oEmbed endpoint (cached, throttled, zero
-extra requests for tiles you never scroll to), and the watch page reads the player
+extra requests for tiles you never scroll to; where a channel blocks embedding, from the title
+your history recorded or the player endpoint instead), and the watch page reads the player
 response, which always carries the original — title *and* description (links and
 timestamps stay clickable). Watch a trilingual feed — 日本語, русский, English — and every
 word is the one its creator wrote.
@@ -299,7 +300,10 @@ slider color rows with recent-color boxes, external `.ttf`/`.otf` font import wi
 glyph preview, font-weight and UI-size sliders, and border / roundness / divider widths all
 the way down to 0 — everything previewed live as you drag. The page itself is laid out like
 the futokxkb keyboard UI page: thin hairlines between sections and headings underlined to
-the width of the text, never the row. A long press on the hamburger opens it directly.
+the width of the text, never the row. Every row that *does* something when tapped — Export /
+Import…, the download directory, Reset — is a full-width outlined pill, its section's main action
+framed thick and bold, with a › when it opens something, so an action never passes for a heading.
+A long press on the hamburger opens it directly.
 
 Every floating surface is framed to match: the modals, the ⋯ menus, the profile selector, the
 subscribe dropdown, the settings jump menu, toasts, tooltips, input suggestions and the player's

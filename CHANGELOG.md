@@ -15,6 +15,35 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+029` — 2026-11-08
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
+upstream commits as `+028`. Neither upstream moved; this release is fork-side work.
+
+### Fixes
+
+- **Original titles on videos that block embedding.** Video tiles look up the untranslated title
+  through YouTube's oEmbed endpoint, but oEmbed refuses (`401`) any video whose uploader disabled
+  embedding — so such a channel's tiles fell back to YouTube's machine-translated title (a Japanese
+  sumo channel's uploads showed up in English, for one). Now, when oEmbed refuses, a tile uses
+  the title your **history** recorded for that video (the watch page stores the untranslated one),
+  and for a video you have not watched it fetches the untranslated `videoDetails` title from the
+  **player endpoint** — a bare request with no player script and no poToken, on one reused
+  session, throttled and cached like the oEmbed lookups. Deleted or private videos are unchanged.
+
+### UI & theming
+
+- **Every pressable row on the UI settings page is an outlined pill** — the rule now shared by all
+  白い熊 apps, so an action can never pass for a heading or a note. *Export / Import…* (Android) and
+  the Android *Download directory* row are their sections' main actions: a full-width pill with a
+  thick frame, a bold label and a **›**, since each opens something (the backup panel, the
+  directory picker; the separate *Choose…* chip is gone). The Similar section's *Reset* is a thin
+  pill with no ›, since it acts in place. The explanation — the chosen directory, or the red
+  *not set* warning — sits beneath the pill, aligned with its label, outside the touch target.
+  Rows that end in their own control (switches, *Sync now*, *Import*, *Forget*, *Remove*) stay
+  plain rows.
+- The download row's label reads *Download directory* (was *Download folder*).
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+028` — 2026-10-23
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
