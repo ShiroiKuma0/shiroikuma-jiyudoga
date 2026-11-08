@@ -122,6 +122,66 @@
   padding-inline: 0.9em;
 }
 
+/*
+ * A row that does something when tapped — opens a panel or picker, or acts in
+ * place — is a full-width OUTLINED pill (never filled), so it cannot be mistaken
+ * for a heading or a note (black-yellow-theme, 2026-11-07). The section's main
+ * action gets the 3 px frame and a bold label, any other the 1.25 px one; › marks
+ * a pill that opens something. The explanation sits beneath, aligned with the
+ * label, and is not part of the touch target. Rows ending in their own control
+ * (switch, button, field) stay plain.
+ */
+.skuiPillRow {
+  inline-size: calc(100% - 2em);
+  padding-block: 3px;
+}
+
+.skuiPill {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  background: none;
+  border: 1.25px solid var(--primary-color);
+  border-radius: 100px;
+  box-sizing: border-box;
+  color: var(--primary-text-color);
+  cursor: pointer;
+  font: inherit;
+  inline-size: 100%;
+  padding-block: 9px;
+  padding-inline: 1em;
+  text-align: start;
+}
+
+.skuiPill:hover,
+.skuiPill:focus-visible {
+  background-color: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.skuiPillMain {
+  border-width: 3px;
+  font-weight: 700;
+}
+
+.skuiPillLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.skuiPillOpens::after {
+  content: '›';
+  color: var(--primary-color);
+  flex: 0 0 auto;
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+/* aligned with the label inside the pill: the pill's inline padding plus its frame */
+.skuiPillSummary {
+  margin-block-start: 0.2em;
+  padding-inline-start: calc(1em + 3px);
+}
+
 /* free-text setting (the download filename template) — full width under its
    label rather than squeezed onto the row, since templates are long */
 .skuiEntryInput {

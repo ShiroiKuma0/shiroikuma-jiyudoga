@@ -1413,9 +1413,8 @@ SKUI:
       chapters and any subtitles you pick embedded, so players like mpv can jump between
       them. It fetches the best video and audio the way the player does and writes the file
       while it arrives, so there is no size limit; the muxed stream is the fallback.
-    Download folder: Download folder
+    Download directory: Download directory
     No download directory set: No download directory set
-    Choose…: Choose…
     Filename template: Filename template
     Tokens: 'Tokens: %(title)s %(upload_date)s %(channel)s %(uploader)s %(id)s %(resolution)s %(ext)s'
     Date format hint: >-

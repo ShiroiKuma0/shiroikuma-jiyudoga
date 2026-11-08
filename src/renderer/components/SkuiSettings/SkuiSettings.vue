@@ -16,21 +16,21 @@
         <h4 class="skuiSectionTitle">
           {{ $t('SKUI.Backup.Export / Import') }}
         </h4>
-        <button
-          class="skuiEntryRow skuiIndent1"
-          type="button"
-          @click="panelOpen = true"
-        >
-          <span class="skuiEntryText">
-            <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Export / Import…') }}</span>
-            <span
-              class="skuiEntrySummary"
-              :class="{ skuiWarn: backupDirectoryName === null }"
-            >
-              {{ backupDirectoryName ?? $t('SKUI.Backup.No backup directory set') }}
-            </span>
+        <div class="skuiPillRow skuiIndent1">
+          <button
+            class="skuiPill skuiPillMain skuiPillOpens"
+            type="button"
+            @click="panelOpen = true"
+          >
+            <span class="skuiPillLabel">{{ $t('SKUI.Backup.Export / Import…') }}</span>
+          </button>
+          <span
+            class="skuiEntrySummary skuiPillSummary"
+            :class="{ skuiWarn: backupDirectoryName === null }"
+          >
+            {{ backupDirectoryName ?? $t('SKUI.Backup.No backup directory set') }}
           </span>
-        </button>
+        </div>
         <label class="skuiEntryRow skuiIndent1">
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Automation export') }}</span>
@@ -282,29 +282,30 @@
           {{ $t('SKUI.Download.Description') }}
         </p>
 
-        <button
+        <div
           v-if="IS_ANDROID"
-          class="skuiEntryRow skuiIndent1"
-          type="button"
-          @click="chooseDownloadDirectory"
+          class="skuiPillRow skuiIndent1"
         >
-          <span class="skuiEntryText">
-            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download folder') }}</span>
-            <span
-              class="skuiEntrySummary"
-              :class="{ skuiWarn: downloadDirectoryLabel === null }"
-            >
-              {{ downloadDirectoryLabel ?? $t('SKUI.Download.No download directory set') }}
-            </span>
+          <button
+            class="skuiPill skuiPillMain skuiPillOpens"
+            type="button"
+            @click="chooseDownloadDirectory"
+          >
+            <span class="skuiPillLabel">{{ $t('SKUI.Download.Download directory') }}</span>
+          </button>
+          <span
+            class="skuiEntrySummary skuiPillSummary"
+            :class="{ skuiWarn: downloadDirectoryLabel === null }"
+          >
+            {{ downloadDirectoryLabel ?? $t('SKUI.Download.No download directory set') }}
           </span>
-          <span class="skuiEntryAction">{{ $t('SKUI.Download.Choose…') }}</span>
-        </button>
+        </div>
         <div
           v-else
           class="skuiEntryRow skuiIndent1"
         >
           <span class="skuiEntryText">
-            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download folder') }}</span>
+            <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download directory') }}</span>
             <span
               class="skuiEntrySummary"
               :class="{ skuiWarn: downloadDirectoryLabel === null }"
@@ -649,15 +650,15 @@
           </button>
         </div>
 
-        <button
-          class="skuiEntryRow skuiIndent1"
-          type="button"
-          @click="resetSimilarTuning"
-        >
-          <span class="skuiEntryText">
-            <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Reset') }}</span>
-          </span>
-        </button>
+        <div class="skuiPillRow skuiIndent1">
+          <button
+            class="skuiPill"
+            type="button"
+            @click="resetSimilarTuning"
+          >
+            <span class="skuiPillLabel">{{ $t('SKUI.Similar.Reset') }}</span>
+          </button>
+        </div>
       </section>
 
       <section
