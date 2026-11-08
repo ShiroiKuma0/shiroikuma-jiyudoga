@@ -1123,6 +1123,31 @@ export async function getLocalVideoRecommendations(videoId) {
     .filter(_ => _) ?? []
 }
 
+/** @type {Innertube | null} */
+let untranslatedTitleSession = null
+
+/**
+ * Fetches a video's untranslated title from the player endpoint's `videoDetails`
+ * (the next endpoint and every list endpoint auto-translate it). Only the bare
+ * `/player` request — no player script, no poToken — since only the title is needed.
+ * Used for tiles whose video blocks embedding, where oEmbed answers 401.
+ * @param {string} videoId
+ * @returns {Promise<string | null>}
+ */
+export async function getLocalUntranslatedTitle(videoId) {
+  if (untranslatedTitleSession === null) {
+    untranslatedTitleSession = await createInnertube()
+  }
+
+  const response = await untranslatedTitleSession.actions.execute('/player', { videoId })
+  const videoDetails = response.data?.videoDetails
+  // a recycled or mismatched answer must never retitle the tile
+  if (videoDetails?.videoId !== videoId) {
+    return null
+  }
+  return videoDetails.title?.trim() || null
+}
+
 /**
  * Returns the channel or the channel termination reason
  * @param {string} id

@@ -1395,7 +1395,7 @@ function onDragStart(event) {
 
 parseVideoData()
 
-getOriginalTitle(id.value).then((originalTitle) => {
+getOriginalTitle(id.value, historyEntry.value?.title).then((originalTitle) => {
   if (originalTitle) {
     title.value = originalTitle
   }
