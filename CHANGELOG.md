@@ -15,6 +15,19 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+030` — 2026-11-09
+
+Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
+upstream commits as `+029`. Neither upstream moved; this release is fork-side work.
+
+### UI & theming
+
+- **The Similar tab's Reset asks before it clears.** The *Reset* pill in the UI settings page's
+  Similar section used to wipe the profile's whole Similar-tab training in one tap. It now opens the
+  app's usual confirmation prompt, naming what goes — blocked channels, rejected videos, learned
+  words and suggestion sources — and that it cannot be undone, with **Yes, clear it** (in the
+  destructive colour) and **Cancel**. Only *Yes* runs the reset.
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+029` — 2026-11-08
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
