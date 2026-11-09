@@ -654,11 +654,19 @@
           <button
             class="skuiPill"
             type="button"
-            @click="resetSimilarTuning"
+            @click="showResetSimilarPrompt = true"
           >
             <span class="skuiPillLabel">{{ $t('SKUI.Similar.Reset') }}</span>
           </button>
         </div>
+        <FtPrompt
+          v-if="showResetSimilarPrompt"
+          :label="$t('SKUI.Similar.Reset confirm')"
+          :option-names="resetSimilarPromptNames"
+          :option-values="RESET_SIMILAR_PROMPT_VALUES"
+          is-first-option-destructive
+          @click="handleResetSimilarPrompt"
+        />
       </section>
 
       <section
@@ -738,6 +746,7 @@ import { hasStorageAccess, requestStorageAccess } from '../../helpers/android/sy
 import { runSync } from '../../helpers/sync/index'
 import { forgetYoutubeCookies, getYoutubeAccountStatus } from '../../helpers/youtube-account'
 
+import FtPrompt from '../FtPrompt/FtPrompt.vue'
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import SkuiAccountCookies from '../SkuiAccountCookies.vue'
 import SkuiColorRow from './SkuiColorRow.vue'
@@ -1040,6 +1049,25 @@ function clearSimilarNegativeTerm(term) {
  */
 function clearSimilarSeedChannel(channelId) {
   store.dispatch('clearSimilarSeedChannel', channelId)
+}
+
+// Reset wipes a profile's whole Similar-tab training in one tap, so it asks first
+const RESET_SIMILAR_PROMPT_VALUES = ['reset', 'cancel']
+const resetSimilarPromptNames = computed(() => [
+  t('SKUI.Similar.Reset action'),
+  t('Cancel')
+])
+const showResetSimilarPrompt = ref(false)
+
+/**
+ * @param {'reset' | 'cancel' | null} option
+ */
+function handleResetSimilarPrompt(option) {
+  showResetSimilarPrompt.value = false
+
+  if (option === 'reset') {
+    resetSimilarTuning()
+  }
 }
 
 function resetSimilarTuning() {

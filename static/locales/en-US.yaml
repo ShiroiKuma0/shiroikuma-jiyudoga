@@ -1463,6 +1463,10 @@ SKUI:
     Remove: Remove
     Reset: Clear everything the Similar tab learned in this profile
     Reset done: The Similar tab forgot everything for this profile
+    Reset confirm: >-
+      Clear everything the Similar tab learned in this profile — blocked channels,
+      rejected videos, learned words and suggestion sources? This cannot be undone.
+    Reset action: Yes, clear it
   Backup:
     Export / Import: Export / Import
     Export / Import…: Export / Import…
