@@ -15,6 +15,69 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.26.0+2026-11-10.05-51.g24da9326+2026-09-13.13-31.gaf0ab865+003` — 2026-11-10
+
+Built on FreeTube `24da9326` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
+pin moved and FreeTube released 0.26.0** — 271 commits of FreeTube `development` merged, so
+`FORK_VERSION` rises from `0.25.3.1` to `0.26.0` (above FreeTubeAndroid's `0.25.3.1`) and the
+counter restarts. Builds `+001` and `+002` were test builds and were never released.
+FreeTubeAndroid had nothing new.
+
+### Fixes
+
+- **No more “Reloading player according to SABR request” every minute.** YouTube now grades the
+  proof-of-origin token in every streaming response. A session whose token comes back *pending*
+  (`STREAM_PROTECTION_STATUS` 2) is served exactly the **first 60 seconds** of the video and then
+  only control messages — the player stalled at 0:59–1:01, retried, and was rebuilt, often several
+  times per video (FreeTube issue #10024, still open upstream). The player now notices the pending
+  answer within the first few seconds, mints a fresh token for the video and switches the running
+  session to it — no reload, no stall. Up to three replacements per session; acceptance is logged.
+- **Every player reload names its cause.** The toast reads “Reloading player according to SABR
+  request (*cause*)” — `retry-loop`, `backoff-loop` or `server-request` — and the log records the
+  session age, request count, host, protection status, token replacements and the cause's own
+  details, so the next stall says what happened.
+- **A decoder-stall recovery no longer claims to be a SABR request.** It rebuilds the player
+  silently, as it always meant to.
+
+### From FreeTube 0.26.0
+
+- **Shows tab on channels**, with a message when a channel has none.
+- **Channel About page:** a links section, keyboard access for Invidious, and *About* selectable
+  as the channel landing tab.
+- **Caption settings** — the player's captions menu becomes shaka-player's caption-settings menu,
+  with display options beside the track choice.
+- **Live and post-live DVR playback fixed** — seeking back in a running or just-ended stream.
+- **The watch page asks YouTube's `/get_watch`** endpoint (with an API fallback), as does the
+  home page.
+- **“How this was made” disclosures and AI labels** on the watch page.
+- **A reload-player button** in the video info bar, to recover after the player crashes — beside
+  our own download button.
+- **Shortened view counts** (K, M, B), no false precision on additional counts, approximate reply
+  counts on comments.
+- **Icons** for music videos, courses, releases and podcasts.
+- **Tooltips position themselves** so they are never cut off and never add a scroll bar.
+- **Playlists:** a specific message for an unviewable playlist; unavailable videos hidden
+  (Invidious); filtered members-only videos handled; copy and channel name fixed.
+- **Fixes:** community posts view; chapter markers matching the seek-bar preview; live-chat
+  auto-scroll; “Hide videos from channels” for collaboration videos; community-protected videos no
+  longer reported as IP-blocked; a channel name no longer misread as a view count; durations over
+  1000 hours; long words in comments; search-history selection; the default playback rate's
+  decimals; settings blank space with the side bar expanded; external-player default mode no
+  longer scrolls to the top; a clearer message when every channel video is filtered out.
+- **Runtime:** Electron 44.3.0 → 44.10.0 (desktop builds), shaka-player 5.1.12 → 5.3.3,
+  youtubei.js 18.1.0 → 18.3.0, electron-builder 26.18.0; minimum macOS 13 (not built here).
+- **Translations:** 155 Weblate updates; newly active locales.
+
+### Downloads
+
+| Platform | File |
+| --- | --- |
+| Android (arm64-v8a) | `shiroikuma-jiyudoga_0.26.0+2026-11-10.05-51.g24da9326+2026-09-13.13-31.gaf0ab865+003_arm64-v8a.apk` |
+| GNU/Linux (amd64 deb) | `shiroikuma-jiyudoga_0.26.0+2026-11-10.05-51.g24da9326+2026-09-13.13-31.gaf0ab865+003_amd64.deb` |
+| Windows x64 (zip) | `shiroikuma-jiyudoga_0.26.0+2026-11-10.05-51.g24da9326+2026-09-13.13-31.gaf0ab865+003_win-x64.zip` |
+
+---
+
 ## 白い熊 自由動画 `0.25.3.1+2026-10-04.17-51.g39efd49f+2026-09-13.13-31.gaf0ab865+030` — 2026-11-09
 
 Built on FreeTube `39efd49f` (2026-10-04) + FreeTubeAndroid `af0ab865` (2026-09-13) — the same two
