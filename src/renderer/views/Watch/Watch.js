@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue'
+import { defineComponent, shallowRef } from 'vue'
 import { isNavigationFailure, NavigationFailureType } from 'vue-router'
 import { mapActions, mapMutations } from 'vuex'
 import shaka from 'shaka-player'
@@ -24,6 +24,8 @@ import {
   extractNumberFromString,
   formatDurationAsTimestamp,
   formatNumber,
+  formatSubscriberCount,
+  throttle,
   getLocalesWithFallback,
   showToast
 } from '../../helpers/utils'
@@ -107,7 +109,9 @@ export default defineComponent({
   setup: function () {
     const { t, locale } = useI18n()
 
-    return { t, currentLocale: locale }
+    const liveChat = shallowRef(null)
+
+    return { t, currentLocale: locale, liveChat }
   },
   data: function () {
     return {
@@ -138,7 +142,6 @@ export default defineComponent({
       videoPlayerLoaded: false,
       isFamilyFriendly: false,
       isLive: false,
-      liveChat: null,
       isLiveContent: false,
       isUpcoming: false,
       isPostLiveDvr: false,
@@ -197,6 +200,8 @@ export default defineComponent({
       // out no directly fetchable URLs
       adaptiveFormats: [],
       captions: [],
+      /** @type {import('youtubei.js').Misc.Format[]} */
+      hlsAudioMetadata: [],
       /** @type {'EQUIRECTANGULAR' | 'EQUIRECTANGULAR_THREED_TOP_BOTTOM' | 'MESH'| null} */
       vrProjection: null,
       autoplayNextRecommendedVideo: false,
@@ -227,6 +232,7 @@ export default defineComponent({
       /** @type {string[]|null} */
       customErrorIcon: null,
       videoGenreIsMusic: false,
+      contentDisclosures: null,
       /** @type {Date|null} */
       streamingDataExpiryDate: null,
       // The video whose refused streaming session (HTTP 401) we have already rebuilt once.
@@ -486,6 +492,7 @@ export default defineComponent({
       this.videoDescription = ''
       this.videoDescriptionHtml = ''
       this.license = ''
+      this.contentDisclosures = null
       this.videoViewCount = 0
       this.videoLikeCount = 0
       this.videoDislikeCount = 0
@@ -638,7 +645,8 @@ export default defineComponent({
         // this page is loading something else now: see `loadGeneration`
         if (this.loadGeneration !== generation) { return }
 
-        const { info: result, poToken, clientInfo, adEndTimeUnixMs, accountState, musicVideoType } = videoInfo
+        const { info: result, poToken, clientInfo, adEndTimeUnixMs, accountState, musicVideoType, contentDisclosures } = videoInfo
+        this.contentDisclosures = contentDisclosures || null
 
         const playabilityStatus = result.playability_status
         this.playabilityStatus = playabilityStatus.status
@@ -762,7 +770,7 @@ export default defineComponent({
         const subCount = !result.secondary_info.owner.subscriber_count.isEmpty() ? parseLocalSubscriberCount(result.secondary_info.owner.subscriber_count.text) : NaN
 
         if (!isNaN(subCount)) {
-          this.channelSubscriptionCountText = formatNumber(subCount, subCount >= 10000 ? { notation: 'compact' } : undefined)
+          this.channelSubscriptionCountText = subCount >= 10000 ? formatNumber(subCount, { notation: 'compact' }) : formatSubscriberCount(subCount)
         } else {
           this.channelSubscriptionCountText = ''
         }
@@ -821,6 +829,7 @@ export default defineComponent({
 
         this.videoChapters = chapters
         this.videoChaptersKind = chaptersKind
+        this.hlsAudioMetadata = []
 
         // The apostrophe is intentionally that one (char code 8217), because that is the one YouTube uses
         const BOT_MESSAGE = 'Sign in to confirm you’re not a bot'
@@ -868,8 +877,9 @@ export default defineComponent({
           } else {
             errorText = `[${playabilityStatus.status}] ${playabilityStatus.reason}`
 
-            if (playabilityStatus.error_screen?.subreason) {
-              errorText += `: ${playabilityStatus.error_screen.subreason.text}`
+            const subreason = playabilityStatus.error_screen?.subreason?.text
+            if (subreason) {
+              errorText += `: ${subreason}`
             }
           }
 
@@ -890,38 +900,15 @@ export default defineComponent({
         }
 
         if ((this.isLive || this.isPostLiveDvr) && !this.isUpcoming) {
-          let useRemoteManifest = true
+          if (result.streaming_data.dash_manifest_url) {
+            this.manifestSrc = result.streaming_data.dash_manifest_url
+            this.manifestMimeType = MANIFEST_TYPE_DASH
+          } else {
+            this.manifestSrc = result.streaming_data.hls_manifest_url
+            this.manifestMimeType = MANIFEST_TYPE_HLS
 
-          if (this.isPostLiveDvr) {
-            // I wasn't able to get SABR working with Post-Live-DVR yet, so for the moment we'll use YouTube's provided DASH manifest instead.
-            // It only contains the last 4 hours of the stream, instead of starting from the beginning but that is better than nothing.
-            if (
-              result.streaming_data.adaptive_formats[0]?.url ||
-              result.streaming_data.adaptive_formats[0]?.signature_cipher ||
-              result.streaming_data.adaptive_formats[0]?.cipher
-            ) {
-              try {
-                const manifestSrc = await this.createLocalDashManifest(result, true)
-
-                if (this.loadGeneration !== generation) { return }
-
-                this.manifestSrc = manifestSrc
-                this.manifestMimeType = MANIFEST_TYPE_DASH
-                useRemoteManifest = false
-              } catch (error) {
-                console.error(`Failed to generate DASH manifest for this Post Live DVR video ${this.videoId}, falling back to using YouTube's provided one...`, error)
-              }
-            }
-          }
-
-          if (useRemoteManifest) {
-            if (result.streaming_data.dash_manifest_url) {
-              this.manifestSrc = result.streaming_data.dash_manifest_url
-              this.manifestMimeType = MANIFEST_TYPE_DASH
-            } else {
-              this.manifestSrc = result.streaming_data.hls_manifest_url
-              this.manifestMimeType = MANIFEST_TYPE_HLS
-            }
+            this.hlsAudioMetadata = result.streaming_data.adaptive_formats
+              .filter((format) => format.mime_type.startsWith('audio/mp4'))
           }
 
           this.streamingDataExpiryDate = result.streaming_data.expires
@@ -1192,7 +1179,7 @@ export default defineComponent({
 
           const subCount = parseLocalSubscriberCount(result.subCountText)
           if (!isNaN(subCount)) {
-            this.channelSubscriptionCountText = formatNumber(subCount, subCount >= 10000 ? { notation: 'compact' } : undefined)
+            this.channelSubscriptionCountText = subCount >= 10000 ? formatNumber(subCount, { notation: 'compact' }) : formatSubscriberCount(subCount)
           } else {
             this.channelSubscriptionCountText = ''
           }
@@ -1237,6 +1224,7 @@ export default defineComponent({
           this.isFamilyFriendly = result.isFamilyFriendly
           this.isPostLiveDvr = !!result.isPostLiveDvr
           this.isUnlisted = !result.isListed
+          this.contentDisclosures = null
 
           this.captions = sortCaptions(result.captions.map(caption => {
             return {
@@ -1282,6 +1270,7 @@ export default defineComponent({
           }
           this.videoChapters = chapters
           this.videoChaptersKind = 'chapters'
+          this.hlsAudioMetadata = []
 
           if (this.isLive || this.isPostLiveDvr) {
             // The live DASH manifest is currently unusable as it returns 403s after 1 minute of playback
@@ -1869,7 +1858,7 @@ export default defineComponent({
             if (this.unauthorizedReloadVideoId !== this.videoId) {
               this.unauthorizedReloadVideoId = this.videoId
 
-              this.onPlayerReloadRequested('YouTube refused the streaming session, rebuilding it')
+              this.onSabrReloadRequested('YouTube refused the streaming session, rebuilding it')
                 .catch((reloadError) => {
                   console.error('Rebuilding the refused streaming session failed', reloadError)
 
@@ -2455,7 +2444,7 @@ export default defineComponent({
     },
 
     isHiddenVideo: function (forbiddenTitles, channelsHidden, video) {
-      return channelsHidden.some(ch => ch.name === video.authorId) ||
+      return channelsHidden.some(ch => ch.name === video.authorId || (video.collaborators?.length > 0 && ch.name === video.collaborators[0].id)) ||
         channelsHidden.some(ch => ch.name === video.author) ||
         forbiddenTitles.some((text) => video.title?.toLowerCase().includes(text)) ||
         forbiddenTitles.some((text) => video.author?.toLowerCase().includes(text))
@@ -2508,18 +2497,10 @@ export default defineComponent({
       }
     },
 
-    /**
-     * @param {string} [message] what to tell 白い熊 while the player is rebuilt. The event this
-     * is bound to carries no payload, so the SABR wording stays the default; the 401 path,
-     * which reloads for a reason of its own, passes its own.
-     */
-    async onPlayerReloadRequested(message = 'Reloading player according to SABR request') {
-      showToast(message)
-
+    async saveWatchProgressForReload() {
       // Falls back to the last position seen while the player was healthy: `getTimestamp` goes
-      // to 0 as soon as `hasLoaded` does, and that is the usual state when this fires.
+      // to 0 as soon as `hasLoaded` does, and that is the usual state when a reload is asked for.
       const timestamp = this.getTimestamp() || Math.floor(this.lastKnownPlaybackPosition)
-
       if (timestamp > 0) {
         // Reload at the middle should restart at current timestamp
         try {
@@ -2535,6 +2516,21 @@ export default defineComponent({
           }
         }
       }
+    },
+
+    onManualReloadRequested: throttle(async function () {
+      await this.saveWatchProgressForReload()
+      await this.reloadView()
+    }, 1000),
+
+    /**
+     * @param {string} [message] what to tell 白い熊 while the player is rebuilt. The player's
+     * event carries no payload, so the SABR wording stays the default; the 401 path, which
+     * reloads for a reason of its own, passes its own.
+     */
+    async onSabrReloadRequested(message = 'Reloading player according to SABR request') {
+      showToast(message)
+      await this.saveWatchProgressForReload()
       await this.reloadView()
     },
 

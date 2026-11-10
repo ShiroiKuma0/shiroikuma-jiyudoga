@@ -142,7 +142,8 @@
           :value="currentInvidiousInstance"
           :data-list="invidiousInstancesList"
           :tooltip="t('Tooltips.General Settings.Invidious Instance')"
-          @blur="handleInvidiousInstanceBlur"
+          @blur="handleInvidiousInstanceSelection"
+          @click="handleInvidiousInstanceSelection"
         />
       </FtFlexBox>
       <FtFlexBox>
@@ -347,6 +348,7 @@ const INCLUDED_DEFAULT_PAGE_NAMES = [
   'userPlaylists',
   'history',
   'settings',
+  'about',
   ...(process.env.SUPPORTS_LOCAL_API ? ['trending'] : [])
 ]
 
@@ -375,11 +377,11 @@ const defaultPageValues = computed(() => {
   return defaultPages.value.map((route) => route.path.slice(1))
 })
 
-/** @type {import('vue').ComputedRef<'subscriptions' | 'subscribedChannels' | 'popular' | 'userPlaylists' | 'history' | 'settings' | 'trending'>} */
+/** @type {import('vue').ComputedRef<'subscriptions' | 'subscribedChannels' | 'popular' | 'userPlaylists' | 'history' | 'settings' | 'about' | 'trending'>} */
 const landingPage = computed(() => store.getters.getLandingPage)
 
 /**
- * @param {'subscriptions' | 'subscribedChannels' | 'popular' | 'userPlaylists' | 'history' | 'settings' | 'trending'} value
+ * @param {'subscriptions' | 'subscribedChannels' | 'popular' | 'userPlaylists' | 'history' | 'settings' | 'about' | 'trending'} value
  */
 function updateLandingPage(value) {
   store.dispatch('updateLandingPage', value)
@@ -504,7 +506,7 @@ onBeforeUnmount(() => {
 /**
  * @param {string} input
  */
-function handleInvidiousInstanceBlur(input) {
+function handleInvidiousInstanceSelection(input) {
   let instance = input
   // If NOT something like https:// (1-2 slashes), remove trailing slash
   if (!/^https?:\/{1,2}$/.test(input)) {

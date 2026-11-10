@@ -17,6 +17,7 @@ import {
   findMostSimilarAudioBandwidth,
   getSponsorBlockSegments,
   logShakaError,
+  patchLiveHlsMainManifest,
   repairInvidiousManifest,
   translateSponsorBlockCategory
 } from '../../helpers/player/utils'
@@ -106,6 +107,11 @@ export default defineComponent({
       default: null
     },
     captions: {
+      type: Array,
+      default: () => ([])
+    },
+    /** @type {import('vue').PropType<import('youtubei.js').Misc.Format[]>} */
+    hlsAudioMetadata: {
       type: Array,
       default: () => ([])
     },
@@ -282,7 +288,8 @@ export default defineComponent({
 
     watch(displayVideoPlayButton, (newValue) => {
       ui.configure({
-        bigButtons: newValue ? ['play_pause'] : []
+        bigButtons: newValue ? ['play_pause_buffering'] : [],
+        showBufferingSpinner: !newValue
       })
     })
 
@@ -338,8 +345,25 @@ export default defineComponent({
 
     window.addEventListener('app-resume', onAppResume)
 
+    const seekingIsPossible = computed(() => {
+      if (props.manifestMimeType !== 'application/x-mpegurl') {
+        return true
+      }
+
+      const match = props.manifestSrc.match(/\/(?:manifest|playlist)_duration\/(\d+)\//)
+
+      // Post live DVR HLS manifests URLs contain /force_finished/1
+      return props.manifestSrc.includes('/force_finished/1') ||
+        // Check how many seconds we are allowed to seek, 30 is too short, 3600 is an hour which is great
+        (match != null && parseInt(match[1] || '0') > 30)
+    })
+
     /** @type {import('vue').ComputedRef<number>} */
     const defaultPlaybackRate = computed(() => {
+      if (!seekingIsPossible.value) {
+        return 1
+      }
+
       return store.getters.getDefaultPlayback
     })
 
@@ -353,29 +377,25 @@ export default defineComponent({
       return parseInt(store.getters.getMaxVideoPlaybackRate)
     })
 
+    watch(maxVideoPlaybackRate, (newValue) => {
+      ui.configure({
+        playbackRateSliderMax: newValue
+      })
+    })
+
     const videoPlaybackRateInterval = computed(() => {
       return parseFloat(store.getters.getVideoPlaybackRateInterval)
     })
 
-    const playbackRates = computed(() => {
-      const interval = videoPlaybackRateInterval.value
-      const playbackRates = []
-      let i = interval
-
-      while (i <= maxVideoPlaybackRate.value) {
-        playbackRates.unshift(i)
-        i += interval
-        i = parseFloat(i.toFixed(2))
-      }
-
-      return playbackRates
-    })
-
-    watch(playbackRates, (newValue) => {
+    watch(videoPlaybackRateInterval, (newValue) => {
       ui.configure({
-        playbackRates: newValue
+        playbackRateSliderMin: newValue,
+        playbackRateSliderStep: newValue,
       })
     })
+
+    // 5 pills only as default for mobile
+    const playbackRates = [0.5, 0.75, 1, 1.5, 2]
 
     /** @type {import('vue').ComputedRef<boolean>} */
     const enableScreenshot = computed(() => {
@@ -404,7 +424,7 @@ export default defineComponent({
 
     /** @type {import('vue').ComputedRef<boolean>} */
     const videoPlaybackRateMouseScroll = computed(() => {
-      return store.getters.getVideoPlaybackRateMouseScroll
+      return store.getters.getVideoPlaybackRateMouseScroll && seekingIsPossible.value
     })
 
     /** @type {import('vue').ComputedRef<boolean>} */
@@ -635,17 +655,6 @@ export default defineComponent({
 
     // #region player config
 
-    const seekingIsPossible = computed(() => {
-      if (props.manifestMimeType !== 'application/x-mpegurl') {
-        return true
-      }
-
-      const match = props.manifestSrc.match(/\/(?:manifest|playlist)_duration\/(\d+)\//)
-
-      // Check how many seconds we are allowed to seek, 30 is too short, 3600 is an hour which is great
-      return match != null && parseInt(match[1] || '0') > 30
-    })
-
     /**
      * @param {'dash'|'audio'|'legacy'} format
      * @param {boolean} useAutoQuality
@@ -682,11 +691,9 @@ export default defineComponent({
         // https://developer.mozilla.org/en-US/docs/Web/API/MediaCapabilities/decodingInfo
         preferredDecodingAttributes: format === 'dash' ? ['smooth', 'powerEfficient'] : [],
 
-        // `preferredVideoCodecs` is deprecated in shaka 5 and warns on every load; these are the
-        // entries shaka's own migration builds from that list, so the behaviour is unchanged.
-        preferredVideo: preferredVideoCodecs().map(
-          codec => ({ label: '', role: '', codec, hdrLevel: '', layout: '' })
-        )
+        // the VR codec workaround upstream inlines here lives in preferredVideoCodecs(), which
+        // also steers away from a codec that already failed to decode this video
+        preferredVideo: preferredVideoCodecs().map(codec => ({ codec }))
       }
     }
 
@@ -846,8 +853,7 @@ export default defineComponent({
         'ft_skip_previous',
         'play_pause',
         'ft_skip_next',
-        'mute',
-        'volume',
+        'mute_volume',
         'time_and_duration',
         'spacer'
       ]
@@ -874,7 +880,7 @@ export default defineComponent({
           'ft_autoplay_toggle',
           props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
           'playback_rate',
-          'captions',
+          'captions-settings',
           'ft_audio_tracks',
           'chapter',
           'loop',
@@ -904,7 +910,7 @@ export default defineComponent({
 
         uiConfig.overflowMenuButtons.push(
           'ft_audio_tracks',
-          'captions',
+          'captions-settings',
           'playback_rate',
           props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
           'chapter',
@@ -949,6 +955,10 @@ export default defineComponent({
 
       if (props.chapters.length === 0) {
         removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'chapter')
+      }
+
+      if (!seekingIsPossible.value) {
+        removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'playback_rate')
       }
 
       return uiConfig
@@ -996,10 +1006,16 @@ export default defineComponent({
           },
 
           // these have their own watchers
-          bigButtons: displayVideoPlayButton.value ? ['play_pause'] : [],
+          bigButtons: displayVideoPlayButton.value ? ['play_pause_buffering'] : [],
+          showBufferingSpinner: !displayVideoPlayButton.value,
           enableFullscreenOnRotation: enterFullscreenOnDisplayRotate.value,
-          playbackRates: playbackRates.value,
+          playbackRateSliderMax: maxVideoPlaybackRate.value,
+          playbackRateSliderMin: videoPlaybackRateInterval.value,
+          playbackRateSliderStep: videoPlaybackRateInterval.value,
+          playbackRates: playbackRates,
           tapSeekDistance: defaultSkipInterval.value,
+
+          showUIOnPaused: false,
 
           // we have our own ones (shaka-player's ones are quite limited)
           enableKeyboardPlaybackControls: false,
@@ -1042,13 +1058,13 @@ export default defineComponent({
         //
 
         if (event.ctrlKey || event.metaKey) {
-          if (videoPlaybackRateMouseScroll.value) {
+          if (videoPlaybackRateMouseScroll.value && canSeek()) {
             mouseScrollPlaybackRateHandler(event)
           }
         } else {
           if (videoVolumeMouseScroll.value) {
             mouseScrollVolumeHandler(event)
-          } else if (videoSkipMouseScroll.value) {
+          } else if (videoSkipMouseScroll.value && canSeek()) {
             mouseScrollSkipHandler(event)
           }
         }
@@ -1081,7 +1097,7 @@ export default defineComponent({
           controlsContainer.addEventListener('wheel', handleControlsContainerWheel)
         }
 
-        if (videoPlaybackRateMouseScroll.value) {
+        if (videoPlaybackRateMouseScroll.value && canSeek()) {
           controlsContainer.addEventListener('click', handleControlsContainerClick, true)
         }
       }
@@ -1446,6 +1462,12 @@ export default defineComponent({
             response.data = new TextEncoder().encode(cleaned).buffer
           }
         }
+      } else if (type === RequestType.MANIFEST && context.type === AdvancedRequestType.MASTER_PLAYLIST) {
+        const result = patchLiveHlsMainManifest(response.data, props.hlsAudioMetadata)
+
+        if (result !== response.data) {
+          response.data = result
+        }
       } else if (type === RequestType.MANIFEST && context.type === AdvancedRequestType.MEDIA_PLAYLIST) {
         const url = new URL(response.uri)
 
@@ -1662,32 +1684,24 @@ export default defineComponent({
 
       stats.bitrate = (newTrack.bandwidth / 1000).toFixed(2)
 
-      // Combined audio and video HLS streams
-      if (newTrack.videoCodec?.includes(',')) {
-        stats.codecs.audioItag = ''
-        stats.codecs.videoItag = ''
+      const isHls = newTrack.audioMimeType === 'video/mp2t'
 
-        const [audioCodec, videoCodec] = newTrack.videoCodec.split(',')
+      stats.codecs.audioCodec = newTrack.audioCodec
 
-        stats.codecs.audioCodec = audioCodec
-        stats.codecs.videoCodec = videoCodec
+      stats.codecs.audioItag = isHls
+        ? ''
+        : newTrack.originalAudioId.split('-', 1)[0]
+
+      if (props.format === 'dash') {
+        stats.codecs.videoCodec = newTrack.videoCodec
 
         stats.resolution.frameRate = newTrack.frameRate
         stats.resolution.width = newTrack.width
         stats.resolution.height = newTrack.height
-      } else {
-        stats.codecs.audioItag = newTrack.originalAudioId.split('-', 1)[0]
-        stats.codecs.audioCodec = newTrack.audioCodec
 
-        if (props.format === 'dash') {
-          stats.resolution.frameRate = newTrack.frameRate
-
-          stats.codecs.videoItag = newTrack.originalVideoId.split('-', 1)[0]
-          stats.codecs.videoCodec = newTrack.videoCodec
-
-          stats.resolution.width = newTrack.width
-          stats.resolution.height = newTrack.height
-        }
+        stats.codecs.videoItag = isHls
+          ? ''
+          : newTrack.originalVideoId.split('-', 1)[0]
       }
     }
 
@@ -2111,11 +2125,33 @@ export default defineComponent({
     }
 
     /**
-     * @param {number} step
+     * @param {number} delta
+     * @param {boolean} snapToClosestInterval
      */
-    function changePlayBackRate(step) {
-      const newPlaybackRateString = (player.getPlaybackRate() + step).toFixed(2)
-      const newPlaybackRate = parseFloat(newPlaybackRateString)
+    function changePlayBackRate(delta, snapToClosestInterval = false) {
+      let newPlaybackRateString = (player.getPlaybackRate() + delta).toFixed(2)
+      let newPlaybackRate = parseFloat(newPlaybackRateString)
+
+      if (snapToClosestInterval) {
+        const currentPlaybackRate = player.getPlaybackRate()
+        const videoPlaybackRateIntervalVal = videoPlaybackRateInterval.value
+
+        // Modified from https://github.com/shaka-project/shaka-player/blob/v5.3.2/ui/playback_rate_selection.js#L206-L221
+        const min = videoPlaybackRateInterval.value
+        const max = maxVideoPlaybackRate.value
+        const current = currentPlaybackRate
+        const step = videoPlaybackRateIntervalVal
+        // Snap current rate to the nearest step grid point, then apply delta.
+        // Slightly different from `shaka-player
+        // When delta > 0, snap to lower number & vice versa (by adding or subtracting 0.001
+        const snapped = Math.round(current / step + (delta < 0 ? 0.001 : -0.001)) * step
+        const raw = snapped + delta
+        // Eliminate floating-point noise (e.g. 0.05 * 20 → 1.0000000000000002).
+        const next = parseFloat((Math.round(raw / step) * step).toPrecision(10))
+        const clamped = Math.max(min, Math.min(max, next))
+        newPlaybackRate = clamped
+        newPlaybackRateString = clamped.toFixed(2)
+      }
 
       // The following error is thrown if you go below 0.07:
       // The provided playback rate (0.05) is not in the supported playback range.
@@ -2137,7 +2173,7 @@ export default defineComponent({
 
       const seekRange = player.seekRange()
 
-      // Seeking not possible e.g. with HLS
+      // Seeking not possible e.g. with live HLS
       if (seekRange.start === seekRange.end || !seekingIsPossible.value) {
         return false
       }
@@ -2476,13 +2512,13 @@ export default defineComponent({
         case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.DECREASE_VIDEO_SPEED_ALT:
           // Decrease playback rate by user configured interval
           event.preventDefault()
-          changePlayBackRate(-videoPlaybackRateInterval.value)
+          changePlayBackRate(-videoPlaybackRateInterval.value, true)
           break
         case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.INCREASE_VIDEO_SPEED:
         case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.INCREASE_VIDEO_SPEED_ALT:
           // Increase playback rate by user configured interval
           event.preventDefault()
-          changePlayBackRate(videoPlaybackRateInterval.value)
+          changePlayBackRate(videoPlaybackRateInterval.value, true)
           break
         case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.CAPTIONS: {
           // Toggle caption/subtitles
@@ -3188,7 +3224,11 @@ export default defineComponent({
 
           markerDiv.title = chapter.title
           markerDiv.className = 'chapterMarker'
-          markerDiv.style.left = `calc(${(chapter.startSeconds / duration) * 100}% - 1px)`
+          // Due to unknown reasons, there are offsets to the left of actual timestamp on seek bar for later timestamps
+          // The markers will be adjusted to the left to align with the chapter previews
+          const extraOffsetPercentAbs = Math.pow(((chapter.startSeconds - (duration * 0.5)) / duration), 2)
+          const extraOffsetPercent = chapter.startSeconds > duration * 0.5 ? -extraOffsetPercentAbs : extraOffsetPercentAbs
+          markerDiv.style.left = `calc(${((chapter.startSeconds) / duration) * 100 + extraOffsetPercent}% - 1px)`
 
           return markerDiv
         })

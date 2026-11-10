@@ -192,6 +192,7 @@ User Playlists:
   Export list of URLs: 匯出 URL 清單
   Move Video to the Top: 將影片移至頂部
   Move Video to the Bottom: 將影片移至底部
+  This playlist is private or does not exist.: 此播放清單為私人或不存在。
 History:
   # On History Page
   History: '觀看紀錄'
@@ -378,11 +379,11 @@ Settings:
     Enable Theatre Mode by Default: '預設開啟劇場模式'
     Default Volume: '預設音量'
     Default Playback Rate: '預設播放速度'
-    Default Video Format:
-      Default Video Format: '預設影片格式'
+    Default Media Format:
       Dash Formats: 'DASH 格式'
       Legacy Formats: '傳統格式'
       Audio Formats: '音訊格式'
+      Default Media Format: 預設媒體格式
     Default Quality:
       Default Quality: '預設畫質'
       Auto: '自動'
@@ -496,7 +497,7 @@ Settings:
     Subscription File: 訂閱檔案
     History File: 歷史紀錄檔案
     Playlist File: 播放清單檔案
-    Export Playlists For Older 白い熊 自由動画 Versions:
+    Export Playlists For Older FreeTube Versions:
       Label: 匯出較舊 白い熊 自由動画 版本的播放清單
       Tooltip: "此選項將所有播放清單中的影片匯出到名為「我的最愛」的播放清單中。\n如何匯出和匯入舊版 白い熊 自由動画 播放清單中的影片：\n1. 啟用此選項後匯出播放清單。\n2. 使用「隱私設定」下的「刪除所有播放清單」選項刪除所有現有播放清單。\n3. 啟動舊版的 白い熊 自由動画 並導入匯出的播放清單。”"
     Search history file: 搜尋歷史紀錄檔案
@@ -671,11 +672,11 @@ Channel:
   Your search results have returned 0 results: '搜尋結果為零'
   Videos:
     Videos: '影片'
-    This channel does not currently have any videos: '這個頻道目前沒有任何影片'
     Sort Types:
       Newest: '最新'
       Oldest: '最舊'
       Most Popular: '最熱門'
+    This channel has videos but none could be displayed, try fetching more: 此頻道有影片，但均無法顯示，請嘗試載入更多影片
   Playlists:
     Playlists: '播放清單'
     This channel does not currently have any playlists: '這個頻道目前沒有任何播放清單'
@@ -693,6 +694,7 @@ Channel:
     Joined: 已加入
     Location: 位置
     Details: 詳細資訊
+    Links: 連結
   Added channel to your subscriptions: 已新增頻道至您的訂閱
   Removed subscription from {count} other channel(s): 從{count}個其他頻道移除訂閱
   Channel has been removed from your subscriptions: 頻道已從您的訂閱中移除
@@ -827,7 +829,7 @@ Video:
     Skipped segment: 已跳過 {segmentCategory} 段
     Autoplay is on: 自動播放已開啟
     Autoplay is off: 自動播放已關閉
-  IP block: YouTube 已封鎖您的 IP 位址，因此無法觀看影片。請嘗試切換到其他 VPN 或代理伺服器。
+  IP block: YouTube 已封鎖您的 IP 位址，使其無法觀看影片；或者，這支影片可能包含涉及未成年人的內容，而 YouTube 會限制未登入帳號的使用者觀看此類內容。若這是 IP 封鎖，請嘗試切換至其他 VPN 或代理伺服器。
   MembersOnly: 會員專屬影片無法使用 白い熊 自由動画 觀看，因為這些影片需要 Google 登入並且必須訂閱上傳者的付費頻道。
   AgeRestricted: 由於需要 Google 登入並使用經過年齡驗證的 YouTube 帳戶，白い熊 自由動画 無法觀看有限制年齡的影片。
   Unlisted: 未公開
@@ -851,6 +853,10 @@ Video:
     Unavailable videos are hidden: 1 部無法觀看的影片已被隱藏 | {count} 部無法觀看的影片已被隱藏
   Enable SponsorBlock on Channel: 在頻道啟用 SponsorBlock
   Disable SponsorBlock on Channel: 在頻道停用 SponsorBlock
+  AI: 人工智慧
+  'AI: Content was made with AI': 人工智慧：內容使用人工智慧製作
+  How this was made: 這部作品的製作過程
+  Reload Page: 重新載入頁面
 Playlist:
   #& About
   View Full Playlist: '觀看完整播放清單'
@@ -991,7 +997,7 @@ Tooltips:
     Fetch Feeds from RSS: 啟用後，白い熊 自由動画 將使用 RSS 替代其預設方法來擷取您的訂閱 feed。RSS 的速度較快，而且可以防止 IP 封鎖，但它可能不會提供某些資訊，例如影片長度、直播狀態或貼文
     Fetch Automatically: 啟用後，白い熊 自由動画 將會在啟動時和開啟新視窗時自動擷取您的訂閱 feed。
   Player Settings:
-    Default Video Format: 設定要用於影片播放的格式。DASH 格式有更高的畫質。傳統格式會限制在 360p 但頻寬需求更低。音訊格式為僅有音訊的串流。
+    Default Media Format: 設定要用於影片播放的格式。DASH 格式有更高的畫質。傳統格式會限制在 360p 但頻寬需求更低。音訊格式為僅有音訊的串流。
     Proxy Videos Through Invidious: 將連線到 Invidious 而非直接連線到 YouTube 來提供影片。
     Scroll Playback Rate Over Video Player: 當游標停在影片上時，按住 Ctrl 鍵（Mac 的話則是 Command 鍵），然後向前或向後滾動滑鼠滾輪來控制播放速度。按住 Ctrl 鍵（Mac 的話則是 Command 鍵）並點擊滑鼠左鍵以快速回到預設的播放速度（1x，除非在設定中更改）。
     Skip by Scrolling Over Video Player: 使用滾輪跳過影片，MPV 風格。

@@ -199,6 +199,7 @@ User Playlists:
   Export list of URLs: Esportatu URLen zerrenda
   Move Video to the Top: Eraman bideoa goialdera
   Move Video to the Bottom: Eraman bideoa behealdera
+  This playlist is private or does not exist.: Erreprodukzio-zerrenda hau pribatua da edo ez da existitzen.
 History:
   # On History Page
   History: 'Historikoa'
@@ -386,11 +387,11 @@ Settings:
     Enable Theatre Mode by Default: 'Gaitu antzerki modua lehenespenez'
     Default Volume: 'Lehenetsitako bolumena'
     Default Playback Rate: 'Lehenetsitako erreprodukzio-tasa'
-    Default Video Format:
-      Default Video Format: 'Lehenetsitako bideo-formatua'
+    Default Media Format:
       Dash Formats: 'DASH formatuak'
       Legacy Formats: 'Formatu zaharrak'
       Audio Formats: 'Audio-formatuak'
+      Default Media Format: Multimedia-formatu lehenetsia
     Default Quality:
       Default Quality: 'Lehenetsitako kalitatea'
       Auto: 'Automatikoa'
@@ -521,6 +522,7 @@ Settings:
     Hide Subscriptions Posts: Ezkutatu harpidetza-argitalpenak
     Add: Gehitu
     Remove: Kendu
+    Hide Channel Shows: Ezkutatu kanalaren «Saioak» fitxa
   Data Settings:
     Data Settings: 'Datuak'
     Select Export Type: 'Hautatu esportazio mota'
@@ -552,7 +554,7 @@ Settings:
     Playlist insufficient data: Ez dago datu nahikorik "{playlist}" erreprodukzio-zerrendarentzat, elementua saltatzen
     History File: Historikoaren fitxategia
     Playlist File: Erreprodukzio-zerrendaren fitxategia
-    Export Playlists For Older 白い熊 自由動画 Versions:
+    Export Playlists For Older FreeTube Versions:
       Label: Esportatu erreprodukzio zerrendak 白い熊 自由動画 bertsio zaharretarako
       Tooltip: "Aukera honek erreprodukzio-zerrenda guztietako bideoak \"Gogokoak\" izeneko erreprodukzio-zerrenda batera esportatzen ditu.\nNola esportatu eta inportatu bideoak erreprodukzio-zerrendetan 白い熊 自由動画-ren bertsio zaharrago baterako:\n 1. Esportatu zure erreprodukzio zerrendak aukera hau gaituta.\n 2. Ezabatu lehendik dituzun erreprodukzio-zerrenda guztiak Pribatutasun-ezarpenetan dagoen Kendu zerrenda guztiak aukera erabiliz.\n 3. Abiarazi 白い熊 自由動画-ren bertsio zaharra eta inportatu esportatutako erreprodukzio-zerrendak.\""
     Subscription File: Harpidetza-fitxategia
@@ -613,6 +615,10 @@ Settings:
     UseDeArrowTitles: Erabili DeArrow bideo-izenburuak
     UseDeArrowThumbnails: Erabili DeArrow irudi txikietarako
     'DeArrow Thumbnail Generator API Url (Default is https://dearrow-thumb.ajay.app)': DeArrow Thumbnail Generator API URLa (lehenetsia https://dearrow-thumb.ajay.app da)
+    Excluded Channels:
+      Disabled Message: Kanal batzuk IDaren bidez baztertu dira eta ez dira prozesatu. Funtzioa blokeatuta dago ID horiek eguneratzen diren bitartean
+      Excluded Channels: Baztertutako kanalak
+      Tooltip: Idatzi kanal baten IDa SponsorBlock desgaitzeko. Kanal honetako bideoetako babesle-zatiak ez dira saltatuko. Idatzitako kanalaren IDak guztiz bat etorri behar du, eta maiuskulak eta minuskulak bereizten ditu.
   Parental Control Settings:
     Show Family Friendly Only: Erakutsi familientzat aproposa dena bakarrik
     Hide Unsubscribe Button: Ezkutatu harpidetza kentzeko botoia
@@ -715,11 +721,11 @@ Channel:
   Your search results have returned 0 results: 'Zure bilaketak 0 emaitza lortu ditu'
   Videos:
     Videos: 'Bideoak'
-    This channel does not currently have any videos: 'Kanal honek ez du bideorik'
     Sort Types:
       Newest: 'Berrienak'
       Oldest: 'Zaharrenak'
       Most Popular: 'Jarraituenak'
+    This channel has videos but none could be displayed, try fetching more: Kanal honek bideoak ditu, baina ezin izan da bat ere erakutsi; saiatu gehiago eskuratzen
   Playlists:
     Playlists: 'Erreprodukzio-zerrendak'
     This channel does not currently have any playlists: 'Kanal honek ez du erreprodukzio-zerrendarik'
@@ -737,6 +743,7 @@ Channel:
       Tags: Etiketak
       Search for: Bilatu "{tag}"
     Details: Xehetasunak
+    Links: Estekak
   This channel does not exist: Kanal hau ez da existitzen
   This channel is age-restricted and currently cannot be viewed in FreeTube.: Kanal hau adin mugatuta dago eta une honetan ezin da ikusi 白い熊 自由動画n.
   Shorts:
@@ -767,6 +774,9 @@ Channel:
     Courses: Ikastaroak
     This channel does not currently have any courses: Une honetan kanal honek ez du ikastarorik
   View All: Ikusi dena
+  Shows:
+    Shows: Saioak
+    This channel does not currently have any shows: Une honetan kanal honek ez du saiorik
 Video:
   Mark As Watched: 'Ikusitako gisa jarri'
   Remove From History: 'Ezabatu historikotik'
@@ -871,7 +881,7 @@ Video:
   MembersOnly: Kideentzat baino ez diren bideoak ezin dira 白い熊 自由動画rekin ikusi, Googleren saioa hastea eta eduki sortzailearen kanalari ordaindutako bazkidetza eskatzen baitute.
   Unlisted: Zerrendatu gabeak
   AgeRestricted: Adin muga duten bideoak ezin dira 白い熊 自由動画rekin ikusi, Googlen saioa hasi eta adinak egiaztatutako YouTubeko kontu bat erabili behar delako.
-  IP block: YouTubek bideoak ikusteko zure IP helbidea blokeatu du. Mesedez, saiatu VPN edo proxy desberdin batera aldatzen.
+  IP block: YouTube-k zure IP helbidea blokeatu du bideoak ikus ez ditzazun, edo baliteke bideo honek adingabeak agertzen diren edukia izatea; YouTube-k eduki horretarako sarbidea mugatzen die saioa hasi ez duten erabiltzaileei. IP blokeo bat bada, saiatu beste VPN edo proxy bat erabiltzen.
   DeArrow:
     Show Original Details: Erakutsi jatorrizko xehetasunak
     Show Modified Details: Erakutsi aldatutako xehetasunak
@@ -889,6 +899,13 @@ Video:
   Premiere: Estreinaldia
   Playlist:
     Unavailable videos are hidden: Erabilgarri ez dagoen bideo 1 ezkutatuta dago | Erabilgarri ez dauden {count} bideo ezkutatuta daude
+  Enable SponsorBlock on Channel: Gaitu SponsorBlock kanalean
+  Disable SponsorBlock on Channel: Desgaitu SponsorBlock kanalean
+  AI: AA
+  'AI: Content was made with AI': 'AA: edukia adimen artifizialarekin egin da'
+  How this was made: Nola egin den
+  Station: Irratia
+  Reload Page: Freskatu orria
 Playlist:
   #& About
   View Full Playlist: 'Ikusi erreprodukzio-zerrenda osoa'
@@ -969,13 +986,13 @@ Tooltips:
     Preferred API Backend: 'Aukeratu 白い熊 自由動画k datuak lortzeko erabiltzen duen motorra. Tokiko APIa integratutako erauzgailua da. Invidious APIak Invidious zerbitzari bat behar du konektatzeko.'
     Fallback to Non-Preferred Backend on Failure: 'Zure hobetsitako APIak arazoren bat duenean, 白い熊 自由動画 automatikoki saiatuko da hobetsi ez den APIa erabiltzen ordezko metodo gisa, posible denean.'
     Thumbnail Preference: '白い熊 自由動画ko miniatura guztiak bideoaren fotograma batekin ordezkatuko dira, lausotuta edo ezkutatuta, lehenetsitako miniaturaren ordez.'
-    Invidious Instance: 'API deietan Freetube konektatuko den Individious instantzia.'
+    Invidious Instance: '白い熊 自由動画 API deietarako konektatuko den Invidious instantzia. Ezarpen honen aldaketek uneko leihoari soilik eragiten diote, instantzia hau lehenetsi gisa ezartzen ez baduzu.'
     Region for Trending: 'Joeren eskualdeak aukera ematen dizu bistaratu nahi dituzun herrialdeko joerako bideoak hautatzeko.'
     External Link Handling: "Lehenetsitako portaera hautatu, Freetuben ireki ezin den esteka bat klikatua izan denean.\nLehentasunez, Freetubek lehenetsitako nabigatazailean irekiko du klikatutako esteka.\n"
     Open Deep Links In New Window: 白い熊 自由動画ra pasatzen diren URLak, birbideratzeko arakatzailearen luzapenek edo komando-lerroko argumentuek, leiho berri batean irekiko dira.
   Player Settings:
     Proxy Videos Through Invidious: 'Bideoak hornitzeko Invidiousera konektatuko da, YouTubera zuzeneko konexioa egin beharrean.'
-    Default Video Format: 'Ezarri bideo bat erreproduzitzean erabiliko diren formatuak. DASH formatuek kalitate handiagoak erreproduzi ditzakete. Legatu diren formatuek gehienez 360p-ra mugatuta daude, baina banda-zabalera gutxiago erabiltzen dute. Audio formatuak audio-jarioak soilik dira.'
+    Default Media Format: 'Ezarri bideo bat erreproduzitzean erabiliko diren formatuak. DASH formatuek kalitate handiagoak erreproduzi ditzakete. Legatu diren formatuek gehienez 360p-ra mugatuta daude, baina banda-zabalera gutxiago erabiltzen dute. Audio formatuak audio-jarioak soilik dira.'
     Scroll Playback Rate Over Video Player: Kursorea bideoaren gainean denean, kontrol tekla sakatu eta mantendu (Komando tekla MACetan) eta saguaren gurpila aurrera eta atzera mugiarazi erreprodukzio tasa kontrolatzeko. Kontrol tekla sakatu eta mantendu (Komando tekla MACetan) eta ondoren saguaren ezkerreko botoia sakatu, lehenetsitako erreprodukzio tasara itzultzeko (1x baldin eta ezarpenetan aldaketarik egin ez bada).
     Skip by Scrolling Over Video Player: Erabili korritze-gurpila bideoa saltatzeko, MPV estiloa.
   Subscription Settings:
@@ -1154,3 +1171,5 @@ Compact side navigation: Trinkotu alboko nabigazioa
 Expand side navigation: Zabaldu alboko nabigazioa
 Screenshot Clipboard Success: Pantaila-argazkia arbelean gorde da
 Screenshot Clipboard Error: Pantaila-argazkia arbelean kopiatzeak huts egin du
+SponsorBlock Disabled on Channel: SponsorBlock desgaituta dago {channel} kanalean
+SponsorBlock Enabled on Channel: SponsorBlock gaituta dago {channel} kanalean

@@ -29,7 +29,9 @@
         <div class="background" />
         <div class="inner">
           <div>{{ videoCount }}</div>
-          <div><FontAwesomeIcon :icon="['fas','list']" /></div>
+          <div>
+            <FontAwesomeIcon :icon="['fas', playlistTypeIcon]" />
+          </div>
         </div>
       </div>
     </div>
@@ -126,6 +128,8 @@ let thumbnail = thumbnailPlaceholder
 let channelId = null
 let channelName = ''
 let videoCount = 0
+/** @type {'fa-list' | 'fa-music' | 'fa-podcast' | 'fa-graduation-cap' | 'fa-tv'} */
+let playlistTypeIcon = 'fa-list'
 
 /** @type {import('vue').ComputedRef<'grid' | 'list'>} */
 const listType = computed(() => store.getters.getListType)
@@ -189,6 +193,16 @@ function parseInvidiousData() {
   playlistId = props.data.playlistId
   videoCount = props.data.videoCount
 
+  if (props.data.isPodcast === true) {
+    playlistTypeIcon = 'fa-podcast'
+  } else if (props.data.isAlbum === true) {
+    playlistTypeIcon = 'fa-music'
+  } else if (props.data.isCourse === true) {
+    playlistTypeIcon = 'fa-graduation-cap'
+  } else if (props.data.isShow === true) {
+    playlistTypeIcon = 'fa-tv'
+  }
+
   if (props.data.proxyThumbnail === false) {
     thumbnail = props.data.playlistThumbnail
   }
@@ -203,6 +217,15 @@ function parseLocalData() {
   channelId = props.data.channelId
   playlistId = props.data.playlistId
   videoCount = props.data.videoCount
+  if (props.data.isPodcast === true) {
+    playlistTypeIcon = 'fa-podcast'
+  } else if (props.data.isAlbum === true) {
+    playlistTypeIcon = 'fa-music'
+  } else if (props.data.isCourse === true) {
+    playlistTypeIcon = 'fa-graduation-cap'
+  } else if (props.data.isShow === true) {
+    playlistTypeIcon = 'fa-tv'
+  }
 }
 
 function parseUserData() {

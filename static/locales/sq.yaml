@@ -444,8 +444,8 @@ Settings:
     Default Playback Rate: ''
     Max Video Playback Rate: ''
     Video Playback Rate Interval: ''
-    Default Video Format:
-      Default Video Format: ''
+    Default Media Format:
+      Default Media Format: ''
       Dash Formats: ''
       Legacy Formats: ''
       Audio Formats: ''
@@ -577,7 +577,7 @@ Settings:
     Export History: ''
     Import Playlists: ''
     Export Playlists: ''
-    Export Playlists For Older 白い熊 自由動画 Versions:
+    Export Playlists For Older FreeTube Versions:
       Label: ''
       # |- = Keep newlines, No newline at end
       Tooltip: |
@@ -725,7 +725,6 @@ Channel:
   Channel Tabs: ''
   Videos:
     Videos: ''
-    This channel does not currently have any videos: ''
     Sort Types:
       Newest: ''
       Oldest: ''
@@ -972,7 +971,7 @@ Tooltips:
     Open Deep Links In New Window: ''
   Player Settings:
     Proxy Videos Through Invidious: ''
-    Default Video Format: ''
+    Default Media Format: ''
     Scroll Playback Rate Over Video Player: ''
     Skip by Scrolling Over Video Player: ''
   External Player Settings:

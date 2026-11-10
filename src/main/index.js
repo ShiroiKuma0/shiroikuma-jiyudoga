@@ -662,9 +662,14 @@ function runApp() {
         requestHeaders['Sec-Fetch-Mode'] = 'navigate'
         requestHeaders['Sec-Fetch-Site'] = 'none'
         requestHeaders['Sec-Fetch-User'] = '?1'
-        requestHeaders.Cookie = requestHeaders.Cookie
-          ? requestHeaders.Cookie + `;PREF=tz=${Intl.DateTimeFormat().resolvedOptions().timeZone.replace('/', '.')}`
-          : ''
+
+        if (requestHeaders['X-Cookie']) {
+          requestHeaders.Cookie = requestHeaders.Cookie
+            ? requestHeaders.Cookie + ';' + requestHeaders['X-Cookie']
+            : requestHeaders['X-Cookie']
+
+          delete requestHeaders['X-Cookie']
+        }
       } else if (url === 'https://www.youtube.com/sw.js_data' || url.startsWith('https://www.youtube.com/api/timedtext')) {
         requestHeaders.Referer = 'https://www.youtube.com/sw.js'
         requestHeaders['Sec-Fetch-Site'] = 'same-origin'
@@ -702,7 +707,8 @@ function runApp() {
       urls: [
         'https://www.youtube.com/sw.js_data',
         'https://www.youtube.com/iframe_api',
-        'https://www.youtube.com/watch?*'
+        'https://www.youtube.com/watch?*',
+        'https://www.youtube.com/',
       ]
     }
 
@@ -1168,16 +1174,7 @@ function runApp() {
 
       newWindow.on('minimize', () => {
         if (trayOnMinimize) {
-          // Workaround for https://github.com/electron/electron/issues/49253
-          if (process.platform === 'linux') {
-            setTimeout(() => {
-              newWindow.restore()
-              newWindow.hide()
-            }, 100)
-          } else {
-            newWindow.hide()
-          }
-
+          newWindow.hide()
           manageTray(newWindow)
 
           if (newWindow === mainWindow) {
@@ -1318,12 +1315,6 @@ function runApp() {
         mainWindow.webContents.send(IpcChannels.OPEN_URL, startupUrl)
       }
       startupUrl = null
-    }
-  })
-
-  ipcMain.on(IpcChannels.SET_WINDOW_TITLE, (event, title) => {
-    if (isFreeTubeUrl(event.senderFrame.url) && typeof title === 'string') {
-      BrowserWindow.fromWebContents(event.sender)?.setTitle(title)
     }
   })
 

@@ -8,10 +8,24 @@
         {{ title }}
       </h1>
       <div
-        v-if="isUnlisted"
-        class="unlistedBadge"
+        v-if="isUnlisted || showAiBadge"
+        class="videoBadges"
       >
-        {{ t('Video.Unlisted') }}
+        <div
+          v-if="isUnlisted"
+          class="unlistedBadge"
+        >
+          {{ t('Video.Unlisted') }}
+        </div>
+        <div
+          v-if="showAiBadge"
+          class="aiBadge"
+          :title="t('Video.AI: Content was made with AI')"
+          :aria-label="t('Video.AI: Content was made with AI')"
+        >
+          <FontAwesomeIcon :icon="['fas', 'circle-info']" />
+          <span>{{ t('Video.AI') }}</span>
+        </div>
       </div>
     </div>
     <div class="videoMetrics">
@@ -141,6 +155,12 @@
             theme="secondary"
             @click="$emit('download-video')"
           />
+          <FtIconButton
+            :title="t('Video.Reload Page')"
+            :icon="['fas', 'rotate-right']"
+            theme="secondary"
+            @click="reloadPlayer"
+          />
           <FtShareButton
             v-if="!hideSharingActions"
             :id="id"
@@ -253,6 +273,10 @@ const props = defineProps({
     type: Boolean,
     required: false
   },
+  contentDisclosures: {
+    type: Array,
+    default: null
+  },
   canSaveWatchedProgress: {
     type: Boolean,
     required: true
@@ -265,12 +289,19 @@ const emit = defineEmits([
   'pause-player',
   'save-watched-progress',
   'study-export',
+  'reload-player',
 ])
 
 const USING_ELECTRON = process.env.IS_ELECTRON
 const USING_ANDROID = process.env.IS_ANDROID
 
 const { locale, t } = useI18n()
+
+const showAiBadge = computed(() => {
+  const LABEL_REGEX = /\b(ai|artificial intelligence|altered|synthetic)\b/i
+
+  return props.contentDisclosures?.some(item => LABEL_REGEX.test(item.label)) || false
+})
 
 /** @type {import('vue').ComputedRef<boolean>} */
 const hideSharingActions = computed(() => store.getters.getHideSharingActions)
@@ -341,6 +372,10 @@ const formatTypeOptions = computed(() => [
  */
 function changeFormat(value) {
   emit('change-format', value)
+}
+
+function reloadPlayer() {
+  emit('reload-player')
 }
 
 const watchedProgressSavingInSemiAutoMode = computed(() => {

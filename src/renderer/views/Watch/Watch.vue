@@ -25,6 +25,7 @@
           :legacy-formats="legacyFormats"
           :start-time="startTimeSeconds"
           :captions="captions"
+          :hls-audio-metadata="hlsAudioMetadata"
           :storyboard-src="videoStoryboardSrc"
           :format="activeFormat"
           :thumbnail="thumbnail"
@@ -55,7 +56,7 @@
           @playback-rate-updated="updatePlaybackRate"
           @skip-to-next="handleSkipToNext"
           @skip-to-prev="handleSkipToPrev"
-          @player-reload-requested="onPlayerReloadRequested"
+          @player-reload-requested="onSabrReloadRequested"
         />
         <div
           v-if="!isLoading && (isUpcoming || errorMessage)"
@@ -152,6 +153,7 @@
         :video-thumbnail="thumbnail"
         :in-user-playlist="!!selectedUserPlaylist"
         :is-unlisted="isUnlisted"
+        :content-disclosures="contentDisclosures"
         :can-save-watched-progress="canSaveWatchProgress"
         class="watchVideo"
         :class="{ theatreWatchVideo: useTheatreMode }"
@@ -160,6 +162,7 @@
         @pause-player="pausePlayer"
         @save-watched-progress="handleWatchProgressManualSave"
         @study-export="handleStudyExport"
+        @reload-player="onManualReloadRequested"
       />
       <SkuiAccountCookies
         v-if="accountCookiesDialog !== null"
@@ -199,6 +202,7 @@
         :description="videoDescription"
         :description-html="videoDescriptionHtml"
         :license="license"
+        :content-disclosures="contentDisclosures"
         class="watchVideo"
         :class="{ theatreWatchVideo: useTheatreMode }"
         @timestamp-event="changeTimestamp"

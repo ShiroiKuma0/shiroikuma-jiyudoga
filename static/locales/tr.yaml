@@ -198,6 +198,7 @@ User Playlists:
   Export list of URLs: URL'lerin listesini dışa aktar
   Move Video to the Top: Videoyu En Üste Taşı
   Move Video to the Bottom: Videoyu En Alta Taşı
+  This playlist is private or does not exist.: Bu oynatma listesi gizli veya yok.
 History:
   # On History Page
   History: 'Geçmiş'
@@ -384,11 +385,11 @@ Settings:
     Enable Theatre Mode by Default: 'Sinema Modunu Öntanımlı Olarak Etkinleştir'
     Default Volume: 'Öntanımlı Ses Düzeyi'
     Default Playback Rate: 'Öntanımlı Oynatma Hızı'
-    Default Video Format:
-      Default Video Format: 'Öntanımlı Video Biçimi'
+    Default Media Format:
       Dash Formats: 'DASH Biçimleri'
       Legacy Formats: 'Eski Biçimler'
       Audio Formats: 'Ses Biçimleri'
+      Default Media Format: Öntanımlı Medya Biçimi
     Default Quality:
       Default Quality: 'Öntanımlı Kalite'
       Auto: 'Otomatik'
@@ -501,7 +502,7 @@ Settings:
     Playlist File: Oynatma Listesi Dosyası
     Subscription File: Abonelik Dosyası
     History File: Geçmiş Dosyası
-    Export Playlists For Older 白い熊 自由動画 Versions:
+    Export Playlists For Older FreeTube Versions:
       Label: Eski 白い熊 自由動画 Sürümleri İçin Oynatma Listelerini Dışa Aktar
       Tooltip: "Bu seçenek, tüm oynatma listelerindeki videoları 'Favoriler' adlı tek bir oynatma listesine aktarır.\n白い熊 自由動画'un eski bir sürümü için oynatma listelerindeki videolar nasıl dışa ve içe aktarılır:\n1. Oynatma listelerinizi bu seçenek etkinken dışa aktarın.\n2. Gizlilik Ayarları altındaki Tüm Oynatma Listelerini Kaldır seçeneğini kullanarak var olan tüm oynatma listelerinizi silin.\n3. 白い熊 自由動画'un eski sürümünü başlatın ve dışa aktarılan oynatma listelerini içe aktarın.\""
 
@@ -570,6 +571,7 @@ Settings:
     Hide Subscriptions Posts: Abonelik gönderilerini gizle
     Add: Ekle
     Remove: Kaldır
+    Hide Channel Shows: Kanalın "Programlar" sekmesini gizle
   The app needs to restart for changes to take effect. Restart and apply change?: Değişikliklerin etkili olması için uygulamanın yeniden başlatılması gerekiyor. Yeniden başlatılsın ve değişiklikler uygulansın mı?
   Proxy Settings:
     Error getting network information. Is your proxy configured properly?: Ağ bilgileri alınırken hata oluştu. Vekil sunucunuz doğru yapılandırıldı mı?
@@ -722,11 +724,11 @@ Channel:
   Your search results have returned 0 results: 'Arama sonuçlarınız 0 sonuç verdi'
   Videos:
     Videos: 'Videolar'
-    This channel does not currently have any videos: 'Bu kanalda şu anda herhangi bir video yok'
     Sort Types:
       Newest: 'En yeni'
       Oldest: 'En eski'
       Most Popular: 'En Popüler'
+    This channel has videos but none could be displayed, try fetching more: Bu kanalda videolar var ancak hiçbiri görüntülenemedi, daha fazlasını getirmeyi deneyin
   Playlists:
     Playlists: 'Oynatma Listeleri'
     This channel does not currently have any playlists: 'Bu kanalda şu anda herhangi bir oynatma listesi yok'
@@ -744,6 +746,7 @@ Channel:
     Details: Ayrıntılar
     Joined: Katıldı
     Location: Konum
+    Links: Bağlantılar
   This channel is age-restricted and currently cannot be viewed in FreeTube.: Bu kanal yaş sınırlamasına tabidir ve şu anda 白い熊 自由動画'da görüntülenememektedir.
   Channel Tabs: Kanal Sekmeleri
   This channel does not allow searching: Bu kanal aramaya izin vermiyor
@@ -774,6 +777,9 @@ Channel:
     Courses: Kurslar
     This channel does not currently have any courses: Bu kanalda şu anda herhangi bir kurs bulunmamaktadır
   View All: Tümünü Görüntüle
+  Shows:
+    Shows: Programlar
+    This channel does not currently have any shows: Bu kanalda şu anda herhangi bir program yok
 Video:
   Mark As Watched: 'İzlendi Olarak İşaretle'
   Remove From History: 'Geçmişten Kaldır'
@@ -875,7 +881,7 @@ Video:
     Skipped segment: '{segmentCategory} bölümü atlandı'
     Autoplay is off: Otomatik Oynat Kapalı
     Autoplay is on: Otomatik Oynat Açık
-  IP block: YouTube, IP adresinizin video izlemesini engelledi. Lütfen farklı bir VPN veya vekil sunucuya geçmeyi deneyin.
+  IP block: YouTube, IP adresinizin videoları izlemesini engelledi, veya bu videoda, YouTube'un oturumu kapalı kullanıcılar için erişimini kısıtladığı, reşit olmayan kişilerin yer aldığı içerik bulunabilir. Eğer bu bir IP engeli ise, farklı bir VPN veya vekil sunucu kullanmayı deneyin.
   Unlisted: Listelenmemiş
   AgeRestricted: Yaş sınırlamalı videolar, Google hesabına giriş ve yaş doğrulaması yapılmış bir YouTube hesabının kullanımını gerektirdiği için 白い熊 自由動画 üzerinden izlenemez.
   MembersOnly: Sadece üyelere özel videolar, Google hesabına giriş ve yükleyicinin kanalına ücretli abonelik gerektirdiği için 白い熊 自由動画 üzerinden izlenemez.
@@ -899,6 +905,10 @@ Video:
   Premiere: İlk gösterim
   Enable SponsorBlock on Channel: Kanalda SponsorBlock'u Etkinleştir
   Disable SponsorBlock on Channel: Kanalda SponsorBlock'u Devre Dışı Bırak
+  AI: YZ
+  'AI: Content was made with AI': 'YZ: İçerik YZ ile yapıldı'
+  How this was made: Nasıl yapıldı
+  Reload Page: Sayfayı Yeniden Yükle
 Playlist:
   #& About
   View Full Playlist: 'Tüm oynatma listesini görüntüle'
@@ -995,7 +1005,7 @@ Tooltips:
     Fetch Feeds from RSS: Etkinleştirildiğinde, 白い熊 自由動画 abonelik akışınızı almak için varsayılan yöntemi yerine RSS kullanacaktır. RSS daha hızlıdır ve IP engellemesini önler, ancak video süresi, canlı durum veya gönderiler gibi belirli bilgileri sağlamaz
     Fetch Automatically: Etkinleştirildiğinde, 白い熊 自由動画 başlangıçta ve yeni bir pencere açıldığında abonelik beslemenizi otomatik olarak getirecektir.
   Player Settings:
-    Default Video Format: Bir video oynatılırken kullanılan biçimleri ayarlayın. DASH biçimleri daha yüksek kalitelerde oynatabilir. Eski biçimler en fazla 360p ile sınırlıdır ancak daha az bant genişliği kullanır. Ses biçimleri yalnızca ses akışlarıdır.
+    Default Media Format: Bir video oynatılırken kullanılan biçimleri ayarlayın. DASH biçimleri daha yüksek kalitelerde oynatabilir. Eski biçimler en fazla 360p ile sınırlıdır ancak daha az bant genişliği kullanır. Ses biçimleri yalnızca ses akışlarıdır.
     Proxy Videos Through Invidious: Videoları sunmak için YouTube ile doğrudan bağlantı kurmak yerine Invidious'a bağlanılacak.
     Scroll Playback Rate Over Video Player: Oynatma hızını denetlemek için, imleç videonun üzerindeyken Ctrl tuşunu (Mac'te Komut tuşu) basılı tutun ve oynatma hızını denetlemek için fare tekerleğini ileri veya geri kaydırın. Öntanımlı oynatma hızına (ayarlarda değiştirilmediği sürece 1x) hızlı bir şekilde dönmek için Ctrl tuşunu (Mac'te Komut tuşu) basılı tutun ve fareye sol tıklayın.
     Skip by Scrolling Over Video Player: MPV'deki gibi videoda atlamak için kaydırma tekerleğini kullanın.

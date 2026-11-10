@@ -198,6 +198,7 @@ const state = {
   hideChannelReleases: false,
   hideChannelPodcasts: false,
   hideChannelCourses: false,
+  hideChannelShows: false,
   hideChannelShorts: false,
   hideChannelSubscriptions: false,
   hideCommentLikes: false,
@@ -587,6 +588,9 @@ const customState = {
 }
 
 const customGetters = {
+  getDefaultPlayback(state) {
+    return Math.round((state['defaultPlayback'] + Number.EPSILON) * 100) / 100
+  },
 }
 
 const customMutations = {}
