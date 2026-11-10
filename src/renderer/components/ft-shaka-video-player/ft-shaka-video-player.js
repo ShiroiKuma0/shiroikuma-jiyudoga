@@ -1393,9 +1393,10 @@ export default defineComponent({
           sabrAbortController.signal,
         )
       }, 1000))
-      sabrStream.onReloadOnce(() => {
+      sabrStream.onReloadOnce((cause) => {
         sabrAbortController.abort()
-        emit('player-reload-requested')
+        // `sabr:<cause>` — the watch page names the cause in its toast
+        emit('player-reload-requested', `sabr:${cause}`)
       })
     }
 
@@ -3068,7 +3069,8 @@ export default defineComponent({
         )
 
         showToast(t('SKUI.Player.Decoder recovery', { codec: 'avc1' }))
-        emit('player-reload-requested')
+        // not a SABR request: the watch page must not add its SABR toast to the one above
+        emit('player-reload-requested', 'decoder-stall')
 
         return true
       }

@@ -579,6 +579,31 @@ async function getWatchHTMLWatchPage(videoId, fetchFunc) {
 }
 
 /**
+ * A fresh content-bound proof-of-origin token for `videoId`, minted from a fresh page's challenge,
+ * for a streaming session YouTube has not accepted the first token for (SabrSchemePlugin).
+ * @param {string} videoId
+ * @returns {Promise<string>}
+ */
+export async function generateFreshContentPoToken(videoId) {
+  const htmlExtracts = await getWatchHTMLWatchPage(videoId, fetch)
+
+  const args = [
+    videoId,
+    JSON.stringify(htmlExtracts.session.context),
+    JSON.stringify(htmlExtracts.initialAttestationData),
+    JSON.stringify(htmlExtracts.ytConfig)
+  ]
+
+  if (process.env.IS_ELECTRON) {
+    return await window.ftElectron.generatePoToken(...args)
+  } else if (process.env.IS_ANDROID) {
+    return await generatePOToken(...args)
+  }
+
+  throw new Error('No PO token generator on this platform')
+}
+
+/**
  * @param {object} ytConfig
  * @param {(input, init) => Promise<Response>} fetchFunc
  */

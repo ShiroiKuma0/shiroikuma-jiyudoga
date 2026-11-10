@@ -30,6 +30,7 @@ import {
   showToast
 } from '../../helpers/utils'
 import {
+  generateFreshContentPoToken,
   getLocalVideoInfo,
   mapLocalLegacyFormat,
   parseLocalSubscriberCount,
@@ -56,6 +57,7 @@ import { isMusicTrack, parseMusicTags } from '../../helpers/download-music'
  * @typedef {{
  *   url: string,
  *   poToken: string,
+ *   refreshPoToken?: () => Promise<string>,
  *   ustreamerConfig: string,
  *   clientInfo: {
  *     clientName: number,
@@ -1984,9 +1986,13 @@ export default defineComponent({
       url.searchParams.set('alr', 'yes')
       url.searchParams.set('cpn', videoInfo.cpn)
 
+      const videoId = this.videoId
+
       this.sabrData = {
         url: url.toString(),
         poToken,
+        // a token YouTube leaves "pending" streams only the first minute (SabrSchemePlugin)
+        refreshPoToken: () => generateFreshContentPoToken(videoId),
         ustreamerConfig: videoInfo.player_config.media_common_config.media_ustreamer_request_config.video_playback_ustreamer_config,
         clientInfo
       }
@@ -2528,6 +2534,24 @@ export default defineComponent({
      * event carries no payload, so the SABR wording stays the default; the 401 path, which
      * reloads for a reason of its own, passes its own.
      */
+    /**
+     * The player's rebuild request. `cause` is `sabr:server` (YouTube's own reload part),
+     * `sabr:backoff-loop`, `sabr:retry-loop` (our loop guards in SabrSchemePlugin) or
+     * `decoder-stall`, which has already shown its own toast. The cause rides in the toast so a
+     * reload on the phone, where the log is out of reach, can still be told apart.
+     * @param {string} [cause]
+     */
+    async onPlayerReloadRequested(cause) {
+      if (cause === 'decoder-stall') {
+        await this.saveWatchProgressForReload()
+        await this.reloadView()
+        return
+      }
+
+      const reason = cause?.startsWith('sabr:') ? cause.slice('sabr:'.length) : cause
+      await this.onSabrReloadRequested(`Reloading player according to SABR request${reason ? ` (${reason})` : ''}`)
+    },
+
     async onSabrReloadRequested(message = 'Reloading player according to SABR request') {
       showToast(message)
       await this.saveWatchProgressForReload()

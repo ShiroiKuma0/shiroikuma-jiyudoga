@@ -64,6 +64,10 @@ const MAX_SABR_REDIRECTS = 5
  * @property {number} cumulativeBackOffRequested
  * @property {number} cumulativeRetryDueToNextRequestPolicy
  * @property {number} cumulativeRedirects
+ * @property {Map<number, number>} partTally - UMP part type → count, over this request's retries
+ * @property {string[]} foreignMediaHeaders - media YouTube sent that was not the segment asked for
+ * @property {() => shaka.Player} getPlayer
+ * @property {number} sentPoTokenGeneration - the token generation this request carries
  */
 /**
  * @typedef SabrStreamState
@@ -74,6 +78,13 @@ const MAX_SABR_REDIRECTS = 5
  * @property {?NextRequestPolicy} nextRequestPolicy
  * @property {boolean} playerReloadRequested
  * @property {number} requestNumber
+ * @property {number} createdAt - `Date.now()` when the stream was set up, for the reload log
+ * @property {number} [protectionStatus] - the last STREAM_PROTECTION_STATUS (1 OK, 2 attestation pending, 3 required)
+ * @property {Uint8Array} poToken - the token new requests carry; replaced by a refresh
+ * @property {number} poTokenGeneration - bumped by every refresh
+ * @property {boolean} poTokenRefreshing
+ * @property {number} poTokenRefreshes
+ * @property {(() => Promise<string>) | undefined} refreshPoToken
  */
 /**
  * @typedef TimeoutController
@@ -85,7 +96,7 @@ const MAX_SABR_REDIRECTS = 5
  * @typedef SabrStream
  * @type {object}
  * @property {(cb: ({backoffMs: number}) => void) => void} onBackoffRequested
- * @property {(cb: () => void) => void} onReloadOnce
+ * @property {(cb: (cause: string) => void) => void} onReloadOnce
  * @property {() => void | undefined} cleanup
  */
 
@@ -326,6 +337,98 @@ function logRefusedSabrResponse(response, operationInputs, currentState, bodyChu
 }
 
 /**
+ * Replaces a proof-of-origin token YouTube has not accepted, in the live session.
+ *
+ * googlevideo grades the token in every response's STREAM_PROTECTION_STATUS: 1 accepted,
+ * 2 "attestation pending", 3 required. A pending session is served exactly the first minute of
+ * the video and then only control parts, until the 100-retry guard rebuilds the whole player —
+ * the "Reloading player according to SABR request" 白い熊 met several times per short video
+ * (2026-11-10; FreeTube #10024, "hit 0:59"). Measured that day: whether a freshly minted token is
+ * accepted is hit and miss, and a rebuild "fixed" it only by minting another one. Minting it here
+ * instead, as soon as the first response says pending, lands the new token well inside that
+ * minute, with no rebuild. A token is replaced only once it has itself been graded, at most three
+ * times per session.
+ * @param {CurrentState} currentState
+ */
+function refreshPoTokenFor(currentState) {
+  const state = currentState.sabrStreamState
+
+  if (
+    !state.refreshPoToken || state.poTokenRefreshing || state.poTokenRefreshes >= 3 ||
+    currentState.sentPoTokenGeneration !== state.poTokenGeneration
+  ) {
+    return
+  }
+
+  state.poTokenRefreshing = true
+  state.poTokenRefreshes++
+
+  const sessionAge = ((Date.now() - state.createdAt) / 1000).toFixed(1)
+  console.warn(`SABR: PO token not accepted (status ${state.protectionStatus}) at ${sessionAge}s, minting a new one (${state.poTokenRefreshes}/3)`)
+
+  state.refreshPoToken()
+    .then((token) => {
+      state.poToken = base64ToU8(token)
+      state.poTokenGeneration++
+    })
+    .catch((error) => {
+      console.error('SABR: minting a replacement PO token failed', error)
+    })
+    .finally(() => {
+      state.poTokenRefreshing = false
+    })
+}
+
+/**
+ * @param {CurrentState} currentState
+ */
+function getPlayerPositionForLog(currentState) {
+  const video = currentState.getPlayer?.()?.getMediaElement()
+  if (!video) return '(no media element)'
+
+  const ranges = []
+  for (let i = 0; i < video.buffered.length; i++) {
+    ranges.push(`${video.buffered.start(i).toFixed(1)}–${video.buffered.end(i).toFixed(1)}`)
+  }
+
+  return `${video.currentTime.toFixed(1)}s, ${video.paused ? 'paused' : 'playing'}, buffered ${ranges.join(', ') || 'nothing'}`
+}
+
+/**
+ * Rebuilds the player, saying why. The four ways into a rebuild used to share one silent toast
+ * ("Reloading player according to SABR request"), so when 白い熊 met it several times in one
+ * short video (2026-11-10) the log could not tell YouTube's own request from our loop guards.
+ * @param {CurrentState} currentState
+ * @param {OperationInputs} operationInputs
+ * @param {'server' | 'backoff-loop' | 'retry-loop'} cause
+ * @param {string} details
+ */
+function requestPlayerReload(currentState, operationInputs, cause, details) {
+  const { sabrStreamState } = currentState
+
+  if (!currentState.abortController.signal.aborted) {
+    currentState.abortController.abort()
+  }
+
+  // Concurrent audio + video requests can both hit this; only the first one logs and rebuilds.
+  if (sabrStreamState.playerReloadRequested) return
+
+  sabrStreamState.playerReloadRequested = true
+
+  console.error(
+    `SABR player reload (${cause})\n` +
+    `URI: ${operationInputs.uri}\n` +
+    `Session age: ${((Date.now() - sabrStreamState.createdAt) / 1000).toFixed(1)}s\n` +
+    `Request number: ${sabrStreamState.requestNumber}\n` +
+    `Host: ${new URL(sabrStreamState.sabrUrl).host}\n` +
+    `Stream protection status: ${sabrStreamState.protectionStatus ?? '(none received)'}, PO token refreshes: ${sabrStreamState.poTokenRefreshes}\n` +
+    details
+  )
+
+  currentState.eventEmitter.emit('reload', cause)
+}
+
+/**
  * @param {OperationInputs} operationInputs - readonly
  * @param {CurrentState} currentState - can be updated
  */
@@ -380,13 +483,28 @@ async function doRequest(
         shouldReloadDueToBackoffLoop = true
       }
     }
-    if (shouldReloadDueToBackoffLoop || currentState.cumulativeRetryDueToNextRequestPolicy >= 100) {
+    if (shouldReloadDueToBackoffLoop) {
+      // Fire fake reload event due to detecting backoff loop
+      requestPlayerReload(currentState, operationInputs, 'backoff-loop',
+        `Backoffs in this request: ${currentState.cumulativeBackOffRequested}, ` +
+        `${currentState.cumulativeBackOffTimeMs} ms in all, last ${currentState.sabrStreamState.nextRequestPolicy?.backoffTimeMs} ms, ` +
+        `timeout ${operationInputs.request.retryParameters.timeout} ms`)
+    } else if (currentState.cumulativeRetryDueToNextRequestPolicy >= 100) {
       // Fire fake reload event due to detecting retry loop
-      currentState.sabrStreamState.playerReloadRequested = true
-      if (!currentState.abortController.signal.aborted) {
-        currentState.abortController.abort()
-        currentState.eventEmitter.emit('reload')
-      }
+      const policy = currentState.sabrStreamState.nextRequestPolicy
+      const tally = [...currentState.partTally].map(([type, count]) => `${UMPPartId[type] ?? type}×${count}`).join(', ')
+
+      requestPlayerReload(currentState, operationInputs, 'retry-loop',
+        `Retries due to the next-request policy: ${currentState.cumulativeRetryDueToNextRequestPolicy}\n` +
+        `Last policy: readahead audio ${policy?.targetAudioReadaheadMs} / video ${policy?.targetVideoReadaheadMs} ms, ` +
+        `min audio ${policy?.minAudioReadaheadMs} / video ${policy?.minVideoReadaheadMs} ms, ` +
+        `backoff ${policy?.backoffTimeMs} ms, max since last request ${policy?.maxTimeSinceLastRequestMs} ms\n` +
+        `Player position: ${getPlayerPositionForLog(currentState)}\n` +
+        `Parts received: ${tally || '(none)'}\n` +
+        `Other media sent: ${currentState.foreignMediaHeaders.join('; ') || '(none)'}\n` +
+        `Buffered ranges sent: ${JSON.stringify(currentState.abrRequest.bufferedRanges.map(range => ({
+          itag: range.formatId?.itag, startSq: range.startSegmentIndex, endSq: range.endSegmentIndex, startMs: range.startTimeMs, durationMs: range.durationMs
+        })))}`)
     }
 
     const sabrURL = new URL(currentState.sabrStreamState.sabrUrl)
@@ -413,10 +531,25 @@ async function doRequest(
       }
 
       const remainingData = new UmpReader(chunkedDataBuffer).read((part) => {
+        currentState.partTally.set(part.type, (currentState.partTally.get(part.type) ?? 0) + 1)
+
         switch (part.type) {
           case UMPPartId.STREAM_PROTECTION_STATUS: {
             const streamProtectionStatus = decodePart(part, StreamProtectionStatus)
             if (!streamProtectionStatus) break
+
+            if (
+              streamProtectionStatus.status === 1 && currentState.sabrStreamState.protectionStatus !== 1 &&
+              currentState.sabrStreamState.poTokenRefreshes > 0
+            ) {
+              console.warn(`SABR: replacement PO token accepted after ${currentState.sabrStreamState.poTokenRefreshes} refresh(es)`)
+            }
+
+            currentState.sabrStreamState.protectionStatus = streamProtectionStatus.status
+
+            if (streamProtectionStatus.status === 2 || streamProtectionStatus.status === 3) {
+              refreshPoTokenFor(currentState)
+            }
 
             if (streamProtectionStatus.status === 3) {
               invalidPoToken = true
@@ -452,6 +585,14 @@ async function doRequest(
             if (mediaHeaderId === undefined) {
               const mediaHeader = decodePart(part, MediaHeader)
               if (!mediaHeader) break
+
+              if (currentState.foreignMediaHeaders.length < 12 && !(
+                mediaHeader.formatId.itag === itag &&
+                (operationInputs.isInit ? mediaHeader.isInitSeg : mediaHeader.sequenceNumber === operationInputs.sequenceNumber)
+              )) {
+                currentState.foreignMediaHeaders.push(
+                  `itag ${mediaHeader.formatId.itag} ${mediaHeader.isInitSeg ? 'init' : `sq ${mediaHeader.sequenceNumber}`} @${mediaHeader.startMs}ms`)
+              }
 
               if (
                 mediaHeader.formatId.itag === itag &&
@@ -545,11 +686,11 @@ async function doRequest(
             if (!reloadPlaybackContext) break
 
             // Whole video cannot be played
-            currentState.sabrStreamState.playerReloadRequested = true
-            if (!currentState.abortController.signal.aborted) {
-              currentState.abortController.abort()
-              currentState.eventEmitter.emit('reload')
-            }
+            // The token is what YouTube's own client hands back in its next /player request; we
+            // never send it, so whether one arrives is worth knowing (its value is not).
+            const reloadToken = reloadPlaybackContext.reloadPlaybackParams?.token
+            requestPlayerReload(currentState, operationInputs, 'server',
+              `Reload token: ${reloadToken ? `${reloadToken.length} chars` : '(none)'}`)
             break
           }
           default: {
@@ -631,6 +772,10 @@ async function doRequest(
     }
 
     const { sabrContexts, unsentSabrContexts } = prepareSabrContexts(currentState.sabrStreamState)
+
+    // a token minted since this request was built goes out with the retry
+    currentState.abrRequest.streamerContext.poToken = currentState.sabrStreamState.poToken
+    currentState.sentPoTokenGeneration = currentState.sabrStreamState.poTokenGeneration
 
     currentState.abrRequest.streamerContext.sabrContexts = sabrContexts
     currentState.abrRequest.streamerContext.unsentSabrContexts = unsentSabrContexts
@@ -728,7 +873,6 @@ export function setupSabrScheme(sabrData, getPlayer, getManifest, playerWidth, p
    */
   const initDataCache = new Map()
 
-  const poToken = base64ToU8(sabrData.poToken)
   const videoPlaybackUstreamerConfig = base64ToU8(sabrData.ustreamerConfig)
   const clientInfo = deepCopy(sabrData.clientInfo)
 
@@ -740,6 +884,12 @@ export function setupSabrScheme(sabrData, getPlayer, getManifest, playerWidth, p
     nextRequestPolicy: undefined,
     playerReloadRequested: false,
     requestNumber: 0,
+    createdAt: Date.now(),
+    poToken: base64ToU8(sabrData.poToken),
+    poTokenGeneration: 0,
+    poTokenRefreshing: false,
+    poTokenRefreshes: 0,
+    refreshPoToken: sabrData.refreshPoToken,
   }
 
   shaka.net.NetworkingEngine.registerScheme('sabr', (uri, request, requestType, _progressUpdated, headersReceived, _config) => {
@@ -839,7 +989,7 @@ export function setupSabrScheme(sabrData, getPlayer, getManifest, playerWidth, p
       selectedFormatIds: isInit ? [] : [audioFormatId, videoFormatId],
       bufferedRanges,
       streamerContext: {
-        poToken,
+        poToken: sabrStreamState.poToken,
         clientInfo,
         sabrContexts,
         unsentSabrContexts,
@@ -925,6 +1075,10 @@ export function setupSabrScheme(sabrData, getPlayer, getManifest, playerWidth, p
       cumulativeBackOffRequested: 0,
       cumulativeRetryDueToNextRequestPolicy: 0,
       cumulativeRedirects: 0,
+      partTally: new Map(),
+      foreignMediaHeaders: [],
+      getPlayer,
+      sentPoTokenGeneration: sabrStreamState.poTokenGeneration,
     }
 
     const pendingRequest = doRequest(opInputs, currentState)
