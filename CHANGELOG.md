@@ -15,6 +15,30 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004` — 2026-11-11
+
+Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
+pin moved** — two fixes from FreeTube `development` merged; `FORK_VERSION` stays `0.26.0` and the
+counter runs on. FreeTubeAndroid had nothing new.
+
+### Downloads
+
+- **Android** (arm64-v8a): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004_arm64-v8a.apk`
+- **GNU/Linux** (amd64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004_amd64.deb`
+- **Windows** (x64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004_win-x64.zip`
+
+### From FreeTube `development`
+
+- **Private videos are recognised in every case** (#10079). YouTube sometimes reports “Private
+  video” in the playability status's own `reason` field rather than on its error screen; that form
+  was missed, so the watch page fell through to the other backends and ended on a generic error.
+  It now shows the private-video message straight away.
+- **“N min ago” upload times parse correctly** (#10080). YouTube began abbreviating minutes as
+  `min`, which the relative-date parser did not know, so the newest feed entries got wrong
+  publish dates and sorted out of place. The `… ago` pattern is tightened at the same time.
+
+---
+
 ## 白い熊 自由動画 `0.26.0+2026-11-10.05-51.g24da9326+2026-09-13.13-31.gaf0ab865+003` — 2026-11-10
 
 Built on FreeTube `24da9326` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
