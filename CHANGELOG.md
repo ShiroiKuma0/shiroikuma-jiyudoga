@@ -15,6 +15,33 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012` — 2026-11-20
+
+Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13) — neither
+upstream moved.
+
+### Downloads
+
+- **Android** (arm64-v8a): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012_arm64-v8a.apk`
+- **GNU/Linux** (amd64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012_amd64.deb`
+- **Windows** (x64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012_win-x64.zip`
+
+### “Directory”, not “folder”, inside the code too
+
+- **Two saved settings renamed**: `studyFolderPath` → `studyDirectoryPath` (desktop study-export
+  directory) and `downloadFolderPath` → `downloadDirectoryPath` (desktop download directory). A
+  **one-time migration** on first start moves a value saved under the old key to the new one and
+  removes the old key, so a directory already chosen is not asked for again.
+- **The code around them follows**: the IPC channel `WRITE_TO_STUDY_FOLDER` →
+  `WRITE_TO_STUDY_DIRECTORY`, and `writeToStudyFolder`, `resolveChosenFolder`,
+  `writeToChosenFolder` → `…Directory`.
+- **Our translation keys** for the sync and backup rows renamed (their visible text already read
+  “directory” since `+011`), and every “folder” in our own comments, JS and Kotlin alike.
+- Upstream FreeTube’s own identifiers (`screenshotFolderPath`, `chooseDefaultFolder`, …) are left
+  as they are, so upstream syncs stay conflict-free.
+
+---
+
 ## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011` — 2026-11-20
 
 Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13) — neither
