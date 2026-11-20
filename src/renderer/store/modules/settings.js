@@ -344,7 +344,7 @@ const state = {
   // where the phone keeps the two snapshots. A plain path rather than a SAF tree,
   // because ssh has no way to open a document uri
   skuiSyncAndroidDir: '/sdcard/jiyudoga-sync',
-  // '' = <electron userData>/sync. Pointing this at a folder something else already
+  // '' = <electron userData>/sync. Pointing this at a directory something else already
   // synchronises (Syncthing, a mounted share) lets the ssh courier be left switched off
   skuiSyncLocalDir: '',
   // the phone, as the system `ssh` will resolve it — an alias out of ~/.ssh/config,
@@ -383,14 +383,14 @@ const state = {
   // keys. Transferable on purpose, so a restore brings the arrangement with the colours
   skuiUiSectionOrder: '[]',
   skuiUiSectionsOpen: '[]',
-  // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
+  // SAF tree uri of the jisho study-export directory (Android; '' = not chosen yet)
   studyDirectoryTree: '',
-  // study-export folder on desktop (set only via the main-process folder picker)
-  studyFolderPath: '',
-  // SAF tree uri of the video download folder (Android; '' = not chosen yet)
+  // study-export directory on desktop (set only via the main-process directory picker)
+  studyDirectoryPath: '',
+  // SAF tree uri of the video download directory (Android; '' = not chosen yet)
   downloadDirectoryTree: '',
-  // video download folder on desktop (set only via the main-process folder picker)
-  downloadFolderPath: '',
+  // video download directory on desktop (set only via the main-process directory picker)
+  downloadDirectoryPath: '',
   // yt-dlp style output template for downloaded videos
   downloadFilenameTemplate: '%(title)s %(upload_date)s (%(channel)s).%(ext)s',
   // filesystems cap a single path component at 255 bytes
@@ -544,11 +544,11 @@ const sideEffectHandlers = {
 const settingsWithSideEffects = Object.keys(sideEffectHandlers)
 
 export const NON_TRANSFERABLE_SETTINGS = new Set([
-  // study-export and download folders are machine/device specific
+  // study-export and download directories are machine/device specific
   'studyDirectoryTree',
-  'studyFolderPath',
+  'studyDirectoryPath',
   'downloadDirectoryTree',
-  'downloadFolderPath',
+  'downloadDirectoryPath',
   // device sync: every one of these describes THIS machine or its view of the other
   // one, so carrying them into a backup would teach the far device to sync with itself
   'skuiSyncAndroidDir',

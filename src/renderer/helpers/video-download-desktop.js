@@ -1,7 +1,7 @@
 // Download button (desktop/Electron): same pipeline as the Android path. The
 // file is written by the main process while it is being muxed — into a hidden
-// `.part` file in the download folder, renamed to its real name only once it is
-// complete — and the folder is asked for once on the first download and
+// `.part` file in the download directory, renamed to its real name only once it is
+// complete — and the directory is asked for once on the first download and
 // remembered afterwards.
 
 import { VideoDownloadError, runDownload } from './download-common'
@@ -9,7 +9,7 @@ import { buildDownloadFilename } from './download-filename'
 import store from '../store/index'
 
 /**
- * Opens the output file in the download folder.
+ * Opens the output file in the download directory.
  * @param {string} fileName
  * @returns {Promise<import('./download-mux').DownloadSink>}
  */
@@ -17,7 +17,7 @@ async function openDesktopSink(fileName) {
   const id = await window.ftElectron.downloadFileOpen(fileName)
 
   if (id === null || typeof id !== 'string') {
-    // the one-time folder prompt was cancelled
+    // the one-time directory prompt was cancelled
     throw new VideoDownloadError('canceled')
   }
 
@@ -34,7 +34,7 @@ async function openDesktopSink(fileName) {
 
 /**
  * Runs the whole download: stream selection → fetch → mkv remux with chapters
- * and subtitles → written into the download folder as it is muxed.
+ * and subtitles → written into the download directory as it is muxed.
  * @param {object} input
  * @param {object[]} [input.adaptiveFormats]
  * @param {object[]} [input.legacyFormats]

@@ -647,7 +647,7 @@ class FreeTubeJavaScriptInterface(
     return list.toString()
   }
 
-  /** `{}` when unset, otherwise `{ tree, path, name }` of the configured backup folder. */
+  /** `{}` when unset, otherwise `{ tree, path, name }` of the configured backup directory. */
   @JavascriptInterface
   fun getBackupDirectory(): String {
     val tree = AutomationAuth.directoryUri(context) ?: return "{}"
@@ -661,7 +661,7 @@ class FreeTubeJavaScriptInterface(
       .toString()
   }
 
-  /** SAF folder picker; resolves the tree uri (already persisted) or `USER_CANCELED`. */
+  /** SAF directory picker; resolves the tree uri (already persisted) or `USER_CANCELED`. */
   @JavascriptInterface
   fun pickBackupDirectory(): String {
     val id = "${randomUUID()}"
@@ -686,8 +686,8 @@ class FreeTubeJavaScriptInterface(
   }
 
   /**
-   * The newest backup in the configured folder — the page queries this on open so the
-   * "last export" line is always current. `{}` when there is no folder or no backup.
+   * The newest backup in the configured directory — the page queries this on open so the
+   * "last export" line is always current. `{}` when there is no directory or no backup.
    */
   @JavascriptInterface
   fun getLatestBackup(): String {
@@ -705,7 +705,7 @@ class FreeTubeJavaScriptInterface(
   }
 
   /**
-   * Writes ONE zip holding the selected categories into the configured folder.
+   * Writes ONE zip holding the selected categories into the configured directory.
    * Resolves `{ name, path, bytes, human, categories }`.
    */
   @JavascriptInterface

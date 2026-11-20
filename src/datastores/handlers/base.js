@@ -78,6 +78,21 @@ class Settings {
       await db.settings.removeAsync({ _id: 'screenshotAskPath' })
     }
 
+    // 白い熊 自由動画 0.26.0+012: the desktop study-export and download directory settings were
+    // renamed from …FolderPath to …DirectoryPath ("folder" is never used for a directory).
+    // One-time move, so a directory already chosen is not asked for again.
+    for (const [oldId, newId] of [['studyFolderPath', 'studyDirectoryPath'], ['downloadFolderPath', 'downloadDirectoryPath']]) {
+      const old = await db.settings.findOneAsync({ _id: oldId })
+
+      if (old) {
+        if (!await db.settings.findOneAsync({ _id: newId })) {
+          await this.upsert(newId, old.value)
+        }
+
+        await db.settings.removeAsync({ _id: oldId })
+      }
+    }
+
     return db.settings.findAsync({ _id: { $ne: 'bounds' } })
   }
 

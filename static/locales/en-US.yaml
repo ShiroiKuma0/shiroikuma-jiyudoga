@@ -1496,9 +1496,9 @@ SKUI:
     Panel description: >-
       Saves the ticked parts of the app into one .zip in the backup directory, or restores
       the ticked parts a chosen .zip contains. Parts the archive does not carry are skipped.
-    Backup folder: Backup directory
+    Backup directory: Backup directory
     No backup directory set: No backup directory set
-    No backup in this folder yet: No backup in this directory yet
+    No backup in this directory yet: No backup in this directory yet
     Last backup: 'Last backup: {when} — {name}'
     Working: Working…
     Select all: Select all
@@ -1617,8 +1617,8 @@ SKUI:
     Toast merged: 'Synced: {count} changes merged'
     Toast failed: The sync failed — see the 白い熊 UI settings for why
     Grant access: Grant access
-    Sync folder: Sync directory on this phone
-    Sync folder description: >-
+    Sync directory: Sync directory on this phone
+    Sync directory description: >-
       A real path rather than a picked directory, because the PC has to reach it over ssh.
       Type the same path into the PC's "phone's sync directory" box.
     Phone host: Phone, as ssh reaches it
@@ -1632,9 +1632,9 @@ SKUI:
       does not use makes an already-trusted phone look like an unknown one.
     Ssh arguments: Extra ssh arguments
     Ssh arguments description: 'Appended to the command as-is, for example: -i ~/.ssh/id_ed25519'
-    Phone folder: The phone's sync directory
-    Local folder: Sync directory on this PC
-    Local folder default: Left empty, the app's own data directory is used
+    Phone directory: The phone's sync directory
+    Local directory: Sync directory on this PC
+    Local directory default: Left empty, the app's own data directory is used
     On start: Sync on opening the app
     On start description: >-
       And whenever it comes back to the front.

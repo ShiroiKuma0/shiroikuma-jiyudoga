@@ -1461,7 +1461,7 @@ function runApp() {
   /**
    * @param {import('electron').WebContents} webContents
    * @param {string | undefined} [currentPath]
-   * @param {'screenshotFolderPath' | 'studyFolderPath' | 'downloadFolderPath'} [settingId]
+   * @param {'screenshotFolderPath' | 'studyDirectoryPath' | 'downloadDirectoryPath'} [settingId]
    */
   async function chooseDefaultFolder(webContents, currentPath, settingId = 'screenshotFolderPath') {
     if (typeof currentPath !== 'string' || currentPath.length === 0) {
@@ -1570,24 +1570,24 @@ function runApp() {
   })
 
   /**
-   * The folder behind a chosen-folder setting, asking for it on first use (or
+   * The directory behind a chosen-directory setting, asking for it on first use (or
    * when access was lost).
    * @param {Electron.IpcMainInvokeEvent} event
-   * @param {'studyFolderPath' | 'downloadFolderPath'} settingId
+   * @param {'studyDirectoryPath' | 'downloadDirectoryPath'} settingId
    * @returns {Promise<string | null>} normalized path, null when the prompt was cancelled
    */
-  async function resolveChosenFolder(event, settingId) {
-    const folderPath = (await baseHandlers.settings._findOne(settingId))?.value
+  async function resolveChosenDirectory(event, settingId) {
+    const directoryPath = (await baseHandlers.settings._findOne(settingId))?.value
 
     let directory
-    if (typeof folderPath === 'string' && folderPath.length > 0) {
+    if (typeof directoryPath === 'string' && directoryPath.length > 0) {
       try {
-        await asyncFs.access(path.normalize(folderPath), fsConstants.W_OK)
-        directory = folderPath
+        await asyncFs.access(path.normalize(directoryPath), fsConstants.W_OK)
+        directory = directoryPath
       } catch {}
     }
 
-    // one-time ask: prompt for the folder on first use (or when access was lost)
+    // one-time ask: prompt for the directory on first use (or when access was lost)
     if (directory === undefined) {
       directory = await chooseDefaultFolder(event.sender, undefined, settingId)
 
@@ -1599,17 +1599,17 @@ function runApp() {
     return path.normalize(directory)
   }
 
-  // Mirrors WRITE_TO_DEFAULT_FOLDER but with a folder setting of its own, asked
+  // Mirrors WRITE_TO_DEFAULT_FOLDER but with a directory setting of its own, asked
   // for once on first write, and returns the absolute file path so the renderer
   // can act on the written file afterwards.
   /**
    * @param {Electron.IpcMainInvokeEvent} event
    * @param {string} filename
    * @param {ArrayBuffer} arrayBuffer
-   * @param {'studyFolderPath' | 'downloadFolderPath'} settingId
+   * @param {'studyDirectoryPath' | 'downloadDirectoryPath'} settingId
    * @returns {Promise<string | null>}
    */
-  async function writeToChosenFolder(event, filename, arrayBuffer, settingId) {
+  async function writeToChosenDirectory(event, filename, arrayBuffer, settingId) {
     if (
       !isFreeTubeUrl(event.senderFrame.url) ||
       typeof filename !== 'string' ||
@@ -1617,7 +1617,7 @@ function runApp() {
       return null
     }
 
-    const directory = await resolveChosenFolder(event, settingId)
+    const directory = await resolveChosenDirectory(event, settingId)
     if (directory === null) {
       return null
     }
@@ -1634,7 +1634,7 @@ function runApp() {
 
       await asyncFs.writeFile(filePath, new DataView(arrayBuffer))
     } catch (error) {
-      console.error(`writing to the ${settingId} folder failed`, error)
+      console.error(`writing to the ${settingId} directory failed`, error)
       // throw a new error so that we don't expose the real error to the renderer
       // eslint-disable-next-line preserve-caught-error
       throw new Error('Failed to save')
@@ -1683,8 +1683,8 @@ function runApp() {
   ipcMain.handle(IpcChannels.DIAG_OPEN_DIRECTORY, () => diag.openDiagDirectory())
 
   // Study export (shiroikuma-yosuga hand-off)
-  ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {
-    return await writeToChosenFolder(event, filename, arrayBuffer, 'studyFolderPath')
+  ipcMain.handle(IpcChannels.WRITE_TO_STUDY_DIRECTORY, async (event, filename, arrayBuffer) => {
+    return await writeToChosenDirectory(event, filename, arrayBuffer, 'studyDirectoryPath')
   })
 
   // Download button: the renderer muxes and this writes, position by position, so a
@@ -1711,7 +1711,7 @@ function runApp() {
       return null
     }
 
-    const directory = await resolveChosenFolder(event, 'downloadFolderPath')
+    const directory = await resolveChosenDirectory(event, 'downloadDirectoryPath')
     if (directory === null) {
       return null
     }
@@ -1859,14 +1859,14 @@ function runApp() {
       return false
     }
 
-    // only files inside the configured study folder may be opened
-    const folderPath = (await baseHandlers.settings._findOne('studyFolderPath'))?.value
-    if (typeof folderPath !== 'string' || folderPath.length === 0) {
+    // only files inside the configured study directory may be opened
+    const directoryPath = (await baseHandlers.settings._findOne('studyDirectoryPath'))?.value
+    if (typeof directoryPath !== 'string' || directoryPath.length === 0) {
       return false
     }
 
     const resolved = path.resolve(filePath)
-    if (path.dirname(resolved) !== path.normalize(folderPath).replace(/\/$/, '')) {
+    if (path.dirname(resolved) !== path.normalize(directoryPath).replace(/\/$/, '')) {
       return false
     }
 
@@ -2117,9 +2117,9 @@ function runApp() {
           return await baseHandlers.settings.find()
 
         case DBActions.GENERAL.UPSERT:
-          // These are only allowed to be changed by the folder-picker IPC actions
-          // to avoid the "write to folder" IPC calls being abused to write to arbitrary locations
-          if (data._id === 'screenshotFolderPath' || data._id === 'studyFolderPath' || data._id === 'downloadFolderPath') {
+          // These are only allowed to be changed by the directory-picker IPC actions
+          // to avoid the "write to directory" IPC calls being abused to write to arbitrary locations
+          if (data._id === 'screenshotFolderPath' || data._id === 'studyDirectoryPath' || data._id === 'downloadDirectoryPath') {
             return null
           }
 

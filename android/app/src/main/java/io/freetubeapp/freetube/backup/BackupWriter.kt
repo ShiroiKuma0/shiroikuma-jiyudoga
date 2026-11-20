@@ -16,7 +16,7 @@ import java.io.File
  *
  * An arbitrary absolute `path` needs All-Files-Access. Without it we can still honour a
  * `path` that points inside the configured SAF tree (the normal case — 白い熊 points both
- * this app and 自由作業盤 at the same 「[979] バックアップ」 folder); otherwise the contract
+ * this app and 自由作業盤 at the same 「[979] バックアップ」 directory); otherwise the contract
  * says to ignore `path` when a SAF directory is configured, and to fail when none is.
  */
 object BackupWriter {

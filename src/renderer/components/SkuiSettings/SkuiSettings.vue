@@ -177,8 +177,8 @@
               class="skuiRowIcon skuiRole-view"
             />
             <span class="skuiEntryText">
-              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Sync folder') }}</span>
-              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Sync folder description') }}</span>
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Sync directory') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Sync directory description') }}</span>
             </span>
           </div>
           <input
@@ -186,7 +186,7 @@
             type="text"
             spellcheck="false"
             :value="syncAndroidDir"
-            :aria-label="$t('SKUI.Sync.Sync folder')"
+            :aria-label="$t('SKUI.Sync.Sync directory')"
             @change="updateSyncPath('updateSkuiSyncAndroidDir', $event.target.value, '/sdcard/jiyudoga-sync')"
           >
         </template>
@@ -257,7 +257,7 @@
               class="skuiRowIcon skuiRole-view"
             />
             <span class="skuiEntryText">
-              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone folder') }}</span>
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone directory') }}</span>
             </span>
           </div>
           <input
@@ -265,7 +265,7 @@
             type="text"
             spellcheck="false"
             :value="syncRemoteDir"
-            :aria-label="$t('SKUI.Sync.Phone folder')"
+            :aria-label="$t('SKUI.Sync.Phone directory')"
             @change="updateSyncPath('updateSkuiSyncRemoteDir', $event.target.value, '/sdcard/jiyudoga-sync')"
           >
 
@@ -275,8 +275,8 @@
               class="skuiRowIcon skuiRole-view"
             />
             <span class="skuiEntryText">
-              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Local folder') }}</span>
-              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Local folder default') }}</span>
+              <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Local directory') }}</span>
+              <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Local directory default') }}</span>
             </span>
           </div>
           <input
@@ -284,7 +284,7 @@
             type="text"
             spellcheck="false"
             :value="syncLocalDir"
-            :aria-label="$t('SKUI.Sync.Local folder')"
+            :aria-label="$t('SKUI.Sync.Local directory')"
             @change="updateSyncText('updateSkuiSyncLocalDir', $event.target.value)"
           >
         </template>
@@ -1289,7 +1289,7 @@ const maxFilenameBytes = computed(() => store.getters.getDownloadMaxFilenameByte
 const downloadDirectoryLabel = computed(() => {
   if (!IS_ANDROID) {
     // set by the main-process picker on the first download
-    return store.getters.getDownloadFolderPath || null
+    return store.getters.getDownloadDirectoryPath || null
   }
 
   const tree = store.getters.getDownloadDirectoryTree

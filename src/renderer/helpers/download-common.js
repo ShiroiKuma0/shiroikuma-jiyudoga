@@ -1,7 +1,7 @@
 // Platform-independent half of the download button: choosing which streams to
 // fetch, fetching them, and remuxing into the Matroska file that gets written.
 // The Android and desktop paths differ only in where the file goes — each hands
-// in an `openSink` that opens a file in its download folder.
+// in an `openSink` that opens a file in its download directory.
 //
 // Stream choice mirrors `yt-dlp -f bestvideo+bestaudio`. SABR comes first: it is
 // how the player itself receives the video, YouTube increasingly offers nothing

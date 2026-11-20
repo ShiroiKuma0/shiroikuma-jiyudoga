@@ -1,9 +1,9 @@
 // Download button (Android): fetches the streams, remuxes them into a single
 // Matroska file with chapters and subtitles, and writes it into the user-chosen
-// download folder while it is being muxed — positional writes through the
-// Kotlin bridge, so a long video never sits in the WebView's memory. The folder
+// download directory while it is being muxed — positional writes through the
+// Kotlin bridge, so a long video never sits in the WebView's memory. The directory
 // is asked for with the SAF picker on the first download and remembered
-// afterwards, the same way the study folder works.
+// afterwards, the same way the study directory works.
 
 import android from 'android'
 import { awaitAsyncResult } from './jsinterface'
@@ -13,7 +13,7 @@ import { buildDownloadFilename } from '../download-filename'
 import store from '../../store/index'
 
 /**
- * Ensures a download directory is configured, prompting with the SAF folder
+ * Ensures a download directory is configured, prompting with the SAF directory
  * picker on first use.
  * @returns {Promise<string>} the SAF tree uri
  */
@@ -65,7 +65,7 @@ function openAndroidSink(tree, fileName) {
 
 /**
  * Runs the whole download: stream selection → fetch → mkv remux with chapters
- * and subtitles → written into the download folder as it is muxed.
+ * and subtitles → written into the download directory as it is muxed.
  * @param {object} input
  * @param {object[]} [input.adaptiveFormats]
  * @param {object[]} [input.legacyFormats]

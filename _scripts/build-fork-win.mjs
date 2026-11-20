@@ -22,7 +22,7 @@ import forkVersionModule from './fork-version.js'
 const { forkVersion } = forkVersionModule
 
 // One stem for the archive AND for the directory inside it: everything must extract into a single
-// top-level folder named after the artifact (白い熊, 2026-08-22). electron-builder's own `zip`
+// top-level directory named after the artifact (白い熊, 2026-08-22). electron-builder's own `zip`
 // target cannot do this — ArchiveTarget hardcodes `withoutDir = !isMac`, so a Windows zip always
 // has its files at the archive root and unpacking one scatters ~76 entries into whatever directory
 // the user happened to be in. So we build the unpacked tree with the `dir` target and archive it

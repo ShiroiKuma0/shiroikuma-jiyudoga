@@ -159,17 +159,17 @@ export default {
   },
 
   /**
-   * Writes a study-export file into the (once-asked) study folder.
+   * Writes a study-export file into the (once-asked) study directory.
    * @param {string} filename
    * @param {ArrayBuffer} contents
-   * @returns {Promise<string | null>} the absolute file path, null when the folder prompt was cancelled
+   * @returns {Promise<string | null>} the absolute file path, null when the directory prompt was cancelled
    */
-  writeToStudyFolder: async (filename, contents) => {
-    return await ipcRenderer.invoke(IpcChannels.WRITE_TO_STUDY_FOLDER, filename, contents)
+  writeToStudyDirectory: async (filename, contents) => {
+    return await ipcRenderer.invoke(IpcChannels.WRITE_TO_STUDY_DIRECTORY, filename, contents)
   },
 
   /**
-   * Opens a study-folder file in shiroikuma-yosuga.
+   * Opens a study-directory file in shiroikuma-yosuga.
    * @param {string} filePath
    * @returns {Promise<boolean>}
    */
@@ -327,10 +327,10 @@ export default {
   },
 
   /**
-   * Opens a downloaded video's file in the (once-asked) download folder; it is
+   * Opens a downloaded video's file in the (once-asked) download directory; it is
    * written as it is muxed and only appears under its real name on finish.
    * @param {string} filename
-   * @returns {Promise<string | null>} a handle id, null when the folder prompt was cancelled
+   * @returns {Promise<string | null>} a handle id, null when the directory prompt was cancelled
    */
   downloadFileOpen: async (filename) => {
     return await ipcRenderer.invoke(IpcChannels.DOWNLOAD_FILE_OPEN, filename)

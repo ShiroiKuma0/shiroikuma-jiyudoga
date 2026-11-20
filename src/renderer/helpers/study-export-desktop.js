@@ -1,6 +1,6 @@
 // Study export (desktop/Electron): builds the same single mkv as the Android
-// path and opens it in shiroikuma-yosuga (the Memento fork). The study folder
-// is asked for once (main-process folder picker on first write) and then
+// path and opens it in shiroikuma-yosuga (the Memento fork). The study directory
+// is asked for once (main-process directory picker on first write) and then
 // reused; no hand-off protocol needed — yosuga is simply launched with the
 // file.
 
@@ -17,7 +17,7 @@ import {
 
 /**
  * Runs the full export: subtitles → video download → mkv remux with embedded
- * subtitle tracks → write into the study folder → open in yosuga.
+ * subtitle tracks → write into the study directory → open in yosuga.
  * @param {object} input
  * @param {{ id: string, url: string, language: string, isAutotranslated?: boolean }[]} input.captions
  * @param {{ url: string, itag?: number | string }[]} input.legacyFormats
@@ -52,13 +52,13 @@ export async function exportForStudyDesktop({ captions, legacyFormats, descripti
 
   const baseName = buildStudyBaseName(published, title, videoId)
 
-  const filePath = await window.ftElectron.writeToStudyFolder(
+  const filePath = await window.ftElectron.writeToStudyDirectory(
     `${baseName}.mkv`,
     await mkvBlob.arrayBuffer()
   )
 
   if (filePath === null || typeof filePath !== 'string') {
-    // the one-time folder prompt was cancelled
+    // the one-time directory prompt was cancelled
     throw new StudyExportError('canceled')
   }
 

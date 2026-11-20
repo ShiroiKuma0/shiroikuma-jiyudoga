@@ -101,7 +101,7 @@ async function sync() {
 
 <style scoped>
 .skuiSyncButton {
-  /* the same red the 白い熊 settings page marks a missing backup folder with; declared
+  /* the same red the 白い熊 settings page marks a missing backup directory with; declared
      here because that page defines it on its own root, not globally */
   --skui-warn: #f66;
 

@@ -42,7 +42,7 @@
           type="button"
           @click="pickDirectory"
         >
-          <span class="skuiDirLabel">{{ $t('SKUI.Backup.Backup folder') }}</span>
+          <span class="skuiDirLabel">{{ $t('SKUI.Backup.Backup directory') }}</span>
           <span
             class="skuiDirValue"
             :class="directory === null ? 'skuiWarn' : 'skuiOk'"
@@ -199,7 +199,7 @@ const statusIsWarning = computed(() => directory.value === null || latest.value 
 const statusText = computed(() => {
   if (busy.value) { return t('SKUI.Backup.Working') }
   if (directory.value === null) { return t('SKUI.Backup.No backup directory set') }
-  if (latest.value === null) { return t('SKUI.Backup.No backup in this folder yet') }
+  if (latest.value === null) { return t('SKUI.Backup.No backup in this directory yet') }
   return t('SKUI.Backup.Last backup', { when: formatTimestamp(latest.value.timestamp), name: latest.value.name })
 })
 

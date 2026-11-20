@@ -1,7 +1,7 @@
 // Study export (Android): builds study SRTs from the current video's caption
 // track, downloads the muxed video, remuxes it into a single Matroska file
 // with the subtitle tracks embedded (S_TEXT/UTF8), writes it into the
-// user-chosen study folder and hands it over to shiroikuma-jisho via an
+// user-chosen study directory and hands it over to shiroikuma-jisho via an
 // explicit intent. The contract is documented in the jisho repo's hand-off.md.
 //
 // The platform-independent pieces live in ../study-export-common.js (shared
@@ -25,7 +25,7 @@ import store from '../../store/index'
 export { StudyExportError, buildStudyBaseName }
 
 /**
- * Ensures a study directory is configured, prompting with the SAF folder
+ * Ensures a study directory is configured, prompting with the SAF directory
  * picker on first use.
  * @returns {Promise<{ tree: string, dirPath: string }>}
  */

@@ -48,7 +48,7 @@ const IpcChannels = {
   CHOOSE_DEFAULT_FOLDER: 'choose-default-folder',
   WRITE_TO_DEFAULT_FOLDER: 'write-to-default-folder',
 
-  WRITE_TO_STUDY_FOLDER: 'write-to-study-folder',
+  WRITE_TO_STUDY_DIRECTORY: 'write-to-study-directory',
   OPEN_IN_YOSUGA: 'open-in-yosuga',
 
   // 白い熊 自由動画 device sync — the disk and ssh half of it. Named apart from the
