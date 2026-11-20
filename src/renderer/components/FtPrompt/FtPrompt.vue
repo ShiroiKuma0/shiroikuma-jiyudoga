@@ -46,6 +46,7 @@
               :text-color="optionButtonTextColor(index)"
               :background-color="optionButtonBackgroundColor(index)"
               :icon="index === 0 && isFirstOptionDestructive ? ['fas', 'trash'] : null"
+              :main="index === 0"
               @click="click(optionValues[index])"
             />
           </FtFlexBox>
@@ -56,7 +57,7 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, provide, useId, useTemplateRef } from 'vue'
 import android from 'android'
 
 import store from '../../store/index'
@@ -64,6 +65,7 @@ import store from '../../store/index'
 import FtCard from '../ft-card/ft-card.vue'
 import FtFlexBox from '../ft-flex-box/ft-flex-box.vue'
 import FtButton from '../FtButton/FtButton.vue'
+import { PROMPT_PILLS } from './promptPills'
 
 const props = defineProps({
   label: {
@@ -105,6 +107,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click'])
+
+provide(PROMPT_PILLS, true)
 
 const id = useId()
 

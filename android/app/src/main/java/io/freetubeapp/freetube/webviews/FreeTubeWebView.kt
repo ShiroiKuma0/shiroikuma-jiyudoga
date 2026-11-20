@@ -20,6 +20,7 @@ import io.freetubeapp.freetube.helpers.WindowInsetsControllerWrapper
 import io.freetubeapp.freetube.helpers.spoofDesktopUserAgent
 import io.freetubeapp.freetube.javascript.FreeTubeJavaScriptInterface
 import io.freetubeapp.freetube.javascript.dispatchEvent
+import io.freetubeapp.freetube.diag.Diag
 import org.json.JSONObject
 
 @SuppressLint("ViewConstructor")
@@ -35,6 +36,12 @@ class FreeTubeWebView (
 
   val onConsoleMessage: (JSONObject) -> Unit = { messageData: JSONObject ->
     context.state.consoleMessages.add(messageData)
+    // 白い熊 UI settings › Diagnostics › Console (off by default): warnings and errors only, as on
+    // the desktop — the rest is third-party chatter
+    val level = messageData.optString("level")
+    if ((level == "WARNING" || level == "ERROR") && Diag.isOn("console")) {
+      Diag.log("console", "$level ${messageData.optString("sourceId")}:${messageData.optInt("lineNumber")}\n${messageData.optString("content")}")
+    }
     dispatchEvent("console-message", "data", messageData)
   }
 

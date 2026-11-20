@@ -4,24 +4,29 @@
     :title="$t('SKUI.Title')"
   >
     <div class="skuiPage">
+      <!-- the jump index: a chip per section; tap jumps, long-press drags to reorder -->
+      <SkuiSectionIndex />
+
       <!--
         Export / Import comes first, as its own separated section — the sister-app
         convention (白い熊 考直's UI page). The two automation rows belong INSIDE it,
         directly below the export rows, so backup lives in one place in every app.
       -->
-      <section
+      <SkuiFoldSection
         v-if="IS_ANDROID"
-        class="skuiSection"
+        section-key="backup"
+        :title="$t('SKUI.Backup.Export / Import')"
       >
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Backup.Export / Import') }}
-        </h4>
         <div class="skuiPillRow skuiIndent1">
           <button
             class="skuiPill skuiPillMain skuiPillOpens"
             type="button"
             @click="panelOpen = true"
           >
+            <FontAwesomeIcon
+              :icon="['fas', 'file-export']"
+              class="skuiRowIcon skuiRole-share"
+            />
             <span class="skuiPillLabel">{{ $t('SKUI.Backup.Export / Import…') }}</span>
           </button>
           <span
@@ -32,6 +37,10 @@
           </span>
         </div>
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'robot']"
+            class="skuiRowIcon skuiRole-share"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Automation export') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Backup.Automation export description') }}</span>
@@ -44,6 +53,10 @@
           >
         </label>
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'lock']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Backup.Require token') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Backup.Require token description') }}</span>
@@ -59,6 +72,10 @@
           v-if="automationRequiresToken"
           class="skuiEntryRow skuiIndent1"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'key']"
+            class="skuiRowIcon skuiRole-share"
+          />
           <button
             class="skuiEntryText"
             type="button"
@@ -75,27 +92,27 @@
             {{ $t('SKUI.Backup.Regenerate') }}
           </button>
         </div>
-      </section>
+      </SkuiFoldSection>
 
       <!--
         Device sync. Each device publishes ONE file describing its own state and reads
         the other's; the desktop app carries both over ssh. The rows split by platform
-        because the phone's part is deliberately tiny — it has a folder and nothing
+        because the phone's part is deliberately tiny — it has a directory and nothing
         else, since it never reaches across and so can never hold the radio awake.
       -->
-      <section class="skuiSection">
-        <hr
-          v-if="IS_ANDROID"
-          class="skuiSectionRule"
-        >
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Sync.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="sync"
+        :title="$t('SKUI.Sync.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Sync.Description') }}
         </p>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'exchange-alt']"
+            class="skuiRowIcon skuiRole-connect"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Enable') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Enable description') }}</span>
@@ -109,6 +126,10 @@
         </label>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'sync']"
+            class="skuiRowIcon skuiRole-connect"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Status') }}</span>
             <span
@@ -134,6 +155,10 @@
             v-if="!syncStorageGranted"
             class="skuiEntryRow skuiIndent1"
           >
+            <FontAwesomeIcon
+              :icon="['fas', 'unlock']"
+              class="skuiRowIcon skuiRole-view"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntrySummary skuiWarn">{{ $t('SKUI.Sync.No storage access') }}</span>
             </span>
@@ -147,6 +172,10 @@
           </div>
 
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'hard-drive']"
+              class="skuiRowIcon skuiRole-view"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Sync folder') }}</span>
               <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Sync folder description') }}</span>
@@ -165,6 +194,10 @@
         <!-- the PC: it is the courier, so the ssh details live only here -->
         <template v-else>
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'mobile-screen']"
+              class="skuiRowIcon skuiRole-connect"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone host') }}</span>
               <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Phone host description') }}</span>
@@ -180,6 +213,10 @@
           >
 
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'plug']"
+              class="skuiRowIcon skuiRole-connect"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone port') }}</span>
               <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Phone port description') }}</span>
@@ -196,6 +233,10 @@
           </div>
 
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'terminal']"
+              class="skuiRowIcon skuiRole-view"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Ssh arguments') }}</span>
               <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Ssh arguments description') }}</span>
@@ -211,6 +252,10 @@
           >
 
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'hard-drive']"
+              class="skuiRowIcon skuiRole-view"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Phone folder') }}</span>
             </span>
@@ -225,6 +270,10 @@
           >
 
           <div class="skuiEntryRow skuiIndent1">
+            <FontAwesomeIcon
+              :icon="['fas', 'hard-drive']"
+              class="skuiRowIcon skuiRole-view"
+            />
             <span class="skuiEntryText">
               <span class="skuiEntryTitle">{{ $t('SKUI.Sync.Local folder') }}</span>
               <span class="skuiEntrySummary">{{ $t('SKUI.Sync.Local folder default') }}</span>
@@ -241,6 +290,10 @@
         </template>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'power-off']"
+            class="skuiRowIcon skuiRole-connect"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Sync.On start') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Sync.On start description') }}</span>
@@ -254,6 +307,10 @@
         </label>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'eye']"
+            class="skuiRowIcon skuiRole-connect"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Sync.After watch') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Sync.After watch description') }}</span>
@@ -265,19 +322,18 @@
             @change="updateSyncFlag('updateSkuiSyncAfterWatch', $event.target.checked)"
           >
         </label>
-      </section>
+      </SkuiFoldSection>
 
       <!--
         Video download: where the watch page's download button puts files and what
-        it calls them. The folder is asked for on the first download either way —
+        it calls them. The directory is asked for on the first download either way —
         on Android with the SAF picker, on desktop from the main process — so this
         section is where it gets reviewed and changed afterwards.
       -->
-      <section class="skuiSection">
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Download.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="download"
+        :title="$t('SKUI.Download.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Download.Description') }}
         </p>
@@ -291,6 +347,10 @@
             type="button"
             @click="chooseDownloadDirectory"
           >
+            <FontAwesomeIcon
+              :icon="['fas', 'download']"
+              class="skuiRowIcon skuiRole-share"
+            />
             <span class="skuiPillLabel">{{ $t('SKUI.Download.Download directory') }}</span>
           </button>
           <span
@@ -304,6 +364,10 @@
           v-else
           class="skuiEntryRow skuiIndent1"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'download']"
+            class="skuiRowIcon skuiRole-share"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Download.Download directory') }}</span>
             <span
@@ -316,6 +380,10 @@
         </div>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'file-lines']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Download.Filename template') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Download.Tokens') }}</span>
@@ -335,6 +403,10 @@
         </p>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'ruler-horizontal']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Download.Max filename length') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Download.Bytes', { count: maxFilenameBytes }) }}</span>
@@ -350,23 +422,26 @@
             @change="updateMaxFilenameBytes($event.target.value)"
           >
         </div>
-      </section>
+      </SkuiFoldSection>
 
       <!--
         YouTube account: a browser's exported cookies, used only to play age-restricted
         videos. The cookies themselves stay in the main process / Kotlin, so all this
         section can see is whether there are any and whether YouTube still honours them.
       -->
-      <section class="skuiSection">
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Account.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="account"
+        :title="$t('SKUI.Account.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Account.Description') }}
         </p>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'cookie-bite']"
+            class="skuiRowIcon skuiRole-contact"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Account.Cookies') }}</span>
             <span
@@ -397,11 +472,15 @@
           v-if="accountStatus.present"
           class="skuiEntryRow skuiIndent1"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'trash']"
+            class="skuiRowIcon skuiRole-delete"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntrySummary">{{ $t('SKUI.Account.Forget description') }}</span>
           </span>
           <button
-            class="skuiEntryAction"
+            class="skuiEntryAction skuiPillDanger"
             type="button"
             :disabled="accountBusy"
             @click="forgetAccountCookies"
@@ -409,23 +488,26 @@
             {{ $t('SKUI.Account.Forget') }}
           </button>
         </div>
-      </section>
+      </SkuiFoldSection>
 
       <!--
         Subscriptions: the filter itself lives in the top bar (the funnel next to the
         profile bubble), because it is a view you switch while browsing. What belongs
         here is the one profile name the app owns rather than the user.
       -->
-      <section class="skuiSection">
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Subscriptions.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="subscriptions"
+        :title="$t('SKUI.Subscriptions.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Subscriptions.Description') }}
         </p>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'users']"
+            class="skuiRowIcon skuiRole-contact"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Subscriptions.All Channels label') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Subscriptions.All Channels label description') }}</span>
@@ -440,22 +522,25 @@
           :aria-label="$t('SKUI.Subscriptions.All Channels label')"
           @change="updateAllChannelsLabel($event.target.value)"
         >
-      </section>
+      </SkuiFoldSection>
 
       <!--
         Tabs: where a new one lands, and whether the strip is pinned open -- it normally
         earns its row only once there is something to switch between.
       -->
-      <section class="skuiSection">
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Tabs.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="tabs"
+        :title="$t('SKUI.Tabs.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Tabs.Description') }}
         </p>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'table-columns']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Tabs.New tab position') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Tabs.New tab position description') }}</span>
@@ -471,6 +556,10 @@
         </label>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'window-maximize']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Tabs.Always show') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Tabs.Always show description') }}</span>
@@ -482,23 +571,26 @@
             @change="updateTabsAlwaysShow($event.target.checked)"
           >
         </label>
-      </section>
+      </SkuiFoldSection>
 
       <!--
         Similar tab: what the discovery feed has been taught in the active profile.
         Everything here is stored on the profile itself, so it travels with profile
         export/import like the starred videos do.
       -->
-      <section class="skuiSection">
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t('SKUI.Similar.Section') }}
-        </h4>
+      <SkuiFoldSection
+        section-key="similar"
+        :title="$t('SKUI.Similar.Section')"
+      >
         <p class="skuiEntrySummary skuiIndent1">
           {{ $t('SKUI.Similar.Description') }}
         </p>
 
         <label class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'arrow-down-wide-short']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Rank by agreement') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Similar.Rank by agreement description') }}</span>
@@ -512,6 +604,10 @@
         </label>
 
         <div class="skuiEntryRow skuiIndent1">
+          <FontAwesomeIcon
+            :icon="['fas', 'filter']"
+            class="skuiRowIcon skuiRole-view"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ $t('SKUI.Similar.Minimum agreement') }}</span>
             <span class="skuiEntrySummary">{{ $t('SKUI.Similar.Minimum agreement description') }}</span>
@@ -542,6 +638,10 @@
           :key="channel.id"
           class="skuiEntryRow skuiIndent2"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'ban']"
+            class="skuiRowIcon skuiRole-block"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ channel.name || channel.id }}</span>
           </span>
@@ -568,6 +668,10 @@
           :key="video.videoId"
           class="skuiEntryRow skuiIndent2"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'ban']"
+            class="skuiRowIcon skuiRole-block"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ video.title || video.videoId }}</span>
             <span class="skuiEntrySummary">{{ video.author }}</span>
@@ -633,6 +737,10 @@
           :key="seed.id"
           class="skuiEntryRow skuiIndent2"
         >
+          <FontAwesomeIcon
+            :icon="['fas', 'seedling']"
+            class="skuiRowIcon skuiRole-contact"
+          />
           <span class="skuiEntryText">
             <span class="skuiEntryTitle">{{ seed.name || seed.id }}</span>
             <span class="skuiEntrySummary">
@@ -652,10 +760,14 @@
 
         <div class="skuiPillRow skuiIndent1">
           <button
-            class="skuiPill"
+            class="skuiPill skuiPillDanger"
             type="button"
             @click="showResetSimilarPrompt = true"
           >
+            <FontAwesomeIcon
+              :icon="['fas', 'rotate-left']"
+              class="skuiRowIcon skuiRole-delete"
+            />
             <span class="skuiPillLabel">{{ $t('SKUI.Similar.Reset') }}</span>
           </button>
         </div>
@@ -667,17 +779,14 @@
           is-first-option-destructive
           @click="handleResetSimilarPrompt"
         />
-      </section>
+      </SkuiFoldSection>
 
-      <section
+      <SkuiFoldSection
         v-for="section in SKUI_SECTIONS"
         :key="section.key"
-        class="skuiSection"
+        :section-key="`theme-${section.key}`"
+        :title="$t(`SKUI.Sections.${section.key}`)"
       >
-        <hr class="skuiSectionRule">
-        <h4 class="skuiSectionTitle">
-          {{ $t(`SKUI.Sections.${section.key}`) }}
-        </h4>
         <template
           v-for="group in section.groups"
           :key="group.key ?? 'main'"
@@ -726,7 +835,38 @@
             />
           </template>
         </template>
-      </section>
+      </SkuiFoldSection>
+
+      <!-- last, as in every sister app: what the app records about itself, all off by default -->
+      <SkuiDiagnostics />
+
+      <!-- the page's own housekeeping -->
+      <SkuiFoldSection
+        section-key="maintenance"
+        :title="$t('SKUI.Maintenance.Section')"
+      >
+        <div class="skuiPillRow skuiIndent1">
+          <button
+            class="skuiPill"
+            type="button"
+            @click="showResetOrderPrompt = true"
+          >
+            <FontAwesomeIcon
+              :icon="['fas', 'rotate-left']"
+              class="skuiRowIcon skuiRole-view"
+            />
+            <span class="skuiPillLabel">{{ $t('SKUI.Maintenance.Reset section order') }}</span>
+          </button>
+          <span class="skuiEntrySummary skuiPillSummary">{{ $t('SKUI.Maintenance.Reset section order description') }}</span>
+        </div>
+        <FtPrompt
+          v-if="showResetOrderPrompt"
+          :label="$t('SKUI.Maintenance.Reset section order confirm')"
+          :option-names="resetOrderPromptNames"
+          :option-values="RESET_ORDER_PROMPT_VALUES"
+          @click="handleResetOrderPrompt"
+        />
+      </SkuiFoldSection>
     </div>
 
     <SkuiExportImport
@@ -750,6 +890,10 @@ import FtPrompt from '../FtPrompt/FtPrompt.vue'
 import FtSettingsSection from '../FtSettingsSection/FtSettingsSection.vue'
 import SkuiAccountCookies from '../SkuiAccountCookies.vue'
 import SkuiColorRow from './SkuiColorRow.vue'
+import SkuiDiagnostics from './SkuiDiagnostics.vue'
+import SkuiFoldSection from './SkuiFoldSection.vue'
+import SkuiSectionIndex from './SkuiSectionIndex.vue'
+import { provideSkuiPageLayout } from '../../helpers/skuiPageLayout'
 import SkuiExportImport from './SkuiExportImport.vue'
 import SkuiFontRow from './SkuiFontRow.vue'
 import SkuiSliderRow from './SkuiSliderRow.vue'
@@ -779,6 +923,37 @@ const IS_ANDROID = !!process.env.IS_ANDROID
 const { t } = useI18n()
 const router = useRouter()
 
+// ---- the folding page: its sections in their default order, for the index and the fold state ----
+
+const pageSections = computed(() => [
+  ...(IS_ANDROID ? [{ key: 'backup', title: t('SKUI.Backup.Export / Import') }] : []),
+  { key: 'sync', title: t('SKUI.Sync.Section') },
+  { key: 'download', title: t('SKUI.Download.Section') },
+  { key: 'account', title: t('SKUI.Account.Section') },
+  { key: 'subscriptions', title: t('SKUI.Subscriptions.Section') },
+  { key: 'tabs', title: t('SKUI.Tabs.Section') },
+  { key: 'similar', title: t('SKUI.Similar.Section') },
+  // eslint-disable-next-line @intlify/vue-i18n/no-dynamic-keys
+  ...SKUI_SECTIONS.map(section => ({ key: `theme-${section.key}`, title: t(`SKUI.Sections.${section.key}`) })),
+  { key: 'diagnostics', title: t('SKUI.Diag.Section') },
+  { key: 'maintenance', title: t('SKUI.Maintenance.Section') },
+])
+
+const pageLayout = provideSkuiPageLayout(pageSections)
+
+const RESET_ORDER_PROMPT_VALUES = ['reset', 'cancel']
+const resetOrderPromptNames = computed(() => [t('SKUI.Maintenance.Reset section order'), t('Cancel')])
+const showResetOrderPrompt = ref(false)
+
+/** @param {'reset' | 'cancel' | null} option */
+function handleResetOrderPrompt(option) {
+  showResetOrderPrompt.value = false
+
+  if (option === 'reset') {
+    pageLayout.resetOrder()
+  }
+}
+
 const panelOpen = ref(false)
 const backupDirectoryName = ref(null)
 const automationEnabled = ref(false)
@@ -790,7 +965,7 @@ const automationToken = ref('')
 const automationRequiresToken = ref(false)
 
 // Queried on opening the page, and again whenever the panel writes something, so the
-// folder row and the panel's "last backup" line never show a stale answer.
+// directory row and the panel's "last backup" line never show a stale answer.
 function refreshBackupState() {
   if (!IS_ANDROID) { return }
 
@@ -944,7 +1119,7 @@ function updateSyncText(action, value) {
 
 /**
  * A path that has been emptied falls back to the default rather than to nothing: an
- * empty sync folder would silently stop the sync with no visible cause.
+ * empty sync directory would silently stop the sync with no visible cause.
  * @param {string} action
  * @param {string} value
  * @param {string} fallback
@@ -1120,7 +1295,7 @@ const downloadDirectoryLabel = computed(() => {
   const tree = store.getters.getDownloadDirectoryTree
   if (!tree) { return null }
 
-  // a device folder resolves to a real path; anything else (cloud providers)
+  // a device directory resolves to a real path; anything else (cloud providers)
   // has only the tree uri to show
   return android.treeUriToPath(tree) || decodeURIComponent(tree)
 })

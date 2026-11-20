@@ -65,6 +65,19 @@ const IpcChannels = {
   GET_RENDERER_LOG_PATH: 'get-renderer-log-path',
   RENDERER_LOG_MESSAGE: 'renderer-log-message',
 
+  // 白い熊 UI settings › Diagnostics — switches, files and export live in main (src/main/diag.js)
+  DIAG_GET_STATE: 'diag-get-state',
+  DIAG_SET_KIND: 'diag-set-kind',
+  DIAG_SET_KEEP_DAYS: 'diag-set-keep-days',
+  DIAG_APPEND: 'diag-append',
+  DIAG_MARK: 'diag-mark',
+  DIAG_SUMMARY: 'diag-summary',
+  DIAG_CLEANUP: 'diag-cleanup',
+  DIAG_PURGE: 'diag-purge',
+  DIAG_EXPORT: 'diag-export',
+  DIAG_OPEN_DIRECTORY: 'diag-open-directory',
+  DIAG_CHANGED: 'diag-changed',
+
   // download button: the file is written while it is muxed (open → write… → finish | abort)
   DOWNLOAD_FILE_OPEN: 'download-file-open',
   DOWNLOAD_FILE_WRITE: 'download-file-write',

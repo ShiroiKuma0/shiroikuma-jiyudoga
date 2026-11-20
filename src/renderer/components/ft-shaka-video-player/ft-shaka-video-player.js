@@ -31,7 +31,8 @@ import {
   copyToClipboard,
 } from '../../helpers/utils'
 import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser'
-import { setupSabrScheme } from '../../helpers/player/SabrSchemePlugin'
+import { describeRecentSabrSegments, setupSabrScheme } from '../../helpers/player/SabrSchemePlugin'
+import { diag, diagError, diagState, diagWarn } from '../../helpers/diag'
 import { STATE_BUFFERING, STATE_PAUSED, STATE_PLAYING, updateMediaSessionState } from '../../helpers/android/media-session'
 import android from 'android'
 
@@ -2893,10 +2894,10 @@ export default defineComponent({
         return
       }
 
-      console.warn(`[decoder-stall] ${props.videoId}: resuming playback after the rebuild`)
+      diagWarn('playback', `[decoder-stall] ${props.videoId}: resuming playback after the rebuild`)
 
       videoElement.play().catch((error) => {
-        console.error(`[decoder-stall] ${props.videoId}: could not resume after the rebuild`, error)
+        diagError('playback', `[decoder-stall] ${props.videoId}: could not resume after the rebuild`, error)
       })
     }
 
@@ -3025,7 +3026,7 @@ export default defineComponent({
       const videoElement = video.value
       const failed = stallActiveCodec ? rememberFailedCodec(stallActiveCodec) : failedCodecsForThisVideo()
 
-      console.warn(
+      diagWarn('playback',
         `[decoder-stall] ${props.videoId}: ${why} at ${videoElement.currentTime.toFixed(2)}s on ` +
         `${stallActiveCodec ?? 'an unknown codec'} ${stallActiveHeight ?? '?'}p; ` +
         `known bad: ${failed.join(', ') || 'none'}; loaded=${hasLoaded.value}; ` +
@@ -3047,7 +3048,7 @@ export default defineComponent({
         // at load time, so there is nothing here to switch to. Rebuilding the player is the only
         // way to change codec — `preferredVideoCodecs` reads the note above on the way back in.
         if (decoderStallRecovery?.reloaded === true) {
-          console.error(
+          diagError('playback',
             `[decoder-stall] ${props.videoId}: already rebuilt once for ${failed.join(', ')} and ` +
             'it failed again; leaving playback alone rather than looping'
           )
@@ -3063,7 +3064,7 @@ export default defineComponent({
           sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
         } catch { }
 
-        console.warn(
+        diagWarn('playback',
           `[decoder-stall] ${props.videoId}: no ${failed.join(', ')}-free variant in this ` +
           'manifest (shaka filters to one codec family); requesting a rebuild onto h264'
         )
@@ -3077,7 +3078,7 @@ export default defineComponent({
 
       const family = videoCodecFamily(track.videoCodec)
 
-      console.warn(`[decoder-stall] ${props.videoId}: switching to ${family} ${track.height ?? '?'}p`)
+      diagWarn('playback', `[decoder-stall] ${props.videoId}: switching to ${family} ${track.height ?? '?'}p`)
 
       // `clearBuffer` drops what is already fetched — the frame that killed the decoder with it —
       // and refills from the current position, so nothing is skipped. It also turns ABR off,
@@ -3093,7 +3094,7 @@ export default defineComponent({
       // The fault does not rewind the clock, it ZEROES it. Put playback back where it was, now
       // that the codec which could not decode that stretch is out of the way.
       if (stallLastGoodPosition - videoElement.currentTime > 1) {
-        console.warn(
+        diagWarn('playback',
           `[decoder-stall] ${props.videoId}: restoring position to ${stallLastGoodPosition.toFixed(2)}s`
         )
         videoElement.currentTime = stallLastGoodPosition
@@ -3184,6 +3185,141 @@ export default defineComponent({
     }
 
     // #endregion hardware decoder stall recovery
+
+    // #region playhead rewind diagnostic
+
+    /*
+     * 白い熊, 2026-11-19: on the PC, playback a few seconds past 2:10 of avOcx9LXJNs jumped back
+     * to 2:10 and carried on — no reload, no error, nothing in renderer.log — and it has happened
+     * at random points of other videos too. Two instrumented runs over the same stretch played
+     * clean, so this records enough to name the cause the next time it happens in ordinary use:
+     * WHO moved the playhead (our code, shaka, or the media pipeline on its own), what was
+     * buffered, which variant was playing, the media events leading up to it, and the segments
+     * SABR delivered last. Every platform, every backwards jump past the threshold — a deliberate
+     * seek back is logged too, and its stack says so. Written to Diagnostics › Playback trace
+     * only, and only while that switch is on (白い熊, 2026-11-19: all debugging goes through the
+     * Diagnostics section, off by default).
+     */
+
+    /** Backwards movement smaller than this is a timeupdate rounding artefact, not a jump. */
+    const REWIND_LOG_SECONDS = 1
+    const REWIND_EVENT_LIMIT = 16
+
+    let rewindLastPosition = 0
+
+    /** @type {{ at: number, from: number, to: number, stack: string } | null} */
+    let rewindLastWrite = null
+
+    /** @type {{ at: number, name: string, position: number }[]} */
+    const rewindRecentEvents = []
+
+    /**
+     * Wraps `currentTime` on THIS element only, so every write — ours, shaka's, its UI's — leaves
+     * a stack behind. Seeks are rare, so capturing a stack on each costs nothing measurable.
+     * @param {HTMLVideoElement} videoElement
+     */
+    function instrumentCurrentTimeWrites(videoElement) {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime')
+
+      if (!descriptor?.get || !descriptor.set) return
+
+      Object.defineProperty(videoElement, 'currentTime', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return descriptor.get.call(this)
+        },
+        set(value) {
+          // the stack is only worth its cost while it can be written down
+          rewindLastWrite = null
+
+          if (diagState.on.playback) {
+            rewindLastWrite = {
+              at: performance.now(),
+              from: descriptor.get.call(this),
+              to: value,
+              // drop the Error line and this setter's own frame
+              stack: (new Error().stack ?? '').split('\n').slice(2, 10).map(line => line.trim()).join('\n  ')
+            }
+          }
+
+          descriptor.set.call(this, value)
+        }
+      })
+    }
+
+    /**
+     * @param {string} name
+     */
+    function noteRewindEvent(name) {
+      rewindRecentEvents.push({ at: performance.now(), name, position: video.value?.currentTime ?? NaN })
+
+      if (rewindRecentEvents.length > REWIND_EVENT_LIMIT) rewindRecentEvents.shift()
+    }
+
+    /**
+     * @param {HTMLVideoElement} videoElement
+     */
+    function describeBuffered(videoElement) {
+      const ranges = []
+
+      for (let i = 0; i < videoElement.buffered.length; i++) {
+        ranges.push(`${videoElement.buffered.start(i).toFixed(2)}–${videoElement.buffered.end(i).toFixed(2)}`)
+      }
+
+      return ranges.join(', ') || 'nothing'
+    }
+
+    function describeActiveVariant() {
+      const track = player?.getVariantTracks().find(variant => variant.active)
+
+      if (!track) return '(none active)'
+
+      return `${track.height ?? '?'}p ${track.videoCodec ?? '-'} itag ${track.originalVideoId ?? '?'} / ` +
+        `${track.audioCodec ?? '-'} itag ${track.originalAudioId ?? '?'}`
+    }
+
+    function checkPlayheadRewind() {
+      const videoElement = video.value
+
+      if (!videoElement) return
+
+      const now = videoElement.currentTime
+      const previous = rewindLastPosition
+
+      rewindLastPosition = now
+
+      if (previous - now <= REWIND_LOG_SECONDS || !diagState.on.playback) return
+
+      const clock = performance.now()
+      const write = rewindLastWrite !== null && clock - rewindLastWrite.at < 5000 &&
+        Math.abs(rewindLastWrite.to - now) < 2
+        ? rewindLastWrite
+        : null
+
+      const cause = write
+        ? `Moved by a currentTime write ${Math.round(clock - write.at)} ms ago ` +
+          `(${write.from.toFixed(2)} → ${Number(write.to).toFixed(2)}):\n  ${write.stack}`
+        : 'No code wrote currentTime — the media pipeline moved the playhead on its own'
+
+      const events = rewindRecentEvents
+        .map(event => `${((event.at - clock) / 1000).toFixed(1)}s ${event.name} @${event.position.toFixed(2)}`)
+        .join(', ') || '(none)'
+
+      diag('playback',
+        `[rewind] ${props.videoId}: playhead went back ${(previous - now).toFixed(2)}s, ` +
+        `${previous.toFixed(2)} → ${now.toFixed(2)}\n` +
+        `${cause}\n` +
+        `State: ${videoElement.paused ? 'paused' : 'playing'}, loaded=${hasLoaded.value}, ` +
+        `format=${props.format}, readyState=${videoElement.readyState}\n` +
+        `Buffered: ${describeBuffered(videoElement)}\n` +
+        `Variant: ${describeActiveVariant()}\n` +
+        `Recent events: ${events}\n` +
+        `Recent SABR segments:\n${describeRecentSabrSegments()}`
+      )
+    }
+
+    // #endregion playhead rewind diagnostic
 
     // #region seek bar markers
 
@@ -3303,6 +3439,13 @@ export default defineComponent({
 
     onMounted(async () => {
       const videoElement = video.value
+
+      instrumentCurrentTimeWrites(videoElement)
+      videoElement.addEventListener('timeupdate', checkPlayheadRewind)
+
+      for (const name of ['seeking', 'seeked', 'waiting', 'stalled', 'emptied', 'loadstart']) {
+        videoElement.addEventListener(name, () => noteRewindEvent(name))
+      }
       if (process.env.IS_ANDROID) {
         window.addEventListener('media-play', mediaPlay)
         window.addEventListener('media-pause', mediaPause)
@@ -3439,6 +3582,10 @@ export default defineComponent({
 
       player.addEventListener('loaded', handleLoaded)
 
+      for (const name of ['loading', 'loaded', 'adaptation', 'variantchanged', 'buffering', 'error']) {
+        player.addEventListener(name, () => noteRewindEvent(`shaka:${name}`))
+      }
+
       if (process.env.IS_ANDROID) {
         // Track what is on screen as it changes: when the decoder dies the player may already be
         // reloading, and a reloading player cannot tell us which codec it was.
@@ -3555,6 +3702,11 @@ export default defineComponent({
     async function handleLoaded() {
       hasLoaded.value = true
       emit('loaded')
+
+      // Diagnostics › Playback trace: each load, so a rewind or a stall reads against its session
+      diag('playback', () =>
+        `[load] ${props.videoId}: format=${props.format}, manifest=${props.manifestMimeType}, ` +
+        `at ${(video.value?.currentTime ?? 0).toFixed(2)}s, variant ${describeActiveVariant()}`)
 
       if (process.env.IS_ANDROID) {
         // A load moves the position without a seek, so re-baseline before the watchdog reads the

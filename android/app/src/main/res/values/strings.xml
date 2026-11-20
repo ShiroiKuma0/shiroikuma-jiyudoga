@@ -4,4 +4,13 @@
     <!-- Foreground service (Settings › General › バックグラウンドで実行し続ける, default off) -->
     <string name="keep_alive_channel">バックグラウンド実行</string>
     <string name="keep_alive_notification">%1$s はバックグラウンドで実行中です</string>
+    <!-- 白い熊 UI settings › Diagnostics: the recording notification (diag/Diag.kt) -->
+    <string name="diag_channel">診断記録</string>
+    <string name="diag_recording">診断を記録中</string>
+    <string name="diag_mark">マーク</string>
+    <string name="diag_all_off">すべてオフ</string>
+    <string name="diag_marked">マーク #%1$d</string>
+    <string name="diag_kind_playback">再生</string>
+    <string name="diag_kind_sync">同期</string>
+    <string name="diag_kind_console">コンソール</string>
 </resources>

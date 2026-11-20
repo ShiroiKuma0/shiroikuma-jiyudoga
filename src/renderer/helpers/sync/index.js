@@ -1,5 +1,6 @@
 import store from '../../store/index'
 import { planMerge } from './merge'
+import { diag, diagError } from '../diag'
 import {
   OWN_ROLE,
   PEER_ROLE,
@@ -147,12 +148,21 @@ async function recordStatus(result, force) {
   await store.dispatch('updateSkuiSyncLastRun', Date.now())
 }
 
+/** @param {number} millis */
+function diagTime(millis) {
+  return millis ? new Date(millis).toISOString() : '?'
+}
+
 async function performSync(reason) {
   const api = await platform()
+
+  // Diagnostics › Device sync (off by default): one entry per step of the run
+  diag('sync', `run (${reason}) on ${process.env.IS_ANDROID ? 'the phone' : 'the PC'}`)
 
   const blocked = await api.ensureReady()
 
   if (blocked !== null) {
+    diag('sync', `blocked: ${blocked}`)
     await recordStatus(blocked, reason === 'manual')
     return { status: blocked }
   }
@@ -172,7 +182,14 @@ async function performSync(reason) {
     courierError = errorReason(error)
   }
 
+  diag('sync', `pull ${PEER_FILE}: ${courierError !== null ? `failed: ${courierError}` : fetched}`)
+
   const remote = parseSnapshot(await api.readFile(PEER_FILE))
+
+  diag('sync', () => remote === null
+    ? `peer snapshot: none readable in ${PEER_FILE}`
+    : `peer snapshot: written ${diagTime(remote.writtenAt)}, ${remote.history?.length ?? 0} history records, ` +
+      `${remote.profiles?.length ?? 0} profiles`)
 
   let changeCount = 0
 
@@ -182,6 +199,14 @@ async function performSync(reason) {
     const plan = planMerge(await readLocalState(), remote)
 
     changeCount = plan.changeCount
+
+    diag('sync', () =>
+      `merge: ${plan.historyUpserts.length} history upserts, ${plan.historyDeletions.length} history deletions, ` +
+      `${plan.profileUpdates.length} profile updates, ${plan.profileCreations.length} profile creations` +
+      (plan.historyUpserts.length > 0
+        ? `\nvideos: ${plan.historyUpserts.slice(0, 20).map(record => record.videoId).join(' ')}` +
+          (plan.historyUpserts.length > 20 ? ' …' : '')
+        : ''))
 
     await applyPlan(plan)
   }
@@ -195,6 +220,9 @@ async function performSync(reason) {
   if (signature !== lastPublished) {
     await api.writeFile(OWN_FILE, text)
     lastPublished = signature
+    diag('sync', `published ${OWN_FILE}: ${snapshot.history.length} history records, ${snapshot.profiles.length} profiles, ${text.length} bytes`)
+  } else {
+    diag('sync', `${OWN_FILE} unchanged, not rewritten`)
   }
 
   // the courier's outbound leg
@@ -207,9 +235,14 @@ async function performSync(reason) {
       if (delivered === 'pushed') {
         lastPushed = signature
       }
+
+      diag('sync', `push ${OWN_FILE}: ${delivered}`)
     } catch (error) {
       courierError = errorReason(error)
+      diag('sync', `push ${OWN_FILE} failed: ${courierError}`)
     }
+  } else {
+    diag('sync', 'push skipped: the peer already has this snapshot')
   }
 
   const noPeer = fetched === 'no-peer' || delivered === 'no-peer'
@@ -225,6 +258,8 @@ async function performSync(reason) {
   }
 
   await recordStatus(result, reason === 'manual' || changeCount > 0)
+
+  diag('sync', `result: ${result}`)
 
   return { status: result, changeCount }
 }
@@ -253,7 +288,7 @@ export async function runSync(reason = 'manual') {
   } catch (error) {
     const message = errorReason(error)
 
-    console.error('[device sync]', error)
+    diagError('sync', '[device sync] run failed', error)
     await recordStatus(`error: ${message}`, true)
 
     return { status: 'error', message }

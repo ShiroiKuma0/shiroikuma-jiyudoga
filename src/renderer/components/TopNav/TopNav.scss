@@ -253,6 +253,16 @@
   .appVersionPart {
     white-space: nowrap;
   }
+
+  // Diagnostics › any kind recording (desktop): a small steady dot, so a forgotten switch is seen
+  .diagRecordingDot {
+    background-color: var(--accent-color);
+    block-size: 8px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    inline-size: 8px;
+    margin-inline-start: 8px;
+  }
 }
 
 .middle {

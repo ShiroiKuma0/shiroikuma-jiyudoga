@@ -426,10 +426,10 @@ Settings:
       Enable: スクリーンショットの有効化
       Format Label: スクリーンショットの形式
       Modes:
-        Ask Path: 保存フォルダを尋ねる
-        Save To Folder: フォルダーへ保存
+        Ask Path: 保存ディレクトリを尋ねる
+        Save To Folder: ディレクトリへ保存
         Clipboard: クリップボードへコピー
-      Folder Button: フォルダの選択
+      Folder Button: ディレクトリの選択
       Mode: スクリーンショットモード
     Enter Fullscreen on Display Rotate: 画面の回転時に全画面表示にする
     Skip by Scrolling Over Video Player: 動画プレーヤーをスクロールして動画をスキップ
@@ -520,7 +520,7 @@ Settings:
     Settings File: 設定ファイル
     Import Settings: 設定のインポート
     Export Settings: 設定のエクスポート
-    Settings Tooltip: OSやユーザー固有の設定、あるいは実験的な設定は、エクスポートやインポートを行うことができません（例：プロキシ、外部プレーヤー、スクリーンショットの保存先フォルダーなど）
+    Settings Tooltip: OSやユーザー固有の設定、あるいは実験的な設定は、エクスポートやインポートを行うことができません（例：プロキシ、外部プレーヤー、スクリーンショットの保存先ディレクトリなど）
     All settings have been successfully imported: すべての設定が正常にインポートされました
     All settings have been successfully exported: すべての設定が正常にエクスポートされました
     Setting object has insufficient data, skipping item: 設定オブジェクトのデータが不十分です。この項目をスキップします
@@ -751,7 +751,7 @@ Video:
     Done ASR: 辞書に送信しました — 自動生成字幕付き
     Failed: 勉強用エクスポートに失敗しました
     Jisho Missing: 白い熊の辞書がインストールされていません
-    Bad Directory: 勉強用フォルダは端末ストレージ上に必要です — もう一度選択してください
+    Bad Directory: 勉強用ディレクトリは端末ストレージ上に必要です — もう一度選択してください
     No Captions: この動画には字幕がないため、勉強用字幕を作成できません
     Captions Failed: 字幕のダウンロードに失敗しました — 後でもう一度お試しください
     No Format: この動画にはダウンロード可能なフォーマットがありません

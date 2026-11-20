@@ -510,13 +510,13 @@ Settings:
       Enable: Enable Screenshot
       Mode: Screenshot Mode
       Modes:
-        Ask Path: Ask for Save Folder
-        Save To Folder: Save to Folder
+        Ask Path: Ask for Save Directory
+        Save To Folder: Save to Directory
         Clipboard: Copy to Clipboard
       Format Label: Screenshot Format
       Quality Label: Screenshot Quality
-      Folder Label: Screenshot Folder
-      Folder Button: Select Folder
+      Folder Label: Screenshot Directory
+      Folder Button: Select Directory
       File Name Label: Filename Pattern
       File Name Tooltip: You can use variables below. %Y Year 4 digits. %M Month 2 digits.
         %D Day 2 digits. %H Hour 2 digits. %N Minute 2 digits. %S Second 2 digits. %T Millisecond 3 digits.
@@ -642,7 +642,7 @@ Settings:
     Export search history: Export search history
     Import Settings: Import Settings
     Export Settings: Export Settings
-    Settings Tooltip: Settings that are OS/user-specific or experimental cannot be exported or imported (e.g., proxy, external player, screenshot folder...)
+    Settings Tooltip: Settings that are OS/user-specific or experimental cannot be exported or imported (e.g., proxy, external player, screenshot directory...)
     Profile object has insufficient data, skipping item: Profile object has insufficient
       data, skipping item
     All subscriptions and profiles have been successfully imported: All subscriptions
@@ -900,7 +900,7 @@ Video:
     Done ASR: Sent to jisho — auto-generated subtitles
     Failed: Study export failed
     Jisho Missing: shiroikuma-jisho is not installed
-    Bad Directory: The study folder must be on device storage — please pick it again
+    Bad Directory: The study directory must be on device storage — please pick it again
     No Captions: This video has no captions to build study subtitles from
     Captions Failed: Could not download the captions — try again later
     No Format: No downloadable video format available for this video
@@ -1326,10 +1326,24 @@ SKUI:
     Side nav: Side nav
     Cards & links: Cards & links
     Shape & lines: Shape & lines
+    Roles: Roles and row icons
   Groups:
+    Settings page: Settings page
+    Row icons: Row icons, by what the row does
     Bar: Bar
     Search bar: Search bar
   Slots:
+    note: Explanations and their rule
+    switchOff: Switch, off
+    divider: Section lines
+    warning: Warning
+    roleConnect: Connects, syncs
+    roleMessage: Writes, marks
+    roleContact: People, accounts
+    roleShare: Copies, shares, exports
+    roleView: Views, settings
+    roleBlock: Blocks, stops
+    roleDelete: Deletes, resets
     background: Background
     text: Text
     secondaryText: Secondary text
@@ -1438,11 +1452,11 @@ SKUI:
     Failed: Download failed
     Cancel: Cancel
     OK: OK
-    Bad Directory: The download folder could not be used — please pick it again
+    Bad Directory: The download directory could not be used — please pick it again
     No Format: No downloadable video format available for this video
     Download Failed: The download failed — try again later
     Too Large: This video is too large to download in one piece
-    Write Failed: The file could not be written to the download folder
+    Write Failed: The file could not be written to the download directory
     Subtitles Title: Download video
     Subtitles Body: Tick the subtitles to embed in the file as SRT tracks.
     Download With Subtitles: 'Download with {count} subtitle track | Download with {count} subtitle tracks'
@@ -1480,11 +1494,11 @@ SKUI:
     Export / Import: Export / Import
     Export / Import…: Export / Import…
     Panel description: >-
-      Saves the ticked parts of the app into one .zip in the backup folder, or restores
+      Saves the ticked parts of the app into one .zip in the backup directory, or restores
       the ticked parts a chosen .zip contains. Parts the archive does not carry are skipped.
-    Backup folder: Backup folder
+    Backup folder: Backup directory
     No backup directory set: No backup directory set
-    No backup in this folder yet: No backup in this folder yet
+    No backup in this folder yet: No backup in this directory yet
     Last backup: 'Last backup: {when} — {name}'
     Working: Working…
     Select all: Select all
@@ -1511,12 +1525,73 @@ SKUI:
       signature.
     Automation token: Automation token
     All files access needed: >-
-      Automation is on, but this app cannot write outside its own backup folder — grant
-      all-files access so a sister-app run can place the backup in the shared folder.
+      Automation is on, but this app cannot write outside its own backup directory — grant
+      all-files access so a sister-app run can place the backup in the shared directory.
     Grant access: Grant access
     Regenerate: Regenerate
     Token copied: Automation token copied to the clipboard
     Token regenerated: New automation token generated — update every pasted copy
+  Maintenance:
+    Section: Maintenance
+    Reset section order: Reset section order
+    Reset section order description: >-
+      Puts the sections of this page back in their original order. Which ones are open stays
+      as it is.
+    Reset section order confirm: Put the sections of this page back in their original order?
+  Diag:
+    Section: Diagnostics
+    Description: >-
+      What the app records about itself, to find out afterwards why something went wrong.
+      Every kind is off until you turn it on; nothing is written while it is off. Each kind
+      gets one file per day in this device's diag directory.
+    Groups:
+      Playback: Playback
+      Sync: Device sync
+      App: App
+      Recording: Recording
+      Recorded: Recorded data
+    Kinds:
+      playback: Playback trace
+      playback description: >-
+        Every jump of the playhead backwards, with what moved it, the buffer and the stream
+        state; every segment the stream delivers, and any whose time does not match; stream
+        token refreshes, redirects and player reloads; decoder stalls on the phone.
+      sync: Device sync
+      sync description: >-
+        Every sync run — what was read from the other device, what was merged, what was sent,
+        and why a run failed.
+      console: Console
+      console description: >-
+        Every warning and error the app prints, including the ones the browser engine
+        reports on its behalf (a refused request, a blocked resource).
+    Mark: Mark
+    Mark description desktop: >-
+      Writes a numbered “mark” line into every file being recorded, so the moment something
+      happened can be found again. Ctrl+Shift+M does the same from anywhere in the app.
+    Mark description Android: >-
+      Writes a numbered “mark” line into every file being recorded, so the moment something
+      happened can be found again. The recording notification has the same button.
+    Turn all off: Turn all off
+    Recording indicator: Diagnostics are being recorded
+    Marked: 'Mark #{number}'
+    Nothing recording: Nothing is being recorded
+    Stored: Stored
+    Nothing stored: Nothing recorded
+    Stored summary: '{files} files, {size}, {days} days ({from} – {to})'
+    Keep for days: Keep for
+    days unit: ' days'
+    Keep everything: everything
+    Export: Export
+    Export description: >-
+      Copies every file into a new dated subdirectory of a directory you pick.
+    Exported: 'Exported to {where}'
+    Export failed: 'The export failed: {message}'
+    Share: Share
+    Open directory: Open the diag directory
+    Purge: Purge
+    Purge confirm: 'Delete {files} files ({size}) forever?'
+    Delete forever: Delete forever
+    Purged: '{files} files deleted'
   Sync:
     Section: Device sync
     Description: >-
@@ -1532,8 +1607,8 @@ SKUI:
     Up to date: Up to date, {when}
     Merged: '{count} changes merged, {when}'
     No peer: No phone configured — nothing is being sent
-    No storage access: All-files access is needed to reach the sync folder
-    No directory: No sync folder set
+    No storage access: All-files access is needed to reach the sync directory
+    No directory: No sync directory set
     Failed: 'Last sync failed: {message}'
     Label: Sync
     Sync now: Sync now
@@ -1542,10 +1617,10 @@ SKUI:
     Toast merged: 'Synced: {count} changes merged'
     Toast failed: The sync failed — see the 白い熊 UI settings for why
     Grant access: Grant access
-    Sync folder: Sync folder on this phone
+    Sync folder: Sync directory on this phone
     Sync folder description: >-
-      A real path rather than a picked folder, because the PC has to reach it over ssh.
-      Type the same path into the PC's "phone's sync folder" box.
+      A real path rather than a picked directory, because the PC has to reach it over ssh.
+      Type the same path into the PC's "phone's sync directory" box.
     Phone host: Phone, as ssh reaches it
     Phone host description: >-
       A host from your ~/.ssh/config, user{'@'}host, or a plain address. Left empty, nothing
@@ -1557,9 +1632,9 @@ SKUI:
       does not use makes an already-trusted phone look like an unknown one.
     Ssh arguments: Extra ssh arguments
     Ssh arguments description: 'Appended to the command as-is, for example: -i ~/.ssh/id_ed25519'
-    Phone folder: The phone's sync folder
-    Local folder: Sync folder on this PC
-    Local folder default: Left empty, the app's own data folder is used
+    Phone folder: The phone's sync directory
+    Local folder: Sync directory on this PC
+    Local folder default: Left empty, the app's own data directory is used
     On start: Sync on opening the app
     On start description: >-
       And whenever it comes back to the front.

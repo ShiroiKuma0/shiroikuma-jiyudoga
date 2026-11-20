@@ -67,6 +67,11 @@
       </intent-filter>
     </receiver>
 
+    <!-- the Diagnostics recording notification's Mark / Turn all off (diag/Diag.kt) -->
+    <receiver
+      android:name=".diag.DiagReceiver"
+      android:exported="false" />
+
     <receiver android:name=".MediaControlsReceiver"
       android:exported="true">
       <intent-filter>

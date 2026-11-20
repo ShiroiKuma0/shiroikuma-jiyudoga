@@ -5,6 +5,10 @@
       type="button"
       @click="expanded = !expanded"
     >
+      <FontAwesomeIcon
+        :icon="['fas', icon]"
+        class="skuiRowIcon"
+      />
       <span class="skuiRowLabel">{{ label }}</span>
       <span
         v-if="isOverridden"
@@ -86,6 +90,11 @@ import { computed, ref } from 'vue'
 import { cssRgba } from '../../helpers/skui'
 
 const props = defineProps({
+  /** the row's icon (black-yellow-theme: every settings row carries one) */
+  icon: {
+    type: String,
+    default: 'palette'
+  },
   label: {
     type: String,
     required: true

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import io.freetubeapp.freetube.activities.FreeTubeActivity
 import io.freetubeapp.freetube.databinding.ActivityMainBinding
+import io.freetubeapp.freetube.diag.Diag
 import io.freetubeapp.freetube.helpers.isDarkMode
 import io.freetubeapp.freetube.helpers.toYtUrl
 import io.freetubeapp.freetube.helpers.urlEncode
@@ -21,7 +22,11 @@ class MainActivity: FreeTubeActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // before the WebView, so its console is recorded from the first line when that switch is on
+    Diag.init(this)
     webView = FreeTubeWebView(this)
+    // the notification's Turn all off: let the settings page follow
+    Diag.onChange = { runOnUiThread { webView.dispatchEvent("diag-changed") } }
 
     val url = intent?.toYtUrl()
     val postfix = if (url != null) {

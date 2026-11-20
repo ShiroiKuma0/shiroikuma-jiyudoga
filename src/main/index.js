@@ -38,6 +38,7 @@ import { isFreeTubeUrl } from './utils'
 import * as deviceSync from './sync'
 import * as youtubeAccount from './youtubeAccount'
 import { attachRendererLog, flushRendererLog, getRendererLogPath, getRendererLogs } from './rendererLog'
+import * as diag from './diag'
 
 const brotliDecompressAsync = promisify(brotliDecompress)
 
@@ -438,6 +439,16 @@ function runApp() {
   let proxyUrl
 
   app.on('ready', async (_, __) => {
+    // Before any window exists, so the console of the first one is recorded from its first line
+    // when that switch is on; the listener keeps every open window's Diagnostics rows in step.
+    await diag.initDiag(() => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (!window.isDestroyed()) {
+          window.webContents.send(IpcChannels.DIAG_CHANGED)
+        }
+      }
+    })
+
     if (process.platform === 'darwin') {
       const dockMenu = Menu.buildFromTemplate([
         {
@@ -1641,6 +1652,35 @@ function runApp() {
   ipcMain.handle(IpcChannels.GET_RENDERER_LOG_PATH, () => {
     return getRendererLogPath()
   })
+
+  // 白い熊 UI settings › Diagnostics (src/main/diag.js)
+  ipcMain.handle(IpcChannels.DIAG_GET_STATE, () => diag.getDiagState())
+
+  ipcMain.handle(IpcChannels.DIAG_SET_KIND, async (_, kind, value, version) => {
+    await diag.setDiagKind(String(kind), value === true, String(version ?? ''))
+  })
+
+  ipcMain.handle(IpcChannels.DIAG_SET_KEEP_DAYS, async (_, days) => {
+    await diag.setDiagKeepDays(Number(days))
+  })
+
+  ipcMain.on(IpcChannels.DIAG_APPEND, (_, kind, text) => {
+    if (typeof kind === 'string' && typeof text === 'string') {
+      diag.appendDiag(kind, text)
+    }
+  })
+
+  ipcMain.handle(IpcChannels.DIAG_MARK, () => diag.markDiag())
+
+  ipcMain.handle(IpcChannels.DIAG_SUMMARY, () => diag.summarizeDiag())
+
+  ipcMain.handle(IpcChannels.DIAG_CLEANUP, () => diag.cleanupDiag())
+
+  ipcMain.handle(IpcChannels.DIAG_PURGE, () => diag.purgeDiag())
+
+  ipcMain.handle(IpcChannels.DIAG_EXPORT, (event) => diag.exportDiag(BrowserWindow.fromWebContents(event.sender)))
+
+  ipcMain.handle(IpcChannels.DIAG_OPEN_DIRECTORY, () => diag.openDiagDirectory())
 
   // Study export (shiroikuma-yosuga hand-off)
   ipcMain.handle(IpcChannels.WRITE_TO_STUDY_FOLDER, async (event, filename, arrayBuffer) => {

@@ -1,7 +1,7 @@
 /*
  * 白い熊 自由動画 Export / Import panel — the Kōjiki export/import sheet in web form:
  * ONE bordered rounded box carries the whole panel (centred bold title, dim description,
- * a bordered tappable folder box, the last-backup line, a divider, Select all + the
+ * a bordered tappable directory box, the last-backup line, a divider, Select all + the
  * category checkboxes, a divider), closed by an ArcaneChat action row — round pills,
  * Cancel alone on the left, Import + Export grouped on the right.
  */
@@ -21,8 +21,7 @@
 }
 
 .skuiPanel {
-  --skui-warn: #f66;
-
+  /* --skui-warn comes from the theme (Roles › Warning), set on body by applySkuiTheme */
   background-color: var(--bg-color);
   border: 2px solid var(--primary-color);
   border-radius: 16px;
@@ -53,7 +52,7 @@
   opacity: 0.85;
 }
 
-/* the folder box: small label over the bold value, warn-red when unset */
+/* the directory box: small label over the bold value, warn-red when unset */
 .skuiDirBox {
   background: none;
   border: 2px solid var(--primary-color);
@@ -90,7 +89,7 @@
   padding-inline-start: 2px;
 }
 
-/* red until a folder is set, then the app's yellow */
+/* red until a directory is set, then the app's yellow */
 .skuiWarn {
   color: var(--skui-warn);
   font-weight: 700;

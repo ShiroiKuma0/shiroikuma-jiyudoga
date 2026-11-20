@@ -147,6 +147,7 @@ import { getClipInvidious } from './helpers/api/invidious.js'
 
 import android from 'android'
 import { getUpdateInfo, updateAndroidTheme } from './helpers/android/system'
+import { diagMark, startDiag } from './helpers/diag'
 import { applySkuiTheme, parseTheme } from './helpers/skui'
 import { registerContextMenuTriggers, unregisterContextMenuTriggers } from './helpers/skuiContextMenu'
 import { registerTitleTooltipTriggers, unregisterTitleTooltipTriggers } from './helpers/skuiTitleTooltip'
@@ -209,6 +210,9 @@ const dataReady = ref(false)
 
 onMounted(async () => {
   await store.dispatch('grabUserSettings')
+
+  // 白い熊 UI settings › Diagnostics: the switches live with the platform; follow them from here
+  startDiag()
 
   updateTheme()
   updateSkui()
@@ -505,6 +509,16 @@ function handleKeyboardShortcuts(event) {
   // 白い熊 自由動画 tabs. Ctrl+W is deliberately absent -- see the note in src/constants.js.
   if (event.ctrlKey && !event.altKey) {
     switch (event.key.toLowerCase()) {
+      case 'm':
+        // Diagnostics › Mark, from anywhere — the desktop's stand-in for the phone's notification
+        if (event.shiftKey) {
+          event.preventDefault()
+          diagMark().then(number => {
+            showToast(number > 0 ? t('SKUI.Diag.Marked', { number }) : t('SKUI.Diag.Nothing recording'))
+          })
+          return
+        }
+        break
       case 't':
         if (!event.shiftKey) {
           event.preventDefault()

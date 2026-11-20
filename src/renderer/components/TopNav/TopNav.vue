@@ -95,6 +95,14 @@
           class="appVersionPart"
         >{{ part }}</span>
       </div>
+      <!-- desktop: Diagnostics is recording (the phone has its notification for this) -->
+      <span
+        v-if="showDiagDot"
+        class="diagRecordingDot"
+        :title="$t('SKUI.Diag.Recording indicator')"
+        role="img"
+        :aria-label="$t('SKUI.Diag.Recording indicator')"
+      />
     </div>
     <div class="middle">
       <div
@@ -166,6 +174,7 @@ import {
 import { KeyboardShortcuts, MOBILE_WIDTH_THRESHOLD, SEARCH_RESULTS_DISPLAY_LIMIT } from '../../../constants'
 import { debounce, localizeAndAddKeyboardShortcutToActionTitle, openInternalPath } from '../../helpers/utils'
 import { translateWindowTitle } from '../../helpers/strings'
+import { diagRecording } from '../../helpers/diag'
 import { clearLocalSearchSuggestionsSession, getLocalClip, getLocalSearchSuggestions } from '../../helpers/api/local'
 import { getClipInvidious, getInvidiousSearchSuggestions } from '../../helpers/api/invidious'
 
@@ -183,6 +192,8 @@ const collapseSearchBar = !!process.env.IS_ANDROID
 // one upstream-base pin per upstream, build counter — so it is set small and split on the `+`
 // group separators: each group is a nowrap span, and the line breaks may only fall between them.
 const appVersion = process.env.FORK_VERSION || packageDetails.version
+
+const showDiagDot = computed(() => !process.env.IS_ANDROID && diagRecording.value)
 const appVersionParts = appVersion
   .split('+')
   .filter((part) => part.length > 0)

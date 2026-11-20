@@ -1,5 +1,9 @@
 <template>
   <div class="skuiRow skuiSliderLine">
+    <FontAwesomeIcon
+      :icon="['fas', icon]"
+      class="skuiRowIcon"
+    />
     <span class="skuiRowLabel">{{ label }}</span>
     <input
       class="skuiRange"
@@ -20,6 +24,11 @@
 import { computed } from 'vue'
 
 const props = defineProps({
+  /** the row's icon (black-yellow-theme: every settings row carries one) */
+  icon: {
+    type: String,
+    default: 'sliders-h'
+  },
   label: {
     type: String,
     required: true

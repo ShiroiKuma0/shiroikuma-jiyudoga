@@ -28,6 +28,25 @@
   cursor: not-allowed;
 }
 
+/* in a dialog: an outlined pill (black-yellow-theme) — 1.25 px regular, 3 px + bold main */
+.btn.pill {
+  background: none;
+  border-style: solid;
+  border-width: 1.25px;
+  border-radius: 100px;
+  box-shadow: none;
+  font-weight: 400;
+}
+
+.btn.pillMain {
+  border-width: 3px;
+  font-weight: 700;
+}
+
+.btn.pill:disabled {
+  opacity: 0.38;
+}
+
 .ripple {
   position: relative;
   overflow: hidden;

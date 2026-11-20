@@ -12,24 +12,59 @@
  * The indent ladder mirrors kxkb's 36 / 54 / 72 / 90 dp exactly (÷36 → 1 / 1.5 / 2 / 2.5 em).
  */
 
+/*
+ * The page is a column of FOLDING sections (black-yellow-theme, "Long settings pages",
+ * 2026-11-19): their order is the CSS `order` the index chips set, so dragging a chip
+ * reorders the sections without touching the template. --skui-warn, --skui-note,
+ * --skui-switch-off, --skui-divider and --skui-role-* come from the theme (Roles), set on
+ * body by applySkuiTheme — none of them is a constant here.
+ */
 .skuiPage {
-  /* the one non-themed colour on the page: "not set" has to read as wrong */
-  --skui-warn: #f66;
-
+  display: flex;
+  flex-direction: column;
   line-height: 1.35;
 }
 
 .skuiSection {
-  margin-block-end: 0.9em;
+  margin-block-end: 0.3em;
 }
 
-/* the between-sections border; the first section has none above it */
+/* the between-sections line stays whether a section is folded or open; the first has none */
 .skuiSectionRule {
-  background-color: var(--primary-color);
+  background-color: var(--skui-divider, var(--primary-color));
   block-size: 1px;
   border: 0;
-  margin-block: 0.9em 0;
+  margin-block: 0.5em 0;
   margin-inline: 0;
+}
+
+/* a section heading is its own fold switch: › folded, ⌄ open, at the row's right */
+.skuiSectionHeader {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  inline-size: 100%;
+  padding: 0;
+  text-align: start;
+}
+
+.skuiFoldMark {
+  color: var(--primary-color);
+  font-size: 1.4em;
+  line-height: 1;
+  margin-inline: auto 0.6em;
+}
+
+.skuiFoldMark::after {
+  content: '›';
+}
+
+.skuiFoldMarkOpen::after {
+  content: '⌄';
 }
 
 .skuiSectionTitle {
@@ -64,20 +99,45 @@
 
 /* ---- Export / Import section rows ---- */
 
+/* minimal padding, no minimum height: a row is as tall as its content (Row padding) */
 .skuiEntryRow {
   display: flex;
   align-items: center;
-  gap: 0.8em;
+  gap: 0.6em;
   background: none;
   border: 0;
+  box-sizing: border-box;
   color: var(--primary-text-color);
   cursor: pointer;
   font: inherit;
-  inline-size: calc(100% - 2em);
-  padding-block: 0.3em;
+  inline-size: calc(100% - 2.5em);
+  padding-block: 2px;
   padding-inline: 0;
   text-align: start;
 }
+
+/* every row keeps the rule's room, transparent where there is nothing to explain, so the
+   icons and labels of all rows share one edge */
+.skuiEntryRow,
+.skuiPillRow {
+  border-inline-start: 2px solid transparent;
+  padding-inline-start: 10px;
+}
+
+/* every row's icon, coloured by what the row does; one column, so the labels share an edge */
+.skuiRowIcon {
+  flex: 0 0 auto;
+  inline-size: 1.15em;
+  text-align: center;
+}
+
+.skuiRole-connect { color: var(--skui-role-connect); }
+.skuiRole-message { color: var(--skui-role-message); }
+.skuiRole-contact { color: var(--skui-role-contact); }
+.skuiRole-share { color: var(--skui-role-share); }
+.skuiRole-view { color: var(--skui-role-view, var(--primary-color)); }
+.skuiRole-block { color: var(--skui-role-block); }
+.skuiRole-delete { color: var(--skui-role-delete); }
 
 /* also worn by a <button> (the tap-to-copy token row), hence the resets */
 .skuiEntryText {
@@ -93,17 +153,20 @@
 }
 
 .skuiEntryTitle {
+  color: var(--primary-color);
   display: block;
+  font-weight: 700;
 }
 
+/* explanations are dim gold (Roles › Explanations), never grey */
 .skuiEntrySummary {
-  color: var(--secondary-text-color);
+  color: var(--skui-note, var(--secondary-text-color));
   display: block;
   font-size: 0.82em;
   overflow-wrap: anywhere;
 }
 
-/* the backup folder is the one thing that must shout when it is missing */
+/* the backup directory is the one thing that must shout when it is missing */
 .skuiEntrySummary.skuiWarn {
   color: var(--skui-warn);
   font-weight: 700;
@@ -111,7 +174,7 @@
 
 .skuiEntryAction {
   background: none;
-  border: 1px solid var(--primary-color);
+  border: 1.25px solid var(--primary-color);
   border-radius: 100px;
   color: var(--primary-color);
   cursor: pointer;
@@ -132,14 +195,16 @@
  * (switch, button, field) stay plain.
  */
 .skuiPillRow {
-  inline-size: calc(100% - 2em);
+  box-sizing: border-box;
+  inline-size: calc(100% - 2.5em);
   padding-block: 3px;
 }
 
+/* the pill HUGS its label (settled 2026-11-09): a short action across the line reads as a banner */
 .skuiPill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.8em;
+  gap: 0.6em;
   background: none;
   border: 1.25px solid var(--primary-color);
   border-radius: 100px;
@@ -147,10 +212,22 @@
   color: var(--primary-text-color);
   cursor: pointer;
   font: inherit;
-  inline-size: 100%;
+  max-inline-size: 100%;
   padding-block: 9px;
   padding-inline: 1em;
   text-align: start;
+}
+
+/* a destructive action lends the warning colour to frame and label — still unfilled */
+.skuiPillDanger {
+  border-color: var(--skui-warn);
+  color: var(--skui-warn);
+}
+
+.skuiPill:disabled,
+.skuiEntryAction:disabled {
+  cursor: default;
+  opacity: 0.38;
 }
 
 .skuiPill:hover,
@@ -176,10 +253,20 @@
   line-height: 1;
 }
 
-/* aligned with the label inside the pill: the pill's inline padding plus its frame */
+/* aligned with the label inside the pill: padding + frame + the icon column and its gap */
 .skuiPillSummary {
   margin-block-start: 0.2em;
-  padding-inline-start: calc(1em + 3px);
+  padding-inline-start: calc(1em + 3px + 1.15em + 0.6em);
+}
+
+/*
+ * A row that carries an explanation is one block: bold label, dim-gold description and a thin
+ * dim-gold rule down its left edge, ~10 px before the text (black-yellow-theme, "Settings rows
+ * with explanations"). Never grey. The rule spans pill + explanation on a pill row.
+ */
+.skuiEntryRow:has(.skuiEntrySummary),
+.skuiPillRow:has(.skuiPillSummary) {
+  border-inline-start-color: var(--skui-note, var(--primary-color));
 }
 
 /* free-text setting (the download filename template) — full width under its
@@ -193,7 +280,11 @@
   display: block;
   font-family: monospace;
   font-size: 0.85em;
-  inline-size: calc(100% - 2.5em);
+
+  /* under its row's label text: indent 2em + rule room 12px + icon 1.15em + gap 0.6em, in the
+     page's em (this field's own font is 0.85 of it) */
+  inline-size: calc(100% - 6.25em / 0.85 - 12px);
+  margin-inline-start: calc(3.75em / 0.85 + 12px);
   padding-block: 0.4em;
   padding-inline: 0.6em;
 }
@@ -228,11 +319,39 @@
   padding-inline: 0.4em;
 }
 
+/*
+ * The switch is an OUTLINED pill with a solid dot — right and accent when on, left and the
+ * opaque darker yellow (Roles › Switch, off) when off; never filled, not even when on
+ * (black-yellow-theme, "Switches"). Drawn on the checkbox itself, so every row keeps its
+ * <input type="checkbox"> and its label.
+ */
 .skuiEntrySwitch {
-  accent-color: var(--primary-color);
+  appearance: none;
+  background-color: transparent;
+  background-image: radial-gradient(circle, var(--skui-switch-off) 0 5.5px, transparent 6px);
+  background-position: left 1px center;
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  block-size: 24px;
+  border: 2px solid var(--skui-switch-off);
+  border-radius: 100px;
+  box-sizing: border-box;
+  cursor: pointer;
   flex: 0 0 auto;
-  block-size: 1.1em;
-  inline-size: 1.1em;
+  inline-size: 44px;
+  margin: 0;
+  transition: background-position 180ms cubic-bezier(0, 0, 0.2, 1), border-color 180ms;
+}
+
+.skuiEntrySwitch:checked {
+  background-image: radial-gradient(circle, var(--primary-color) 0 5.5px, transparent 6px);
+  background-position: right 1px center;
+  border-color: var(--primary-color);
+}
+
+.skuiEntrySwitch:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 /* learned Similar-tab words: too many for one row each, so they wrap as

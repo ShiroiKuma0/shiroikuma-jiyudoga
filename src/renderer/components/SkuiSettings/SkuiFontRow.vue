@@ -5,6 +5,10 @@
       type="button"
       @click="expanded = !expanded"
     >
+      <FontAwesomeIcon
+        :icon="['fas', icon]"
+        class="skuiRowIcon"
+      />
       <span class="skuiRowLabel">{{ $t('SKUI.Font family') }}</span>
       <span
         class="skuiFontCurrent"
@@ -79,6 +83,11 @@ import { awaitAsyncResult } from '../../helpers/android/jsinterface'
 import { showToast } from '../../helpers/utils'
 
 const props = defineProps({
+  /** the row's icon (black-yellow-theme: every settings row carries one) */
+  icon: {
+    type: String,
+    default: 'font'
+  },
   /** resolved font {family, weight, size} */
   font: {
     type: Object,

@@ -378,6 +378,11 @@ const state = {
   // where a tab being opened lands: 'end' at the far right of the strip, so the tabs
   // already open never move, or 'next' immediately after the tab it was opened from
   skuiTabsNewTabPosition: 'end',
+  // the 白い熊 UI settings page folds (black-yellow-theme, "Long settings pages"): the section
+  // order set by dragging the index chips, and which sections are open — JSON arrays of section
+  // keys. Transferable on purpose, so a restore brings the arrangement with the colours
+  skuiUiSectionOrder: '[]',
+  skuiUiSectionsOpen: '[]',
   // SAF tree uri of the jisho study-export folder (Android; '' = not chosen yet)
   studyDirectoryTree: '',
   // study-export folder on desktop (set only via the main-process folder picker)

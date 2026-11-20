@@ -21,8 +21,8 @@
 
         <!--
           Only relevant once automation is on: without All-Files-Access a sister-app run
-          that names an absolute `path` outside our folder cannot be honoured, and the
-          backup lands in our own folder instead of the shared one.
+          that names an absolute `path` outside our directory cannot be honoured, and the
+          backup lands in our own directory instead of the shared one.
         -->
         <template v-if="needsAllFilesAccess">
           <p class="skuiStatus skuiWarn">
@@ -212,7 +212,7 @@ onMounted(() => {
   refresh()
 })
 
-/** Re-reads the folder and the newest backup in it — done on open and after every write. */
+/** Re-reads the directory and the newest backup in it — done on open and after every write. */
 function refresh() {
   const parsed = JSON.parse(android.getBackupDirectory())
   directory.value = parsed.tree ? parsed : null
@@ -262,7 +262,7 @@ function toggleAll(checked) {
   selected.value = checked ? new Set(leaves.value.map(leaf => leaf.id)) : new Set()
 }
 
-// ---- folder ----
+// ---- directory ----
 
 async function pickDirectory() {
   const response = await awaitAsyncResult(android.pickBackupDirectory())

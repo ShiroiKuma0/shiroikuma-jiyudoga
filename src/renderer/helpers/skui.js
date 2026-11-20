@@ -96,7 +96,57 @@ export const SKUI_SECTIONS = [
       ]
     }]
   },
+  // black-yellow-theme: the settings page's own roles, and the colour each row's icon takes from
+  // what the row does (connect green, share orange, delete red …) — settable, never constants
+  {
+    key: 'Roles',
+    groups: [
+      {
+        key: 'Settings page',
+        slots: [
+          { key: 'note', kind: 'color' },
+          { key: 'switchOff', kind: 'color' },
+          { key: 'divider', kind: 'color' },
+          { key: 'warning', kind: 'color' },
+        ]
+      },
+      {
+        key: 'Row icons',
+        slots: [
+          { key: 'roleConnect', kind: 'color' },
+          { key: 'roleMessage', kind: 'color' },
+          { key: 'roleContact', kind: 'color' },
+          { key: 'roleShare', kind: 'color' },
+          { key: 'roleView', kind: 'color' },
+          { key: 'roleBlock', kind: 'color' },
+          { key: 'roleDelete', kind: 'color' },
+        ]
+      },
+    ]
+  },
 ]
+
+/** The icon roles a settings row can name, and the CSS variable each one sets. */
+export const SKUI_ROLE_VARS = {
+  connect: '--skui-role-connect',
+  message: '--skui-role-message',
+  contact: '--skui-role-contact',
+  share: '--skui-role-share',
+  view: '--skui-role-view',
+  block: '--skui-role-block',
+  delete: '--skui-role-delete',
+}
+
+/**
+ * Opaque, `t` of the way from `from` to `to` — the theme's darker yellows are deliberate
+ * colours, not faded ones (a dimmed alpha reads as disabled).
+ * @param {number[]} from
+ * @param {number[]} to
+ * @param {number} t
+ */
+function mix(from, to, t) {
+  return [0, 1, 2].map(i => Math.round(from[i] + (to[i] - from[i]) * t)).concat(1)
+}
 
 /** @param {number[]} c @param {number} a */
 function withAlpha(c, a) {
@@ -144,6 +194,21 @@ function slotDefault(slotKey, resolved) {
     case 'cardBg': return resolved('background')
     case 'secondaryCardBg': return withAlpha(resolved('background'), 0.75)
     case 'linkColor': return resolved('accent')
+    // dim gold #C8C800: explanations and the left rule beside them
+    case 'note': return mix(resolved('background'), resolved('text'), 0.78)
+    // #8C8C00: a switch that is off — darker, not fainter, so it is never taken for a note
+    case 'switchOff': return mix(resolved('background'), resolved('accent'), 0.55)
+    // #B3B300: the lines between sections and groups
+    case 'divider': return mix(resolved('background'), resolved('accent'), 0.70)
+    case 'warning': return [255, 0, 0, 1]
+    case 'roleConnect': return [0, 255, 0, 1]
+    // not pure blue, which vanishes as a thin glyph on black
+    case 'roleMessage': return [77, 148, 255, 1]
+    case 'roleContact': return [0, 255, 255, 1]
+    case 'roleShare': return [255, 128, 0, 1]
+    case 'roleView': return resolved('accent')
+    case 'roleBlock': return [255, 0, 255, 1]
+    case 'roleDelete': return resolved('warning')
     default: return SKUI_YELLOW
   }
 }
@@ -273,6 +338,17 @@ export function applySkuiTheme(theme, customFonts = []) {
     '--scrollbar-color': c('secondaryText'),
     '--scrollbar-color-hover': c('text'),
     '--logo-primary-color': c('text'),
+    '--skui-note': c('note'),
+    '--skui-switch-off': c('switchOff'),
+    '--skui-divider': c('divider'),
+    '--skui-warn': c('warning'),
+    '--skui-role-connect': c('roleConnect'),
+    '--skui-role-message': c('roleMessage'),
+    '--skui-role-contact': c('roleContact'),
+    '--skui-role-share': c('roleShare'),
+    '--skui-role-view': c('roleView'),
+    '--skui-role-block': c('roleBlock'),
+    '--skui-role-delete': c('roleDelete'),
   }
   for (const [name, value] of Object.entries(vars)) {
     body.style.setProperty(name, value)
@@ -331,7 +407,9 @@ export function applySkuiTheme(theme, customFonts = []) {
     // content cards fill the window unframed; only settings sections keep the border
     `.settingsSection { ${borderCss} border-radius: ${dims.roundness}px !important; }`,
     `${popupSurfaces} { border: 2px solid var(--primary-color) !important; box-sizing: border-box; }`,
-    `.btn, .ft-input-component .ft-input, .select { border-radius: ${dims.roundness}px !important; }`,
+    `.btn:not(.pill), .ft-input-component .ft-input, .select { border-radius: ${dims.roundness}px !important; }`,
+    // a dialog pill is always fully round (black-yellow-theme, "Pills")
+    '.btn.pill { border-radius: 100px !important; }',
     `.topNav { background-color: ${c('topBarBg')} !important; }`,
     `.topNav .navIcon, .topNav .navFilterIcon { color: ${c('topBarText')} !important; }`,
     `.searchContainer .ft-input, .searchContainer .ft-input-component { color: ${c('searchText')} !important; }`,

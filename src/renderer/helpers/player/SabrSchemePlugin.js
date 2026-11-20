@@ -17,6 +17,7 @@ import {
 import shaka from 'shaka-player'
 
 import { deepCopy } from '../utils'
+import { diag, diagError, diagWarn } from '../diag'
 
 const AbortableOperation = shaka.util.AbortableOperation
 const ShakaError = shaka.util.Error
@@ -324,7 +325,7 @@ function logRefusedSabrResponse(response, operationInputs, currentState, bodyChu
     expiry = `${new Date(Number(expire) * 1000).toISOString()} — ${Math.abs(secondsLeft)}s ${secondsLeft < 0 ? 'ago' : 'left'}`
   }
 
-  console.error(
+  diagError('playback',
     'SABR request refused\n' +
     `URI: ${operationInputs.uri}\n` +
     `Status: ${response.status} ${response.statusText}\n` +
@@ -364,7 +365,7 @@ function refreshPoTokenFor(currentState) {
   state.poTokenRefreshes++
 
   const sessionAge = ((Date.now() - state.createdAt) / 1000).toFixed(1)
-  console.warn(`SABR: PO token not accepted (status ${state.protectionStatus}) at ${sessionAge}s, minting a new one (${state.poTokenRefreshes}/3)`)
+  diagWarn('playback', `SABR: PO token not accepted (status ${state.protectionStatus}) at ${sessionAge}s, minting a new one (${state.poTokenRefreshes}/3)`)
 
   state.refreshPoToken()
     .then((token) => {
@@ -372,12 +373,89 @@ function refreshPoTokenFor(currentState) {
       state.poTokenGeneration++
     })
     .catch((error) => {
-      console.error('SABR: minting a replacement PO token failed', error)
+      diagError('playback', 'SABR: minting a replacement PO token failed', error)
     })
     .finally(() => {
       state.poTokenRefreshing = false
     })
 }
+
+// #region recent segment log (playhead rewind diagnostics)
+
+/** How many delivered media segments the rewind diagnostic in the player can look back over. */
+const RECENT_SEGMENT_LIMIT = 12
+
+/** A segment whose media starts further than this from where shaka placed it is reported. */
+const SEGMENT_TIME_MISMATCH_MS = 1000
+
+/**
+ * The last few media segments handed to shaka-player, newest last. Module-level on purpose:
+ * the scheme is re-registered on every reload, and the rewind diagnostic in the player reads
+ * this without holding a reference to the session (白い熊, 2026-11-19 — playback jumped ~10 s
+ * back with nothing in the log, so we record enough to tell a moved playhead from a stream
+ * that delivered the same stretch twice).
+ * @type {{ wall: number, track: string, itag: number, sq: number, wantMs: number, gotMs: number | null, durationMs: number | null, bytes: number, rn: number }[]}
+ */
+const recentSegments = []
+
+/**
+ * @param {OperationInputs} operationInputs
+ * @param {CurrentState} currentState
+ * @param {import('googlevideo/protos').MediaHeader | undefined} mediaHeader
+ * @param {number} bytes
+ */
+function recordDeliveredSegment(operationInputs, currentState, mediaHeader, bytes) {
+  if (operationInputs.isInit) return
+
+  const url = new URL(operationInputs.uri)
+  const wantMs = Number(url.searchParams.get('startTimeMs') ?? NaN)
+  const gotMs = mediaHeader?.startMs != null ? Number(mediaHeader.startMs) : null
+
+  const entry = {
+    wall: Date.now(),
+    track: url.pathname,
+    itag: formatIdFromString(operationInputs.formatIdString).itag,
+    sq: operationInputs.sequenceNumber,
+    wantMs,
+    gotMs,
+    durationMs: mediaHeader?.durationMs != null ? Number(mediaHeader.durationMs) : null,
+    bytes,
+    rn: currentState.sabrStreamState.requestNumber - 1,
+  }
+
+  recentSegments.push(entry)
+  if (recentSegments.length > RECENT_SEGMENT_LIMIT) recentSegments.shift()
+
+  // the full trace, one line a segment, only while the playback trace is on
+  diag('playback', () =>
+    `SABR segment ${entry.track} itag ${entry.itag} sq ${entry.sq} want ${entry.wantMs} ms ` +
+    `got ${entry.gotMs ?? '?'} ms dur ${entry.durationMs ?? '?'} ms ${entry.bytes} B rn ${entry.rn}`)
+
+  if (gotMs != null && Number.isFinite(wantMs) && Math.abs(gotMs - wantMs) > SEGMENT_TIME_MISMATCH_MS) {
+    diagWarn('playback',
+      `SABR: ${entry.track} segment sq ${entry.sq} (itag ${entry.itag}) was asked for at ${wantMs} ms ` +
+      `but its media header says ${gotMs} ms (${gotMs - wantMs > 0 ? '+' : ''}${gotMs - wantMs} ms)`
+    )
+  }
+}
+
+/**
+ * One line per recently delivered segment, oldest first, for the player's rewind diagnostic.
+ * @returns {string}
+ */
+export function describeRecentSabrSegments() {
+  if (recentSegments.length === 0) return '(none)'
+
+  const now = Date.now()
+
+  return recentSegments.map(entry =>
+    `${((entry.wall - now) / 1000).toFixed(1)}s ${entry.track} itag ${entry.itag} sq ${entry.sq} ` +
+    `want ${entry.wantMs} ms got ${entry.gotMs ?? '?'} ms dur ${entry.durationMs ?? '?'} ms ` +
+    `${entry.bytes} B rn ${entry.rn}`
+  ).join('\n')
+}
+
+// #endregion recent segment log (playhead rewind diagnostics)
 
 /**
  * @param {CurrentState} currentState
@@ -415,7 +493,7 @@ function requestPlayerReload(currentState, operationInputs, cause, details) {
 
   sabrStreamState.playerReloadRequested = true
 
-  console.error(
+  diagError('playback',
     `SABR player reload (${cause})\n` +
     `URI: ${operationInputs.uri}\n` +
     `Session age: ${((Date.now() - sabrStreamState.createdAt) / 1000).toFixed(1)}s\n` +
@@ -437,6 +515,8 @@ async function doRequest(
   currentState,
 ) {
   let response
+  /** @type {import('googlevideo/protos').MediaHeader | undefined} */
+  let matchedMediaHeader
   /** @type {CompositeBuffer | null} */
   let chunkedDataBuffer = null
   /** @type {Uint8Array[]} */
@@ -542,7 +622,7 @@ async function doRequest(
               streamProtectionStatus.status === 1 && currentState.sabrStreamState.protectionStatus !== 1 &&
               currentState.sabrStreamState.poTokenRefreshes > 0
             ) {
-              console.warn(`SABR: replacement PO token accepted after ${currentState.sabrStreamState.poTokenRefreshes} refresh(es)`)
+              diagWarn('playback', `SABR: replacement PO token accepted after ${currentState.sabrStreamState.poTokenRefreshes} refresh(es)`)
             }
 
             currentState.sabrStreamState.protectionStatus = streamProtectionStatus.status
@@ -578,7 +658,7 @@ async function doRequest(
             shouldRetryDueToRedirect = true
 
             // The host, never the URL, which carries the session's signature.
-            console.warn(`Following SABR redirect to ${new URL(sabrRedirect.url).host}`)
+            diagWarn('playback', `Following SABR redirect to ${new URL(sabrRedirect.url).host}`)
             break
           }
           case UMPPartId.MEDIA_HEADER: {
@@ -601,8 +681,10 @@ async function doRequest(
               ) {
                 if (operationInputs.isInit && mediaHeader.isInitSeg) {
                   mediaHeaderId = mediaHeader.headerId
+                  matchedMediaHeader = mediaHeader
                 } else if (!operationInputs.isInit && mediaHeader.sequenceNumber === operationInputs.sequenceNumber) {
                   mediaHeaderId = mediaHeader.headerId
+                  matchedMediaHeader = mediaHeader
                 }
               }
             }
@@ -728,6 +810,8 @@ async function doRequest(
   if (responseDataChunks.length > 0 && segmentComplete) {
     const data = /** @__NOINLINE__ */ concatenateChunks(responseDataChunks)
 
+    recordDeliveredSegment(operationInputs, currentState, matchedMediaHeader, data.byteLength)
+
     if (operationInputs.isInit) {
       currentState.initDataCache.set(operationInputs.formatIdString, data)
     }
@@ -752,7 +836,7 @@ async function doRequest(
       currentState.cumulativeRedirects += 1
 
       if (currentState.cumulativeRedirects > MAX_SABR_REDIRECTS) {
-        console.error(
+        diagError('playback',
           'SABR redirect loop\n' +
           `URI: ${operationInputs.uri}\n` +
           `Redirects followed: ${currentState.cumulativeRedirects - 1}\n` +

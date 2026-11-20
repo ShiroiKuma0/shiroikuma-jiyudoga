@@ -1,9 +1,11 @@
 /* Shared row styles for the 白い熊 自由動画 UI settings — tight vertical
    rhythm: rows have no extra padding; only sections separate visually. */
 
+/* the rule's room of the explained rows (SkuiSettings.css), so every row's icon shares one edge */
 .skuiRow {
   margin: 0;
   padding: 0;
+  padding-inline-start: 12px;
 }
 
 .skuiRowHeader {
@@ -164,4 +166,12 @@
 
 .skuiOverriddenMark::before {
   content: '●';
+}
+
+/* every row's icon, in the "views, settings" role colour (black-yellow-theme, Eye candy) */
+.skuiRowIcon {
+  color: var(--skui-role-view, var(--primary-color));
+  flex: 0 0 auto;
+  inline-size: 1.15em;
+  text-align: center;
 }

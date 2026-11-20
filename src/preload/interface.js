@@ -207,6 +207,75 @@ export default {
   },
 
   /**
+   * Diagnostics (白い熊 UI settings) — the switches and the recorded files, all held by main.
+   * @returns {Promise<{ on: Record<string, boolean>, keepDays: number, directory: string }>}
+   */
+  diagGetState: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_GET_STATE)
+  },
+
+  /**
+   * @param {string} kind
+   * @param {boolean} value
+   * @param {string} version
+   */
+  diagSetKind: async (kind, value, version) => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_SET_KIND, kind, value, version)
+  },
+
+  /** @param {number} days */
+  diagSetKeepDays: async (days) => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_SET_KEEP_DAYS, days)
+  },
+
+  /**
+   * Fire and forget: main drops the line when the kind is off.
+   * @param {string} kind
+   * @param {string} text
+   */
+  diagAppend: (kind, text) => {
+    ipcRenderer.send(IpcChannels.DIAG_APPEND, kind, text)
+  },
+
+  /** @returns {Promise<number>} the mark's number, 0 when nothing records */
+  diagMark: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_MARK)
+  },
+
+  diagSummary: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_SUMMARY)
+  },
+
+  diagCleanup: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_CLEANUP)
+  },
+
+  diagPurge: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_PURGE)
+  },
+
+  /** @returns {Promise<{ path: string, files: number } | null>} */
+  diagExport: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_EXPORT)
+  },
+
+  diagOpenDirectory: async () => {
+    return await ipcRenderer.invoke(IpcChannels.DIAG_OPEN_DIRECTORY)
+  },
+
+  /**
+   * @param {() => void} listener called whenever a switch changes in any window
+   * @returns {() => void} unsubscribe
+   */
+  onDiagChanged: (listener) => {
+    const wrapped = () => listener()
+
+    ipcRenderer.on(IpcChannels.DIAG_CHANGED, wrapped)
+
+    return () => ipcRenderer.removeListener(IpcChannels.DIAG_CHANGED, wrapped)
+  },
+
+  /**
    * Device sync — reads a snapshot out of the local sync directory.
    * @param {string} fileName
    * @returns {Promise<string | null>} null when the file does not exist

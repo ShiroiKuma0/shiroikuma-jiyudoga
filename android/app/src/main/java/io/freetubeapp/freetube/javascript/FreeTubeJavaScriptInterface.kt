@@ -8,6 +8,7 @@ import android.content.Intent
 import android.media.session.PlaybackState.STATE_PAUSED
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.provider.DocumentsContract
 import android.provider.Settings
 import android.webkit.JavascriptInterface
 import androidx.core.content.FileProvider
@@ -20,6 +21,7 @@ import io.freetubeapp.freetube.backup.AutomationAuth
 import io.freetubeapp.freetube.backup.BackupWriter
 import io.freetubeapp.freetube.backup.StateBackup
 import io.freetubeapp.freetube.backup.StateCategories
+import io.freetubeapp.freetube.diag.Diag
 import io.freetubeapp.freetube.helpers.MediaSessionFacade
 import io.freetubeapp.freetube.helpers.Promise
 import io.freetubeapp.freetube.helpers.SafPaths
@@ -919,6 +921,76 @@ class FreeTubeJavaScriptInterface(
       exception.message ?: "share failed"
     }
   }
+
+  // region Diagnostics (白い熊 UI settings) — see diag/Diag.kt
+
+  /** `{ on: { kind: bool }, keepDays, directory }` */
+  @JavascriptInterface
+  fun diagGetState(): String = Diag.state(context).toString()
+
+  @JavascriptInterface
+  fun diagSetKind(kind: String, value: Boolean, version: String) = Diag.set(context, kind, value, version)
+
+  @JavascriptInterface
+  fun diagSetKeepDays(days: Int) = Diag.setKeepDays(context, days)
+
+  @JavascriptInterface
+  fun diagAppend(kind: String, text: String) = Diag.log(kind, text)
+
+  /** @return the mark's number, 0 when nothing is recording */
+  @JavascriptInterface
+  fun diagMark(): Int = Diag.mark(context, "the app")
+
+  /** The same JSON shape as the desktop's `summarizeDiag`. */
+  @JavascriptInterface
+  fun diagSummary(): String = Diag.summary(context).toString()
+
+  @JavascriptInterface
+  fun diagCleanup(): Int = Diag.cleanup(context)
+
+  @JavascriptInterface
+  fun diagPurge(): Int = Diag.purge(context)
+
+  /**
+   * Picks a directory — offered at /sdcard/tmp first — and copies every file into a new
+   * `yyyy-MM-dd_HH-mm-ss_jiyudoga-diag` subdirectory of it. Resolves the subdirectory's name,
+   * `USER_CANCELED`, or an empty string when nothing was recorded.
+   */
+  @JavascriptInterface
+  fun diagExport(): String {
+    val id = "${randomUUID()}"
+    val pick = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+      putExtra(
+        DocumentsContract.EXTRA_INITIAL_URI,
+        DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:tmp")
+      )
+    }
+    context.launchIntent(pick).then { result ->
+      val uri = result?.data?.data
+      if (result?.resultCode == Activity.RESULT_CANCELED || uri == null) {
+        jsCommunicator.resolve(id, "USER_CANCELED")
+        return@then
+      }
+      Thread {
+        try {
+          jsCommunicator.resolve(id, Diag.exportTo(context, uri) ?: "")
+        } catch (ex: Exception) {
+          jsCommunicator.reject(id, ex.toString())
+        }
+      }.start()
+    }
+    return id
+  }
+
+  /** @return false when nothing is recorded */
+  @JavascriptInterface
+  fun diagShare(): Boolean {
+    val intent = Diag.shareIntent(context) ?: return false
+    context.runOnUiThread { context.startActivity(intent) }
+    return true
+  }
+
+  // endregion
 
   @JavascriptInterface
   fun getLogs(): String {
