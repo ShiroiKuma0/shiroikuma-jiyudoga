@@ -33,7 +33,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -300,10 +300,16 @@ slider color rows with recent-color boxes, external `.ttf`/`.otf` font import wi
 glyph preview, font-weight and UI-size sliders, and border / roundness / divider widths all
 the way down to 0 — everything previewed live as you drag. The page itself is laid out like
 the futokxkb keyboard UI page: thin hairlines between sections and headings underlined to
-the width of the text, never the row. Every row that *does* something when tapped — Export /
-Import…, the download directory, Reset — is a full-width outlined pill, its section's main action
-framed thick and bold, with a › when it opens something, so an action never passes for a heading.
-A long press on the hamburger opens it directly.
+the width of the text, never the row. The page is a **folding accordion**: every section folds
+to its heading, and a grid of small chips on top jumps to any of them — tap a chip to open its
+section and scroll there, long-press it to **drag** it, the other chips sliding aside live under
+your finger and the sections following on release (order and fold state come back with a
+restore). Every row carries an icon coloured by what it does — connect green, share orange,
+delete red, … — with bold labels over dim-gold explanations on a thin left rule, outlined-pill
+switches, and action pills that hug their label (red-framed when they destroy something), its
+section's main action framed thick and bold, with a › when it opens something. Every dialog
+button is an outlined pill too, never a filled slab. A long press on the hamburger opens the
+page directly.
 
 Every floating surface is framed to match: the modals, the ⋯ menus, the profile selector, the
 subscribe dropdown, the settings jump menu, toasts, tooltips, input suggestions and the player's
@@ -413,6 +419,19 @@ entries still on screen — to a stamped `.txt`, and **Share all** hands it to t
 sheet as a real file, which is how a failure on the phone reaches the desk without the clipboard
 quietly truncating it. It is what found the codec bug fixed in `+017`, and the decoder stall
 fixed in `+015`.
+
+## 🔬 Diagnostics, off until you want them
+
+The last section of the UI page holds three recorders — **Playback trace**, **Sync** and
+**Console** — each behind its own switch and all **off by default**, so nothing is written unless
+you are chasing something. Playback trace catches the hard ones: every time the playhead jumps
+*backwards* it records what moved it, the buffer, the active quality and the last streaming
+segments YouTube delivered, with every segment whose timing disagrees with what was asked for.
+Files are one per kind per day (`.txt`, never `.log`, which the phone's cleaner deletes), capped
+at 64 MB, kept for as many days as you choose, and exported to a dated directory, shared from the
+phone, or purged behind a summary of exactly what goes. **Mark** drops a numbered line into every
+running trace at the moment something happens — Ctrl+Shift+M on the desktop (a dot in the top bar
+shows recording is on), the ongoing notification on the phone.
 
 ## 🔄 Own update channel
 

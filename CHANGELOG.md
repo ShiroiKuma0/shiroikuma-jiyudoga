@@ -15,6 +15,70 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011` — 2026-11-20
+
+Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13) — neither
+upstream moved. Builds `+005`–`+010` were test builds and were never released.
+
+### Downloads
+
+- **Android** (arm64-v8a): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011_arm64-v8a.apk`
+- **GNU/Linux** (amd64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011_amd64.deb`
+- **Windows** (x64): `shiroikuma-jiyudoga_0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+011_win-x64.zip`
+
+### Diagnostics section (both platforms)
+
+- **A new last section of the 白い熊 UI page**, with three recorders behind their own switches,
+  all **off by default**: **Playback trace**, **Sync** and **Console**. Turning one on writes
+  “`diag <kind> on, <version>`” so every file says what was recorded.
+- **Playback trace** records every **backward jump of the playhead** — the cause of the
+  “déjà vu” rewinds (e.g. back to 2:10 ten seconds after passing it) — with the stack of whatever
+  set `currentTime`, the buffered ranges, the active variant, the recent media events and the last
+  SABR segments delivered. It also logs every SABR segment with requested vs. actual start, a
+  warning when they differ by more than a second, PO-token refreshes, redirects, player reloads,
+  a `[load]` line per video and (Android) decoder stalls.
+- **Sync** traces every step of a device sync: run, pull, peer snapshot, merge counts with the
+  video IDs, publish, push, result.
+- **Console** captures every renderer / WebView warning and error. It replaces the always-on
+  `logs/renderer.log`, whose entries are migrated into per-day console files on first start.
+- **Files:** `jiyudoga-<kind>_<yyyy-MM-dd>.txt` — never `.log`, which EMUI's nightly clean-up
+  deletes — local time per line, capped at 64 MB a day, in `<userData>/diag/` on the desktop and
+  `Android/data/shiroikuma.jiyudoga/files/diag/` on the phone.
+- **Recorded data:** Stored (files, size, day span), Keep for N days (0 = everything), Export into
+  a new `yyyy-MM-dd_HH-mm-ss_jiyudoga-diag` subdirectory of a directory picked each time (the phone
+  offers `/sdcard/tmp` first), Share (phone) / Open the diag directory (desktop), and Purge behind a
+  warning that lists every kind and day it will delete.
+- **Mark:** Ctrl+Shift+M or the Mark row on the desktop, with a dot in the top bar while anything
+  records; on the phone an ongoing notification with **Mark** and **Turn all off**.
+
+### UI settings page per the black-yellow theme
+
+- **Folding accordion with a chip index.** Every section folds to its heading (› folded, ⌄ open;
+  folded by default; the divider stays). A grid of chips on top: tap one to open its section and
+  smooth-scroll to it; long-press to drag it — a lifted copy follows the finger, the other chips
+  reorder live, and the sections follow on release. Order and fold state are transferable
+  settings; **Maintenance › Reset section order** puts them back.
+- **Role-coloured icons on every row**: connect green, message blue, contact cyan, share orange,
+  view accent, block magenta, delete red.
+- **Outlined-pill switches** (dot right and bright when on, left and dim when off — never filled),
+  bold accent labels, dim-gold explanations with a 2 px left rule, 2 px row padding, action pills
+  that hug their label, and red-framed destructive pills (Purge, the Similar tab's Reset, Forget
+  the cookies).
+- **All of these colours are settable** in the theme's new **Roles and row icons** section
+  (explanation, switch-off, divider, warning and the seven icon roles). The fixed `#f66` warning
+  colour is gone.
+
+### Dialogs
+
+- **Every dialog button is an outlined pill**, never filled: the first option the main pill
+  (3 px frame, bold), the rest 1.25 px, a destructive option red-framed — and always fully round,
+  whatever the theme's roundness.
+
+### Wording
+
+- **“Folder” is “directory” everywhere it is shown** — the sync, download, backup and study rows
+  and the screenshot settings, in English and Japanese (フォルダ → ディレクトリ).
+
 ## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+004` — 2026-11-11
 
 Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13). **The FreeTube
