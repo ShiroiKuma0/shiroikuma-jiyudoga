@@ -106,17 +106,22 @@ export async function openSabrDownload({ sabrData, formats, audioOnly = false, a
   const stream = new SabrStream({
     // SabrStream calls this as its own method; the browser's fetch throws "Illegal
     // invocation" unless it is called on window, so it gets a bound wrapper
-    fetch: (input, init) => fetch(input, init),
+    fetchFunction: (input, init) => fetch(input, init),
+    // googlevideo 5: media headers carrying another video id are ignored, so this is required
+    videoId: sabrData.videoId,
     serverAbrStreamingUrl: sabrData.url,
     videoPlaybackUstreamerConfig: sabrData.ustreamerConfig,
     poToken: sabrData.poToken,
     clientInfo: sabrData.clientInfo,
     formats,
-    durationMs: isFinite(durationMs) ? durationMs : undefined
-  })
-
-  stream.on('reloadPlayerResponse', () => {
-    console.warn('SABR download: the server asked for a player reload; the session is no longer usable')
+    callbacks: {
+      // we have no second player response to hand back; throwing ends the session, and the
+      // caller falls through to its next download path
+      onReloadPlayerResponse: async () => {
+        console.warn('SABR download: the server asked for a player reload; the session is no longer usable')
+        throw new Error('player reload requested')
+      }
+    }
   })
 
   // the unused video stream is left alone rather than cancelled: SabrStream
@@ -124,7 +129,8 @@ export async function openSabrDownload({ sabrData, formats, audioOnly = false, a
   const { videoStream, audioStream } = await stream.start({
     videoFormat: video,
     audioFormat: audio,
-    enabledTrackTypes: audioOnly ? EnabledTrackTypes.AUDIO_ONLY : EnabledTrackTypes.VIDEO_AND_AUDIO
+    enabledTrackTypes: audioOnly ? EnabledTrackTypes.AUDIO_ONLY : EnabledTrackTypes.VIDEO_AND_AUDIO,
+    isPostLiveDvr: false
   })
 
   let received = 0

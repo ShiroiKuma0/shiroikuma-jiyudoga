@@ -1,0 +1,4060 @@
+<template>
+  <div
+    ref="container"
+    class="ftVideoPlayer shaka-video-container"
+    :class="{
+      fullWindow: fullWindowEnabled,
+      sixteenByNine: forceAspectRatio && !fullWindowEnabled
+    }"
+  >
+    <!-- eslint-disable-next-line vuejs-accessibility/media-has-caption -->
+    <video
+      ref="video"
+      class="player"
+      preload="auto"
+      crossorigin="anonymous"
+      playsinline
+      :autoplay="autoplayVideos ? true : null"
+      :poster="thumbnail"
+      @play="handlePlay"
+      @pause="handlePause"
+      @ended="handleEnded"
+      @canplay="handleCanPlay"
+      @volumechange="updateVolume"
+      @timeupdate="handleTimeupdate"
+      @enterpictureinpicture="handleEnterPictureInPicture"
+      @leavepictureinpicture="handleLeavePictureInPicture"
+    />
+    <!--
+      VR playback is only possible for VR videos with "EQUIRECTANGULAR" projection
+      This intentionally doesn't use the "useVrMode" computed prop,
+      as that changes depending on the active format,
+      but as we initialize the shaka-player UI once per watch page,
+      the canvas has to exist even in audio-only mode, because the user may switch to DASH later.
+    -->
+    <canvas
+      v-if="vrProjection === 'EQUIRECTANGULAR'"
+      ref="vrCanvas"
+      class="vrCanvas"
+    />
+    <div
+      v-if="showStats"
+      class="stats"
+    >
+      <span>{{ t('Video.Player.Stats.Video ID', { videoId }) }}</span>
+      <br>
+      <span>{{ t('Video.Player.Stats.Media Formats', { formats: format }) }}</span>
+      <br>
+      <span>{{ t('Video.Player.Stats.Bitrate', { bitrate: stats.bitrate }) }}</span>
+      <br>
+      <span>{{ t('Video.Player.Stats.Volume', { volumePercentage: stats.volume }) }}</span>
+      <br>
+      <template
+        v-if="format !== 'legacy'"
+      >
+        <span>{{ t('Video.Player.Stats.Bandwidth', { bandwidth: stats.bandwidth }) }}</span>
+        <br>
+      </template>
+      <span>{{ t('Video.Player.Stats.Buffered', { bufferedPercentage: stats.buffered }) }}</span>
+      <br>
+      <span
+        v-if="format === 'audio'"
+      >{{ t('Video.Player.Stats.CodecAudio', stats.codecs) }}</span>
+      <span
+        v-else-if="stats.codecs.audioItag && stats.codecs.videoItag"
+      >{{ t('Video.Player.Stats.CodecsVideoAudio', stats.codecs) }}</span>
+      <span
+        v-else
+      >{{ t('Video.Player.Stats.CodecsVideoAudioNoItags', stats.codecs) }}</span>
+      <br>
+      <span>{{ t('Video.Player.Stats.Player Dimensions', playerDimensions) }}</span>
+      <br>
+      <template
+        v-if="format !== 'audio'"
+      >
+        <span>{{ t('Video.Player.Stats.Resolution', stats.resolution) }}</span>
+        <br>
+        <span>{{ t('Video.Player.Stats.Dropped Frames / Total Frames', stats.frames) }}</span>
+      </template>
+    </div>
+    <Transition name="fade">
+      <div
+        v-if="showValueChangePopup"
+        class="valueChangePopup"
+        :class="{ 'invert-content-order': invertValueChangeContentOrder }"
+      >
+        <font-awesome-icon
+          v-if="valueChangeIcon"
+          :icon="['fas', valueChangeIcon]"
+        />
+        <span>{{ valueChangeMessage }}</span>
+      </div>
+    </Transition>
+    <div
+      v-if="showOfflineMessage"
+      class="offlineWrapper"
+    >
+      <FontAwesomeLayers
+        class="offlineIcon"
+        aria-hidden="true"
+      >
+        <FontAwesomeIcon :icon="['fas', 'wifi']" />
+        <FontAwesomeIcon :icon="['fas', 'slash']" />
+      </FontAwesomeLayers>
+      <p class="offlineMessage">
+        <span>
+          {{ t('Video.Player.You appear to be offline') }}
+        </span>
+        <br>
+        <span class="offlineMessageSubtitle">
+          {{ t('Video.Player.Playback will resume automatically when your connection comes back') }}
+        </span>
+      </p>
+    </div>
+    <div
+      v-if="sponsorBlockShowSkippedToast && skippedSponsorBlockSegments.length > 0"
+      class="skippedSegmentsWrapper"
+    >
+      <p
+        v-for="{ uuid, translatedCategory } in skippedSponsorBlockSegments"
+        :key="uuid"
+        class="skippedSegment"
+      >
+        {{ t('Video.Player.Skipped segment', { segmentCategory: translatedCategory }) }}
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome'
+import shaka from 'shaka-player'
+import { computed, nextTick, onBeforeUnmount, onMounted, onUnmounted, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+import store from '../../store/index.js'
+
+import { AudioTrackSelection } from './player-components/AudioTrackSelection.js'
+import { FullWindowButton } from './player-components/FullWindowButton.js'
+import { LegacyQualitySelection } from './player-components/LegacyQualitySelection.js'
+import { ScreenshotButton } from './player-components/ScreenshotButton.js'
+import { StatsButton } from './player-components/StatsButton.js'
+import { TheatreModeButton } from './player-components/TheatreModeButton.js'
+import { AutoplayToggle } from './player-components/AutoplayToggle.js'
+import { SkipButton } from './player-components/SkipButton.js'
+
+import { KeyboardShortcuts } from '../../../constants.js'
+import {
+  deduplicateAudioTracks,
+  findMostSimilarAudioBandwidth,
+  getSponsorBlockSegments,
+  hlsProxiedUrlReplacer,
+  logShakaError,
+  manifestPreprocessorTXml,
+  patchLiveHlsMainManifest,
+  PLAYER_LOCALE_MAPPINGS,
+  requestFilter,
+  SHAKA_CONTROL_KEYS_TO_SHORTCUTS,
+  stopPowerSaveBlocker,
+  translateSponsorBlockCategory
+} from '../../helpers/player/utils.js'
+import {
+  addKeyboardShortcutToActionTitle,
+  showToast,
+  writeFileWithPicker,
+  throttle,
+  debounce,
+  removeFromArrayIfExists,
+  copyToClipboard,
+} from '../../helpers/utils.js'
+import { MANIFEST_TYPE_SABR } from '../../helpers/player/SabrManifestParser.js'
+import { describeRecentSabrSegments, setupSabrScheme } from '../../helpers/player/SabrSchemePlugin.js'
+import { diag, diagError, diagState, diagWarn } from '../../helpers/diag'
+import { STATE_BUFFERING, STATE_PAUSED, STATE_PLAYING, updateMediaSessionState } from '../../helpers/android/media-session'
+import android from 'android'
+
+const props = defineProps({
+  format: {
+    type: String,
+    required: true
+  },
+  manifestSrc: {
+    type: String,
+    default: null
+  },
+  manifestMimeType: {
+    type: String,
+    required: true
+  },
+  sabrData: {
+    type: Object,
+    default: null
+  },
+  legacyFormats: {
+    type: Array,
+    default: () => ([])
+  },
+  startTime: {
+    type: Number,
+    default: null
+  },
+  captions: {
+    type: Array,
+    default: () => ([])
+  },
+  /** @type {import('vue').PropType<import('youtubei.js').Misc.Format[]>} */
+  hlsAudioMetadata: {
+    type: Array,
+    default: () => ([])
+  },
+  chapters: {
+    type: Array,
+    default: () => ([])
+  },
+  currentChapterIndex: {
+    type: Number,
+    default: 0
+  },
+  chaptersSrc: {
+    type: String,
+    default: ''
+  },
+  storyboardSrc: {
+    type: String,
+    default: ''
+  },
+  videoId: {
+    type: String,
+    default: ''
+  },
+  channelId: {
+    type: String,
+    default: ''
+  },
+  title: {
+    type: String,
+    default: ''
+  },
+  thumbnail: {
+    type: String,
+    default: ''
+  },
+  theatrePossible: {
+    type: Boolean,
+    default: false
+  },
+  useTheatreMode: {
+    type: Boolean,
+    default: false
+  },
+  autoplayPossible: {
+    type: Boolean,
+    default: false
+  },
+  autoplayEnabled: {
+    type: Boolean,
+    default: false
+  },
+  watchingPlaylist: {
+    type: Boolean,
+    default: false
+  },
+  vrProjection: {
+    type: String,
+    default: null
+  },
+  startInFullscreen: {
+    type: Boolean,
+    default: false
+  },
+  startInFullwindow: {
+    type: Boolean,
+    default: false
+  },
+  startInPip: {
+    type: Boolean,
+    default: false
+  },
+  currentPlaybackRate: {
+    type: Number,
+    default: 1
+  },
+  delayLoadUntilUnix: {
+    type: Number,
+    default: 0
+  },
+})
+
+const emit = defineEmits([
+  'error',
+  'loaded',
+  'ended',
+  'timeupdate',
+  'toggle-autoplay',
+  'toggle-theatre-mode',
+  'playback-rate-updated',
+  'skip-to-next',
+  'skip-to-prev',
+  'player-reload-requested',
+])
+
+/** @typedef {import('../../helpers/sponsorblock.js').SponsorBlockCategory} SponsorBlockCategory */
+
+// The UTF-8 characters "h", "t", "t", and "p".
+const HTTP_IN_HEX = 0x68747470
+
+const USE_OVERFLOW_MENU_WIDTH_THRESHOLD = 634
+
+/**
+ * In-memory mirror of the `sessionStorage` note recording which codec families have wedged this
+ * device's decoder on the video now playing. Recovery from the stall reloads the player and can
+ * tear the document down with it, so the durable copy is the stored one; this only saves parsing
+ * it on every variant decision. It is what the next `player.load()` reads to come back on a
+ * codec that works.
+ * @type {{ videoId: string, failed: string[] } | null}
+ */
+let decoderStallRecovery = null
+
+const RequestType = shaka.net.NetworkingEngine.RequestType
+const AdvancedRequestType = shaka.net.NetworkingEngine.AdvancedRequestType
+const TrackLabelFormat = shaka.ui.Overlay.TrackLabelFormat
+const { Severity: ErrorSeverity, Category: ErrorCategory, Code: ErrorCode } = shaka.util.Error
+
+let [onAppPause, onAppResume] = [() => {}, () => {}]
+
+const { locale, t } = useI18n()
+
+/** @type {shaka.Player|null} */
+let player = null
+
+/** @type {shaka.ui.Overlay|null} */
+let ui = null
+
+const events = new EventTarget()
+
+const container = useTemplateRef('container')
+const video = useTemplateRef('video')
+const vrCanvas = useTemplateRef('vrCanvas')
+
+const hasLoaded = ref(false)
+
+const hasMultipleAudioTracks = ref(false)
+const isLive = ref(false)
+
+const onlyUseOverFlowMenu = ref(false)
+const forceAspectRatio = ref(false)
+
+const activeLegacyFormat = shallowRef(null)
+
+const fullWindowEnabled = ref(false)
+const startInFullwindow = props.startInFullwindow
+let startInFullscreen = props.startInFullscreen
+let startInPip = props.startInPip
+
+/** @type {number|null} */
+let restoreCaptionIndex = null
+
+if (store.getters.getEnableSubtitlesByDefault && props.captions.length > 0) {
+  restoreCaptionIndex = 0
+}
+
+const showStats = ref(false)
+const stats = reactive({
+  resolution: {
+    width: 0,
+    height: 0,
+    frameRate: 0
+  },
+  bitrate: '0',
+  volume: '100',
+  bandwidth: '0',
+  buffered: '0',
+  frames: {
+    totalFrames: 0,
+    droppedFrames: 0
+  },
+  codecs: {
+    audioItag: '',
+    audioCodec: '',
+    videoItag: '',
+    videoCodec: ''
+  }
+})
+
+const playerDimensions = computed(() => ({
+  width: playerWidth.value,
+  height: playerHeight.value
+}))
+
+// #region settings
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const autoplayVideos = computed(() => {
+  return store.getters.getAutoplayVideos
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const displayVideoPlayButton = computed(() => {
+  return store.getters.getDisplayVideoPlayButton
+})
+
+watch(displayVideoPlayButton, (newValue) => {
+  ui.configure({
+    bigButtons: newValue ? ['play_pause_buffering'] : [],
+    showBufferingSpinner: !newValue
+  })
+})
+
+/** @type {import('vue').ComputedRef<number>} */
+const defaultSkipInterval = computed(() => {
+  return store.getters.getDefaultSkipInterval
+})
+
+watch(defaultSkipInterval, (newValue) => {
+  ui.configure({
+    tapSeekDistance: newValue
+  })
+})
+
+/** @type {import('vue').ComputedRef<number | 'auto'>} */
+const defaultQuality = computed(() => {
+  const value = store.getters.getDefaultQuality
+
+  // TODO: Revert when auto is fixed (720 is the default setttings value)
+  if (value === 'auto') { return 720 }
+  // if (value === 'auto') { return value }
+
+  return parseInt(value)
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const enterFullscreenOnDisplayRotate = computed(() => {
+  return store.getters.getEnterFullscreenOnDisplayRotate
+})
+
+watch(enterFullscreenOnDisplayRotate, (newValue) => {
+  ui.configure({
+    enableFullscreenOnRotation: newValue
+  })
+})
+onAppPause = () => {
+  try {
+    document.exitFullscreen()
+  } catch {
+    // pass
+  }
+  ui.configure({
+    enableFullscreenOnRotation: false
+  })
+}
+
+onAppResume = () => {
+  ui.configure({
+    enableFullscreenOnRotation: enterFullscreenOnDisplayRotate.value
+  })
+}
+window.addEventListener('app-pause', onAppPause)
+
+window.addEventListener('app-resume', onAppResume)
+
+const seekingIsPossible = computed(() => {
+  if (props.manifestMimeType !== 'application/x-mpegurl') {
+    return true
+  }
+
+  const match = props.manifestSrc.match(/\/(?:manifest|playlist)_duration\/(\d+)\//)
+
+  // Post live DVR HLS manifests URLs contain /force_finished/1
+  return props.manifestSrc.includes('/force_finished/1') ||
+    // Check how many seconds we are allowed to seek, 30 is too short, 3600 is an hour which is great
+    (match != null && parseInt(match[1] || '0') > 30)
+})
+
+/** @type {import('vue').ComputedRef<number>} */
+const defaultPlaybackRate = computed(() => {
+  if (!seekingIsPossible.value) {
+    return 1
+  }
+
+  return store.getters.getDefaultPlayback
+})
+
+watch(defaultPlaybackRate, (newValue) => {
+  if (video.value) {
+    video.value.defaultPlaybackRate = newValue
+  }
+})
+
+const maxVideoPlaybackRate = computed(() => {
+  return parseInt(store.getters.getMaxVideoPlaybackRate)
+})
+
+watch(maxVideoPlaybackRate, (newValue) => {
+  ui.configure({
+    playbackRateSliderMax: newValue
+  })
+})
+
+const videoPlaybackRateInterval = computed(() => {
+  return parseFloat(store.getters.getVideoPlaybackRateInterval)
+})
+
+watch(videoPlaybackRateInterval, (newValue) => {
+  ui.configure({
+    playbackRateSliderMin: newValue,
+    playbackRateSliderStep: newValue,
+  })
+})
+
+// 5 pills only as default for mobile
+const playbackRates = [0.5, 0.75, 1, 1.5, 2]
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const enableScreenshot = computed(() => {
+  return store.getters.getEnableScreenshot
+})
+
+/** @type {import('vue').ComputedRef<string>} */
+const screenshotMode = computed(() => {
+  return store.getters.getScreenshotMode
+})
+
+/** @type {import('vue').ComputedRef<string>} */
+const screenshotFormat = computed(() => {
+  return store.getters.getScreenshotFormat
+})
+
+/** @type {import('vue').ComputedRef<number>} */
+const screenshotQuality = computed(() => {
+  return store.getters.getScreenshotQuality
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const videoVolumeMouseScroll = computed(() => {
+  return store.getters.getVideoVolumeMouseScroll
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const videoPlaybackRateMouseScroll = computed(() => {
+  return store.getters.getVideoPlaybackRateMouseScroll && seekingIsPossible.value
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const videoSkipMouseScroll = computed(() => {
+  return store.getters.getVideoSkipMouseScroll
+})
+
+/** @type {import('vue').ComputedRef<any[]>} */
+const sponsorBlockExcludedChannels = computed(() => {
+  return JSON.parse(store.getters.getSponsorBlockExcludedChannels)
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const useSponsorBlock = computed(() => {
+  return store.getters.getUseSponsorBlock
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const shouldSkipSponsorBlockSegmentsOnChannel = computed(() => {
+  return useSponsorBlock.value && !sponsorBlockExcludedChannels.value.some(c => c.name === props.channelId)
+})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const sponsorBlockShowSkippedToast = computed(() => {
+  return store.getters.getSponsorBlockShowSkippedToast
+})
+
+const sponsorSkips = computed(() => {
+  // save some work when sponsorblock is disabled
+  if (!useSponsorBlock.value) {
+    return {}
+  }
+
+  /** @type {SponsorBlockCategory[]} */
+  const sponsorCategories = ['sponsor',
+    'selfpromo',
+    'interaction',
+    'intro',
+    'outro',
+    'preview',
+    'music_offtopic',
+    'filler'
+  ]
+
+  /** @type {Set<SponsorBlockCategory>} */
+  const autoSkip = new Set()
+
+  /** @type {SponsorBlockCategory[]} */
+  const seekBar = []
+
+  /** @type {Set<SponsorBlockCategory>} */
+  const promptSkip = new Set()
+
+  /**
+   * @type {{
+   *   [key in SponsorBlockCategory]: {
+   *     color: string,
+   *     skip: 'autoSkip' | 'promptToSkip' | 'showInSeekBar' | 'doNothing'
+   *   }
+    }} */
+  const categoryData = {}
+
+  sponsorCategories.forEach(x => {
+    let sponsorVal = {}
+    switch (x) {
+      case 'sponsor':
+        sponsorVal = store.getters.getSponsorBlockSponsor
+        break
+      case 'selfpromo':
+        sponsorVal = store.getters.getSponsorBlockSelfPromo
+        break
+      case 'interaction':
+        sponsorVal = store.getters.getSponsorBlockInteraction
+        break
+      case 'intro':
+        sponsorVal = store.getters.getSponsorBlockIntro
+        break
+      case 'outro':
+        sponsorVal = store.getters.getSponsorBlockOutro
+        break
+      case 'preview':
+        sponsorVal = store.getters.getSponsorBlockRecap
+        break
+      case 'music_offtopic':
+        sponsorVal = store.getters.getSponsorBlockMusicOffTopic
+        break
+      case 'filler':
+        sponsorVal = store.getters.getSponsorBlockFiller
+        break
+    }
+
+    if (sponsorVal.skip !== 'doNothing') {
+      seekBar.push(x)
+    }
+
+    if (sponsorVal.skip === 'autoSkip') {
+      autoSkip.add(x)
+    }
+
+    if (sponsorVal.skip === 'promptToSkip') {
+      promptSkip.add(x)
+    }
+
+    categoryData[x] = sponsorVal
+  })
+  return { autoSkip, seekBar, promptSkip, categoryData }
+})
+
+// #endregion settings
+
+// #region SponsorBlock
+
+/**
+ * @type {{
+ *   uuid: string
+ *   category: SponsorBlockCategory
+ *   startTime: number,
+ *   endTime: number
+ * }[]}
+ */
+let sponsorBlockSegments = []
+let sponsorBlockAverageVideoDuration = 0
+
+/**
+ * Yes a map would be much more suitable for this (unlike objects they retain the order that items were inserted),
+ * but Vue 2 doesn't support reactivity on Maps, so we have to use an array instead
+ * @type {import('vue').Ref<{uuid: string, translatedCategory: string, timeoutId: number}[]>}
+ */
+const skippedSponsorBlockSegments = ref([])
+
+async function setupSponsorBlock() {
+  let segments, averageDuration
+
+  try {
+    ({ segments, averageDuration } = await getSponsorBlockSegments(props.videoId, sponsorSkips.value.seekBar))
+  } catch (e) {
+    console.error(e)
+    segments = []
+  }
+
+  // check if the component is already getting destroyed
+  // which is possible because this function runs asynchronously
+  if (!ui || !player) {
+    return
+  }
+
+  if (segments.length > 0) {
+    sponsorBlockSegments = segments
+    sponsorBlockAverageVideoDuration = averageDuration
+
+    createSponsorBlockMarkers(averageDuration)
+  }
+}
+
+/**
+ * @param {number} currentTime
+ */
+function skipSponsorBlockSegments(currentTime) {
+  if (!shouldSkipSponsorBlockSegmentsOnChannel.value) {
+    return
+  }
+
+  const { autoSkip } = sponsorSkips.value
+
+  if (autoSkip.size === 0) {
+    return
+  }
+
+  const video_ = video.value
+
+  let newTime = 0
+  const skippedSegments = []
+
+  sponsorBlockSegments.forEach(segment => {
+    if (autoSkip.has(segment.category) && currentTime < segment.endTime &&
+      (segment.startTime <= currentTime ||
+        // if we already have a segment to skip, check if there are any that are less than 150ms later,
+        // so that we can skip them all in one go (especially useful on slow connections)
+        (newTime > 0 && (segment.startTime < newTime || segment.startTime - newTime <= 0.150) && segment.endTime > newTime))) {
+      newTime = segment.endTime
+      skippedSegments.push(segment)
+    }
+  })
+
+  if (newTime === 0 || video_.ended) {
+    return
+  }
+
+  const videoEnd = player.seekRange().end
+
+  if (Math.abs(videoEnd - currentTime) < 1 || video_.ended) {
+    return
+  }
+
+  if (newTime > videoEnd || Math.abs(videoEnd - newTime) < 1) {
+    newTime = videoEnd
+  }
+
+  video_.currentTime = newTime
+
+  if (sponsorBlockShowSkippedToast.value) {
+    skippedSegments.forEach(({ uuid, category }) => {
+      // if the element already exists, just update the timeout, instead of creating a duplicate
+      // can happen at the end of the video sometimes
+      const existingSkip = skippedSponsorBlockSegments.value.find(skipped => skipped.uuid === uuid)
+      if (existingSkip) {
+        clearTimeout(existingSkip.timeoutId)
+
+        existingSkip.timeoutId = setTimeout(() => {
+          const index = skippedSponsorBlockSegments.value.findIndex(skipped => skipped.uuid === uuid)
+          skippedSponsorBlockSegments.value.splice(index, 1)
+        }, 2000)
+      } else {
+        skippedSponsorBlockSegments.value.push({
+          uuid,
+          translatedCategory: translateSponsorBlockCategory(category),
+          timeoutId: setTimeout(() => {
+            const index = skippedSponsorBlockSegments.value.findIndex(skipped => skipped.uuid === uuid)
+            skippedSponsorBlockSegments.value.splice(index, 1)
+          }, 2000)
+        })
+      }
+    })
+  }
+}
+
+// #endregion SponsorBlock
+
+// #region player config
+
+/**
+ * @param {'dash'|'audio'|'legacy'} format
+ * @param {boolean} useAutoQuality
+ * @returns {shaka.extern.PlayerConfiguration}
+ */
+function getPlayerConfig(format, useAutoQuality = false) {
+  return {
+    // YouTube uses these values and they seem to work well in FreeTube too,
+    // so we might as well use them
+    streaming: {
+      bufferingGoal: 180,
+      rebufferingGoal: 0.02,
+      bufferBehind: 300
+    },
+    manifest: {
+      disableVideo: format === 'audio',
+
+      // makes captions work for live streams and doesn't seem to have any negative affect on VOD videos
+      segmentRelativeVttTiming: true,
+      dash: {
+        manifestPreprocessorTXml
+      },
+    },
+    abr: {
+      enabled: useAutoQuality,
+
+      // This only affects the "auto" quality, users can still manually select whatever quality they want.
+      restrictToElementSize: true
+    },
+
+    // Prioritise variants that are predicted to play:
+    // - `smooth`: without dropping frames
+    // - `powerEfficient` the spec is quite vague but in Chromium it should prioritise hardware decoding when available
+    // https://developer.mozilla.org/en-US/docs/Web/API/MediaCapabilities/decodingInfo
+    preferredDecodingAttributes: format === 'dash' ? ['smooth', 'powerEfficient'] : [],
+
+    // the VR codec workaround upstream inlines here lives in preferredVideoCodecs(), which
+    // also steers away from a codec that already failed to decode this video
+    preferredVideo: preferredVideoCodecs().map(codec => ({ codec }))
+  }
+}
+
+// #endregion player config
+
+// #region UI config
+
+const useVrMode = computed(() => {
+  return props.format === 'dash' && props.vrProjection === 'EQUIRECTANGULAR'
+})
+
+const uiConfig = computed(() => {
+  const controlPanelElements = [
+    'ft_skip_previous',
+    'play_pause',
+    'ft_skip_next',
+    'mute_volume',
+    'time_and_duration',
+    'spacer'
+  ]
+
+  /** @type {shaka.extern.UIConfiguration} */
+  const uiConfig = {
+    controlPanelElements: controlPanelElements,
+    overflowMenuButtons: [],
+
+    // only set this to label when we actually have labels, so that the warning doesn't show up
+    // about it being set to labels, but that the audio tracks don't have labels
+    trackLabelFormat: hasMultipleAudioTracks.value ? TrackLabelFormat.LABEL : TrackLabelFormat.LANGUAGE_ROLE,
+    // Only set it to label if we added the captions ourselves,
+    // some live streams come with subtitles in the DASH manifest, but without labels
+    textTrackLabelFormat: props.captions.length > 0 ? TrackLabelFormat.LABEL : TrackLabelFormat.LANGUAGE,
+    displayInVrMode: useVrMode.value
+  }
+
+  /** @type {string[]} */
+  let elementList
+
+  if (onlyUseOverFlowMenu.value) {
+    uiConfig.overflowMenuButtons = [
+      'ft_autoplay_toggle',
+      props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
+      'playback_rate',
+      'captions-settings',
+      'ft_audio_tracks',
+      'chapter',
+      'loop',
+      'ft_screenshot',
+      'picture_in_picture',
+      'ft_full_window',
+      'recenter_vr',
+      'toggle_stereoscopic',
+    ]
+
+    elementList = uiConfig.overflowMenuButtons
+
+    // theatre mode stays in the bottom row even in the compact layout
+    // (白い熊 2026-07-22); full window lives in the overflow menu — on
+    // Android it is redundant with fullscreen anyway
+    uiConfig.controlPanelElements.push('overflow_menu', 'ft_theatre_mode', 'fullscreen')
+  } else {
+    uiConfig.controlPanelElements.push(
+      'ft_screenshot',
+      'ft_autoplay_toggle',
+      'overflow_menu',
+      'picture_in_picture',
+      'ft_theatre_mode',
+      'ft_full_window',
+      'fullscreen'
+    )
+
+    uiConfig.overflowMenuButtons.push(
+      'ft_audio_tracks',
+      'captions-settings',
+      'playback_rate',
+      props.format === 'legacy' ? 'ft_legacy_quality' : 'quality',
+      'chapter',
+      'loop',
+      'recenter_vr',
+      'toggle_stereoscopic',
+    )
+
+    elementList = uiConfig.controlPanelElements
+  }
+
+  if (!enableScreenshot.value || props.format === 'audio') {
+    removeFromArrayIfExists(elementList, 'ft_screenshot')
+  }
+
+  if (!props.theatrePossible) {
+    removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_theatre_mode')
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'ft_theatre_mode')
+  }
+
+  if (!props.autoplayPossible) {
+    removeFromArrayIfExists(elementList, 'ft_autoplay_toggle')
+  }
+
+  if (props.format === 'audio') {
+    removeFromArrayIfExists(elementList, 'picture_in_picture')
+  }
+
+  if (isLive.value) {
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'loop')
+  }
+
+  if (!useVrMode.value) {
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'recenter_vr')
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'toggle_stereoscopic')
+  }
+
+  if (!props.watchingPlaylist) {
+    removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_skip_previous')
+    removeFromArrayIfExists(uiConfig.controlPanelElements, 'ft_skip_next')
+  }
+
+  if (props.chapters.length === 0) {
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'chapter')
+  }
+
+  if (!seekingIsPossible.value) {
+    removeFromArrayIfExists(uiConfig.overflowMenuButtons, 'playback_rate')
+  }
+
+  return uiConfig
+})
+
+/**
+ * For the first call we want to set initial values for options that may change later,
+ * as well as setting the options that we won't change again.
+ *
+ * For all subsequent calls we only want to reconfigure the options that have changed.
+ * e.g. due to the active format changing or the user changing settings
+ * @param {boolean} firstTime
+ */
+function configureUI(firstTime = false) {
+  if (firstTime) {
+    /** @type {shaka.extern.UIConfiguration} */
+    const firstTimeConfig = {
+      addSeekBar: seekingIsPossible.value,
+      customContextMenu: true,
+      contextMenuElements: ['ft_stats'],
+      enableTooltips: true,
+      seekBarColors: {
+        // shaka-player's chapter markers only show up part of the time for the DASH and audio formats
+        // the issue is clearly on the FreeTube side as shaka-player's demo page works fine and they show up all the time for the legacy formats.
+        // As I have spent way too much time debugging it and still cannot make sense of it, we'll stick with FreeTube's own chapter markers for now.
+        chapters: 'transparent',
+        played: 'var(--primary-color)'
+      },
+      showAudioCodec: false,
+      showVideoCodec: false,
+      volumeBarColors: {
+        level: 'var(--primary-color)'
+      },
+      mediaSession: {
+        // The WatchVideoInfo component handles that
+        handleMetadata: false,
+        // Need to override the default list so it doesn't override the next and previous video handlers in the WatchVideoPlaylist component.
+        supportedActions: [
+          'pause',
+          'play',
+          'seekbackward',
+          'seekforward',
+          'seekto'
+        ]
+      },
+
+      // these have their own watchers
+      bigButtons: displayVideoPlayButton.value ? ['play_pause_buffering'] : [],
+      showBufferingSpinner: !displayVideoPlayButton.value,
+      enableFullscreenOnRotation: enterFullscreenOnDisplayRotate.value,
+      playbackRateSliderMax: maxVideoPlaybackRate.value,
+      playbackRateSliderMin: videoPlaybackRateInterval.value,
+      playbackRateSliderStep: videoPlaybackRateInterval.value,
+      playbackRates: playbackRates,
+      tapSeekDistance: defaultSkipInterval.value,
+
+      showUIOnPaused: false,
+
+      // we have our own ones (shaka-player's ones are quite limited)
+      enableKeyboardPlaybackControls: false,
+
+      // TODO: enable this when electron gets document PiP support
+      // https://github.com/electron/electron/issues/39633
+      documentPictureInPicture: {
+        enabled: false
+      }
+    }
+
+    if (document.pictureInPictureEnabled) {
+      firstTimeConfig.mediaSession.supportedActions.push('enterpictureinpicture')
+    }
+
+    // Combine the config objects so we only need to do one configure call
+    // as shaka-player recreates the UI when you call configure
+    Object.assign(firstTimeConfig, uiConfig.value)
+
+    ui.configure(firstTimeConfig)
+  } else {
+    ui.configure(uiConfig.value)
+  }
+}
+
+/**
+ * @param {WheelEvent} event
+ */
+function handleControlsContainerWheel(event) {
+  /** @type {DOMTokenList} */
+  const classList = event.target.classList
+
+  if (classList.contains('shaka-scrim-container') ||
+    classList.contains('shaka-fast-forward-container') ||
+    classList.contains('shaka-rewind-container') ||
+    classList.contains('shaka-play-button-container') ||
+    classList.contains('shaka-play-button') ||
+    classList.contains('shaka-controls-container') ||
+    classList.contains('shaka-spacer')) {
+    //
+
+    if (event.ctrlKey || event.metaKey) {
+      if (videoPlaybackRateMouseScroll.value && canSeek()) {
+        mouseScrollPlaybackRateHandler(event)
+      }
+    } else {
+      if (videoVolumeMouseScroll.value) {
+        mouseScrollVolumeHandler(event)
+      } else if (videoSkipMouseScroll.value && canSeek()) {
+        mouseScrollSkipHandler(event)
+      }
+    }
+  }
+}
+
+/**
+ * @param {MouseEvent} event
+ */
+function handleControlsContainerClick(event) {
+  if (event.ctrlKey || event.metaKey) {
+    // stop shaka-player's click handler firing
+    event.stopPropagation()
+
+    player.cancelTrickPlay()
+
+    showValueChange(`${defaultPlaybackRate.value}x`)
+  }
+}
+
+function addUICustomizations() {
+  /** @type {HTMLDivElement} */
+  const controlsContainer = ui.getControls().getControlsContainer()
+
+  controlsContainer.removeEventListener('wheel', handleControlsContainerWheel)
+  controlsContainer.removeEventListener('click', handleControlsContainerClick, true)
+
+  if (!useVrMode.value) {
+    if (videoVolumeMouseScroll.value || videoSkipMouseScroll.value || videoPlaybackRateMouseScroll.value) {
+      controlsContainer.addEventListener('wheel', handleControlsContainerWheel)
+    }
+
+    if (videoPlaybackRateMouseScroll.value && canSeek()) {
+      controlsContainer.addEventListener('click', handleControlsContainerClick, true)
+    }
+  }
+
+  // title overlay when the video is fullscreened
+  // placing this inside the controls container so that we can fade it in and out at the same time as the controls
+  const fullscreenTitleOverlay = document.createElement('h1')
+  fullscreenTitleOverlay.textContent = props.title
+  fullscreenTitleOverlay.className = 'playerFullscreenTitleOverlay'
+  fullscreenTitleOverlay.dir = 'auto'
+  controlsContainer.appendChild(fullscreenTitleOverlay)
+
+  if (hasLoaded.value && props.chapters.length > 0) {
+    createChapterMarkers()
+  }
+
+  if (useSponsorBlock.value && sponsorBlockSegments.length > 0) {
+    let duration
+    if (hasLoaded.value) {
+      const seekRange = player.seekRange()
+
+      duration = seekRange.end - seekRange.start
+    } else {
+      duration = sponsorBlockAverageVideoDuration
+    }
+
+    createSponsorBlockMarkers(duration)
+  }
+}
+
+watch(uiConfig, (newValue, oldValue) => {
+  if (newValue !== oldValue && ui) {
+    configureUI()
+  }
+})
+
+watch(videoVolumeMouseScroll, (newValue, oldValue) => {
+  if (newValue !== oldValue && ui) {
+    configureUI()
+  }
+})
+
+watch(videoPlaybackRateMouseScroll, (newValue, oldValue) => {
+  if (newValue !== oldValue && ui) {
+    configureUI()
+  }
+})
+
+watch(videoSkipMouseScroll, (newValue, oldValue) => {
+  if (newValue !== oldValue && ui) {
+    configureUI()
+  }
+})
+
+watch(() => props.autoplayEnabled, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    events.dispatchEvent(new CustomEvent('setAutoplay', {
+      detail: newValue
+    }))
+  }
+})
+
+/** @type {ResizeObserver|null} */
+let containerResizeObserver = null
+
+/** @type {ResizeObserverCallback} */
+function resized(entries) {
+  onlyUseOverFlowMenu.value = entries[0].contentBoxSize[0].inlineSize <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
+}
+
+// #endregion UI config
+
+// #region player locales
+
+// shaka-player ships with some locales prebundled and already loaded
+const loadedLocales = new Set(process.env.SHAKA_LOCALES_PREBUNDLED)
+
+/**
+ * @param {string} locale
+ */
+async function setLocale(locale) {
+  // For most of FreeTube's locales, there is an equivalent one in shaka-player,
+  // however if there isn't one we should fall back to US English.
+  // At the time of writing "et", "eu", "gl", "is" don't have any translations
+  const shakaLocale = PLAYER_LOCALE_MAPPINGS.get(locale) ?? 'en'
+
+  const localization = ui.getControls().getLocalization()
+
+  const cachedLocales = store.state.player.cachedPlayerLocales
+
+  if (!loadedLocales.has(shakaLocale)) {
+    if (!Object.hasOwn(cachedLocales, shakaLocale)) {
+      await store.dispatch('cachePlayerLocale', shakaLocale)
+    }
+
+    localization.insert(shakaLocale, new Map(Object.entries(cachedLocales[shakaLocale])))
+
+    loadedLocales.add(shakaLocale)
+  }
+
+  localization.changeLocale([shakaLocale])
+
+  // Add the keyboard shortcut to the label for the default Shaka controls
+
+  const shakaControlKeysToShortcutLocalizations = new Map()
+  Object.entries(SHAKA_CONTROL_KEYS_TO_SHORTCUTS).forEach(([shakaControlKey, shortcut]) => {
+    const originalLocalization = localization.resolve(shakaControlKey)
+    if (originalLocalization === '') {
+      // e.g., A Shaka localization key in shakaControlKeysToShortcuts has fallen out of date and need to be updated
+      console.error('Mising Shaka localization key "%s"', shakaControlKey)
+      return
+    }
+
+    const localizationWithShortcut = addKeyboardShortcutToActionTitle(
+      originalLocalization,
+      shortcut
+    )
+
+    shakaControlKeysToShortcutLocalizations.set(shakaControlKey, localizationWithShortcut)
+  })
+
+  localization.insert(shakaLocale, shakaControlKeysToShortcutLocalizations)
+
+  events.dispatchEvent(new CustomEvent('localeChanged'))
+}
+
+watch(locale, setLocale)
+
+// #endregion player locales
+
+// #region video event handlers
+
+function handlePlay() {
+  if (process.env.IS_ELECTRON) {
+    window.ftElectron.startPowerSaveBlocker()
+  }
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'playing'
+  }
+}
+
+function handlePause() {
+  stopPowerSaveBlocker()
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'paused'
+  }
+}
+
+function handleEnded() {
+  stopPowerSaveBlocker()
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'none'
+  }
+
+  emit('ended')
+}
+
+function handleCanPlay() {
+  // PiP can only be activated once the video's readState and video track are populated
+  if (startInPip && props.format !== 'audio' && ui.getControls().isPiPAllowed() && process.env.IS_ELECTRON) {
+    startInPip = false
+    window.ftElectron.requestPiP()
+  }
+}
+
+function updateVolume() {
+  const video_ = video.value
+  // https://docs.videojs.com/html5#volume
+  if (sessionStorage.getItem('muted') === 'false' && video_.volume === 0) {
+    // If video is muted by dragging volume slider, it doesn't change 'muted' in sessionStorage to true
+    // hence compare it with 'false' and set volume to defaultVolume.
+    const volume = parseFloat(sessionStorage.getItem('defaultVolume'))
+    const muted = true
+    sessionStorage.setItem('volume', volume.toString())
+    sessionStorage.setItem('muted', String(muted))
+  } else {
+    // If volume isn't muted by dragging the slider, muted and volume values are carried over to next video.
+    const volume = video_.volume
+    const muted = video_.muted
+    sessionStorage.setItem('volume', volume.toString())
+    sessionStorage.setItem('muted', String(muted))
+  }
+
+  if (showStats.value) {
+    stats.volume = (video_.volume * 100).toFixed(1)
+  }
+}
+
+function handleTimeupdate() {
+  if (video.value) {
+    const currentTime = video.value.currentTime
+
+    emit('timeupdate', currentTime)
+
+    if (showStats.value && hasLoaded.value) {
+      updateStats()
+    }
+
+    if (useSponsorBlock.value && sponsorBlockSegments.length > 0 && canSeek()) {
+      skipSponsorBlockSegments(currentTime)
+    }
+  }
+}
+
+const videoElementWidth = ref(0)
+const videoElementHeight = ref(0)
+
+/** @type {ResizeObserver} */
+const videoResizeObserver = new ResizeObserver(() => {
+  if (video.value) {
+    const devicePixelRatio = window.devicePixelRatio > 1 ? window.devicePixelRatio : 1
+    const video_ = video.value
+
+    videoElementWidth.value = video_.clientWidth * devicePixelRatio
+    videoElementHeight.value = video_.clientHeight * devicePixelRatio
+  }
+})
+
+/** @type {PictureInPictureWindow | null} */
+let pipWindow = null
+const pipWindowWidth = ref(null)
+const pipWindowHeight = ref(null)
+
+/**
+ * @param {PictureInPictureEvent} event
+ */
+function handleEnterPictureInPicture(event) {
+  pipWindow = event.pictureInPictureWindow
+  handlePictureInPictureResize()
+  pipWindow.addEventListener('resize', handlePictureInPictureResize)
+}
+
+function handleLeavePictureInPicture() {
+  pipWindow.removeEventListener('resize', handlePictureInPictureResize)
+
+  pipWindow = null
+  pipWindowWidth.value = null
+  pipWindowHeight.value = null
+}
+
+function handlePictureInPictureResize() {
+  const devicePixelRatio = window.devicePixelRatio > 1 ? window.devicePixelRatio : 1
+
+  pipWindowWidth.value = pipWindow.width * devicePixelRatio
+  pipWindowHeight.value = pipWindow.height * devicePixelRatio
+}
+
+const playerWidth = computed(() => Math.round(pipWindowWidth.value ?? videoElementWidth.value))
+const playerHeight = computed(() => Math.round(pipWindowHeight.value ?? videoElementHeight.value))
+
+// #endregion video event handlers
+
+// #region SABR
+
+/** @type {shaka.extern.Manifest | undefined} */
+let sabrManifest
+
+/** @type {import('../../helpers/player/SabrSchemePlugin.js').SabrStream | undefined} */
+let sabrStream
+/** @type {AbortController | undefined} */
+let sabrAbortController
+
+if (process.env.SUPPORTS_LOCAL_API && props.sabrData) {
+  sabrStream = /** @__NOINLINE__ */ setupSabrScheme(props.sabrData, () => player, () => sabrManifest, playerWidth, playerHeight)
+  sabrAbortController = new AbortController()
+  // Since there can be 2 requests at the same time (video + audio), we debounce the listener to only show the message once
+  sabrStream.onBackoffRequested(debounce(({ backoffMs }) => {
+    showToast(
+      ({ remainingMs }) => {
+        // `+value` converts string back to float
+        return t('Video.Watch.Remaining SABR backoff time: {remindingTimeSeconds}s', { remindingTimeSeconds: +(remainingMs / 1000).toFixed(1) })
+      },
+      // So that we don't see last countdown text like 0/N
+      backoffMs,
+      null,
+      sabrAbortController.signal,
+    )
+  }, 1000))
+  sabrStream.onReloadOnce((cause) => {
+    sabrAbortController.abort()
+    // `sabr:<cause>` — the watch page names the cause in its toast
+    emit('player-reload-requested', `sabr:${cause}`)
+  })
+}
+
+// #endregion SABR
+
+// #region request/response filters
+
+/** @type {shaka.extern.ResponseFilter} */
+async function responseFilter(type, response, context) {
+  if (type === RequestType.SEGMENT) {
+    const url = new URL(response.uri)
+
+    if (url.protocol === 'sabr:') {
+      return
+    }
+
+    if (response.data && response.data.byteLength > 4 &&
+      new DataView(response.data).getUint32(0) === HTTP_IN_HEX) {
+      // Interpret the response data as a URL string.
+      const responseAsString = shaka.util.StringUtils.fromUTF8(response.data)
+
+      const retryParameters = player.getConfiguration().streaming.retryParameters
+
+      // Make another request for the redirect URL.
+      const uris = [responseAsString]
+      const redirectRequest = shaka.net.NetworkingEngine.makeRequest(uris, retryParameters)
+      const requestOperation = player.getNetworkingEngine().request(type, redirectRequest, context)
+      const redirectResponse = await requestOperation.promise
+
+      // Modify the original response to contain the results of the redirect
+      // response.
+      response.data = redirectResponse.data
+      response.headers = redirectResponse.headers
+      response.uri = redirectResponse.uri
+    } else {
+      // Fix positioning for auto-generated subtitles
+      if (url.hostname.endsWith('.youtube.com') && url.pathname === '/api/timedtext' &&
+        url.searchParams.get('caps') === 'asr' && url.searchParams.get('kind') === 'asr' && url.searchParams.get('fmt') === 'vtt') {
+        const stringBody = new TextDecoder().decode(response.data)
+        // position:0% for LTR text and position:100% for RTL text
+        const cleaned = stringBody.replaceAll(/ align:start position:(?:10)?0%$/gm, '')
+
+        response.data = new TextEncoder().encode(cleaned).buffer
+      }
+    }
+  } else if (type === RequestType.MANIFEST && context.type === AdvancedRequestType.MASTER_PLAYLIST) {
+    const result = patchLiveHlsMainManifest(response.data, props.hlsAudioMetadata)
+
+    if (result !== response.data) {
+      response.data = result
+    }
+  } else if (type === RequestType.MANIFEST && context.type === AdvancedRequestType.MEDIA_PLAYLIST) {
+    const url = new URL(response.uri)
+
+    let modifiedText
+
+    // Fixes proxied HLS manifests, as Invidious replaces the path parameters with query parameters,
+    // so shaka-player isn't able to infer the mime type from the `/file/seg.ts` part like it does for non-proxied HLS manifests.
+    // Shaka-player does attempt to detect it with HEAD request but the `Content-Type` header is `application/octet-stream`,
+    // which still doesn't tell shaka-player how to handle the stream because that's the equivalent of saying "binary data".
+    if (url.searchParams.has('local')) {
+      const stringBody = new TextDecoder().decode(response.data)
+
+      modifiedText = stringBody.replaceAll(/https?:\/\/.+$/gm, hlsProxiedUrlReplacer)
+    }
+
+    // The audio-only streams are actually raw AAC, so correct the file extension from `.ts` to `.aac`
+    if (/\/itag\/23[34]\//.test(url.pathname) || url.searchParams.get('itag') === '233' || url.searchParams.get('itag') === '234') {
+      if (!modifiedText) {
+        modifiedText = new TextDecoder().decode(response.data)
+      }
+
+      modifiedText = modifiedText.replaceAll('/file/seg.ts', '/file/seg.aac')
+    }
+
+    if (modifiedText) {
+      response.data = new TextEncoder().encode(modifiedText).buffer
+    }
+  }
+}
+
+// #endregion request/response filters
+
+// #region set quality
+
+/**
+ * @param {number} quality
+ * @param {number | undefined} audioBandwidth
+ * @param {string | undefined} label
+ */
+function setDashQuality(quality, audioBandwidth, label) {
+  // Codecs that have already stalled this device's decoder on this video are not candidates,
+  // however the quality was asked for — see the hardware decoder stall region.
+  let variants = variantsWithoutFailedCodecs(player.getVariantTracks())
+
+  if (label) {
+    variants = variants.filter(variant => variant.label === label)
+  } else if (hasMultipleAudioTracks.value) {
+    // default audio track
+    const filteredVariants = variants.filter(variant => variant.audioRoles.includes('main'))
+    // Sometimes there is nothing marked as main, don't filter in this case
+    if (filteredVariants.length > 0) {
+      variants = filteredVariants
+    }
+  }
+
+  const isPortrait = variants[0].height > variants[0].width
+
+  let matches = variants.filter(variant => {
+    const { width, height } = variant
+    const [primary, secondary] = isPortrait ? [width, height] : [height, width]
+    const aspectRatio = secondary / primary
+    const resolution = aspectRatio > 16 / 9 ? Math.round(secondary * 9 / 16) : primary
+    return quality === resolution
+  })
+
+  if (matches.length === 0) {
+    matches = variants.filter(variant => {
+      return quality > (isPortrait ? variant.width : variant.height)
+    })
+  }
+
+  matches.sort((a, b) => isPortrait ? b.width - a.width : b.height - a.height)
+
+  let chosenVariant
+
+  if (typeof audioBandwidth === 'number') {
+    const width = matches[0].width
+    const height = matches[0].height
+
+    matches = matches.filter(variant => variant.width === width && variant.height === height)
+
+    chosenVariant = findMostSimilarAudioBandwidth(matches, audioBandwidth)
+  } else {
+    chosenVariant = matches[0]
+  }
+
+  player.selectVariantTrack(chosenVariant)
+}
+
+/**
+ * @param {number|null} playbackPosition
+ * @param {number|undefined} previousQuality
+ */
+async function setLegacyQuality(playbackPosition = null, previousQuality = undefined) {
+  if (typeof previousQuality === 'undefined') {
+    if (defaultQuality.value === 'auto') {
+      previousQuality = Infinity
+    } else {
+      previousQuality = defaultQuality.value
+    }
+  }
+
+  /** @type {object[]} */
+  const legacyFormats = props.legacyFormats
+  if (legacyFormats.length === 0) { return }
+
+  const isPortrait = legacyFormats[0].height > legacyFormats[0].width
+
+  let matches = legacyFormats.filter(variant => {
+    return previousQuality === isPortrait ? variant.width : variant.height
+  })
+
+  if (matches.length === 0) {
+    matches = legacyFormats.filter(variant => {
+      return previousQuality > isPortrait ? variant.width : variant.height
+    })
+
+    if (matches.length > 0) {
+      matches.sort((a, b) => b.bitrate - a.bitrate)
+    } else {
+      matches = legacyFormats.sort((a, b) => a.bitrate - b.bitrate)
+    }
+  }
+
+  hasMultipleAudioTracks.value = false
+
+  events.dispatchEvent(new CustomEvent('setLegacyFormat', {
+    detail: {
+      format: matches[0],
+      playbackPosition
+    }
+  }))
+}
+
+// #endregion set quality
+
+// #region stats
+
+function gatherInitialStatsValues() {
+  /** @type {HTMLVideoElement} */
+  const video_ = video.value
+
+  stats.volume = (video_.volume * 100).toFixed(1)
+
+  if (props.format === 'legacy') {
+    updateLegacyQualityStats(activeLegacyFormat.value)
+  }
+
+  if (!hasLoaded.value) {
+    player.addEventListener('loaded', () => {
+      if (showStats.value) {
+        if (props.format !== 'legacy') {
+          updateQualityStats({
+            newTrack: player.getVariantTracks().find(track => track.active)
+          })
+        }
+
+        updateStats()
+      }
+    }, {
+      once: true
+    })
+
+    return
+  }
+
+  if (props.format !== 'legacy') {
+    updateQualityStats({
+      newTrack: player.getVariantTracks().find(track => track.active)
+    })
+  }
+
+  updateStats()
+}
+
+/**
+ * @param {{
+ *   type: ('adaptation'|'variantchanged'),
+ *   newTrack: shaka.extern.Track,
+ *   oldTrack: shaka.extern.Track
+ * }} track
+ */
+function updateQualityStats({ newTrack }) {
+  if (!showStats.value || props.format === 'legacy') {
+    return
+  }
+
+  stats.bitrate = (newTrack.bandwidth / 1000).toFixed(2)
+
+  const isHls = newTrack.audioMimeType === 'video/mp2t'
+
+  stats.codecs.audioCodec = newTrack.audioCodec
+
+  stats.codecs.audioItag = isHls
+    ? ''
+    : newTrack.originalAudioId.split('-', 1)[0]
+
+  if (props.format === 'dash') {
+    stats.codecs.videoCodec = newTrack.videoCodec
+
+    stats.resolution.frameRate = newTrack.frameRate
+    stats.resolution.width = newTrack.width
+    stats.resolution.height = newTrack.height
+
+    stats.codecs.videoItag = isHls
+      ? ''
+      : newTrack.originalVideoId.split('-', 1)[0]
+  }
+}
+
+function updateLegacyQualityStats(newFormat) {
+  if (!showStats.value || props.format !== 'legacy') {
+    return
+  }
+
+  const { fps, bitrate, mimeType, itag, width, height } = newFormat
+
+  const codecsMatch = mimeType.match(/codecs="(?<videoCodec>.+), ?(?<audioCodec>.+)"/)
+
+  stats.codecs.audioItag = itag
+  stats.codecs.audioCodec = codecsMatch.groups.audioCodec
+
+  stats.codecs.videoItag = itag
+  stats.codecs.videoCodec = codecsMatch.groups.videoCodec
+
+  stats.resolution.frameRate = fps
+
+  stats.bitrate = (bitrate / 1000).toFixed(2)
+
+  stats.resolution.width = width
+  stats.resolution.height = height
+}
+
+function updateStats() {
+  const playerStats = player.getStats()
+
+  if (props.format !== 'audio') {
+    stats.frames = {
+      droppedFrames: playerStats.droppedFrames,
+      totalFrames: playerStats.decodedFrames
+    }
+  }
+
+  if (props.format !== 'legacy') {
+    // estimated bandwidth is NaN for legacy, as none of the requests go through shaka,
+    // so it has no way to estimate the bandwidth
+    stats.bandwidth = (playerStats.estimatedBandwidth / 1000).toFixed(2)
+  }
+
+  let bufferedSeconds = 0
+
+  const buffered = player.getBufferedInfo().total
+
+  for (const { start, end } of buffered) {
+    bufferedSeconds += end - start
+  }
+
+  const seekRange = player.seekRange()
+  const duration = seekRange.end - seekRange.start
+
+  stats.buffered = ((bufferedSeconds / duration) * 100).toFixed(2)
+}
+
+watch(showStats, (newValue) => {
+  if (newValue) {
+    // for abr changes/auto quality
+    player.addEventListener('adaptation', updateQualityStats)
+
+    // for manual changes e.g. in quality selector
+    player.addEventListener('variantchanged', updateQualityStats)
+  } else {
+    // for abr changes/auto quality
+    player.removeEventListener('adaptation', updateQualityStats)
+
+    // for manual changes e.g. in quality selector
+    player.removeEventListener('variantchanged', updateQualityStats)
+  }
+})
+
+watch(activeLegacyFormat, updateLegacyQualityStats)
+
+// #endregion stats
+
+// #region screenshots
+
+async function takeScreenshot() {
+  const video_ = video.value
+
+  const width = video_.videoWidth
+  const height = video_.videoHeight
+
+  if (width <= 0) {
+    return
+  }
+
+  // Need to set crossorigin="anonymous" for LegacyFormat on Invidious
+  // https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  canvas.getContext('2d').drawImage(video_, 0, 0)
+
+  // Navigator Clipboard API only supports PNG
+  const format = screenshotMode.value === 'clipboard' ? 'png' : screenshotFormat.value
+  const mimeType = `image/${format === 'jpg' ? 'jpeg' : format}`
+  // imageQuality is ignored for pngs, so it is still okay to pass the quality value
+  const imageQuality = screenshotQuality.value / 100
+
+  const wasPlaying = !video_.paused
+  if ((!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') && wasPlaying) {
+    video_.pause()
+  }
+
+  try {
+    /** @type {Blob} */
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, mimeType, imageQuality))
+
+    if (screenshotMode.value === 'clipboard') {
+      await copyToClipboard(blob, { messageOnSuccess: t('Screenshot Clipboard Success'), messageOnError: t('Screenshot Clipboard Error') })
+    } else if (screenshotMode.value === 'prompt_folder' || screenshotMode.value === 'default_folder') {
+      let filename
+      try {
+        filename = await store.dispatch('parseScreenshotCustomFileName', {
+          date: new Date(),
+          playerTime: video_.currentTime,
+          videoId: props.videoId
+        })
+      } catch (err) {
+        console.error(`Parse failed: ${err.message}`)
+        showToast(t('Screenshot Error', { error: err.message }))
+        canvas.remove()
+        return
+      }
+
+      const filenameWithExtension = `${filename}.${format}`
+
+      if (!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') {
+        const saved = await writeFileWithPicker(
+          filenameWithExtension,
+          blob,
+          format.toUpperCase(),
+          mimeType,
+          `.${format}`,
+          'player-screenshots',
+          'pictures'
+        )
+
+        if (saved) {
+          showToast(t('Screenshot Success'))
+        }
+      } else {
+        const arrayBuffer = await blob.arrayBuffer()
+
+        if (await window.ftElectron.writeToDefaultFolder(filenameWithExtension, arrayBuffer)) {
+          showToast(t('Screenshot Success'))
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    showToast(t('Screenshot Error', { error }))
+  } finally {
+    canvas.remove()
+
+    if ((!process.env.IS_ELECTRON || screenshotMode.value === 'prompt_folder') && wasPlaying) {
+      video_.play()
+    }
+  }
+}
+
+// #endregion screenshots
+
+// #region custom player controls
+
+const { ContextMenu: shakaContextMenu, Controls: shakaControls, OverflowMenu: shakaOverflowMenu } = shaka.ui
+
+function registerAudioTrackSelection() {
+  /** @implements {shaka.extern.IUIElement.Factory} */
+  class AudioTrackSelectionFactory {
+    create(rootElement, controls) {
+      return new AudioTrackSelection(events, rootElement, controls)
+    }
+  }
+
+  shakaControls.registerElement('ft_audio_tracks', new AudioTrackSelectionFactory())
+  shakaOverflowMenu.registerElement('ft_audio_tracks', new AudioTrackSelectionFactory())
+}
+
+function registerAutoplayToggle() {
+  events.addEventListener('toggleAutoplay', () => {
+    emit('toggle-autoplay')
+  })
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class AutoplayToggleFactory {
+    create(rootElement, controls) {
+      return new AutoplayToggle(props.autoplayEnabled, events, rootElement, controls)
+    }
+  }
+
+  shakaControls.registerElement('ft_autoplay_toggle', new AutoplayToggleFactory())
+  shakaOverflowMenu.registerElement('ft_autoplay_toggle', new AutoplayToggleFactory())
+}
+
+function registerTheatreModeButton() {
+  events.addEventListener('toggleTheatreMode', () => {
+    emit('toggle-theatre-mode')
+  })
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class TheatreModeButtonFactory {
+    create(rootElement, controls) {
+      return new TheatreModeButton(props.useTheatreMode, events, rootElement, controls)
+    }
+  }
+
+  shakaControls.registerElement('ft_theatre_mode', new TheatreModeButtonFactory())
+  shakaOverflowMenu.registerElement('ft_theatre_mode', new TheatreModeButtonFactory())
+}
+
+function registerFullWindowButton() {
+  events.addEventListener('setFullWindow', (/** @type {CustomEvent} */ event) => {
+    if (event.detail) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+
+    fullWindowEnabled.value = event.detail
+
+    if (fullWindowEnabled.value) {
+      document.body.classList.add('playerFullWindow')
+    } else {
+      document.body.classList.remove('playerFullWindow')
+    }
+  })
+
+  if (startInFullwindow) {
+    events.dispatchEvent(new CustomEvent('setFullWindow', {
+      detail: true
+    }))
+  }
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class FullWindowButtonFactory {
+    create(rootElement, controls) {
+      return new FullWindowButton(fullWindowEnabled.value, events, rootElement, controls)
+    }
+  }
+
+  shakaControls.registerElement('ft_full_window', new FullWindowButtonFactory())
+  shakaOverflowMenu.registerElement('ft_full_window', new FullWindowButtonFactory())
+}
+
+function registerLegacyQualitySelection() {
+  events.addEventListener('setLegacyFormat', async (/** @type {CustomEvent} */ event) => {
+    const { format, playbackPosition, restoreCaptionIndex: restoreCaptionIndex_ = null } = event.detail
+
+    if (restoreCaptionIndex_ !== null) {
+      restoreCaptionIndex = restoreCaptionIndex_
+    }
+
+    activeLegacyFormat.value = event.detail.format
+    try {
+      await player.load(format.url, playbackPosition, format.mimeType)
+    } catch (error) {
+      handleError(error, 'setLegacyFormat', event.detail)
+    }
+  })
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class LegacyQualitySelectionFactory {
+    create(rootElement, controls) {
+      return new LegacyQualitySelection(
+        activeLegacyFormat.value,
+        props.legacyFormats,
+        events,
+        rootElement,
+        controls
+      )
+    }
+  }
+
+  shakaControls.registerElement('ft_legacy_quality', new LegacyQualitySelectionFactory())
+  shakaOverflowMenu.registerElement('ft_legacy_quality', new LegacyQualitySelectionFactory())
+}
+
+function registerStatsButton() {
+  events.addEventListener('setStatsVisibility', (/** @type {CustomEvent} */ event) => {
+    showStats.value = event.detail
+
+    if (showStats.value) {
+      gatherInitialStatsValues()
+    }
+  })
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class StatsButtonFactory {
+    create(rootElement, controls) {
+      return new StatsButton(showStats.value, events, rootElement, controls)
+    }
+  }
+
+  shakaContextMenu.registerElement('ft_stats', new StatsButtonFactory())
+}
+
+function registerScreenshotButton() {
+  events.addEventListener('takeScreenshot', () => {
+    takeScreenshot()
+  })
+
+  /**
+   * @implements {shaka.extern.IUIElement.Factory}
+   */
+  class ScreenshotButtonFactory {
+    create(rootElement, controls) {
+      return new ScreenshotButton(events, rootElement, controls)
+    }
+  }
+
+  shakaControls.registerElement('ft_screenshot', new ScreenshotButtonFactory())
+  shakaOverflowMenu.registerElement('ft_screenshot', new ScreenshotButtonFactory())
+}
+
+function registerSkipButtons() {
+  // skip to next video button
+  events.addEventListener('nextVideo', () => {
+    emit('skip-to-next')
+  })
+
+  class SkipNextButtonFactory {
+    create(rootElement, controls) {
+      return new SkipButton(events, rootElement, controls, 'next')
+    }
+  }
+
+  shakaControls.registerElement('ft_skip_next', new SkipNextButtonFactory())
+  shakaOverflowMenu.registerElement('ft_skip_next', new SkipNextButtonFactory())
+
+  // skip to previous video button
+  events.addEventListener('previousVideo', () => {
+    emit('skip-to-prev')
+  })
+
+  class SkipPreviousButtonFactory {
+    create(rootElement, controls) {
+      return new SkipButton(events, rootElement, controls, 'previous')
+    }
+  }
+
+  shakaControls.registerElement('ft_skip_previous', new SkipPreviousButtonFactory())
+  shakaOverflowMenu.registerElement('ft_skip_previous', new SkipPreviousButtonFactory())
+}
+
+/**
+ * As shaka-player doesn't let you unregister custom control factories,
+ * overwrite them with `null` instead so the referenced objects
+ * (e.g. {@linkcode events}, {@linkcode fullWindowEnabled}) can get garbage collected
+ */
+function cleanUpCustomPlayerControls() {
+  shakaControls.registerElement('ft_audio_tracks', null)
+  shakaOverflowMenu.registerElement('ft_audio_tracks', null)
+
+  shakaControls.registerElement('ft_autoplay_toggle', null)
+  shakaOverflowMenu.registerElement('ft_autoplay_toggle', null)
+
+  shakaControls.registerElement('ft_theatre_mode', null)
+  shakaOverflowMenu.registerElement('ft_theatre_mode', null)
+
+  shakaControls.registerElement('ft_full_window', null)
+  shakaOverflowMenu.registerElement('ft_full_window', null)
+
+  shakaControls.registerElement('ft_legacy_quality', null)
+  shakaOverflowMenu.registerElement('ft_legacy_quality', null)
+
+  shakaContextMenu.registerElement('ft_stats', null)
+
+  shakaControls.registerElement('ft_screenshot', null)
+  shakaOverflowMenu.registerElement('ft_screenshot', null)
+
+  shakaControls.registerElement('ft_next_previous', null)
+  shakaOverflowMenu.registerElement('ft_next_previous', null)
+
+  shakaControls.registerElement('ft_skip_previous', null)
+  shakaOverflowMenu.registerElement('ft_skip_previous', null)
+}
+
+// #endregion custom player controls
+
+// #region mouse and keyboard helpers
+
+/**
+ * @param {number} step
+ */
+function changeVolume(step) {
+  const volumeBar = container.value.querySelector('.shaka-volume-bar')
+
+  const oldValue = parseFloat(volumeBar.value)
+  const newValue = oldValue + (step * 100)
+
+  if (newValue < 0) {
+    volumeBar.value = 0
+  } else if (newValue > 100) {
+    volumeBar.value = 100
+  } else {
+    volumeBar.value = newValue
+  }
+
+  volumeBar.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }))
+
+  let messageIcon
+  if (newValue <= 0) {
+    messageIcon = 'volume-mute'
+  } else if (newValue > 0 && newValue < oldValue) {
+    messageIcon = 'volume-low'
+  } else if (newValue > 0 && newValue > oldValue) {
+    messageIcon = 'volume-high'
+  }
+  showValueChange(`${Math.round(video.value.volume * 100)}%`, messageIcon)
+}
+
+/**
+ * @param {number} delta
+ * @param {boolean} snapToClosestInterval
+ */
+function changePlayBackRate(delta, snapToClosestInterval = false) {
+  let newPlaybackRateString = (player.getPlaybackRate() + delta).toFixed(2)
+  let newPlaybackRate = parseFloat(newPlaybackRateString)
+
+  if (snapToClosestInterval) {
+    const currentPlaybackRate = player.getPlaybackRate()
+    const videoPlaybackRateIntervalVal = videoPlaybackRateInterval.value
+
+    // Modified from https://github.com/shaka-project/shaka-player/blob/v5.3.2/ui/playback_rate_selection.js#L206-L221
+    const min = videoPlaybackRateInterval.value
+    const max = maxVideoPlaybackRate.value
+    const current = currentPlaybackRate
+    const step = videoPlaybackRateIntervalVal
+    // Snap current rate to the nearest step grid point, then apply delta.
+    // Slightly different from `shaka-player
+    // When delta > 0, snap to lower number & vice versa (by adding or subtracting 0.001
+    const snapped = Math.round(current / step + (delta < 0 ? 0.001 : -0.001)) * step
+    const raw = snapped + delta
+    // Eliminate floating-point noise (e.g. 0.05 * 20 → 1.0000000000000002).
+    const next = parseFloat((Math.round(raw / step) * step).toPrecision(10))
+    const clamped = Math.max(min, Math.min(max, next))
+    newPlaybackRate = clamped
+    newPlaybackRateString = clamped.toFixed(2)
+  }
+
+  // The following error is thrown if you go below 0.07:
+  // The provided playback rate (0.05) is not in the supported playback range.
+  if (newPlaybackRate > 0.07 && newPlaybackRate <= maxVideoPlaybackRate.value) {
+    if (newPlaybackRate === defaultPlaybackRate.value) {
+      player.cancelTrickPlay()
+    } else {
+      player.trickPlay(newPlaybackRate, false)
+    }
+
+    showValueChange(`${newPlaybackRateString}x`)
+  }
+}
+
+function canSeek() {
+  if (!player || !hasLoaded.value) {
+    return false
+  }
+
+  const seekRange = player.seekRange()
+
+  // Seeking not possible e.g. with live HLS
+  if (seekRange.start === seekRange.end || !seekingIsPossible.value) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * @param {number} seconds The number of seconds to seek by, positive values seek forwards, negative ones seek backwards
+ * @param {boolean} canSeekResult Allow functions that have already checked whether seeking is possible, to skip the extra check (e.g. frameByFrame)
+ * @param {boolean} showPopUp Whether to show a pop-up with the seconds seeked
+ */
+function seekBySeconds(seconds, canSeekResult = false, showPopUp = false) {
+  if (!(canSeekResult || canSeek())) {
+    return
+  }
+
+  const seekRange = player.seekRange()
+
+  const video_ = video.value
+
+  const currentTime = video_.currentTime
+  const newTime = currentTime + seconds
+
+  if (newTime < seekRange.start) {
+    video_.currentTime = seekRange.start
+  } else if (newTime > seekRange.end) {
+    if (isLive.value) {
+      player.goToLive()
+    } else {
+      video_.currentTime = seekRange.end
+    }
+  } else {
+    video_.currentTime = newTime
+  }
+  if (showPopUp) {
+    const popUpLayout = seconds > 0
+      ? { icon: 'arrow-right', invertContentOrder: true }
+      : { icon: 'arrow-left', invertContentOrder: false }
+    // `+value` converts string back to float
+    const formattedSeconds = +Math.abs(seconds).toFixed(2)
+    showValueChange(`${formattedSeconds}s`, popUpLayout.icon, popUpLayout.invertContentOrder)
+  }
+
+  showOverlayControls()
+}
+
+// #endregion mouse and keyboard helpers
+
+// #region mouse scroll handlers
+
+const mouseScrollThrottleWaitMs = 200
+
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollPlaybackRate(event) {
+  if ((event.deltaY < 0 || event.deltaX > 0)) {
+    changePlayBackRate(0.05)
+  } else if ((event.deltaY > 0 || event.deltaX < 0)) {
+    changePlayBackRate(-0.05)
+  }
+}
+const mouseScrollPlaybackRateThrottle = throttle(mouseScrollPlaybackRate, mouseScrollThrottleWaitMs)
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollPlaybackRateHandler(event) {
+  event.preventDefault()
+
+  // Touchpad scroll = small deltaX/deltaY
+  if (Math.abs(event.deltaX) <= 5 && Math.abs(event.deltaY) <= 5) {
+    mouseScrollPlaybackRateThrottle(event)
+  } else {
+    mouseScrollPlaybackRate(event)
+  }
+}
+
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollSkip(event) {
+  if ((event.deltaY < 0 || event.deltaX > 0)) {
+    seekBySeconds(defaultSkipInterval.value * player.getPlaybackRate(), true)
+  } else if ((event.deltaY > 0 || event.deltaX < 0)) {
+    seekBySeconds(-defaultSkipInterval.value * player.getPlaybackRate(), true)
+  }
+}
+const mouseScrollSkipThrottle = throttle(mouseScrollSkip, mouseScrollThrottleWaitMs)
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollSkipHandler(event) {
+  if (canSeek()) {
+    event.preventDefault()
+
+    // Touchpad scroll = small deltaX/deltaY
+    if (Math.abs(event.deltaX) <= 5 && Math.abs(event.deltaY) <= 5) {
+      mouseScrollSkipThrottle(event)
+    } else {
+      mouseScrollSkip(event)
+    }
+  }
+}
+
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollVolume(event) {
+  const video_ = video.value
+
+  if (video_.muted && (event.deltaY < 0 || event.deltaX > 0)) {
+    video_.muted = false
+    video_.volume = 0
+  }
+
+  if (!video_.muted) {
+    if ((event.deltaY < 0 || event.deltaX > 0)) {
+      changeVolume(0.05)
+    } else if ((event.deltaY > 0 || event.deltaX < 0)) {
+      changeVolume(-0.05)
+    }
+  }
+}
+const mouseScrollVolumeThrottle = throttle(mouseScrollVolume, mouseScrollThrottleWaitMs)
+/**
+ * @param {WheelEvent} event
+ */
+function mouseScrollVolumeHandler(event) {
+  if (!event.ctrlKey && !event.metaKey) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    // Touchpad scroll = small deltaX/deltaY
+    if (Math.abs(event.deltaX) <= 5 && Math.abs(event.deltaY) <= 5) {
+      mouseScrollVolumeThrottle(event)
+    } else {
+      mouseScrollVolume(event)
+    }
+  }
+}
+
+// #endregion mouse scroll handlers
+
+// #region keyboard shortcuts
+
+/**
+ * determines whether the jump to the previous or next chapter
+ * with the the keyboard shortcuts, should be done
+ * first it checks whether there are any chapters (the array is also empty if chapters are hidden)
+ * it also checks that the approprate combination was used ALT/OPTION on macOS and CTRL everywhere else
+ * @param {KeyboardEvent} event the keyboard event
+ * @param {string} direction the direction of the jump either previous or next
+ */
+function canChapterJump(event, direction) {
+  const currentChapter = props.currentChapterIndex
+  return props.chapters.length > 0 &&
+    (direction === 'previous' ? currentChapter > 0 : props.chapters.length - 1 !== currentChapter) &&
+    ((process.platform !== 'darwin' && event.ctrlKey) ||
+      (process.platform === 'darwin' && event.metaKey))
+}
+
+/**
+ * @param {number} step
+ */
+function frameByFrame(step) {
+  if (props.format === 'audio' || !canSeek()) {
+    return
+  }
+
+  video.value.pause()
+
+  /** @type {number} */
+  let fps
+  if (props.format === 'legacy') {
+    fps = activeLegacyFormat.value.fps
+  } else {
+    fps = player.getVariantTracks().find(track => track.active).frameRate
+  }
+
+  const frameTime = 1 / fps
+  const dist = frameTime * step
+  seekBySeconds(dist, true)
+}
+
+// Blur player buttons to remove :focus-visible state, preventing tooltips from staying visible
+const buttonWithTooltipClasses = [
+  'shaka-play-button',
+  'shaka-fullscreen-button',
+  'shaka-mute-button',
+  'shaka-pip-button',
+  'full-window-button',
+  'theatre-button',
+  'screenshot-button',
+]
+function blurTooltipButtons() {
+  const element = document.activeElement
+  if (buttonWithTooltipClasses.some(className => element.classList.contains(className))) {
+    element.blur()
+  }
+}
+
+/**
+ * @param {KeyboardEvent} event
+ */
+function keyboardShortcutHandler(event) {
+  if (!player) {
+    return
+  }
+
+  if (document.activeElement.classList.contains('ft-input') || event.altKey) {
+    return
+  }
+
+  // exit fullscreen and/or fullwindow if keyboard shortcut modal is opened
+  if (event.shiftKey && event.key === '?') {
+    event.preventDefault()
+
+    if (ui.getControls().isFullScreenEnabled()) {
+      ui.getControls().toggleFullScreen()
+    }
+
+    if (fullWindowEnabled.value) {
+      events.dispatchEvent(new CustomEvent('setFullWindow', {
+        detail: !fullWindowEnabled.value
+      }))
+    }
+
+    return
+  }
+
+  // allow chapter jump keyboard shortcuts
+  if (event.ctrlKey && (process.platform === 'darwin' || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight'))) {
+    return
+  }
+
+  // allow copying text
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
+    return
+  }
+
+  // allow focusing on search bar without affecting the playback
+  if ((process.platform === 'darwin' && event.metaKey) && event.key.toLowerCase() === 'l') {
+    return
+  }
+
+  const video_ = video.value
+
+  // Skip to next video in playlist or recommended
+  if (event.shiftKey && event.key.toLowerCase() === 'n') {
+    emit('skip-to-next')
+    return
+  }
+
+  // Skip to previous video in playlist
+  if (event.shiftKey && event.key.toLowerCase() === 'p') {
+    emit('skip-to-prev')
+    return
+  }
+
+  switch (event.key.toLowerCase()) {
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.FULLSCREEN:
+      // Toggle full screen
+      event.preventDefault()
+      ui.getControls().toggleFullScreen()
+      blurTooltipButtons()
+      break
+    case 'escape':
+      // Exit full window
+      if (fullWindowEnabled.value) {
+        event.preventDefault()
+
+        events.dispatchEvent(new CustomEvent('setFullWindow', {
+          detail: false
+        }))
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.FULLWINDOW:
+      // Toggle full window mode
+      event.preventDefault()
+      events.dispatchEvent(new CustomEvent('setFullWindow', {
+        detail: !fullWindowEnabled.value
+      }))
+      blurTooltipButtons()
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.THEATRE_MODE:
+      // Toggle theatre mode
+      if (props.theatrePossible) {
+        event.preventDefault()
+
+        events.dispatchEvent(new CustomEvent('toggleTheatreMode', {
+          detail: !props.useTheatreMode
+        }))
+      }
+      blurTooltipButtons()
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.MUTE:
+      // Toggle mute only if metakey is not pressed
+      if (!event.metaKey) {
+        event.preventDefault()
+        const isMuted = !video_.muted
+        video_.muted = isMuted
+
+        const messageIcon = isMuted ? 'volume-mute' : 'volume-high'
+        const message = isMuted ? '0%' : `${Math.round(video_.volume * 100)}%`
+        showValueChange(message, messageIcon)
+      }
+      blurTooltipButtons()
+      break
+  }
+
+  if (!hasLoaded.value) {
+    return
+  }
+
+  switch (event.key.toLowerCase()) {
+    case ' ':
+    case 'spacebar': // older browsers might return spacebar instead of a space character
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.PLAY:
+      // Toggle Play/Pause
+      event.preventDefault()
+      video_.paused ? video_.play() : video_.pause()
+      blurTooltipButtons()
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.LARGE_REWIND:
+      // Rewind by 2x the time-skip interval (in seconds)
+      event.preventDefault()
+      seekBySeconds(-defaultSkipInterval.value * player.getPlaybackRate() * 2, false, true)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.LARGE_FAST_FORWARD:
+      // Fast-Forward by 2x the time-skip interval (in seconds)
+      event.preventDefault()
+      seekBySeconds(defaultSkipInterval.value * player.getPlaybackRate() * 2, false, true)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.DECREASE_VIDEO_SPEED:
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.DECREASE_VIDEO_SPEED_ALT:
+      // Decrease playback rate by user configured interval
+      event.preventDefault()
+      changePlayBackRate(-videoPlaybackRateInterval.value, true)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.INCREASE_VIDEO_SPEED:
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.INCREASE_VIDEO_SPEED_ALT:
+      // Increase playback rate by user configured interval
+      event.preventDefault()
+      changePlayBackRate(videoPlaybackRateInterval.value, true)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.CAPTIONS: {
+      // Toggle caption/subtitles
+
+      const textTracks = player.getTextTracks()
+      if (textTracks.length > 0) {
+        event.preventDefault()
+
+        if (textTracks.some(track => track.active)) {
+          player.selectTextTrack(null)
+        } else {
+          player.selectTextTrack(textTracks[0])
+        }
+
+        showOverlayControls()
+      }
+      break
+    }
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.VOLUME_UP:
+      // Increase volume
+      event.preventDefault()
+      changeVolume(0.05)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.VOLUME_DOWN:
+      // Decrease Volume
+      event.preventDefault()
+      changeVolume(-0.05)
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.SMALL_REWIND:
+      if (event.shiftKey) {
+        break
+      }
+      event.preventDefault()
+      if (canChapterJump(event, 'previous')) {
+        // Jump to the previous chapter
+        video_.currentTime = props.chapters[props.currentChapterIndex - 1].startSeconds
+        showOverlayControls()
+      } else {
+        // Rewind by the time-skip interval (in seconds)
+        seekBySeconds(-defaultSkipInterval.value * player.getPlaybackRate(), false, true)
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.SMALL_FAST_FORWARD:
+      if (event.shiftKey) {
+        break
+      }
+      event.preventDefault()
+      if (canChapterJump(event, 'next')) {
+        // Jump to the next chapter
+        video_.currentTime = (props.chapters[props.currentChapterIndex + 1].startSeconds)
+        showOverlayControls()
+      } else {
+        // Fast-Forward by the time-skip interval (in seconds)
+        seekBySeconds(defaultSkipInterval.value * player.getPlaybackRate(), false, true)
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.PICTURE_IN_PICTURE:
+      // Toggle picture in picture
+      if (props.format !== 'audio') {
+        const controls = ui.getControls()
+        if (controls.isPiPAllowed()) {
+          controls.togglePiP()
+        }
+      }
+      blurTooltipButtons()
+      break
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': {
+      // Jump to percentage in the video
+      if (canSeek()) {
+        event.preventDefault()
+
+        // use seek range instead of duration so that it works for live streams too
+        const seekRange = player.seekRange()
+
+        const length = seekRange.end - seekRange.start
+        const percentage = parseInt(event.key) / 10
+
+        video_.currentTime = seekRange.start + (length * percentage)
+        showOverlayControls()
+      }
+      break
+    }
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.LAST_FRAME:
+      // `⌘+,` is for settings in MacOS
+      if (!event.metaKey && video_.paused) {
+        event.preventDefault()
+        // Return to previous frame
+        frameByFrame(-1)
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.NEXT_FRAME:
+      if (video_.paused) {
+        event.preventDefault()
+        // Advance to next frame
+        frameByFrame(1)
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.STATS:
+      // Toggle stats display
+      event.preventDefault()
+
+      events.dispatchEvent(new CustomEvent('setStatsVisibility', {
+        detail: !showStats.value
+      }))
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.HOME:
+      // Jump to beginning of video
+      if (canSeek()) {
+        event.preventDefault()
+        // use seek range instead of duration so that it works for live streams too
+        const seekRange = player.seekRange()
+        video_.currentTime = seekRange.start
+        showOverlayControls()
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.PLAYBACK.END:
+      // Jump to end of video
+      if (canSeek()) {
+        event.preventDefault()
+        // use seek range instead of duration so that it works for live streams too
+        const seekRange = player.seekRange()
+        video_.currentTime = seekRange.end
+        showOverlayControls()
+      }
+      break
+    case KeyboardShortcuts.VIDEO_PLAYER.GENERAL.TAKE_SCREENSHOT:
+      if (enableScreenshot.value && props.format !== 'audio') {
+        event.preventDefault()
+        // Take screenshot
+        takeScreenshot()
+      }
+      blurTooltipButtons()
+      break
+  }
+}
+
+// #endregion keyboard shortcuts
+
+let ignoreErrors = false
+
+/**
+ * @param {shaka.util.Error} error
+ * @param {string} context
+ * @param {object?} details
+ */
+function handleError(error, context, details) {
+  // These two errors are just wrappers around another error, so use the original error instead
+  // As they can be nested (e.g. multiple googlevideo redirects because the Invidious server was far away from the user) we should pick the inner most one
+  while (error.code === ErrorCode.REQUEST_FILTER_ERROR || error.code === ErrorCode.RESPONSE_FILTER_ERROR) {
+    error = error.data[0]
+  }
+
+  // Allow shaka-player to retry on potentially recoverable network errors
+  if (error.severity === ErrorSeverity.RECOVERABLE && error.category === ErrorCategory.NETWORK) {
+    /** @type {keyof ErrorCategory} */
+    const categoryText = Object.keys(ErrorCategory).find((/** @type {keyof ErrorCategory} */ key) => ErrorCategory[key] === error.category)
+
+    /** @type {keyof ErrorCode} */
+    const codeText = Object.keys(ErrorCode).find((/** @type {keyof ErrorCode} */ key) => ErrorCode[key] === error.code)
+
+    console.warn(
+      'Recoverable network error retrying...\n' +
+      `Category: ${categoryText} (${error.category})\n` +
+      `Code: ${codeText} (${error.code})\n` +
+      'Data', error.data
+    )
+    return
+  }
+
+  logShakaError(error, context, props.videoId, details)
+
+  // A hardware decoder refusing a frame reaches shaka as a SourceBuffer append failure on
+  // the media request — MEDIA_SOURCE_OPERATION_FAILED, with a `sabr:video?formatId=248-...`
+  // in its data — roughly a second after the clock is zeroed. That is a direct signal, far
+  // better than inferring one from the clock, so it is the trigger of choice. Handling it
+  // here also gets in ahead of the Watch view's format ladder, which cannot help: a video
+  // with `legacyFormats=0` only gets a toast out of it.
+  if (process.env.IS_ANDROID &&
+    (error.code === ErrorCode.MEDIA_SOURCE_OPERATION_FAILED || error.code === ErrorCode.VIDEO_ERROR) &&
+    recoverFromDecoderStall(`shaka error ${error.code}`)) {
+    return
+  }
+
+  // text related errors aren't serious (captions and seek bar thumbnails), so we should just log them
+  // TODO: consider only emitting when the severity is crititcal?
+  if (
+    !ignoreErrors &&
+    error.category !== shaka.util.Error.Category.TEXT &&
+    !(error.code === shaka.util.Error.Code.BAD_HTTP_STATUS && error.data[0].startsWith('https://www.youtube.com/api/timedtext'))
+  ) {
+    // don't react to multiple consecutive errors, otherwise we don't give the format fallback from the previous error a chance to work
+    ignoreErrors = true
+
+    emit('error', error)
+
+    stopPowerSaveBlocker()
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'none'
+    }
+  }
+}
+
+// #region hardware decoder stall recovery
+
+/*
+ * Some Android hardware decoders size their MediaCodec input buffers linearly from the
+ * stream's resolution — the Kirin VP9 decoder allocates width * height * 3 / 8, exactly
+ * 777600 bytes for 1080p — and reject outright any compressed frame too big to fit:
+ *
+ *   [ERROR:media_codec_bridge_impl.cc(723)] Input buffer size 810850
+ *   exceeds MediaCodec input buffer capacity: 777600
+ *
+ * An occasional heavy keyframe overruns that by a few percent. Chromium cannot split one
+ * compressed frame across input buffers, so it fails the decode, tears the codec down and
+ * re-creates it from the keyframe *before* the offending one — walking back into it, for as
+ * long as anyone lets it. None of this surfaces above MSE: no `error` event is fired and
+ * shaka never hears of it.
+ *
+ * Lowering the resolution is not the cure it looks like — the input buffer shrinks linearly
+ * with the pixel count while the keyframe does not, so the same picture can be a *larger*
+ * multiple of a smaller buffer. Changing codec is what settles it, and on this device the
+ * only alternative is h264: the console log shows every av01 variant dropped as unsupported
+ * by the platform's MediaSource, so the real choice is vp9 or avc1 and nothing else.
+ *
+ * WHAT IT ACTUALLY LOOKS LIKE, finally caught in the console log on 2026-09-04:
+ *
+ *   [decoder-stall] ignoring a 131.0s fall-back to 0.00s (too large ...); loaded=true
+ *   Player Error: MEDIA_SOURCE_OPERATION_FAILED (3014)
+ *     Data: sabr:video?formatId=248-...&resolution=1080&startTimeMs=186500&sq=37
+ *   Unable to play DASH formats. Reverting to legacy formats...
+ *
+ * itag 248 is vp9 1080p, so the failing stream is exactly the one the MediaCodec error
+ * names. Three things that guesswork had wrong, in order of how much they cost:
+ *
+ * - The clock is reset to ZERO, not rewound a couple of seconds. Judging a decoder fault by
+ *   the SIZE of the fall-back threw the real event away as "too large". `hasLoaded` is the
+ *   honest discriminator instead: a reload or a route change clears it first, so a backwards
+ *   jump while it is still true, with no seek in flight, is the decoder and nothing else.
+ * - It DOES surface to shaka, as MEDIA_SOURCE_OPERATION_FAILED (3014) on the media request —
+ *   a SourceBuffer append failure — about a second after the clock drops. That is a direct
+ *   signal and far better than inferring anything from the clock, so it is now the trigger.
+ * - The Watch view's answer to 3014 is the format ladder, which is useless here: this video
+ *   reports `legacyFormats=0`, so `enableLegacyFormat` toasts and returns, leaving nothing.
+ *   Handling it here, before the error escapes, is the only place a fix can work.
+ *
+ * AND WHY AN IN-PLACE SWITCH CANNOT WORK, which the next log made plain:
+ *
+ *   fell back 130.9s at 0.00s on vp9 1080p; known bad: vp9; loaded=true; variants=528
+ *   no other codec on offer; leaving playback alone
+ *
+ * 528 variants and not one avc1 among them. shaka's `chooseCodecsAndFilterManifest` settles
+ * on a SINGLE video codec family while the manifest is being filtered and drops the rest, so
+ * `getVariantTracks()` never offers a second codec to switch to — the tracks do not exist.
+ * The codec is therefore only choosable at LOAD time, through `preferredVideo`, which is why
+ * recovery ends in a deliberate reload: note the dead codec, ask for the player to be
+ * rebuilt, and `preferredVideoCodecs` steers the fresh manifest onto h264. The position
+ * survives because `onPlayerReloadRequested` carries it across (see Watch.js's
+ * `lastKnownPlaybackPosition`, which exists for exactly this).
+ *
+ * TWO EARLIER ATTEMPTS FAILED, both for reasons worth keeping written down.
+ *
+ * The first hung its detection on `timeupdate` — but a media element fires `timeupdate`
+ * only when `currentTime` CHANGES, and a wedged decoder is precisely the case where it
+ * stops changing. The detector could not observe the failure it existed for. Freezes are
+ * therefore polled on an interval now, and the poll is the primary signal: time not moving
+ * while playing, with data already buffered ahead, is a decode failure and nothing else
+ * (a network stall has no buffer ahead, which is what separates them).
+ *
+ * The second reacted by switching variants from inside shaka's `loaded` handler — that is,
+ * during `player.load()` — and by changing `activeFormat`, which the format watcher turns
+ * into `performFirstLoad()` at `props.startTime`. Between them those restarted the video
+ * and could leave the load wedged. So: nothing is mutated mid-load any more. The codec to
+ * avoid is recorded, and applied as CONFIGURATION before the next `player.load()`, where
+ * shaka filters the manifest down to the preferred family and vp9 never becomes a variant.
+ *
+ * The record lives in `sessionStorage`, not just in memory: the failure is accompanied by a
+ * document teardown ("Failed to execute 'exitFullscreen': Document not active"), and a
+ * document reload would take module state with it.
+ */
+
+/** Playing, but the clock has not moved this long — with data buffered ahead. */
+const STALL_FROZEN_MS = 3000
+
+/** Buffer ahead of the playhead that separates a wedged decoder from a starved network. */
+const STALL_BUFFER_AHEAD_SECONDS = 1
+
+/** How often to look, since a frozen element reports nothing on its own. */
+const STALL_POLL_MS = 1000
+
+/** Smaller than this is jitter. There is deliberately no upper bound — see above. */
+const STALL_REGRESSION_SECONDS = 0.5
+
+const STALL_STORAGE_KEY = 'decoderStallCodecs'
+
+let stallLastObserved = 0
+let stallSeekPending = false
+let stallLastAdvanceAt = 0
+let stallFrozenHandled = false
+
+/** Where playback had got to before the fault reset the clock, so it can be put back. */
+let stallLastGoodPosition = 0
+
+/**
+ * What is on screen, kept current as it changes rather than read when the fault is noticed —
+ * by then the player may be reloading and reporting no variants at all.
+ * @type {string | null}
+ */
+let stallActiveCodec = null
+
+/** @type {number | null} */
+let stallActiveHeight = null
+
+/**
+ * `avc1.4d401f`, `vp09.00.41.08` and `vp9` all reduce to the family that decides which
+ * MediaCodec instance ends up doing the work.
+ * @param {string} codec
+ */
+function videoCodecFamily(codec) {
+  const family = codec.split('.')[0].toLowerCase()
+
+  return family === 'vp09' ? 'vp9' : family
+}
+
+/** @returns {string[]} codec families known to wedge this device on the video now playing */
+function failedCodecsForThisVideo() {
+  if (decoderStallRecovery?.videoId === props.videoId) {
+    return decoderStallRecovery.failed
+  }
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(STALL_STORAGE_KEY) ?? 'null')
+
+    if (stored?.videoId === props.videoId && Array.isArray(stored.failed)) {
+      decoderStallRecovery = stored
+      return stored.failed
+    }
+  } catch { }
+
+  return []
+}
+
+/**
+ * Resume playback after a rebuild this code asked for, once. Anything else — a fresh visit,
+ * a SABR reload, 白い熊 opening the video deliberately — keeps the Autoplay Videos setting's
+ * answer, which is why this is keyed to a flag we set rather than to the reload itself.
+ */
+function resumeAfterDecoderRebuild() {
+  if (decoderStallRecovery?.videoId !== props.videoId || decoderStallRecovery.resumeAfterRebuild !== true) {
+    return
+  }
+
+  decoderStallRecovery = { ...decoderStallRecovery, resumeAfterRebuild: false }
+
+  try {
+    sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+  } catch { }
+
+  const videoElement = video.value
+
+  if (!videoElement || !videoElement.paused) {
+    return
+  }
+
+  diagWarn('playback', `[decoder-stall] ${props.videoId}: resuming playback after the rebuild`)
+
+  videoElement.play().catch((error) => {
+    diagError('playback', `[decoder-stall] ${props.videoId}: could not resume after the rebuild`, error)
+  })
+}
+
+/** @param {string} family */
+function rememberFailedCodec(family) {
+  const failed = failedCodecsForThisVideo()
+
+  if (failed.includes(family)) {
+    return failed
+  }
+
+  decoderStallRecovery = {
+    videoId: props.videoId,
+    failed: [...failed, family],
+    reloaded: decoderStallRecovery?.videoId === props.videoId ? decoderStallRecovery.reloaded === true : false
+  }
+
+  try {
+    sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+  } catch { }
+
+  return decoderStallRecovery.failed
+}
+
+/**
+ * Codec preference applied BEFORE `player.load()`. shaka uses it to filter the manifest down
+ * to one family, so a codec left out here never becomes a variant at all — which is why this
+ * replaces the mid-load variant switch that used to hang the player.
+ * @returns {string[]}
+ */
+function preferredVideoCodecs() {
+  if (typeof props.vrProjection === 'string') {
+    // Electron doesn't like YouTube's vp9 VR video streams and throws
+    // "CHUNK_DEMUXER_ERROR_APPEND_FAILED: Projection element is incomplete", so use av1/h264.
+    return ['av01', 'avc1']
+  }
+
+  const failed = failedCodecsForThisVideo()
+
+  if (failed.length === 0) {
+    return []
+  }
+
+  return ['avc1', 'av01', 'vp9'].filter(codec => !failed.includes(codec))
+}
+
+function refreshStallActiveCodec() {
+  const active = player?.getVariantTracks().find(track => track.active)
+
+  if (active?.videoCodec) {
+    stallActiveCodec = videoCodecFamily(active.videoCodec)
+    stallActiveHeight = active.height ?? null
+  }
+}
+
+/**
+ * Drop every variant whose codec has already wedged this device. Used by `setDashQuality`
+ * too, so a quality applied after a switch cannot put playback back on the failing decoder.
+ * @param {shaka.extern.Track[]} variants
+ * @returns {shaka.extern.Track[]}
+ */
+function variantsWithoutFailedCodecs(variants) {
+  const failed = failedCodecsForThisVideo()
+
+  if (failed.length === 0) {
+    return variants
+  }
+
+  const usable = variants.filter(variant =>
+    variant.videoCodec && !failed.includes(videoCodecFamily(variant.videoCodec))
+  )
+
+  // Never hand back nothing: a video whose every codec has failed is better off playing
+  // badly than not at all.
+  return usable.length > 0 ? usable : variants
+}
+
+/** @returns {number} seconds of contiguous buffer ahead of `position`, 0 if none covers it */
+function bufferedAheadOf(videoElement, position) {
+  const buffered = videoElement.buffered
+
+  for (let index = 0; index < buffered.length; index++) {
+    if (buffered.start(index) <= position + 0.1 && buffered.end(index) > position) {
+      return buffered.end(index) - position
+    }
+  }
+
+  return 0
+}
+
+/** @returns {shaka.extern.Track | null} */
+function pickVariantAvoidingFailedCodecs() {
+  const tracks = player?.getVariantTracks() ?? []
+  const failed = failedCodecsForThisVideo()
+
+  const alternatives = tracks.filter(track =>
+    track.videoCodec && !failed.includes(videoCodecFamily(track.videoCodec))
+  )
+
+  if (alternatives.length === 0) {
+    return null
+  }
+
+  // h264 first: the one codec every Android device decodes in hardware, and its far more
+  // conservative keyframes are the least likely to overrun a buffer a second time.
+  const h264 = alternatives.filter(track => videoCodecFamily(track.videoCodec) === 'avc1')
+  const candidates = h264.length > 0 ? h264 : alternatives
+
+  // Never climb above the resolution that failed — a bigger frame is the last thing this
+  // decoder needs — but do not refuse to pick at all if that leaves nothing.
+  const atOrBelow = typeof stallActiveHeight === 'number'
+    ? candidates.filter(track => typeof track.height === 'number' && track.height <= stallActiveHeight)
+    : []
+  const shortlist = atOrBelow.length > 0 ? atOrBelow : candidates
+
+  shortlist.sort((a, b) => (b.height ?? 0) - (a.height ?? 0) || b.bandwidth - a.bandwidth)
+
+  return shortlist[0]
+}
+
+/**
+ * @param {string} why what was observed — the log line is the only trace this leaves
+ * @returns {boolean} whether playback was actually moved onto another codec
+ */
+function recoverFromDecoderStall(why) {
+  const videoElement = video.value
+  const failed = stallActiveCodec ? rememberFailedCodec(stallActiveCodec) : failedCodecsForThisVideo()
+
+  diagWarn('playback',
+    `[decoder-stall] ${props.videoId}: ${why} at ${videoElement.currentTime.toFixed(2)}s on ` +
+    `${stallActiveCodec ?? 'an unknown codec'} ${stallActiveHeight ?? '?'}p; ` +
+    `known bad: ${failed.join(', ') || 'none'}; loaded=${hasLoaded.value}; ` +
+    `variants=${player?.getVariantTracks().length ?? 0}; ` +
+    `buffered ahead=${bufferedAheadOf(videoElement, videoElement.currentTime).toFixed(1)}s`
+  )
+
+  if (!hasLoaded.value) {
+    // A load is in flight — this is shaka or Chromium already rebuilding. Racing it is what
+    // restarted the video from zero last time. The note above survives in sessionStorage,
+    // and `preferredVideoCodecs` applies it to the load that is happening anyway.
+    return false
+  }
+
+  const track = pickVariantAvoidingFailedCodecs()
+
+  if (!track) {
+    // The expected case, not a failure: shaka filtered the manifest down to one codec family
+    // at load time, so there is nothing here to switch to. Rebuilding the player is the only
+    // way to change codec — `preferredVideoCodecs` reads the note above on the way back in.
+    if (decoderStallRecovery?.reloaded === true) {
+      diagError('playback',
+        `[decoder-stall] ${props.videoId}: already rebuilt once for ${failed.join(', ')} and ` +
+        'it failed again; leaving playback alone rather than looping'
+      )
+      return false
+    }
+
+    // `resumeAfterRebuild` is consumed by the next `loaded`: the rebuilt player honours the
+    // Autoplay Videos setting, which is the wrong answer here — playback was running when
+    // the decoder died, and the rebuild is our doing, not a fresh visit to the video.
+    decoderStallRecovery = { ...decoderStallRecovery, reloaded: true, resumeAfterRebuild: true }
+
+    try {
+      sessionStorage.setItem(STALL_STORAGE_KEY, JSON.stringify(decoderStallRecovery))
+    } catch { }
+
+    diagWarn('playback',
+      `[decoder-stall] ${props.videoId}: no ${failed.join(', ')}-free variant in this ` +
+      'manifest (shaka filters to one codec family); requesting a rebuild onto h264'
+    )
+
+    showToast(t('SKUI.Player.Decoder recovery', { codec: 'avc1' }))
+    // not a SABR request: the watch page must not add its SABR toast to the one above
+    emit('player-reload-requested', 'decoder-stall')
+
+    return true
+  }
+
+  const family = videoCodecFamily(track.videoCodec)
+
+  diagWarn('playback', `[decoder-stall] ${props.videoId}: switching to ${family} ${track.height ?? '?'}p`)
+
+  // `clearBuffer` drops what is already fetched — the frame that killed the decoder with it —
+  // and refills from the current position, so nothing is skipped. It also turns ABR off,
+  // which is wanted: left on, shaka would climb back onto the codec we just escaped.
+  player.selectVariantTrack(track, /* clearBuffer */ true)
+
+  stallActiveCodec = family
+  stallActiveHeight = track.height ?? null
+  stallLastAdvanceAt = performance.now()
+
+  showToast(t('SKUI.Player.Decoder recovery', { codec: family }))
+
+  // The fault does not rewind the clock, it ZEROES it. Put playback back where it was, now
+  // that the codec which could not decode that stretch is out of the way.
+  if (stallLastGoodPosition - videoElement.currentTime > 1) {
+    diagWarn('playback',
+      `[decoder-stall] ${props.videoId}: restoring position to ${stallLastGoodPosition.toFixed(2)}s`
+    )
+    videoElement.currentTime = stallLastGoodPosition
+  }
+
+  // The fault pauses the element itself, so a pause here is its doing, not 白い熊's.
+  if (videoElement.paused) {
+    videoElement.play().catch(() => { })
+  }
+
+  return true
+}
+
+/**
+ * The primary signal, and the one the first attempt could not see. A media element fires
+ * `timeupdate` only while `currentTime` changes, so a wedged decoder is invisible to it —
+ * this has to be polled. Time standing still while playing, with the buffer already filled
+ * past the playhead, is a decode failure: a network stall would have nothing buffered ahead.
+ */
+function pollDecoderStall() {
+  const videoElement = video.value
+
+  if (!videoElement || videoElement.paused || videoElement.seeking || videoElement.ended || stallSeekPending) {
+    stallLastAdvanceAt = performance.now()
+    stallFrozenHandled = false
+    return
+  }
+
+  if (videoElement.currentTime !== stallLastObserved) {
+    stallLastObserved = videoElement.currentTime
+    stallLastAdvanceAt = performance.now()
+    stallFrozenHandled = false
+
+    if (videoElement.currentTime > 0) {
+      stallLastGoodPosition = videoElement.currentTime
+    }
+
+    return
+  }
+
+  if (stallFrozenHandled || performance.now() - stallLastAdvanceAt < STALL_FROZEN_MS) {
+    return
+  }
+
+  if (bufferedAheadOf(videoElement, videoElement.currentTime) < STALL_BUFFER_AHEAD_SECONDS) {
+    // Nothing to decode — that is the network's problem, and shaka's to retry.
+    return
+  }
+
+  stallFrozenHandled = true
+  recoverFromDecoderStall('playback frozen with buffer ahead')
+}
+
+/**
+ * Secondary signal: Chromium rewinding to the keyframe before the bad frame. Every backwards
+ * jump is LOGGED whatever its size — the silence after the last failure cost a whole round of
+ * guessing — but only one inside the window is acted on, since a jump of tens of seconds is a
+ * reload or a seek rather than a decoder rewind.
+ */
+function handleDecoderStallTick() {
+  const videoElement = video.value
+
+  if (!videoElement || stallSeekPending || videoElement.seeking) {
+    return
+  }
+
+  const previous = stallLastObserved
+  const now = videoElement.currentTime
+  const fellBackBy = previous - now
+
+  stallLastObserved = now
+  stallLastAdvanceAt = performance.now()
+  stallFrozenHandled = false
+
+  // Never let the zeroed clock become the position we would restore to.
+  if (now > 0) {
+    stallLastGoodPosition = now
+  }
+
+  if (fellBackBy <= STALL_REGRESSION_SECONDS) {
+    return
+  }
+
+  // No upper bound: the fault zeroes the clock, and the version that dismissed a 131 s
+  // fall-back as "too large for a decoder rewind" threw away the only event that mattered.
+  // `recoverFromDecoderStall` gates on `hasLoaded`, which is the discriminator that holds.
+  recoverFromDecoderStall(`fell back ${fellBackBy.toFixed(1)}s`)
+}
+
+// #endregion hardware decoder stall recovery
+
+// #region playhead rewind diagnostic
+
+/*
+ * 白い熊, 2026-11-19: on the PC, playback a few seconds past 2:10 of avOcx9LXJNs jumped back
+ * to 2:10 and carried on — no reload, no error, nothing in renderer.log — and it has happened
+ * at random points of other videos too. Two instrumented runs over the same stretch played
+ * clean, so this records enough to name the cause the next time it happens in ordinary use:
+ * WHO moved the playhead (our code, shaka, or the media pipeline on its own), what was
+ * buffered, which variant was playing, the media events leading up to it, and the segments
+ * SABR delivered last. Every platform, every backwards jump past the threshold — a deliberate
+ * seek back is logged too, and its stack says so. Written to Diagnostics › Playback trace
+ * only, and only while that switch is on (白い熊, 2026-11-19: all debugging goes through the
+ * Diagnostics section, off by default).
+ */
+
+/** Backwards movement smaller than this is a timeupdate rounding artefact, not a jump. */
+const REWIND_LOG_SECONDS = 1
+const REWIND_EVENT_LIMIT = 16
+
+let rewindLastPosition = 0
+
+/** @type {{ at: number, from: number, to: number, stack: string } | null} */
+let rewindLastWrite = null
+
+/** @type {{ at: number, name: string, position: number }[]} */
+const rewindRecentEvents = []
+
+/**
+ * Wraps `currentTime` on THIS element only, so every write — ours, shaka's, its UI's — leaves
+ * a stack behind. Seeks are rare, so capturing a stack on each costs nothing measurable.
+ * @param {HTMLVideoElement} videoElement
+ */
+function instrumentCurrentTimeWrites(videoElement) {
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime')
+
+  if (!descriptor?.get || !descriptor.set) return
+
+  Object.defineProperty(videoElement, 'currentTime', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return descriptor.get.call(this)
+    },
+    set(value) {
+      // the stack is only worth its cost while it can be written down
+      rewindLastWrite = null
+
+      if (diagState.on.playback) {
+        rewindLastWrite = {
+          at: performance.now(),
+          from: descriptor.get.call(this),
+          to: value,
+          // drop the Error line and this setter's own frame
+          stack: (new Error().stack ?? '').split('\n').slice(2, 10).map(line => line.trim()).join('\n  ')
+        }
+      }
+
+      descriptor.set.call(this, value)
+    }
+  })
+}
+
+/**
+ * @param {string} name
+ */
+function noteRewindEvent(name) {
+  rewindRecentEvents.push({ at: performance.now(), name, position: video.value?.currentTime ?? NaN })
+
+  if (rewindRecentEvents.length > REWIND_EVENT_LIMIT) rewindRecentEvents.shift()
+}
+
+/**
+ * @param {HTMLVideoElement} videoElement
+ */
+function describeBuffered(videoElement) {
+  const ranges = []
+
+  for (let i = 0; i < videoElement.buffered.length; i++) {
+    ranges.push(`${videoElement.buffered.start(i).toFixed(2)}–${videoElement.buffered.end(i).toFixed(2)}`)
+  }
+
+  return ranges.join(', ') || 'nothing'
+}
+
+function describeActiveVariant() {
+  const track = player?.getVariantTracks().find(variant => variant.active)
+
+  if (!track) return '(none active)'
+
+  return `${track.height ?? '?'}p ${track.videoCodec ?? '-'} itag ${track.originalVideoId ?? '?'} / ` +
+    `${track.audioCodec ?? '-'} itag ${track.originalAudioId ?? '?'}`
+}
+
+function checkPlayheadRewind() {
+  const videoElement = video.value
+
+  if (!videoElement) return
+
+  const now = videoElement.currentTime
+  const previous = rewindLastPosition
+
+  rewindLastPosition = now
+
+  if (previous - now <= REWIND_LOG_SECONDS || !diagState.on.playback) return
+
+  const clock = performance.now()
+  const write = rewindLastWrite !== null && clock - rewindLastWrite.at < 5000 &&
+    Math.abs(rewindLastWrite.to - now) < 2
+    ? rewindLastWrite
+    : null
+
+  const cause = write
+    ? `Moved by a currentTime write ${Math.round(clock - write.at)} ms ago ` +
+      `(${write.from.toFixed(2)} → ${Number(write.to).toFixed(2)}):\n  ${write.stack}`
+    : 'No code wrote currentTime — the media pipeline moved the playhead on its own'
+
+  const events = rewindRecentEvents
+    .map(event => `${((event.at - clock) / 1000).toFixed(1)}s ${event.name} @${event.position.toFixed(2)}`)
+    .join(', ') || '(none)'
+
+  diag('playback',
+    `[rewind] ${props.videoId}: playhead went back ${(previous - now).toFixed(2)}s, ` +
+    `${previous.toFixed(2)} → ${now.toFixed(2)}\n` +
+    `${cause}\n` +
+    `State: ${videoElement.paused ? 'paused' : 'playing'}, loaded=${hasLoaded.value}, ` +
+    `format=${props.format}, readyState=${videoElement.readyState}\n` +
+    `Buffered: ${describeBuffered(videoElement)}\n` +
+    `Variant: ${describeActiveVariant()}\n` +
+    `Recent events: ${events}\n` +
+    `Recent SABR segments:\n${describeRecentSabrSegments()}`
+  )
+}
+
+// #endregion playhead rewind diagnostic
+
+// #region seek bar markers
+
+/**
+ * @param {number} duration As the sponsorblock segments can sometimes load before the video does, we need to pass in the duration here
+ */
+function createSponsorBlockMarkers(duration) {
+  addMarkers(
+    sponsorBlockSegments.map(segment => {
+      const markerDiv = document.createElement('div')
+
+      markerDiv.title = translateSponsorBlockCategory(segment.category)
+      markerDiv.className = `sponsorBlockMarker main${sponsorSkips.value.categoryData[segment.category].color}`
+      markerDiv.style.width = `${((segment.endTime - segment.startTime) / duration) * 100}%`
+      markerDiv.style.left = `${(segment.startTime / duration) * 100}%`
+
+      return markerDiv
+    })
+  )
+}
+
+function createChapterMarkers() {
+  const { start, end } = player.seekRange()
+  const duration = end - start
+
+  /**
+   * @type {{
+   *   title: string,
+   *   timestamp: string,
+   *   startSeconds: number,
+   *   endSeconds: number,
+   *   thumbnail?: string
+   * }[]}
+   */
+  const chapters = props.chapters
+
+  addMarkers(
+    chapters.map(chapter => {
+      const markerDiv = document.createElement('div')
+
+      markerDiv.title = chapter.title
+      markerDiv.className = 'chapterMarker'
+      // Due to unknown reasons, there are offsets to the left of actual timestamp on seek bar for later timestamps
+      // The markers will be adjusted to the left to align with the chapter previews
+      const extraOffsetPercentAbs = Math.pow(((chapter.startSeconds - (duration * 0.5)) / duration), 2)
+      const extraOffsetPercent = chapter.startSeconds > duration * 0.5 ? -extraOffsetPercentAbs : extraOffsetPercentAbs
+      markerDiv.style.left = `calc(${((chapter.startSeconds) / duration) * 100 + extraOffsetPercent}% - 1px)`
+
+      return markerDiv
+    })
+  )
+}
+
+/**
+ * @param {HTMLDivElement[]} markers
+ */
+function addMarkers(markers) {
+  const seekBarContainer = container.value.querySelector('.shaka-seek-bar-container')
+
+  if (seekBarContainer.firstElementChild?.classList.contains('markerContainer')) {
+    /** @type {HTMLDivElement} */
+    const markerBar = seekBarContainer.firstElementChild
+
+    markers.forEach(marker => markerBar.appendChild(marker))
+  } else {
+    const markerBar = document.createElement('div')
+    markerBar.className = 'markerContainer'
+
+    markers.forEach(marker => markerBar.appendChild(marker))
+
+    seekBarContainer.insertBefore(markerBar, seekBarContainer.firstElementChild)
+  }
+}
+
+// #endregion seek bar markers
+
+// #region offline message
+
+const isOffline = ref(!navigator.onLine)
+const isBuffering = ref(false)
+
+function onlineHandler() {
+  isOffline.value = false
+}
+
+function offlineHandler() {
+  isOffline.value = true
+}
+
+function fullscreenChangeHandler() {
+  nextTick(showOverlayControls)
+}
+
+window.addEventListener('online', onlineHandler)
+window.addEventListener('offline', offlineHandler)
+
+// Only display the offline message while buffering/the loading symbol is visible.
+// If we briefly lose the connection but it comes back before the buffer is empty,
+// the user won't notice anything so we don't need to display the message.
+const showOfflineMessage = computed(() => {
+  return isOffline.value && isBuffering.value
+})
+
+// #endregion offline message
+
+// #region setup
+const initLoadWaitTimeToastAC = new AbortController()
+
+const mediaPlay = () => {
+  video.value.play()
+}
+const mediaPause = () => {
+  video.value.pause()
+}
+let updateBufferInterval = null
+let decoderStallInterval = null
+
+onMounted(async () => {
+  const videoElement = video.value
+
+  instrumentCurrentTimeWrites(videoElement)
+  videoElement.addEventListener('timeupdate', checkPlayheadRewind)
+
+  for (const name of ['seeking', 'seeked', 'waiting', 'stalled', 'emptied', 'loadstart']) {
+    videoElement.addEventListener(name, () => noteRewindEvent(name))
+  }
+  if (process.env.IS_ANDROID) {
+    window.addEventListener('media-play', mediaPlay)
+    window.addEventListener('media-pause', mediaPause)
+    videoElement.addEventListener('play', () => {
+      android.enableKeepScreenOn()
+      updateMediaSessionState(STATE_PLAYING)
+    })
+    videoElement.addEventListener('pause', () => {
+      android.disableKeepScreenOn()
+      updateMediaSessionState(STATE_PAUSED)
+    })
+    videoElement.addEventListener('timeupdate', () => {
+      updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_PLAYING, Math.floor(videoElement.currentTime * 1000))
+    })
+    videoElement.addEventListener('seeking', () => {
+      stallSeekPending = true
+    })
+    videoElement.addEventListener('seeked', () => {
+      stallSeekPending = false
+      stallLastObserved = videoElement.currentTime
+    })
+    videoElement.addEventListener('timeupdate', handleDecoderStallTick)
+    // Polled, not event-driven: a wedged element fires no `timeupdate`, because the clock
+    // it would report has stopped. See the hardware decoder stall region.
+    decoderStallInterval = setInterval(pollDecoderStall, STALL_POLL_MS)
+    updateBufferInterval = setInterval(() => {
+      if (videoElement.buffered.length === 0) {
+        updateMediaSessionState(videoElement.paused ? STATE_PAUSED : STATE_BUFFERING, Math.floor(videoElement.currentTime * 1000))
+      }
+    }, 0)
+  }
+
+  // Lower the consecutive-error latch once playback demonstrably recovers. `handleError`
+  // raises it before emitting, so that a burst of errors cannot outrun the format fallback
+  // the first one sets off — but the only thing that ever lowers it again is a format
+  // switch. An error the Watch view deliberately declines to act on therefore leaves it
+  // raised for the rest of the video: the connection-lost path returns without switching
+  // formats, on the understanding that shaka will retry and resume by itself, and from
+  // that moment every further error on that video is swallowed in silence, including the
+  // fatal one that explains why it never came back. Playing again is proof the burst is
+  // over and the next error is news.
+  videoElement.addEventListener('playing', () => {
+    ignoreErrors = false
+  })
+
+  const volume = sessionStorage.getItem('volume')
+  if (volume !== null) {
+    videoElement.volume = parseFloat(volume)
+  }
+
+  const muted = sessionStorage.getItem('muted')
+  if (muted !== null) {
+    // as sessionStorage stores string values which are truthy by default so we must check with 'true'
+    // otherwise 'false' will be returned as true as well
+    videoElement.muted = (muted === 'true')
+  }
+
+  const localPlayer = new shaka.Player()
+
+  ui = new shaka.ui.Overlay(
+    localPlayer,
+    container.value,
+    videoElement,
+    vrCanvas.value
+  )
+
+  // This has to be called after creating the UI, so that the player uses the UI's UITextDisplayer
+  // otherwise it uses the browsers native captions which get displayed underneath the UI controls
+  await localPlayer.attach(videoElement)
+
+  videoElement.playbackRate = props.currentPlaybackRate
+  videoElement.defaultPlaybackRate = defaultPlaybackRate.value
+
+  // check if the component is already getting destroyed
+  // which is possible because this function runs asynchronously
+  if (!ui) {
+    return
+  }
+
+  const controls = ui.getControls()
+  player = controls.getPlayer()
+
+  player.addEventListener('buffering', event => {
+    isBuffering.value = event.buffering
+  })
+
+  player.addEventListener('error', event => handleError(event.detail, 'shaka error handler'))
+
+  player.configure(getPlayerConfig(props.format, defaultQuality.value === 'auto'))
+
+  if (process.env.SUPPORTS_LOCAL_API) {
+    player.getNetworkingEngine().registerRequestFilter(requestFilter)
+    player.getNetworkingEngine().registerResponseFilter(responseFilter)
+  }
+
+  await setLocale(locale.value)
+
+  // check if the component is already getting destroyed
+  // which is possible because this function runs asynchronously
+  if (!ui || !player) {
+    return
+  }
+
+  videoResizeObserver.observe(videoElement)
+
+  registerScreenshotButton()
+  registerAudioTrackSelection()
+  registerAutoplayToggle()
+
+  registerTheatreModeButton()
+  registerFullWindowButton()
+  registerLegacyQualitySelection()
+  registerStatsButton()
+  registerSkipButtons()
+
+  // Decide by width on every platform: upstream forced the reduced
+  // overflow-only layout on all touch devices, hiding theatre mode and
+  // full window on Android even on tablet-wide screens
+  onlyUseOverFlowMenu.value = container.value.getBoundingClientRect().width <= USE_OVERFLOW_MENU_WIDTH_THRESHOLD
+
+  containerResizeObserver = new ResizeObserver(resized)
+  containerResizeObserver.observe(container.value)
+
+  controls.addEventListener('uiupdated', addUICustomizations)
+  configureUI(true)
+
+  document.removeEventListener('keydown', keyboardShortcutHandler)
+  document.addEventListener('keydown', keyboardShortcutHandler)
+  document.addEventListener('fullscreenchange', fullscreenChangeHandler)
+
+  player.addEventListener('loading', () => {
+    hasLoaded.value = false
+  })
+
+  player.addEventListener('loaded', handleLoaded)
+
+  for (const name of ['loading', 'loaded', 'adaptation', 'variantchanged', 'buffering', 'error']) {
+    player.addEventListener(name, () => noteRewindEvent(`shaka:${name}`))
+  }
+
+  if (process.env.IS_ANDROID) {
+    // Track what is on screen as it changes: when the decoder dies the player may already be
+    // reloading, and a reloading player cannot tell us which codec it was.
+    player.addEventListener('adaptation', refreshStallActiveCodec)
+    player.addEventListener('variantchanged', refreshStallActiveCodec)
+  }
+
+  if (props.format !== 'legacy') {
+    player.addEventListener('streaming', () => {
+      if (props.format === 'dash') {
+        const firstVariant = player.getVariantTracks()[0]
+
+        // force the player aspect ratio to 16:9 to avoid overflowing the layout
+        forceAspectRatio.value = firstVariant.width / firstVariant.height < 1.5
+      }
+    })
+  } else if (props.legacyFormats.length > 0) {
+    // force the player aspect ratio to 16:9 to avoid overflowing the layout, when the video is too tall
+
+    const firstFormat = props.legacyFormats[0]
+    forceAspectRatio.value = firstFormat.width / firstFormat.height < 1.5
+  }
+
+  if (useSponsorBlock.value && sponsorSkips.value.seekBar.length > 0) {
+    setupSponsorBlock()
+  }
+
+  window.addEventListener('beforeunload', stopPowerSaveBlocker)
+
+  // shaka-player doesn't start with the cursor hidden, so hide it here for instances in which the
+  // cursor is in the video player area when the video first loads
+  container.value.classList.add('no-cursor')
+
+  await performFirstLoad()
+  // Whatever runs after `performFirstLoad` might be after switching to another page due to SABR backoff
+
+  player?.addEventListener('ratechange', () => {
+    emit('playback-rate-updated', player.getPlaybackRate())
+  })
+})
+onUnmounted(() => {
+  initLoadWaitTimeToastAC.abort()
+})
+
+async function performFirstLoad() {
+  if (process.env.SUPPORTS_LOCAL_API && sabrStream) {
+    // Longer timeout for receiving larger responses
+    player.configure({
+      streaming: {
+        retryParameters: {
+          timeout: 30 * 1000 * 2,
+        }
+      }
+    })
+  } else {
+    // Reset to default value
+    player.configure({
+      streaming: {
+        retryParameters: {
+          timeout: 30 * 1000,
+        }
+      }
+    })
+  }
+
+  const initialLoadDelayMs = props.delayLoadUntilUnix - Date.now()
+  if (initialLoadDelayMs > 0 && (props.format === 'legacy' || props.manifestMimeType !== MANIFEST_TYPE_SABR)) {
+    showToast(
+      ({ remainingMs }) => {
+        // `+value` converts string back to float
+        return t('Video.Watch.Remaining preroll-ad time: {remindingTimeSeconds}s', { remindingTimeSeconds: +(remainingMs / 1000).toFixed(1) })
+      },
+      // So that we don't see last countdown text like 0/N
+      initialLoadDelayMs,
+      null,
+      initLoadWaitTimeToastAC.signal,
+    )
+    await new Promise((resolve) => setTimeout(resolve, initialLoadDelayMs))
+  }
+
+  if (props.format === 'dash' || props.format === 'audio') {
+    try {
+      await player.load(props.manifestSrc, props.startTime, props.manifestMimeType)
+
+      if (defaultQuality.value !== 'auto') {
+        if (props.format === 'dash') {
+          setDashQuality(defaultQuality.value)
+        } else {
+          let variants = player.getVariantTracks()
+
+          if (hasMultipleAudioTracks.value) {
+            // default audio track
+            variants = variants.filter(variant => variant.audioRoles.includes('main'))
+          }
+
+          const highestBandwidth = Math.max(...variants.map(variant => variant.audioBandwidth))
+          variants = variants.filter(variant => variant.audioBandwidth === highestBandwidth)
+
+          player.selectVariantTrack(variants[0])
+        }
+      }
+    } catch (error) {
+      handleError(error, 'loading dash/audio manifest and setting default quality in mounted')
+    }
+  } else {
+    await setLegacyQuality(props.startTime)
+  }
+}
+
+/**
+ * Adds the captions and thumbnail tracks, also restores the previously selected captions track,
+ * if this was triggered by a format change and the user had the captions enabled.
+ */
+async function handleLoaded() {
+  hasLoaded.value = true
+  emit('loaded')
+
+  // Diagnostics › Playback trace: each load, so a rewind or a stall reads against its session
+  diag('playback', () =>
+    `[load] ${props.videoId}: format=${props.format}, manifest=${props.manifestMimeType}, ` +
+    `at ${(video.value?.currentTime ?? 0).toFixed(2)}s, variant ${describeActiveVariant()}`)
+
+  if (process.env.IS_ANDROID) {
+    // A load moves the position without a seek, so re-baseline before the watchdog reads the
+    // jump as a decoder rewind. Nothing is switched here: the codec this video has to avoid
+    // went into the configuration BEFORE this load, which is the whole point.
+    stallLastObserved = video.value?.currentTime ?? 0
+    stallLastAdvanceAt = performance.now()
+    stallFrozenHandled = false
+    refreshStallActiveCodec()
+    resumeAfterDecoderRebuild()
+  }
+
+  // ideally we would set this in the `streaming` event handler, but for HLS this is only set to true after the loaded event fires.
+  isLive.value = player.isLive()
+  // getAudioTracks() returns an empty array when no variant is active, so we can't do this in the `streaming` event
+  hasMultipleAudioTracks.value = deduplicateAudioTracks(player.getAudioTracks()).size > 1
+
+  if (process.env.SUPPORTS_LOCAL_API && props.format !== 'legacy' && props.manifestMimeType === MANIFEST_TYPE_SABR) {
+    sabrManifest = player.getManifest()
+  }
+
+  // For SABR we include the thumbnails, chapters and subtitles in the manifest
+  if (!process.env.SUPPORTS_LOCAL_API || props.format === 'legacy' || props.manifestMimeType !== MANIFEST_TYPE_SABR) {
+    const promises = []
+
+    for (const caption of props.captions) {
+      if (props.format === 'legacy') {
+        const url = new URL(caption.url)
+
+        if (url.hostname.endsWith('.youtube.com') && url.pathname === '/api/timedtext' &&
+          url.searchParams.get('caps') === 'asr' && url.searchParams.get('kind') === 'asr' && url.searchParams.get('fmt') === 'vtt') {
+          promises.push((async () => {
+            try {
+              const response = await fetch(caption.url)
+              let text = await response.text()
+
+              // position:0% for LTR text and position:100% for RTL text
+              text = text.replaceAll(/ align:start position:(?:10)?0%$/gm, '')
+
+              const url = `data:${caption.mimeType};charset=utf-8,${encodeURIComponent(text)}`
+
+              await player.addTextTrackAsync(
+                url,
+                caption.language,
+                'captions',
+                caption.mimeType,
+                undefined, // codec, only needed if the captions are inside a container (e.g. mp4)
+                caption.label
+              )
+            } catch (error) {
+              if (error instanceof shaka.util.Error) {
+                handleError(error, 'addTextTrackAsync', caption)
+              } else {
+                console.error(error)
+              }
+            }
+          })())
+        } else {
+          promises.push(
+            player.addTextTrackAsync(
+              caption.url,
+              caption.language,
+              'captions',
+              caption.mimeType,
+              undefined, // codec, only needed if the captions are inside a container (e.g. mp4)
+              caption.label
+            )
+              .catch(error => handleError(error, 'addTextTrackAsync', caption))
+          )
+        }
+      } else {
+        promises.push(
+          player.addTextTrackAsync(
+            caption.url,
+            caption.language,
+            'captions',
+            caption.mimeType,
+            undefined, // codec, only needed if the captions are inside a container (e.g. mp4)
+            caption.label
+          )
+            .catch(error => handleError(error, 'addTextTrackAsync', caption))
+        )
+      }
+    }
+
+    if (!isLive.value && props.storyboardSrc) {
+      promises.push(
+        // Only log the error, as the thumbnails are a nice to have
+        // If an error occurs with them, it's not critical
+        player.addThumbnailsTrack(props.storyboardSrc, 'text/vtt')
+          .catch(error => logShakaError(error, 'addThumbnailsTrack', props.videoId, props.storyboardSrc))
+      )
+    }
+
+    if (!isLive.value && props.chaptersSrc.length > 0) {
+      promises.push(
+        // Only log the error, as the chapters are a nice to have (we have our own UI outside of the player too)
+        // If an error occurs with them, it is not critical
+        player.addChaptersTrack(props.chaptersSrc, 'und', 'text/vtt')
+          .catch(error => logShakaError(error, 'addChaptersTrack', props.videoId, props.chaptersSrc))
+      )
+    }
+
+    await Promise.all(promises)
+  }
+
+  if (restoreCaptionIndex !== null) {
+    const index = restoreCaptionIndex
+    restoreCaptionIndex = null
+
+    const textTrack = player.getTextTracks()[index]
+
+    if (textTrack) {
+      player.selectTextTrack(textTrack)
+    }
+  }
+
+  if (props.chapters.length > 0) {
+    createChapterMarkers()
+  }
+
+  if (startInFullscreen && process.env.IS_ELECTRON) {
+    startInFullscreen = false
+    window.ftElectron.requestFullscreen()
+  }
+}
+
+watch(
+  () => props.format,
+  /**
+   * Handles changing between formats. It tries its best to backup and restore the settings:
+   * - playback position
+   * - paused state
+   * - audio track
+   * - captions track
+   * - video quality
+   * @param {'dash'|'audio'|'legacy'} newFormat
+   * @param {'dash'|'audio'|'legacy'} oldFormat
+   */
+  async (newFormat, oldFormat) => {
+    ignoreErrors = true
+
+    // format switch happened before the player loaded, probably because of an error
+    // as there are no previous player settings to restore, we should treat it like this was the original format
+    if (!hasLoaded.value) {
+      try {
+        await player.unload()
+      } catch { }
+
+      ignoreErrors = false
+
+      player.configure(getPlayerConfig(newFormat, defaultQuality.value === 'auto'))
+
+      await performFirstLoad()
+      return
+    }
+
+    const video_ = video.value
+
+    const wasPaused = video_.paused
+
+    let useAutoQuality = oldFormat === 'legacy' ? defaultQuality.value === 'auto' : player.getConfiguration().abr.enabled
+
+    if (!wasPaused) {
+      video_.pause()
+    }
+
+    const playbackPosition = video_.currentTime
+
+    const activeCaptionIndex = player.getTextTracks().findIndex(caption => caption.active)
+
+    if (activeCaptionIndex >= 0) {
+      restoreCaptionIndex = activeCaptionIndex
+
+      // hide captions before switching as shaka/the browser doesn't clean up the displayed captions
+      // when switching away from the legacy formats
+      player.selectTextTrack(null)
+    } else {
+      restoreCaptionIndex = null
+    }
+
+    if (newFormat === 'audio' || newFormat === 'dash') {
+      let label
+      let audioBandwidth
+      let dimension
+
+      if (oldFormat === 'legacy' && newFormat === 'dash') {
+        const legacyFormat = activeLegacyFormat.value
+
+        if (!useAutoQuality) {
+          dimension = legacyFormat.height > legacyFormat.width ? legacyFormat.width : legacyFormat.height
+        }
+      } else if (oldFormat !== 'legacy') {
+        const track = player.getVariantTracks().find(track => track.active)
+
+        if (typeof track.audioBandwidth === 'number') {
+          audioBandwidth = track.audioBandwidth
+        }
+
+        if (track.label) {
+          label = track.label
+        }
+      }
+
+      if (oldFormat === 'audio' && newFormat === 'dash' && !useAutoQuality) {
+        if (defaultQuality.value !== 'auto') {
+          dimension = defaultQuality.value
+        } else {
+          // Use auto as we don't know what resolution to pick
+          useAutoQuality = true
+        }
+      }
+
+      try {
+        await player.unload()
+      } catch { }
+
+      ignoreErrors = false
+
+      player.configure(getPlayerConfig(newFormat, useAutoQuality))
+
+      try {
+        await player.load(props.manifestSrc, playbackPosition, props.manifestMimeType)
+
+        if (useAutoQuality) {
+          if (label) {
+            const audioTracks = deduplicateAudioTracks(player.getAudioTracks()).values()
+
+            for (const track of audioTracks) {
+              if (label === track.label) {
+                player.selectAudioTrack(track)
+                break
+              }
+            }
+          }
+        } else {
+          if (dimension) {
+            setDashQuality(dimension, audioBandwidth, label)
+          } else {
+            let variants = player.getVariantTracks()
+
+            if (label) {
+              variants = variants.filter(variant => variant.label === label)
+            } else if (variants.length > 1) {
+              // default audio track
+              const filteredVariants = variants.filter(variant => variant.audioRoles.includes('main'))
+              // Sometimes there is nothing marked as main, don't filter in this case
+              if (filteredVariants.length > 0) {
+                variants = filteredVariants
+              }
+            }
+
+            let chosenVariant
+
+            if (typeof audioBandwidth === 'number') {
+              chosenVariant = findMostSimilarAudioBandwidth(variants, audioBandwidth)
+            } else {
+              chosenVariant = variants.reduce((previous, current) => {
+                return previous === null || current.bandwidth > previous.bandwidth ? current : previous
+              }, null)
+            }
+
+            player.selectVariantTrack(chosenVariant)
+          }
+        }
+      } catch (error) {
+        handleError(error, 'loading dash/audio manifest for format switch', `${oldFormat} -> ${newFormat}`)
+      }
+      activeLegacyFormat.value = null
+    } else {
+      let previousQuality
+
+      if (oldFormat === 'dash') {
+        const previousTrack = player.getVariantTracks().find(track => track.active)
+
+        previousQuality = previousTrack.height > previousTrack.width ? previousTrack.width : previousTrack.height
+      }
+
+      try {
+        await player.unload()
+      } catch { }
+
+      ignoreErrors = false
+
+      await setLegacyQuality(playbackPosition, previousQuality)
+    }
+
+    if (wasPaused) {
+      video_.pause()
+    }
+  }
+)
+
+// #endregion setup
+
+// #region tear down
+
+onBeforeUnmount(() => {
+  hasLoaded.value = false
+  document.body.classList.remove('playerFullWindow')
+
+  document.removeEventListener('keydown', keyboardShortcutHandler)
+  document.removeEventListener('fullscreenchange', fullscreenChangeHandler)
+
+  if (containerResizeObserver) {
+    containerResizeObserver.disconnect()
+    containerResizeObserver = null
+  }
+
+  if (videoResizeObserver) {
+    videoResizeObserver.disconnect()
+  }
+
+  cleanUpCustomPlayerControls()
+
+  stopPowerSaveBlocker()
+  window.removeEventListener('beforeunload', stopPowerSaveBlocker)
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'none'
+  }
+
+  skippedSponsorBlockSegments.value.forEach(segment => clearTimeout(segment.timeoutId))
+
+  window.removeEventListener('online', onlineHandler)
+  window.removeEventListener('offline', offlineHandler)
+
+  window.removeEventListener('media-play', mediaPlay)
+  window.removeEventListener('media-pause', mediaPause)
+  clearInterval(updateBufferInterval)
+  clearInterval(decoderStallInterval)
+})
+
+// #endregion tear down
+
+// #region functions used by the watch page
+
+/**
+ * Vue's lifecycle hooks are synchonous, so if we destroy the player in {@linkcode onBeforeUnmount},
+ * it won't be finished in time, as the player destruction is asynchronous.
+ * To workaround that we destroy the player first and wait for it to finish before we unmount this component.
+ *
+ * @returns {Promise<{ startNextVideoInFullscreen: boolean, startNextVideoInFullwindow: boolean, startNextVideoInPip: boolean }>}
+ */
+async function destroyPlayer() {
+  ignoreErrors = true
+
+  let uiState = { startNextVideoInFullscreen: false, startNextVideoInFullwindow: false, startNextVideoInPip: false }
+
+  if (ui) {
+    if (ui.getControls()) {
+      // save the state of player settings to reinitialize them upon next creation
+      const controls = ui.getControls()
+      uiState = {
+        startNextVideoInFullscreen: controls.isFullScreenEnabled(),
+        startNextVideoInFullwindow: fullWindowEnabled.value,
+        startNextVideoInPip: controls.isPiPEnabled()
+      }
+    }
+
+    // destroying the ui also destroys the player
+    await ui.destroy()
+    ui = null
+    player = null
+  } else if (player) {
+    await player.destroy()
+    player = null
+  }
+
+  if (process.env.SUPPORTS_LOCAL_API && sabrStream) {
+    sabrStream.cleanup()
+    sabrAbortController?.abort()
+  }
+
+  // shaka-player doesn't clear these itself, which prevents shaka.ui.Overlay from being garbage collected
+  // Should really be fixed in shaka-player but it's easier just to do it ourselves
+  if (container.value) {
+    container.value.ui = null
+  }
+
+  if (video.value) {
+    video.value.ui = null
+  }
+
+  return uiState
+}
+
+defineExpose({
+  hasLoaded,
+
+  isPaused: () => video.value.paused,
+  pause: () => video.value.pause(),
+  getCurrentTime: () => video.value.currentTime,
+  /**
+   * @param {number} time
+   */
+  setCurrentTime: (time) => {
+    video.value.currentTime = time
+  },
+  destroyPlayer
+})
+
+// #endregion functions used by the watch page
+
+const showValueChangePopup = ref(false)
+const valueChangeMessage = ref('')
+const valueChangeIcon = ref(null)
+const invertValueChangeContentOrder = ref(false)
+let valueChangeTimeout = null
+
+function showOverlayControls() {
+  ui.getControls().showUI()
+}
+
+/**
+ * Shows a popup with a message and an icon on top of the video player.
+ * @param {string} message - The message to display.
+ * @param {string} icon - The icon to display.
+ * @param {boolean} invertContentOrder - Whether to invert the order of the icon and message.
+ */
+function showValueChange(message, icon = null, invertContentOrder = false) {
+  valueChangeMessage.value = message
+  valueChangeIcon.value = icon
+  showValueChangePopup.value = true
+  invertValueChangeContentOrder.value = invertContentOrder
+
+  if (valueChangeTimeout) {
+    clearTimeout(valueChangeTimeout)
+  }
+
+  valueChangeTimeout = setTimeout(() => {
+    showValueChangePopup.value = false
+  }, 2000)
+
+  showOverlayControls()
+}
+
+onUnmounted(() => {
+  window.removeEventListener('app-pause', onAppPause)
+  window.removeEventListener('app-resume', onAppResume)
+})
+</script>
+
+<style src="shaka-player/dist/controls.css" />
+<style scoped src="./FtShakaVideoPlayer.css" />

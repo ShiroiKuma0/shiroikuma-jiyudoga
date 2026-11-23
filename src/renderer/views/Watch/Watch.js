@@ -4,7 +4,7 @@ import { mapActions, mapMutations } from 'vuex'
 import shaka from 'shaka-player'
 import { Utils, YTNodes } from 'youtubei.js'
 import FtLoader from '../../components/FtLoader/FtLoader.vue'
-import FtShakaVideoPlayer from '../../components/ft-shaka-video-player/ft-shaka-video-player.vue'
+import FtShakaVideoPlayer from '../../components/FtShakaVideoPlayer/FtShakaVideoPlayer.vue'
 import WatchVideoInfo from '../../components/WatchVideoInfo/WatchVideoInfo.vue'
 import WatchVideoChapters from '../../components/WatchVideoChapters/WatchVideoChapters.vue'
 import WatchVideoDescription from '../../components/WatchVideoDescription/WatchVideoDescription.vue'
@@ -336,14 +336,8 @@ export default defineComponent({
     hideChapters: function () {
       return this.$store.getters.getHideChapters
     },
-    channelsHidden() {
-      return JSON.parse(this.$store.getters.getChannelsHidden).map((ch) => {
-        // Legacy support
-        if (typeof ch === 'string') {
-          return { name: ch, preferredName: '', icon: '' }
-        }
-        return ch
-      })
+    channelsHiddenIdSet() {
+      return this.$store.getters.getChannelsHiddenIdSet
     },
     forbiddenTitles() {
       return JSON.parse(this.$store.getters.getForbiddenTitles.toLowerCase())
@@ -362,7 +356,7 @@ export default defineComponent({
     },
     nextRecommendedVideo: function () {
       return this.recommendedVideos.find((video) =>
-        !this.isHiddenVideo(this.forbiddenTitles, this.channelsHidden, video)
+        !this.isHiddenVideo(this.forbiddenTitles, this.channelsHiddenIdSet, video)
       )
     },
     startTimeSeconds: function () {
@@ -444,6 +438,9 @@ export default defineComponent({
   },
   methods: {
     async reloadView() {
+      // Upstream guards this with an `isReloadingView` flag that DROPS a reload arriving while
+      // one is running (#10131). Ours hands over to the newer one instead, which also ends the
+      // double load that fix is for -- the first call stops after tearing the player down.
       const generation = ++this.loadGeneration
 
       await this.handleRouteChange()
@@ -1990,6 +1987,8 @@ export default defineComponent({
       const videoId = this.videoId
 
       this.sabrData = {
+        // googlevideo 5's SabrStream (our downloader) drops media whose id is not this one
+        videoId,
         url: url.toString(),
         poToken,
         // a token YouTube leaves "pending" streams only the first minute (SabrSchemePlugin)
@@ -2450,9 +2449,10 @@ export default defineComponent({
       this.setAppTitle(this.videoTitle)
     },
 
-    isHiddenVideo: function (forbiddenTitles, channelsHidden, video) {
-      return channelsHidden.some(ch => ch.name === video.authorId || (video.collaborators?.length > 0 && ch.name === video.collaborators[0].id)) ||
-        channelsHidden.some(ch => ch.name === video.author) ||
+    isHiddenVideo: function (forbiddenTitles, channelsHiddenIdSet, video) {
+      return channelsHiddenIdSet.has(video.authorId) ||
+      (video.collaborators?.length > 0 && channelsHiddenIdSet.has(video.collaborators[0].id)) ||
+        channelsHiddenIdSet.has(video.author) ||
         forbiddenTitles.some((text) => video.title?.toLowerCase().includes(text)) ||
         forbiddenTitles.some((text) => video.author?.toLowerCase().includes(text))
     },

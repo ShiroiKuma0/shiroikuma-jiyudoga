@@ -2,6 +2,7 @@
   <button
     class="btn ripple"
     :class="{ pill: inPrompt, pillMain: inPrompt && main }"
+    :data-settings-search-label="label"
     :style="inPrompt ? pillStyle : {
       color: textColor,
       backgroundColor: backgroundColor,

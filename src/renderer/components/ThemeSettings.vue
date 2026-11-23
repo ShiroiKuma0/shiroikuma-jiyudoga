@@ -52,8 +52,8 @@
           :label="$t('Settings.Theme Settings.UI Scale')"
           :default-value="uiScale"
           :min-value="25"
-          :max-value="300"
-          :step="5"
+          :max-value="UI_SCALE.MAX"
+          :step="UI_SCALE.STEP"
           value-extension="%"
           @change="updateUiScale"
         />
@@ -112,6 +112,7 @@ import FtFlexBox from './ft-flex-box/ft-flex-box.vue'
 import FtPrompt from './FtPrompt/FtPrompt.vue'
 
 import store from '../store/index'
+import { UI_SCALE } from '../../constants.js'
 
 import { colors } from '../helpers/colors'
 import { useColorTranslations } from '../composables/colors'

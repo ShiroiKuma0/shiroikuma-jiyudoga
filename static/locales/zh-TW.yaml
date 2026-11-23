@@ -85,6 +85,7 @@ Search Filters:
     Creative Commons: 創用CC
     3D: 3D
   Clear Filters: 清除篩選
+  No results found: 未找到任何結果。請嘗試使用不同的關鍵字或調整搜尋篩選條件
 Subscriptions:
     # On Subscriptions Page
   Subscriptions: '訂閱'
@@ -490,7 +491,6 @@ Settings:
     Data Settings: 資料
     Manage Subscriptions: 管理訂閱
     Import Playlists: 匯入播放清單
-    All playlists has been successfully imported: 所有播放清單都已成功匯入
     Export Playlists: 匯出播放清單
     Playlist insufficient data: 「{playlist}」播放清單的資料不足，正在略過項目
     All playlists has been successfully exported: 所有播放清單都已成功匯出
@@ -515,6 +515,7 @@ Settings:
     Setting object has insufficient data, skipping item: 設定物件的資料不足，將跳過該項目
     Unknown setting key: 未知的設定鍵：{key}
     Non-transferable setting key: 無法轉移的設定鍵：{key}
+    Playlists have been successfully imported: 已成功匯入 1 個播放清單，共 {total} 個 | 已成功匯入 {count} 個播放清單，共 {total} 個
   Distraction Free Settings:
     Hide Video Likes And Dislikes: 隱藏影片喜歡與不喜歡
     Distraction Free Settings: 勿擾
@@ -560,11 +561,13 @@ Settings:
     Hide Videos, Playlists and Channels Containing Text Placeholder: 單字、單字片段或片語
     Hide Channel Home: 隱藏頻道「首頁」分頁
     Show Added Items: 顯示新增的項目
-    Hide Channel Courses: 隱藏頻道“課程”標籤
+    Hide Channel Courses: 隱藏頻道「課程」分頁
     Hide Channel Posts: 隱藏頻道「貼文」分頁
     Hide Subscriptions Posts: 隱藏訂閱貼文
     Add: 新增
     Remove: 移除
+    Hide Channel Shows: 隱藏頻道「節目」分頁
+    More Items Count: 以及 {count} 個等⋯⋯
   The app needs to restart for changes to take effect. Restart and apply change?: 必須重新啟動應用程式以生效。重新啟動並套用變更嗎？
   Proxy Settings:
     Error getting network information. Is your proxy configured properly?: 取得網路資訊時發生錯誤。您的代理伺服器設定正確嗎？
@@ -637,6 +640,9 @@ Settings:
   SABR:
     Label: 啟用 SABR 作為 DASH 後端
     Tooltip: SABR 將在未來版本成為唯一的 DASH 後端，且無法停用。此切換功能僅供早期實作出現無法修復的問題時使用。
+  Search Settings: 搜尋設定
+  Settings found: 找到 1 個設定 | 找到 {count} 個設定
+  No Matching Settings: 沒有任何設定符合您的搜尋條件。
 About:
   #On About page
   About: '關於'
@@ -728,6 +734,9 @@ Channel:
     This channel does not currently have any courses: 該頻道目前還沒有任何課程
     Courses: 課程
   View All: 檢視全部
+  Shows:
+    Shows: 節目
+    This channel does not currently have any shows: 此頻道目前沒有節目
 Video:
   Open in YouTube: '在 YouTube 中開啟'
   Copy YouTube Link: '複製 YouTube 連結'

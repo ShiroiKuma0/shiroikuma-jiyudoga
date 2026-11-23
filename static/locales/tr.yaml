@@ -91,6 +91,7 @@ Search Filters:
     Location: Konum
     VR180: VR180
   Clear Filters: Süzgeci Temizle
+  No results found: Sonuç bulunamadı. Farklı anahtar kelimeler deneyin veya arama filtrelerini değiştirin
 Subscriptions:
     # On Subscriptions Page
   Subscriptions: 'Abonelikler'
@@ -495,7 +496,6 @@ Settings:
     How do I import my subscriptions?: 'Aboneliklerimi nasıl içe artarırım?'
     Manage Subscriptions: Abonelikleri Yönet
     Export Playlists: Oynatma Listelerini Dışa Aktar
-    All playlists has been successfully imported: Tüm oynatma listeleri başarıyla içe aktarıldı
     Playlist insufficient data: '"{playlist}" oynatma listesi için yetersiz veri, öge atlanıyor'
     Import Playlists: Oynatma Listelerini İçe Aktar
     All playlists has been successfully exported: Tüm oynatma listeleri başarıyla dışa aktarıldı
@@ -521,6 +521,7 @@ Settings:
     Setting object has insufficient data, skipping item: Ayar nesnesinde yeterli veri yok, öge atlanıyor
     Unknown setting key: 'Bilinmeyen ayar anahtarı: {key}'
     Non-transferable setting key: 'Aktarılamayan ayar anahtarı: {key}'
+    Playlists have been successfully imported: 1/{total} oynatma listesi başarıyla içe aktarıldı | {count}/{total} oynatma listesi başarıyla içe aktarıldı
   Distraction Free Settings:
     Hide Live Chat: Canlı Sohbeti Gizle
     Hide Popular Videos: Popüler Videoları Gizle
@@ -572,6 +573,7 @@ Settings:
     Add: Ekle
     Remove: Kaldır
     Hide Channel Shows: Kanalın "Programlar" sekmesini gizle
+    More Items Count: +{count} daha…
   The app needs to restart for changes to take effect. Restart and apply change?: Değişikliklerin etkili olması için uygulamanın yeniden başlatılması gerekiyor. Yeniden başlatılsın ve değişiklikler uygulansın mı?
   Proxy Settings:
     Error getting network information. Is your proxy configured properly?: Ağ bilgileri alınırken hata oluştu. Vekil sunucunuz doğru yapılandırıldı mı?
@@ -644,6 +646,9 @@ Settings:
   SABR:
     Label: DASH arka ucu olarak SABR etkinleştir
     Tooltip: SABR, gelecek sürümlerde tek DASH arka ucu olacak ve devre dışı bırakılamayacaktır. Bu seçenek, erken uygulamada kurtarılamaz sorunlar olması ihtimaline karşı sunulmaktadır.
+  Search Settings: Ayarlarda Ara
+  Settings found: 1 ayar bulundu | {count} ayar bulundu
+  No Matching Settings: Aramanızla eşleşen ayar bulunamadı.
 About:
   #On About page
   About: 'Hakkında'
