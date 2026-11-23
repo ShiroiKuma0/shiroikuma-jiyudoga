@@ -17,6 +17,7 @@ const isDevMode = process.env.NODE_ENV === 'development'
 
 const { forkVersion } = require('./fork-version')
 
+/** @type {import('webpack').Configuration} */
 const config = {
   name: 'web',
   mode: process.env.NODE_ENV,
@@ -38,7 +39,7 @@ const config = {
         globOptions: {
           ignore: [
             '**/.*',
-            'static/{locales,locales-android,pwabuilder-sw.js}'
+            'static/{locales,locales-android,pwabuilder-sw.js,dashFiles,storyboards}'
           ]
         }
       },
@@ -118,10 +119,6 @@ const config = {
         ]
       },
       {
-        test: /\.html$/,
-        use: 'vue-html-loader',
-      },
-      {
         test: /\.(png|jpe?g|gif|tif?f|bmp|webp|svg)(\?.*)?$/,
         type: 'asset/resource',
         generator: {
@@ -136,6 +133,11 @@ const config = {
         }
       },
     ],
+    generator: {
+      json: {
+        JSONParse: false
+      }
+    }
   },
   // webpack defaults to only optimising the production builds, so having this here is fine
   optimization: {
