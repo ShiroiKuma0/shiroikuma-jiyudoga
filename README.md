@@ -33,7 +33,7 @@ Every release builds **all three** artifacts, always at the same version:
 - **Android arm64-v8a APK** (native Kotlin WebView wrapper; installs side-by-side with any
   other client as package `shiroikuma.jiyudoga`)
 
-**📥 Latest release: [`0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
+**📥 Latest release: [`0.26.0.1+2026-11-23.14-51.g7f6baa8b+2026-11-15.13-31.gdb559aa7+001`](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases/latest)** — [all releases & downloads »](https://github.com/ShiroiKuma0/shiroikuma-jiyudoga/releases) · [changelog »](CHANGELOG.md)
 
 </div>
 
@@ -315,6 +315,16 @@ Every floating surface is framed to match: the modals, the ⋯ menus, the profil
 subscribe dropdown, the settings jump menu, toasts, tooltips, input suggestions and the player's
 own menus all carry the accent border, so nothing hovering over the page is ever a borderless slab
 on black.
+
+And the look does not stop at that page. **Every colour in the app is a role you can set** — 106
+of them, each in the section of the thing it colours: buttons, dialogs, switches, menus, lists,
+bars, toasts, the player. Every button is an outlined pill, thick and bold for the one action a
+block is for, red-framed when it deletes; every switch an outlined pill with a solid dot; every
+action menu a column of full-width pills, each with an icon coloured by what the row does. The
+side nav and the Settings menu wear the same coloured icons, and the player's own menus are pill
+rows too. On the UI page each section carries an icon in one of seven colours that say what kind
+of section it is, on its heading and on its chip alike. And every string the fork adds reads in
+proper Japanese.
 
 ## 🔁 Device sync — the phone and the PC keep the same history
 

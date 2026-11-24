@@ -15,6 +15,89 @@ Both are left exactly as published.
 
 ---
 
+## 白い熊 自由動画 `0.26.0.1+2026-11-23.14-51.g7f6baa8b+2026-11-15.13-31.gdb559aa7+001` — 2026-11-24
+
+Built on FreeTube `7f6baa8b` (2026-11-23) + FreeTubeAndroid `db559aa7` (2026-11-15) — **both
+upstreams moved**. FreeTubeAndroid's `0.26.0.1` release is the higher of the two versions, so it
+is adopted and the build counter starts again at `+001` (Android versionCode 26001001).
+
+### Downloads
+
+- **Android** (arm64-v8a): `shiroikuma-jiyudoga_0.26.0.1+2026-11-23.14-51.g7f6baa8b+2026-11-15.13-31.gdb559aa7+001_arm64-v8a.apk`
+- **GNU/Linux** (amd64): `shiroikuma-jiyudoga_0.26.0.1+2026-11-23.14-51.g7f6baa8b+2026-11-15.13-31.gdb559aa7+001_amd64.deb`
+- **Windows** (x64): `shiroikuma-jiyudoga_0.26.0.1+2026-11-23.14-51.g7f6baa8b+2026-11-15.13-31.gdb559aa7+001_win-x64.zip`
+
+### From FreeTube (95 commits)
+
+- **Settings search**: a search box over the Settings page (Ctrl+F there) that lists the matching
+  settings and jumps to them. The 白い熊 UI page's own rows are not indexed yet.
+- **A text when a search finds nothing**, and the “fetch more results” button no longer shows
+  once nothing is left to fetch.
+- **Playlist import** reworked.
+- **Reloading the video view no longer loads twice.** We keep our own hand-over for this — the
+  newest of two reloads wins — instead of upstream's guard, which drops the newer one.
+- **Much faster with very large channel blocklists.**
+- **Fixes**: the UI-scale shortcuts now update the setting; no errors when the language is
+  changed; dropdown labels in Settings no longer overlap; dropdown items start-aligned.
+- **Under the hood**: Electron 44.10 → 45.3.3, shaka-player 5.3.3 → 5.3.5, googlevideo 4 → 5,
+  Vue 3.5.45, vue-router 5.5.1; the player component rewritten as one `<script setup>` file —
+  our player layer (diagnostics, decoder-stall recovery, media session, the pinned theatre
+  button) is ported onto it, and our SABR diagnostics and video downloader onto googlevideo 5.
+- 66 translation updates, Japanese among them.
+
+### From FreeTubeAndroid
+
+- Their Android webpack build adapted to FreeTube 0.26.0. No change to the Kotlin side.
+
+### The black-yellow theme, on every surface
+
+Until now the theme covered the 白い熊 UI page and the dialog buttons. This build takes it through
+the whole app.
+
+- **Every colour is a role of its own, settable on the UI page**: 106 colour roles, each in the
+  section of the thing it colours — Text, Buttons, Dialogs, Switches, Check boxes and radio
+  buttons, Text fields and pickers, Menus, Lists and tiles, Top bar (with the search bar and the
+  tab strip), Side nav, Cards & links, Toasts and tooltips, Player, and the page's own notes,
+  lines and icons. A role follows another one until it is set, so changing a foundation colour
+  still reaches everything that has no value of its own. Each row resets by itself, and
+  **Maintenance › Reset all colours** resets them all.
+- **Every button is an outlined pill, never a filled slab**: thick and bold where upstream marked
+  the one emphasised action of a block (Subscribe, for one), red-framed where it deletes, thin
+  for every other — the bare-text buttons included. Round icon buttons lose their filled disc.
+- **Every switch is the outlined pill with a solid dot**, right and accent when on, left and the
+  darker yellow when off — on upstream's own settings pages too, not only on ours.
+- **Menus are full-width icon pills**: the ⋯ menu of a video tile, the format menu of the watch
+  page and our right-click / long-press menu. Each row carries an icon coloured by what the row
+  does, a › when it opens something, and a clear line between groups. Lists of pure choices
+  (the navigation history) keep their check marks.
+- **The player's own menus** — quality, speed, captions, the overflow — are pill rows too.
+- **Coloured icons in the side nav and the Settings menu**, by what each entry is about.
+- **Dialogs, toasts, tooltips, banners, text fields, pickers, sliders, check boxes and radio
+  buttons** all draw from their own roles; the notification banner and the proxy warning are
+  framed notices instead of filled blocks.
+- **The 白い熊 UI page**: every section heading and every chip of the index now carries the
+  section's icon, in one of **seven colours that say what kind of section it is** — yellow for
+  the app and its settings, green for controls, light blue for words, heavy blue for the frame
+  and its boxes, orange where the app asks, offers or hands over, red for warning and
+  diagnostics, rose for brief notices. The seven are settable. In the default order no two
+  neighbouring sections share a colour (an order you dragged is left alone). **Chips are as wide
+  as their content** instead of all one width, and row icons grow with the label's text size.
+- **Menu icon colours changed** to ones that are easier to tell apart: connect is a heavy green
+  `#00A550`, message a heavy blue `#0066FF`, contact a light blue `#00B0FF`, block a rose
+  `#FF3D7F`. A colour you had already set yourself is kept.
+- **Not in this build**: per-row icons on upstream's own settings sections.
+
+### Japanese, everywhere
+
+- **Every string the fork adds is now translated** — 291 were English-only: the whole UI page
+  (Export / Import, device sync, video download, the Similar tab, the feed filter, diagnostics,
+  maintenance and every colour role), the Similar tab's actions and the download button.
+- **The Android layer's own strings** (data directory, tap highlight, UI scale, …) have a
+  Japanese translation for the first time.
+- **The backup categories** in the Export / Import panel are translated.
+
+---
+
 ## 白い熊 自由動画 `0.26.0+2026-11-10.10-09.gc45940fa+2026-09-13.13-31.gaf0ab865+012` — 2026-11-20
 
 Built on FreeTube `c45940fa` (2026-11-10) + FreeTubeAndroid `af0ab865` (2026-09-13) — neither
