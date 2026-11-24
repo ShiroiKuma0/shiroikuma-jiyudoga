@@ -1,0 +1,25 @@
+Keep Alive Notification:
+  Running In Background Message: 白い熊 自由動画 はバックグラウンドで実行中です
+General Settings:
+  Show Tap Highlight: タップしたときの強調を表示
+Player Settings:
+  Use Old Layout For Info: 動画情報を以前の配置で表示
+Distraction Free Settings:
+  Hide Thumbnail In Media Controls: メディア操作の通知でサムネイルを隠す
+Data Settings:
+  Data Directory: データ用ディレクトリ
+  Select Data Directory: データ用ディレクトリを選ぶ
+  Reset Data Directory: データ用ディレクトリを元に戻す
+  Your data directory has been moved successfully: データ用ディレクトリを移しました
+  Error moving data directory: データ用ディレクトリを移す途中でエラーが起きました
+  Nothing to change: 変更はありません
+  Copy Data Files When Moving: ディレクトリを移すときにデータファイルをコピーする
+  Copy Data Files When Moving Tooltip: オンにすると、選んだディレクトリにあるデータベースファイルを今のデータベースファイルで上書きします。オフにすると、ディレクトリを移した直後にアプリが再起動します。
+  Data Is Currently Stored In: 現在のデータの保存先
+Theme Settings:
+  Enable Ui Scale: UI の拡大率を使う
+Log Viewer:
+  Console Log: コンソールログ
+About FTA:
+  Donate Upstream: 本家に寄付する
+Decipher Script Timed Out: 解読スクリプトが時間切れになりました

@@ -109,6 +109,14 @@ Subscriptions:
   Empty Posts: 現在、登録しているチャンネルには動画はありません。
   Empty Starred: このプロファイルにはまだスター付き動画がありません。視聴ページのスターボタンで動画にスターを付けると、ここに集まります。
   Similar Needs Videos: 類似動画は登録チャンネルの最近の動画から発見されます。先に「動画」タブを更新してから、ここに戻ってください。
+  Similar Block Channel: '{channel} をここに表示しない'
+  Similar Reject Video: このような動画を減らす
+  Similar Stop Seeding: '{channel} をおすすめの元にしない'
+  Similar Because Of: '{channel} から'
+  Similar Because Of More: '{channel} ほか {count} 件から'
+  Similar Channel Blocked: '{channel} はここに表示されなくなります — タップで元に戻す'
+  Similar Video Rejected: このような動画を減らします — タップで元に戻す
+  Similar Seed Blocked: '{channel} はおすすめの元ではなくなりました — タップで元に戻す'
   Posts:
     RSS Message: YouTube は投稿の RSS フィードを提供していません。投稿を表示するには "{rssSetting}" 設定を無効にするか、このタブを非表示にするには "{hideSetting}" 設定を有効にしてください。
 Trending:
@@ -750,6 +758,7 @@ Video:
   Unstar Video: スターを外す
   Study in jisho: 辞書で勉強
   Study in yosuga: よすがで勉強
+  Download Video: 動画を保存
   Study Export:
     Preparing: 勉強用字幕を準備中…
     Done Aligned: 辞書に送信しました — 概要欄の書き起こしに合わせた字幕付き
@@ -1214,10 +1223,118 @@ SKUI:
     Side nav: サイドバー
     Cards & links: カードとリンク
     Shape & lines: 形と線
+    Roles: この設定ページ
+    Text: 文章
+    Buttons: ボタン
+    Dialogs: ダイアログ
+    Switches: スイッチ
+    Marks: チェックボックスとラジオボタン
+    Fields: 入力欄と選択欄
+    Menus: メニュー
+    Lists: 一覧と動画の枠
+    Toasts: 通知と説明の吹き出し
+    Player: プレーヤー
   Groups:
+    Settings page: 説明文と線
+    Row icons: 行のアイコン（行の働きごと）
+    Section icons: このページの節のアイコン（節の種類ごと）
+    Icon buttons: アイコンだけのボタン
+    Pickers: 選択欄
+    Sliders: スライダー
+    Tab strip: タブ列
+    Tooltips: 説明の吹き出し
     Bar: バー
     Search bar: 検索バー
   Slots:
+    note: 説明文とその縦線
+    switchOn: スイッチ（オン）
+    switchOff: スイッチ（オフ）
+    switchLabel: スイッチの見出し
+    divider: 節の区切り線
+    warning: 警告
+    titleText: 見出し
+    tertiaryText: 小さな文字
+    selectionBg: 選択した文字の背景
+    selectionText: 選択した文字
+    focusRing: キーボード操作の枠
+    buttonText: ボタンの文字
+    buttonFrame: ボタンの枠
+    buttonGround: ボタンの地
+    buttonMainText: 主ボタンの文字
+    buttonMainFrame: 主ボタンの枠
+    buttonDanger: 削除するボタン
+    buttonRipple: ボタンを押したとき
+    iconButtonGlyph: アイコンだけのボタン
+    iconButtonHover: アイコンだけのボタン（ホバー）
+    iconButtonDanger: 削除するアイコンボタン
+    dialogGround: ダイアログの地
+    dialogFrame: ダイアログの枠
+    dialogTitle: ダイアログの見出し
+    dialogText: ダイアログの文章
+    dialogScrim: ダイアログの後ろの陰
+    dialogButtonText: ダイアログのボタンの文字
+    dialogButtonFrame: ダイアログのボタンの枠
+    checkOn: チェックボックス（入）
+    checkOff: チェックボックス（空）
+    checkLabel: チェックボックスとラジオボタンの見出し
+    radioOn: ラジオボタン（選択）
+    radioOff: ラジオボタン（空）
+    fieldText: 入力欄の文字
+    fieldGround: 入力欄の地
+    fieldFrame: 入力欄の枠
+    fieldPlaceholder: 入力欄の案内文
+    selectText: 選択欄の文字
+    selectGround: 選択欄の地
+    selectFrame: 選択欄の枠
+    sliderTrack: スライダーの線
+    sliderThumb: スライダーのつまみ
+    menuGround: メニューの地
+    menuFrame: メニューの枠
+    menuLabel: メニューの文字
+    menuRowFrame: メニューの行の枠
+    menuHover: メニューの行（ホバー）
+    menuDivider: メニューの区切り線
+    menuHeader: メニューの見出し行
+    tileTitle: 動画の題名
+    tileInfo: チャンネル名・視聴回数・日付
+    tileBadgeGround: 再生時間の札の地
+    tileBadgeText: 再生時間の札の文字
+    tileProgress: 視聴済みの進み具合
+    tileStar: 星を付けた動画の星
+    listDivider: 一覧の区切り線
+    tabActiveGround: 開いているタブの地
+    tabActiveText: 開いているタブの文字
+    tabIdleText: ほかのタブの文字
+    tabFrame: タブの枠
+    scrollbar: スクロールバー
+    scrollbarHover: スクロールバー（ホバー）
+    linkVisited: 開いたことのあるリンク
+    toastGround: 通知の地
+    toastText: 通知の文字
+    toastFrame: 通知の枠
+    tooltipGround: 吹き出しの地
+    tooltipText: 吹き出しの文字
+    tooltipFrame: 吹き出しの枠
+    playerMenuGround: プレーヤーのメニューの地
+    playerMenuText: プレーヤーのメニューの文字
+    playerMenuFrame: プレーヤーのメニューの枠
+    playerSeek: 再生位置のバー
+    playerOverlayGround: プレーヤー上の表示の地
+    playerOverlayText: プレーヤー上の表示の文字
+    sectionBase: アプリとその設定
+    sectionControls: 操作するもの
+    sectionWords: 文字と文章
+    sectionFrame: 枠と区画
+    sectionReach: 尋ねる・示す・渡す
+    sectionWarning: 警告と診断
+    sectionFlash: 短い知らせ
+    roleConnect: つなぐ・同期する
+    roleMessage: 書く・印を付ける
+    roleContact: 人・アカウント
+    roleShare: コピー・共有・書き出し
+    roleView: 見る・設定
+    roleBlock: 止める・隠す
+    roleDelete: 削除・初期化
     background: 背景
     text: 文字色
     secondaryText: 補助文字色
@@ -1250,33 +1367,9 @@ SKUI:
   Font & UI size: フォントとUIの大きさ
   Font file: フォントファイル
   Only ttf and otf fonts are supported: ttf と otf のフォントのみ対応しています
-  Tabs:
-    Section: タブ
-    Description: >-
-      デスクトップでは動画を右クリック、スマホでは長押しすると、別のタブで開きます。
-      タブが二つ以上になるとタブ列が現れ、開いていたタブは次回の起動時に戻ります。
-    New tab position: 新しいタブを開く位置
-    New tab position description: >-
-      「一番右」なら開いているタブは動きません。読んでいるタブも、閉じる × も同じ場所に残ります。
-    At the far right: 一番右
-    Beside this one: 今のタブの隣
-    New tab: 新しいタブ
-    Close tab: タブを閉じる
-    Scroll tabs left: タブを左へスクロール
-    Scroll tabs right: タブを右へスクロール
-    Always show: タブ列を常に表示
-    Always show description: >-
-      タブが一つだけでもタブ列を表示し続けます。
-  Menu:
-    Open in a new tab: 新しいタブで開く
-    Open in a new window: 新しいウィンドウで開く
-    Save thumbnail as: サムネイルを保存…
-    Copy thumbnail address: サムネイルのアドレスをコピー
-    Thumbnail address copied: サムネイルのアドレスをクリップボードにコピーしました
-    Thumbnail save failed: サムネイルを保存できませんでした
   Account:
     Section: YouTube アカウント
-    Description: '年齢制限のある動画は、ログイン済みで年齢確認を済ませた YouTube アカウントでしか再生できません。そのアカウントの Cookie をブラウザーから cookies.txt（yt-dlp が読む形式）として書き出して読み込むと、視聴ページはその動画に限って使います。それ以外はすべて匿名のままです。Cookie はログインそのものなので、この端末にだけ保存され、エクスポート／インポートや端末同期には含まれません。'
+    Description: 年齢制限のある動画は、ログイン済みで年齢確認を済ませた YouTube アカウントでしか再生できません。そのアカウントの Cookie をブラウザーから cookies.txt（yt-dlp が読む形式）として書き出して読み込むと、視聴ページはその動画に限って使います。それ以外はすべて匿名のままです。Cookie はログインそのものなので、この端末にだけ保存され、エクスポート／インポートや端末同期には含まれません。
     Cookies: Cookie
     None: 未読み込み
     Imported: '{when} に読み込み'
@@ -1290,23 +1383,242 @@ SKUI:
     Dialog:
       Title: YouTube の Cookie を読み込む
       Expired title: YouTube の Cookie が使えなくなりました
-      Expired: 'YouTube が読み込んだ Cookie を受け付けなくなったため、年齢制限のある動画を再生できません。新しく書き出して読み込んでください。'
+      Expired: YouTube が読み込んだ Cookie を受け付けなくなったため、年齢制限のある動画を再生できません。新しく書き出して読み込んでください。
       Age restricted title: この動画は年齢制限があります
-      Age restricted: 'YouTube はログイン済みで年齢確認を済ませたアカウントにしか再生しません。そのアカウントの Cookie を読み込むとここで再生できます。Cookie は年齢制限のある動画にだけ使われます。'
-      Private: 'Cookie は必ずプライベートウィンドウから書き出してください。通常のウィンドウでは Firefox が YouTube のセッションを更新し続けるため、書き出した Cookie は数分で使えなくなります。'
+      Age restricted: YouTube はログイン済みで年齢確認を済ませたアカウントにしか再生しません。そのアカウントの Cookie を読み込むとここで再生できます。Cookie は年齢制限のある動画にだけ使われます。
+      Private: Cookie は必ずプライベートウィンドウから書き出してください。通常のウィンドウでは Firefox が YouTube のセッションを更新し続けるため、書き出した Cookie は数分で使えなくなります。
       Step allow: '最初に一度だけ: Firefox で about:addons → YT-DLP Cookie Exporter を開き、「プライベートウィンドウでの実行」を「許可」にします。許可しないと通常のウィンドウの Cookie が書き出されます。'
-      Step window: '新しいプライベートウィンドウ（Ctrl+Shift+P）を開き、年齢確認済みのアカウントで YouTube にログインして、どれかの動画を開きます。'
+      Step window: 新しいプライベートウィンドウ（Ctrl+Shift+P）を開き、年齢確認済みのアカウントで YouTube にログインして、どれかの動画を開きます。
       Step export: YT-DLP Cookie Exporter のボタンを押して cookies.txt を保存します。
-      Step close: 'ログアウトせずにプライベートウィンドウを閉じます。ログアウトすると書き出したセッションも無効になります。'
+      Step close: ログアウトせずにプライベートウィンドウを閉じます。ログアウトすると書き出したセッションも無効になります。
       Step import: その cookies.txt をここで読み込みます。
       Step import phone: その cookies.txt をスマートフォンにコピーして、ここで読み込みます。
       Later: 後で
     Hint: ここで見るには、白い熊 UI 設定で年齢確認済みアカウントの Cookie を読み込んでください。
-    Signed out: 'この動画は年齢制限があり、読み込んだ Cookie のセッションは YouTube にログアウトされています。（プライベートウィンドウから）書き出し直して、白い熊 UI 設定で読み込んでください。'
-    Refused: 'この動画は年齢制限があり、読み込んだ Cookie のアカウントでも YouTube に拒否されました。アカウントが年齢確認を済ませていない可能性があります。'
-    Failed: 'この動画は年齢制限があり、読み込んだ Cookie での取得に失敗しました。詳細はログにあります。'
+    Signed out: この動画は年齢制限があり、読み込んだ Cookie のセッションは YouTube にログアウトされています。（プライベートウィンドウから）書き出し直して、白い熊 UI 設定で読み込んでください。
+    Refused: この動画は年齢制限があり、読み込んだ Cookie のアカウントでも YouTube に拒否されました。アカウントが年齢確認を済ませていない可能性があります。
+    Failed: この動画は年齢制限があり、読み込んだ Cookie での取得に失敗しました。詳細はログにあります。
+  Download:
+    Section: 動画の保存
+    Description: 視聴ページの保存ボタンは、動画を Matroska ファイルとして保存します。チャプターと選んだ字幕が埋め込まれるので、mpv などのプレーヤーでそのまま移動できます。プレーヤーと同じ方法で最良の映像と音声を取得し、届いた分から書き込むため、大きさの上限はありません。取得できないときは映像と音声が一体のストリームを使います。
+    Download directory: 保存先ディレクトリ
+    No download directory set: 保存先ディレクトリが未設定です
+    Filename template: ファイル名の書式
+    Tokens: '使える項目: %(title)s %(upload_date)s %(channel)s %(uploader)s %(id)s %(resolution)s %(ext)s'
+    Date format hint: '%(upload_date)s は YYYY-MM-DD です。ほかの書式は %(upload_date>%Y%m%d)s のように書きます。'
+    Preview: '例: {name}'
+    Max filename length: ファイル名の最大長
+    Bytes: '{count} バイト'
+    Downloading: 取得中…
+    Muxing: Matroska ファイルを作成中…
+    Writing: 保存中…
+    Finished: 保存が完了しました
+    Failed: 保存に失敗しました
+    Cancel: キャンセル
+    OK: OK
+    Bad Directory: 保存先ディレクトリを使えませんでした — もう一度選んでください
+    No Format: この動画には保存できる形式がありません
+    Download Failed: 保存に失敗しました — 後でもう一度お試しください
+    Too Large: この動画は一度に保存するには大きすぎます
+    Write Failed: 保存先ディレクトリにファイルを書き込めませんでした
+    Subtitles Title: 動画を保存
+    Subtitles Body: SRT トラックとしてファイルに埋め込む字幕にチェックを入れてください。
+    Download With Subtitles: 字幕 {count} 本を付けて保存 | 字幕 {count} 本を付けて保存
+    Download Without Subtitles: 字幕なしで保存
+    Subtitles Missing: '取得できず、埋め込まれなかった字幕: {tracks}'
+  Similar:
+    Section: 「類似」タブ
+    Description: 今使っているプロファイルで「類似」タブが覚えた内容です。「すべてのチャンネル」を使っているときのブロックはすべてのプロファイルに効き、そちらで管理します。
+    Rank by agreement: 一致の多い順に並べる
+    Rank by agreement description: 単に新しい順ではなく、あなたの動画の複数からたどり着いた動画を先に並べます。
+    Minimum agreement: 一致する動画の最小数
+    Minimum agreement description: この数より少ない動画からしかたどり着かなかったおすすめを隠します。1 ならすべて表示します。
+    Blocked channels: ブロックしたチャンネル
+    Rejected videos: 断った動画
+    Learned words: 覚えた言葉
+    Suggestion sources: おすすめの元
+    Seed blocked: おすすめの元から外しました
+    Seed demerits: これまでに {count} 件を断りました
+    Nothing yet: まだありません
+    And more: ほか {count} 件
+    Term weight: ×{count}
+    Remove: 外す
+    Reset: このプロファイルで「類似」タブが覚えたことをすべて消す
+    Reset done: このプロファイルについて「類似」タブが覚えたことをすべて消しました
+    Reset confirm: このプロファイルで「類似」タブが覚えたこと（ブロックしたチャンネル、断った動画、覚えた言葉、おすすめの元）をすべて消しますか？ 元には戻せません。
+    Reset action: はい、消します
+  Backup:
+    Categories:
+      settings: 'アプリの設定'
+      settings-general: '一般（言語、地域、取得方法、最初のページ）'
+      settings-appearance: '外観と白い熊 UI（テーマ、色、フォント、動画の並び）'
+      settings-player: 'プレーヤー（再生、画質、字幕、音量）'
+      settings-subscriptions: '登録チャンネルとフィード'
+      settings-distraction: '集中モード（隠す要素）'
+      settings-privacy: 'プライバシー、履歴、ペアレンタルコントロール'
+      settings-sponsorblock: 'SponsorBlock'
+      settings-external: '外部プレーヤー'
+      settings-proxy: 'プロキシ'
+      settings-downloads: 'スクリーンショットと学習用の書き出し'
+      profiles: 'プロファイル、登録チャンネル、星を付けた動画、「類似」の調整'
+      playlists: '再生リスト'
+      history: '視聴履歴'
+      search-history: '検索履歴'
+    Export / Import: 書き出しと読み込み
+    Export / Import…: 書き出しと読み込み…
+    Panel description: チェックを入れた部分を、バックアップ用ディレクトリの .zip 一つに保存します。または、選んだ .zip に入っている部分のうちチェックを入れたものを戻します。アーカイブに入っていない部分は飛ばします。
+    Backup directory: バックアップ用ディレクトリ
+    No backup directory set: バックアップ用ディレクトリが未設定です
+    No backup in this directory yet: このディレクトリにはまだバックアップがありません
+    Last backup: '最後のバックアップ: {when} — {name}'
+    Working: 処理中…
+    Select all: すべて選択
+    Cancel: キャンセル
+    Import: 読み込み
+    Export: 書き出し
+    OK: OK
+    Later: 後で
+    Restart now: 今すぐ再起動
+    Export finished: 書き出しが完了しました
+    Export failed: 書き出しに失敗しました
+    Import finished: 読み込みが完了しました
+    Import failed: 読み込みに失敗しました
+    No categories selected: 項目が選ばれていません。
+    N categories: '{count} 項目'
+    Restart hint: 戻したデータを反映するには、アプリを再起動してください。
+    Automation export: 自動化による書き出し
+    Automation export description: 姉妹アプリのタスクが、トークンで守られたインテントを通してこのアプリの書き出しを起動できるようにします。
+    Require token: 認証トークンを使いますか？
+    Require token description: オフなら、どの姉妹アプリでもこのアプリの自動化を動かせます。オンなら、呼び出す側は下のトークンも示す必要があります。どちらの場合も、データの受け渡し口は呼び出し元の身元と署名を確かめます。
+    Automation token: 自動化のトークン
+    All files access needed: 自動化はオンですが、このアプリは自分のバックアップ用ディレクトリの外に書き込めません。姉妹アプリからの実行で共有ディレクトリにバックアップを置けるように、すべてのファイルへのアクセスを許可してください。
+    Grant access: アクセスを許可
+    Regenerate: 作り直す
+    Token copied: 自動化のトークンをクリップボードにコピーしました
+    Token regenerated: 新しい自動化のトークンを作りました — 貼り付けてある写しをすべて更新してください
+  Maintenance:
+    Section: 保守
+    Reset section order: 節の並びを元に戻す
+    Reset section order description: このページの節を最初の並びに戻します。どの節が開いているかは変わりません。
+    Reset section order confirm: このページの節を最初の並びに戻しますか？
+    Reset all colours: すべての色を元に戻す
+    Reset all colours description: このページのすべての色を既定に戻します。フォント、形、節の並びは変わりません。
+    Reset all colours confirm: すべての色を既定に戻しますか？
+  Diag:
+    Section: 診断
+    Description: 不具合が起きたときに後から原因を調べるために、アプリが自分について記録するものです。どの種類もオンにするまではオフで、オフの間は何も書き込みません。種類ごとに一日一つのファイルが、この端末の diag ディレクトリに作られます。
+    Groups:
+      Playback: 再生
+      Sync: 端末間の同期
+      App: アプリ
+      Recording: 記録
+      Recorded: 記録したデータ
+    Kinds:
+      playback: 再生の記録
+      playback description: 再生位置が後ろへ飛んだすべての場面と、その原因、バッファーとストリームの状態。ストリームが届けたすべての区間と、時刻が合わない区間。ストリームのトークンの更新、転送、プレーヤーの読み込み直し。スマートフォンでのデコーダーの停止。
+      sync: 端末間の同期
+      sync description: 同期のすべての実行 — 相手の端末から読んだもの、取り込んだもの、送ったもの、失敗した理由。
+      console: コンソール
+      console description: アプリが出すすべての警告とエラー。ブラウザーエンジンが代わりに報告するもの（拒否された要求、ブロックされた資源）も含みます。
+    Mark: 印を付ける
+    Mark description desktop: 記録中のすべてのファイルに番号付きの「印」の行を書き込み、何かが起きた瞬間を後で見つけられるようにします。アプリのどこからでも Ctrl+Shift+M で同じことができます。
+    Mark description Android: 記録中のすべてのファイルに番号付きの「印」の行を書き込み、何かが起きた瞬間を後で見つけられるようにします。記録中の通知にも同じボタンがあります。
+    Turn all off: すべてオフ
+    Recording indicator: 診断を記録中です
+    Marked: '印 #{number}'
+    Nothing recording: 何も記録していません
+    Stored: 保存済み
+    Nothing stored: 記録はありません
+    Stored summary: '{files} ファイル、{size}、{days} 日分（{from} – {to}）'
+    Keep for days: 保存期間
+    days unit: ' 日'
+    Keep everything: すべて残す
+    Export: 書き出し
+    Export description: 選んだディレクトリの中に日付の付いた新しいサブディレクトリを作り、すべてのファイルをコピーします。
+    Exported: '{where} に書き出しました'
+    Export failed: '書き出しに失敗しました: {message}'
+    Share: 共有
+    Open directory: diag ディレクトリを開く
+    Purge: 消去
+    Purge confirm: '{files} ファイル（{size}）を完全に削除しますか？'
+    Delete forever: 完全に削除
+    Purged: '{files} ファイルを削除しました'
   Sync:
+    Section: 端末間の同期
+    Description: 視聴履歴、各プロファイルの登録チャンネル、星を付けた動画を、この端末ともう一方の端末で同じに保ちます。それぞれの端末は自分の状態を表すファイルを一つだけ公開し、デスクトップ版が起動している間に ssh で二つのファイルを運びます。スマートフォンで途中まで見た動画は、PC で続きから再生できます。
+    Enable: もう一方の端末と同期する
+    Enable description: これをオンにするまで、何も読まず、書かず、送りません。
+    Status: 状態
+    Never: まだ同期していません
+    Up to date: 最新です（{when}）
+    Merged: '{count} 件の変更を取り込みました（{when}）'
+    No peer: スマートフォンが未設定です — 何も送っていません
+    No storage access: 同期用ディレクトリを使うには、すべてのファイルへのアクセスが必要です
+    No directory: 同期用ディレクトリが未設定です
+    Failed: '前回の同期に失敗しました: {message}'
     Label: 同期
+    Sync now: 今すぐ同期
+    Syncing: 同期中…
+    Toast up to date: もう一方の端末とすでに同じ状態です
+    Toast merged: '同期しました: {count} 件の変更を取り込みました'
+    Toast failed: 同期に失敗しました — 理由は白い熊 UI 設定で確認できます
+    Grant access: アクセスを許可
+    Sync directory: このスマートフォンの同期用ディレクトリ
+    Sync directory description: 選択したディレクトリではなく実際のパスです。PC が ssh で届く必要があるためです。同じパスを PC 側の「スマートフォンの同期用ディレクトリ」欄に入力してください。
+    Phone host: スマートフォン（ssh での接続先）
+    Phone host description: ~/.ssh/config のホスト名、user{'@'}host、またはアドレスそのもの。空欄なら、どこにも送りません。鍵、別名、エージェントは ssh 側の仕事で、このアプリは関わりません。
+    Phone port: ssh のポート
+    Phone port description: 0 ならポートを指定せず、~/.ssh/config に任せます。上書きしたいときだけ設定してください。known_hosts はホストとポートの組で記録されるので、設定にないポートを使うと、信頼済みのスマートフォンが未知の相手に見えます。
+    Ssh arguments: ssh の追加の引数
+    Ssh arguments description: 'そのままコマンドの後ろに付けます。例: -i ~/.ssh/id_ed25519'
+    Phone directory: スマートフォンの同期用ディレクトリ
+    Local directory: この PC の同期用ディレクトリ
+    Local directory default: 空欄なら、アプリ自身のデータ用ディレクトリを使います
+    On start: アプリを開いたときに同期する
+    On start description: 前面に戻ったときにも同期します。
+    After watch: 視聴の後に同期する
+    After watch description: 動画を離れてから数秒後に同期するので、再生位置がもう一方の端末にすぐ届きます。
+  Tabs:
+    Section: タブ
+    Description: デスクトップでは動画を右クリック、スマホでは長押しすると、別のタブで開きます。 タブが二つ以上になるとタブ列が現れ、開いていたタブは次回の起動時に戻ります。
+    New tab position: 新しいタブを開く位置
+    New tab position description: 「一番右」なら開いているタブは動きません。読んでいるタブも、閉じる × も同じ場所に残ります。
+    At the far right: 一番右
+    Beside this one: 今のタブの隣
+    New tab: 新しいタブ
+    Close tab: タブを閉じる
+    Scroll tabs left: タブを左へスクロール
+    Scroll tabs right: タブを右へスクロール
+    Always show: タブ列を常に表示
+    Always show description: タブが一つだけでもタブ列を表示し続けます。
+  Menu:
+    Open in a new tab: 新しいタブで開く
+    Open in a new window: 新しいウィンドウで開く
+    Save thumbnail as: サムネイルを保存…
+    Copy thumbnail address: サムネイルのアドレスをコピー
+    Thumbnail address copied: サムネイルのアドレスをクリップボードにコピーしました
+    Thumbnail save failed: サムネイルを保存できませんでした
+  Feed filter:
+    New filter: 新しい絞り込み
+    Edit filter: 絞り込みを編集
+    Legend: プロファイルをタップすると切り替わります。+ は表示、− は非表示、数字はチャンネルごとに新しい順でその本数だけ残します。+ が一つもないときは、今のプロファイルが基準になります。
+    Pill hint: タップでこの絞り込みを表示 — 長押しで移動、離すと削除、さらに押し続ける（または右クリック）と編集
+    Hide upcoming: 公開前を隠す
+    Upcoming hint: まだ公開されていない動画と配信を除きます
+    Filter name: 絞り込みの名前
+    Create: 作成
+    Save: 保存
+    Cancel: キャンセル
+    Deleted: 「{name}」を削除しました — タップで元に戻す
+    Cycle state: '切り替え: なし、表示、非表示、本数の上限'
+    Max per channel: チャンネルごとに残す新しい動画の本数
+    Channels in view: '{count} チャンネルを表示中'
+    Clear: 解除
+  Subscriptions:
+    Section: 登録チャンネル
+    Description: 絞り込みそのものは、プロファイルの丸の隣のじょうごのボタンにあります。ここでは、絞り込みの対象になるプロファイルの呼び名を決めます。
+    All Channels label: 「すべてのチャンネル」の呼び名
+    All Channels label description: すべての登録チャンネルを持つプロファイルの、丸とプロファイル一覧での呼び名です。空欄なら翻訳された名前を使います。
   Player:
     Decoder recovery: この端末のデコーダーが再生できないため {codec} に切り替えました
   Music:

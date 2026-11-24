@@ -263,10 +263,10 @@ class AutomationDataService : Service() {
   private fun notification(importing: Boolean): Notification {
     val manager = getSystemService(NotificationManager::class.java)
     manager?.createNotificationChannel(
-      NotificationChannel(CHANNEL, "自動化データ", NotificationManager.IMPORTANCE_LOW)
+      NotificationChannel(CHANNEL, getString(R.string.automation_channel), NotificationManager.IMPORTANCE_LOW)
     )
     return Notification.Builder(this, CHANNEL)
-      .setContentTitle(if (importing) "データを戻しています" else "データを書き出しています")
+      .setContentTitle(getString(if (importing) R.string.automation_importing else R.string.automation_exporting))
       .setContentText(getString(R.string.app_name))
       .setSmallIcon(android.R.drawable.stat_sys_download)
       .setOngoing(true)

@@ -13,4 +13,8 @@
     <string name="diag_kind_playback">再生</string>
     <string name="diag_kind_sync">同期</string>
     <string name="diag_kind_console">コンソール</string>
+    <!-- Automation export / import (automation/AutomationDataService.kt): the foreground notification -->
+    <string name="automation_channel">自動化データ</string>
+    <string name="automation_importing">データを戻しています</string>
+    <string name="automation_exporting">データを書き出しています</string>
 </resources>
