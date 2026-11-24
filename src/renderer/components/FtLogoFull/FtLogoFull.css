@@ -1,5 +1,5 @@
 .logo-text {
-  fill: #ff0;
+  fill: var(--skui-top-bar-text);
   font-size: 60px;
   font-weight: 700;
 }

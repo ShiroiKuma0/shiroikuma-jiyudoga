@@ -1330,17 +1330,111 @@ SKUI:
     Side nav: Side nav
     Cards & links: Cards & links
     Shape & lines: Shape & lines
-    Roles: Roles and row icons
+    Roles: This settings page
+    Text: Text
+    Buttons: Buttons
+    Dialogs: Dialogs
+    Switches: Switches
+    Marks: Check boxes and radio buttons
+    Fields: Text fields and pickers
+    Menus: Menus
+    Lists: Lists and tiles
+    Toasts: Toasts and tooltips
+    Player: Player
   Groups:
-    Settings page: Settings page
+    Settings page: Notes and lines
     Row icons: Row icons, by what the row does
+    Section icons: Section icons of this page, by what the section is
+    Icon buttons: Icon buttons
+    Pickers: Pickers
+    Sliders: Sliders
+    Tab strip: Tab strip
+    Tooltips: Tooltips
     Bar: Bar
     Search bar: Search bar
   Slots:
     note: Explanations and their rule
+    switchOn: Switch, on
     switchOff: Switch, off
+    switchLabel: Switch label
     divider: Section lines
     warning: Warning
+    titleText: Headings
+    tertiaryText: Small print
+    selectionBg: Selected text, ground
+    selectionText: Selected text
+    focusRing: Keyboard focus ring
+    buttonText: Button label
+    buttonFrame: Button frame
+    buttonGround: Button ground
+    buttonMainText: Main button label
+    buttonMainFrame: Main button frame
+    buttonDanger: Deleting button
+    buttonRipple: Button press
+    iconButtonGlyph: Icon button
+    iconButtonHover: Icon button, hovered
+    iconButtonDanger: Deleting icon button
+    dialogGround: Dialog ground
+    dialogFrame: Dialog frame
+    dialogTitle: Dialog title
+    dialogText: Dialog text
+    dialogScrim: Shade behind a dialog
+    dialogButtonText: Dialog button label
+    dialogButtonFrame: Dialog button frame
+    checkOn: Check box, ticked
+    checkOff: Check box, empty
+    checkLabel: Label of a check box or radio button
+    radioOn: Radio button, chosen
+    radioOff: Radio button, empty
+    fieldText: Field text
+    fieldGround: Field ground
+    fieldFrame: Field frame
+    fieldPlaceholder: Field hint
+    selectText: Picker text
+    selectGround: Picker ground
+    selectFrame: Picker frame
+    sliderTrack: Slider track
+    sliderThumb: Slider thumb
+    menuGround: Menu ground
+    menuFrame: Menu frame
+    menuLabel: Menu label
+    menuRowFrame: Menu row frame
+    menuHover: Menu row, hovered
+    menuDivider: Menu divider
+    menuHeader: Menu header line
+    tileTitle: Video title
+    tileInfo: Channel, views and date
+    tileBadgeGround: Duration badge, ground
+    tileBadgeText: Duration badge, text
+    tileProgress: Watched progress bar
+    tileStar: Star of a starred video
+    listDivider: Lines between parts of a list
+    tabActiveGround: Open tab, ground
+    tabActiveText: Open tab, text
+    tabIdleText: Other tabs, text
+    tabFrame: Tab frame
+    scrollbar: Scrollbar
+    scrollbarHover: Scrollbar, hovered
+    linkVisited: Visited link
+    toastGround: Toast ground
+    toastText: Toast text
+    toastFrame: Toast frame
+    tooltipGround: Tooltip ground
+    tooltipText: Tooltip text
+    tooltipFrame: Tooltip frame
+    playerMenuGround: Player menu ground
+    playerMenuText: Player menu text
+    playerMenuFrame: Player menu frame
+    playerSeek: Seek bar
+    playerOverlayGround: Player readouts, ground
+    playerOverlayText: Player readouts, text
+    sectionBase: The app and its settings
+    sectionControls: Controls
+    sectionWords: Words
+    sectionFrame: The frame and its boxes
+    sectionReach: Asks, offers, hands over
+    sectionWarning: Warning, diagnostics
+    sectionFlash: A brief notice
     roleConnect: Connects, syncs
     roleMessage: Writes, marks
     roleContact: People, accounts
@@ -1495,6 +1589,22 @@ SKUI:
       rejected videos, learned words and suggestion sources? This cannot be undone.
     Reset action: Yes, clear it
   Backup:
+    Categories:
+      settings: 'App settings'
+      settings-general: 'General (locale, region, backend, start page)'
+      settings-appearance: 'Appearance & 白い熊 UI (theme, colours, fonts, grid)'
+      settings-player: 'Player (playback, quality, captions, volume)'
+      settings-subscriptions: 'Subscriptions & feeds'
+      settings-distraction: 'Distraction free (hidden elements)'
+      settings-privacy: 'Privacy, history & parental control'
+      settings-sponsorblock: 'SponsorBlock'
+      settings-external: 'External player'
+      settings-proxy: 'Proxy'
+      settings-downloads: 'Screenshots & study export'
+      profiles: 'Profiles, subscriptions, starred videos & Similar tuning'
+      playlists: 'Playlists'
+      history: 'Watch history'
+      search-history: 'Search history'
     Export / Import: Export / Import
     Export / Import…: Export / Import…
     Panel description: >-
@@ -1542,6 +1652,11 @@ SKUI:
       Puts the sections of this page back in their original order. Which ones are open stays
       as it is.
     Reset section order confirm: Put the sections of this page back in their original order?
+    Reset all colours: Reset all colours
+    Reset all colours description: >-
+      Puts every colour of this page back to its default. Fonts, shapes and the order of the
+      sections stay as they are.
+    Reset all colours confirm: Put every colour back to its default?
   Diag:
     Section: Diagnostics
     Description: >-

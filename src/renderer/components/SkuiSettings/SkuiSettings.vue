@@ -805,6 +805,8 @@
               v-if="slot.kind === 'color'"
               :class="group.key === null ? 'skuiIndent1' : 'skuiIndent2'"
               :label="$t(`SKUI.Slots.${slot.key}`)"
+              :icon="slot.icon"
+              :tint="slot.tint"
               :model-color="resolvedColors[slot.key]"
               :is-overridden="slot.key in themeColors"
               :recent-colors="recentColors"
@@ -859,6 +861,28 @@
           </button>
           <span class="skuiEntrySummary skuiPillSummary">{{ $t('SKUI.Maintenance.Reset section order description') }}</span>
         </div>
+        <div class="skuiPillRow skuiIndent1">
+          <button
+            class="skuiPill skuiPillDanger"
+            type="button"
+            @click="showResetColorsPrompt = true"
+          >
+            <FontAwesomeIcon
+              :icon="['fas', 'palette']"
+              class="skuiRowIcon skuiRole-delete"
+            />
+            <span class="skuiPillLabel">{{ $t('SKUI.Maintenance.Reset all colours') }}</span>
+          </button>
+          <span class="skuiEntrySummary skuiPillSummary">{{ $t('SKUI.Maintenance.Reset all colours description') }}</span>
+        </div>
+        <FtPrompt
+          v-if="showResetColorsPrompt"
+          :label="$t('SKUI.Maintenance.Reset all colours confirm')"
+          :option-names="resetColorsPromptNames"
+          :option-values="RESET_ORDER_PROMPT_VALUES"
+          is-first-option-destructive
+          @click="handleResetColorsPrompt"
+        />
         <FtPrompt
           v-if="showResetOrderPrompt"
           :label="$t('SKUI.Maintenance.Reset section order confirm')"
@@ -925,19 +949,83 @@ const router = useRouter()
 
 // ---- the folding page: its sections in their default order, for the index and the fold state ----
 
-const pageSections = computed(() => [
-  ...(IS_ANDROID ? [{ key: 'backup', title: t('SKUI.Backup.Export / Import') }] : []),
-  { key: 'sync', title: t('SKUI.Sync.Section') },
-  { key: 'download', title: t('SKUI.Download.Section') },
-  { key: 'account', title: t('SKUI.Account.Section') },
-  { key: 'subscriptions', title: t('SKUI.Subscriptions.Section') },
-  { key: 'tabs', title: t('SKUI.Tabs.Section') },
-  { key: 'similar', title: t('SKUI.Similar.Section') },
-  // eslint-disable-next-line @intlify/vue-i18n/no-dynamic-keys
-  ...SKUI_SECTIONS.map(section => ({ key: `theme-${section.key}`, title: t(`SKUI.Sections.${section.key}`) })),
-  { key: 'diagnostics', title: t('SKUI.Diag.Section') },
-  { key: 'maintenance', title: t('SKUI.Maintenance.Section') },
-])
+/**
+ * The page's section registry: every top-level section with its title, its icon and which of
+ * the seven section colours the icon is drawn in — by what KIND of thing the section is
+ * (black-yellow-theme, "Section icons"): base = what the app is and its settings, controls =
+ * what you operate, words = written and read, frame = the frame and its boxes, reach = the app
+ * asks, offers or hands over, warning = resets, wipes and diagnostics, flash = a brief notice
+ * (one section at most). The heading and the chip of a section both read this entry.
+ *
+ * The ORDER below is the default one, arranged so that no two neighbouring sections share a
+ * colour. An order 白い熊 has dragged is stored and is never touched by a change here.
+ */
+const OWN_SECTIONS = {
+  backup: { titleKey: 'SKUI.Backup.Export / Import', icon: 'file-export', color: 'reach' },
+  sync: { titleKey: 'SKUI.Sync.Section', icon: 'exchange-alt', color: 'reach' },
+  download: { titleKey: 'SKUI.Download.Section', icon: 'download', color: 'base' },
+  account: { titleKey: 'SKUI.Account.Section', icon: 'cookie-bite', color: 'base' },
+  subscriptions: { titleKey: 'SKUI.Subscriptions.Section', icon: 'rss', color: 'base' },
+  tabs: { titleKey: 'SKUI.Tabs.Section', icon: 'table-columns', color: 'frame' },
+  similar: { titleKey: 'SKUI.Similar.Section', icon: 'seedling', color: 'base' },
+  diagnostics: { titleKey: 'SKUI.Diag.Section', icon: 'gauge', color: 'warning' },
+  maintenance: { titleKey: 'SKUI.Maintenance.Section', icon: 'rotate-left', color: 'warning' },
+}
+
+const DEFAULT_SECTION_ORDER = [
+  'backup', // reach
+  'account', // base
+  'sync', // reach
+  'download', // base
+  'tabs', // frame
+  'subscriptions', // base
+  'theme-Buttons', // controls
+  'similar', // base
+  'theme-Typography', // words
+  'theme-Foundation', // base
+  'theme-Text', // words
+  'theme-Top bar', // frame
+  'theme-Switches', // controls
+  'theme-Side nav', // frame
+  'theme-Fields', // words
+  'theme-Dialogs', // reach
+  'theme-Marks', // controls
+  'theme-Menus', // reach
+  'theme-Lists', // frame
+  'theme-Toasts', // flash
+  'theme-Cards & links', // frame
+  'theme-Player', // base
+  'theme-Shape & lines', // frame
+  'diagnostics', // warning
+  'theme-Roles', // base
+  'maintenance', // warning
+]
+
+const pageSections = computed(() => {
+  const registry = new Map()
+
+  for (const [key, section] of Object.entries(OWN_SECTIONS)) {
+    if (key === 'backup' && !IS_ANDROID) { continue }
+    // eslint-disable-next-line @intlify/vue-i18n/no-dynamic-keys
+    registry.set(key, { key, title: t(section.titleKey), icon: section.icon, color: section.color })
+  }
+
+  for (const section of SKUI_SECTIONS) {
+    registry.set(`theme-${section.key}`, {
+      key: `theme-${section.key}`,
+      // eslint-disable-next-line @intlify/vue-i18n/no-dynamic-keys
+      title: t(`SKUI.Sections.${section.key}`),
+      icon: section.icon,
+      color: section.section
+    })
+  }
+
+  const ordered = DEFAULT_SECTION_ORDER.filter(key => registry.has(key)).map(key => registry.get(key))
+  // a section added to the table without a place in the order still shows, at the end
+  const rest = [...registry.values()].filter(section => !DEFAULT_SECTION_ORDER.includes(section.key))
+
+  return [...ordered, ...rest]
+})
 
 const pageLayout = provideSkuiPageLayout(pageSections)
 
@@ -1449,6 +1537,19 @@ function resetColor(slotKey) {
   const next = { ...theme.value, colors: { ...themeColors.value } }
   delete next.colors[slotKey]
   pushTheme(next, true)
+}
+
+// Maintenance › Reset all colours: every role back to its default (fonts and shapes stay)
+const showResetColorsPrompt = ref(false)
+const resetColorsPromptNames = computed(() => [t('SKUI.Maintenance.Reset all colours'), t('Cancel')])
+
+/** @param {'reset' | 'cancel' | null} option */
+function handleResetColorsPrompt(option) {
+  showResetColorsPrompt.value = false
+
+  if (option === 'reset') {
+    pushTheme({ ...theme.value, colors: {} }, true)
+  }
 }
 
 function addRecentColor(color) {

@@ -260,22 +260,25 @@
   flex: none;
   padding-block: 5px;
   padding-inline: 12px;
-  border: 0;
-  border-radius: 14px;
-  background-color: var(--secondary-card-bg-color);
-  color: var(--primary-text-color);
+  border: 1.25px solid var(--skui-button-frame);
+  border-radius: 100px;
+  background-color: transparent;
+  color: var(--skui-button-text);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
 }
 
+/* the panel's main action: a pill is never filled — 3 px and bold instead */
 .createButton {
-  background-color: var(--primary-color);
-  color: var(--text-with-main-color);
+  border-color: var(--skui-button-main-frame);
+  border-width: 3px;
+  color: var(--skui-button-main-text);
+  font-weight: 700;
 }
 
 .clearButton:disabled,
 .footerButton:disabled {
-  opacity: 0.45;
+  opacity: 0.38;
   cursor: default;
 }

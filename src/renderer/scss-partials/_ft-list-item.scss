@@ -144,13 +144,13 @@ $grid-mode-grab-bar-padding: 1em;
 
     .starredBadge {
       place-self: flex-end start;
-      color: #fc0;
+      color: var(--skui-tile-star);
       font-size: 16px;
       line-height: 1;
       margin-block: 0 6px;
       margin-inline: 6px 0;
       pointer-events: none;
-      filter: drop-shadow(0 0 2px rgb(0 0 0 / 70%));
+      filter: drop-shadow(0 0 2px var(--skui-tile-badge-ground));
 
       @include is-watch-playlist-item {
         font-size: 12px;

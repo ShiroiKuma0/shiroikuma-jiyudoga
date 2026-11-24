@@ -9,19 +9,19 @@
     <!-- 白い熊 自由動画 icon: black card, the three "F" parts outlined in yellow -->
     <g transform="translate(36 36) scale(2)">
       <path
-        style="fill:#000000"
+        style="fill:var(--skui-top-bar-bg)"
         d="M8.2 4A4.19 4.19 0 0 0 4 8.2v47.6A4.19 4.19 0 0 0 8.2 60h35C52.507 60 60 52.507 60 43.2v-35A4.19 4.19 0 0 0 55.8 4h-35z"
       />
       <path
-        style="fill:#000000;stroke:#ffff00;stroke-width:2"
+        style="fill:var(--skui-top-bar-bg);stroke:var(--skui-top-bar-text);stroke-width:2"
         d="M14.75 12C13.226 12 12 13.274 12 14.857v30C12 49.143 17.5 52 20.25 52H23V14.857C23 13.274 21.773 12 20.25 12z"
       />
       <path
-        style="fill:#000000;stroke:#ffff00;stroke-width:2"
+        style="fill:var(--skui-top-bar-bg);stroke:var(--skui-top-bar-text);stroke-width:2"
         d="M26 20.25c0 1.523 1.268 2.75 2.842 2.75h17.053C50.158 23 53 17.5 53 14.75V12H28.842C27.268 12 26 13.226 26 14.75z"
       />
       <path
-        style="fill:#000000;stroke:#ffff00;stroke-width:2"
+        style="fill:var(--skui-top-bar-bg);stroke:var(--skui-top-bar-text);stroke-width:2"
         d="M27.321 26A1.291 1.141 0 0 0 26 27.143V41.86a1.291 1.141 0 0 0 1.936.986l7.21-3.679 7.21-3.68a1.291 1.141 0 0 0 0-1.976l-7.21-3.679-7.21-3.68a1.291 1.141 0 0 0-.615-.153z"
       />
     </g>

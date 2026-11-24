@@ -1,13 +1,13 @@
 <template>
   <button
     class="btn ripple"
-    :class="{ pill: inPrompt, pillMain: inPrompt && main }"
-    :data-settings-search-label="label"
-    :style="inPrompt ? pillStyle : {
-      color: textColor,
-      backgroundColor: backgroundColor,
-      borderColor: backgroundColor
+    :class="{
+      pill: true,
+      pillMain: isMain,
+      pillDanger: isDanger,
+      pillDialog: inPrompt
     }"
+    :data-settings-search-label="label"
     @click="click"
   >
     <slot>
@@ -51,25 +51,17 @@ const props = defineProps({
 })
 
 /**
- * Inside a dialog (FtPrompt) every button is an outlined pill, never filled (black-yellow-theme,
- * "Pills"): the accent frame and label over the dialog's own background. A button that asked for
- * a colour of its own — the destructive red above all — lends it to the frame and the label.
+ * Every button is an outlined pill, never filled (black-yellow-theme, "Pills"): frame and label
+ * over the ground behind it, all three from the Buttons roles (the Dialogs roles inside an
+ * FtPrompt) — see skui-theme.css. The colours upstream passes in are read only for what they
+ * MEAN: its destructive red makes the pill a red-framed one, and the fill it reserves for the
+ * one emphasised action of a block (`--primary-color`) makes the pill the main one, 3 px and
+ * bold. Every other button is a regular 1.25 px pill, the bare-text ones included.
  */
 const inPrompt = inject(PROMPT_PILLS, false)
 
-const pillStyle = computed(() => {
-  const own = props.backgroundColor
-
-  if (own === 'var(--destructive-color)') {
-    return { color: 'var(--skui-warn, var(--destructive-color))', borderColor: 'var(--skui-warn, var(--destructive-color))' }
-  }
-
-  if (own && own !== 'var(--accent-color)') {
-    return { color: own, borderColor: own }
-  }
-
-  return { color: 'var(--primary-text-color)', borderColor: 'var(--primary-color)' }
-})
+const isDanger = computed(() => props.backgroundColor === 'var(--destructive-color)')
+const isMain = computed(() => props.main || (!inPrompt && props.backgroundColor === 'var(--primary-color)'))
 
 const emit = defineEmits(['click'])
 

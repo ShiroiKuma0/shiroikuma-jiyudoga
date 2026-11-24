@@ -7,6 +7,8 @@ import { showExternalPlayerUnsupportedActionToast, showToast } from './helpers/u
 import { library } from './fontawesome-minimal'
 // import the styles
 import '@fortawesome/fontawesome-svg-core/styles.css'
+// 白い熊 自由動画: the black-yellow look of every stock widget, drawn from the theme's roles
+import './skui-theme.css'
 
 import { register as registerSwiper } from 'swiper/element'
 

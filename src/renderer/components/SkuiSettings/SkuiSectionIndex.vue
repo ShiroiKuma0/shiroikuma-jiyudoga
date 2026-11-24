@@ -1,6 +1,8 @@
 <!--
   The jump index on top of the 白い熊 UI settings page (black-yellow-theme, "Long settings
-  pages"): a wrapping grid of small outlined chips, one per section, in the page's order.
+  pages"): a wrapping flow of small outlined chips, one per section, in the page's order. Each
+  chip carries its section's icon in the section's colour at the left of its label, and is
+  exactly as wide as its content — variable length, never a uniform width (白い熊, 2026-11-23).
   A TAP unfolds that section and scrolls to it; a LONG-PRESS lifts the chip into a drag: a
   copy follows the finger and the chips reorder LIVE under it (白い熊, 2026-11-19 — reordering
   only on drop is not enough); the sections below follow on the drop.
@@ -25,7 +27,12 @@
       @contextmenu.prevent
       @keydown.enter.prevent="jump(section.key)"
     >
-      {{ section.title }}
+      <FontAwesomeIcon
+        :icon="['fas', section.icon]"
+        class="skuiIndexIcon"
+        :class="`skuiSectionColor-${section.color}`"
+      />
+      <span class="skuiIndexLabel">{{ section.title }}</span>
     </button>
   </div>
   <Teleport to="body">
@@ -40,13 +47,19 @@
       }"
       aria-hidden="true"
     >
-      {{ ghost.title }}
+      <FontAwesomeIcon
+        :icon="['fas', ghost.icon]"
+        class="skuiIndexIcon"
+        :class="`skuiSectionColor-${ghost.color}`"
+      />
+      <span class="skuiIndexLabel">{{ ghost.title }}</span>
     </div>
   </Teleport>
 </template>
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useSkuiPageLayout } from '../../helpers/skuiPageLayout'
 
 const LONG_PRESS_MS = 450
@@ -69,6 +82,8 @@ let pressStart = null
 let pressKey = null
 let grabOffset = null
 let moved = false
+/** the chip the last live swap pushed aside — see onPointerMove */
+let lastDisplacedKey = null
 
 /** @param {string} key */
 async function jump(key) {
@@ -126,7 +141,9 @@ function lift(chip, key) {
   dragKey.value = key
   preview.value = layout.ordered.value.slice()
   ghost.value = {
-    title: chip.textContent.trim(),
+    title: layout.meta(key).title,
+    icon: layout.meta(key).icon,
+    color: layout.meta(key).color,
     x: rect.left,
     y: rect.top,
     width: rect.width,
@@ -160,7 +177,18 @@ function onPointerMove(event) {
   const target = targetIndex(event.clientX, event.clientY)
   const from = preview.value.findIndex(section => section.key === dragKey.value)
 
-  if (target === null || target === from) return
+  if (target === null || target === from) {
+    // over a gap or the dragged chip's own slot: whatever was displaced last may be taken again
+    lastDisplacedKey = null
+    return
+  }
+
+  // The chips are of different lengths, so after a swap the chip that was just displaced can
+  // land under the finger again and would swap straight back, flapping on every move. It is
+  // skipped until the finger has left it.
+  const displacedKey = preview.value[target].key
+  if (displacedKey === lastDisplacedKey) return
+  lastDisplacedKey = displacedKey
 
   const next = preview.value.slice()
   const [dragged] = next.splice(from, 1)
@@ -170,7 +198,7 @@ function onPointerMove(event) {
 
 /**
  * The slot the finger is over, in the current (live) order: the chip whose box holds the point
- * takes the dragged one's place — the grid's cells are all one size, so this never flip-flops.
+ * takes the dragged one's place (onPointerMove guards the swap against flapping).
  * Past the last chip (to its right on the last row, or below the grid) means the end; over a gap
  * between chips means "stay".
  * @param {number} x
@@ -217,6 +245,7 @@ function cancel() {
 }
 
 function reset() {
+  lastDisplacedKey = null
   if (pressTimer !== null) {
     clearTimeout(pressTimer)
     pressTimer = null
@@ -237,26 +266,32 @@ onBeforeUnmount(reset)
 
 <style scoped>
 .skuiIndex {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  grid-template-columns: repeat(auto-fill, minmax(9.5em, 1fr));
   margin-block: 0.4em 0.6em;
   margin-inline: 1em;
   order: 0;
 }
 
 .skuiIndexChip {
+  align-items: center;
   background: none;
-  border: 1.25px solid var(--primary-color);
+  border: 1.25px solid var(--skui-button-frame);
   border-radius: 100px;
-  color: var(--primary-text-color);
+  color: var(--skui-button-text);
   cursor: pointer;
+  display: inline-flex;
+
+  /* as wide as its icon, its label and its padding — never stretched, never a fixed width */
+  flex: 0 0 auto;
   font: inherit;
   font-size: 0.85em;
+  gap: 0.45em;
+  max-inline-size: 100%;
   overflow: hidden;
   padding-block: 4px;
   padding-inline: 0.8em;
-  text-overflow: ellipsis;
   /* a long press must lift the chip, not scroll the page or select its text */
   touch-action: none;
   user-select: none;
@@ -265,7 +300,18 @@ onBeforeUnmount(reset)
 
 .skuiIndexChip:hover,
 .skuiIndexChip:focus-visible {
-  background-color: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  background-color: var(--skui-menu-hover);
+}
+
+/* the section's icon, sized by the chip's label */
+.skuiIndexIcon {
+  flex: 0 0 auto;
+  font-size: 1.25em;
+}
+
+.skuiIndexLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* the dragged chip's place in the flow while it is lifted: a hollow dashed slot */
@@ -274,12 +320,16 @@ onBeforeUnmount(reset)
   color: transparent;
 }
 
+.skuiIndexChipSlot .skuiIndexIcon {
+  visibility: hidden;
+}
+
 /* lifted: the copy under the finger is the one heavy thing on the grid */
 .skuiIndexGhost {
   align-items: center;
-  background-color: var(--card-bg-color, var(--bg-color));
+  background-color: var(--skui-button-ground);
   border-width: 3px;
-  box-shadow: 0 4px 14px rgb(0 0 0 / 60%);
+  box-shadow: 0 4px 14px var(--skui-dialog-scrim);
   box-sizing: border-box;
   cursor: grabbing;
   display: flex;
@@ -290,4 +340,13 @@ onBeforeUnmount(reset)
   position: fixed;
   z-index: 300;
 }
+
+/* the seven section-icon colours — settable roles (helpers/skui.js, "Section icons") */
+.skuiSectionColor-base { color: var(--skui-section-base); }
+.skuiSectionColor-controls { color: var(--skui-section-controls); }
+.skuiSectionColor-words { color: var(--skui-section-words); }
+.skuiSectionColor-frame { color: var(--skui-section-frame); }
+.skuiSectionColor-reach { color: var(--skui-section-reach); }
+.skuiSectionColor-warning { color: var(--skui-section-warning); }
+.skuiSectionColor-flash { color: var(--skui-section-flash); }
 </style>

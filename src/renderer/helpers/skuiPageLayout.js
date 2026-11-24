@@ -23,8 +23,10 @@ function parseKeys(json) {
 
 /**
  * Called once by the page.
- * @param {import('vue').ComputedRef<{ key: string, title: string }[]>} sections in their
- *   default order, only the ones this platform shows
+ * @param {import('vue').ComputedRef<{ key: string, title: string, icon: string, color: string }[]>} sections
+ *   in their default order, only the ones this platform shows. `icon` and `color` are the
+ *   section's icon and which of the seven section colours it is drawn in — kept here, next to
+ *   the title, so the heading and the chip of a section cannot drift apart.
  */
 export function provideSkuiPageLayout(sections) {
   const storedOrder = computed(() => parseKeys(store.getters.getSkuiUiSectionOrder))
@@ -47,8 +49,13 @@ export function provideSkuiPageLayout(sections) {
 
   const positions = computed(() => new Map(ordered.value.map((section, index) => [section.key, index])))
 
+  const byKey = computed(() => new Map(sections.value.map(section => [section.key, section])))
+
   const layout = {
     ordered,
+
+    /** @param {string} key the section's registry entry: title, icon, colour */
+    meta: key => byKey.value.get(key),
 
     /** @param {string} key */
     orderOf: key => (positions.value.get(key) ?? 0) + 1,

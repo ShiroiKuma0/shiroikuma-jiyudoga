@@ -80,7 +80,7 @@
             :checked="isChecked(category)"
             @change="toggleCategory(category, $event.target.checked)"
           >
-          <span>{{ category.label }}</span>
+          <span>{{ categoryLabel(category) }}</span>
         </label>
 
         <hr class="skuiPanelRule">
@@ -104,7 +104,7 @@
             {{ $t('SKUI.Backup.Import') }}
           </button>
           <button
-            class="skuiPill"
+            class="skuiPill skuiPillMain"
             type="button"
             :disabled="busy"
             @click="startExport"
@@ -132,7 +132,7 @@
           <div class="skuiInfoActions">
             <button
               v-if="info.kind === 'imported'"
-              class="skuiPill"
+              class="skuiPill skuiPillMain"
               type="button"
               @click="acknowledgeInfo"
             >
@@ -140,7 +140,7 @@
             </button>
             <button
               v-if="info.kind === 'imported'"
-              class="skuiPill"
+              class="skuiPill skuiPillMain"
               type="button"
               @click="restartApp"
             >
@@ -168,7 +168,7 @@ import android from 'android'
 
 import { awaitAsyncResult } from '../../helpers/android/jsinterface'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 /**
  * `close` — dismiss the panel only (a failure leaves everything else standing).
@@ -178,6 +178,19 @@ const emit = defineEmits(['close', 'closeChain'])
 
 /** @type {import('vue').Ref<{ id: string, label: string, parent: string | null, leaf: boolean }[]>} */
 const categories = ref([])
+
+/**
+ * The Kotlin core names its categories in English — that label is also what the automation
+ * contract's LIST_CATEGORIES reports — so the panel translates by category id, and falls back
+ * to the core's own label for a category it does not know yet.
+ * @param {{ id: string, label: string }} category
+ */
+function categoryLabel(category) {
+  const key = `SKUI.Backup.Categories.${category.id.replaceAll('.', '-')}`
+
+  // eslint-disable-next-line @intlify/vue-i18n/no-dynamic-keys
+  return te(key) ? t(key) : category.label
+}
 const selected = ref(new Set())
 
 /** @type {import('vue').Ref<{ tree: string, path: string, name: string } | null>} */

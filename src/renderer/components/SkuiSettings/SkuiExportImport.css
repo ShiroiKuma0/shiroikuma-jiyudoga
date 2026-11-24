@@ -9,7 +9,7 @@
 .skuiOverlay {
   position: fixed;
   inset: 0;
-  background-color: rgb(0 0 0 / 70%);
+  background-color: var(--skui-dialog-scrim);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -23,10 +23,10 @@
 .skuiPanel {
   /* --skui-warn comes from the theme (Roles › Warning), set on body by applySkuiTheme */
   background-color: var(--bg-color);
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--skui-dialog-frame);
   border-radius: 16px;
   box-sizing: border-box;
-  color: var(--primary-text-color);
+  color: var(--skui-dialog-text);
   margin-inline: auto;
   max-block-size: 100%;
   max-inline-size: 40em;
@@ -37,7 +37,7 @@
 }
 
 .skuiPanelTitle {
-  color: var(--primary-color);
+  color: var(--skui-dialog-title);
   font-size: 1.15em;
   font-weight: 700;
   margin-block: 2px 6px;
@@ -55,7 +55,7 @@
 /* the directory box: small label over the bold value, warn-red when unset */
 .skuiDirBox {
   background: none;
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--skui-dialog-frame);
   border-radius: 10px;
   color: inherit;
   cursor: pointer;
@@ -69,7 +69,7 @@
 }
 
 .skuiDirLabel {
-  color: var(--primary-color);
+  color: var(--skui-dialog-title);
   display: block;
   font-size: 0.78em;
 }
@@ -97,11 +97,11 @@
 }
 
 .skuiOk {
-  color: var(--primary-color);
+  color: var(--skui-dialog-title);
 }
 
 .skuiPanelRule {
-  background-color: var(--primary-color);
+  background-color: var(--skui-divider);
   block-size: 1px;
   border: 0;
   margin-block: 8px 4px;
@@ -118,7 +118,7 @@
 }
 
 .skuiCheck input {
-  accent-color: var(--primary-color);
+  accent-color: var(--skui-check-on);
   block-size: 1.05em;
   flex: 0 0 auto;
   inline-size: 1.05em;
@@ -146,15 +146,21 @@
 
 /* ArcaneChat-style dialog action: a round-pill outline button */
 .skuiPill {
-  background-color: var(--bg-color);
-  border: 1.5px solid var(--primary-color);
+  background-color: var(--skui-dialog-ground);
+  border: 1.25px solid var(--skui-dialog-button-frame);
   border-radius: 100px;
-  color: var(--primary-color);
+  color: var(--skui-dialog-button-text);
   cursor: pointer;
   font: inherit;
   padding-block: 10px;
   padding-inline: 20px;
   white-space: nowrap;
+}
+
+/* the main action of the panel or dialog: heavier, never filled */
+.skuiPillMain {
+  border-width: 3px;
+  font-weight: 700;
 }
 
 .skuiPill:disabled {
@@ -168,7 +174,7 @@
   position: fixed;
   inset: 0;
   align-items: center;
-  background-color: rgb(0 0 0 / 70%);
+  background-color: var(--skui-dialog-scrim);
   display: flex;
   justify-content: center;
   padding: 12px;
@@ -177,7 +183,7 @@
 
 .skuiInfoBox {
   background-color: var(--bg-color);
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--skui-dialog-frame);
   border-radius: 16px;
   box-sizing: border-box;
   max-block-size: 100%;
@@ -189,14 +195,14 @@
 }
 
 .skuiInfoTitle {
-  color: var(--primary-color);
+  color: var(--skui-dialog-title);
   font-size: 1.1em;
   font-weight: 700;
   margin: 0;
 }
 
 .skuiInfoBody {
-  color: var(--primary-color);
+  color: var(--skui-dialog-title);
   font-size: 0.9em;
   margin-block: 10px 0;
   margin-inline: 0;

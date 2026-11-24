@@ -151,5 +151,5 @@
 }
 
 .starVideoIcon.starred :deep(.iconButton) {
-  color: #fc0;
+  color: var(--skui-tile-star);
 }

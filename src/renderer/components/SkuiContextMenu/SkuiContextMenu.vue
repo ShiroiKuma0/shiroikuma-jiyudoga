@@ -27,7 +27,10 @@
           @keydown.enter.prevent="run(entry)"
           @keydown.space.prevent="run(entry)"
         >
-          {{ entry.label }}
+          <SkuiMenuRow
+            :label="entry.label"
+            :item-key="entry.action"
+          />
         </li>
       </template>
     </ul>
@@ -39,6 +42,7 @@ import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import store from '../../store/index'
+import SkuiMenuRow from '../SkuiMenuRow.vue'
 import { closeContextMenu, contextMenuState } from '../../helpers/skuiContextMenu'
 import { externalUrlForTarget } from '../../helpers/skuiLinkTargets'
 import { openTab } from '../../helpers/skuiTabs'

@@ -8,6 +8,7 @@
       <FontAwesomeIcon
         :icon="['fas', icon]"
         class="skuiRowIcon"
+        :class="`skuiRole-${tint}`"
       />
       <span class="skuiRowLabel">{{ label }}</span>
       <span
@@ -94,6 +95,11 @@ const props = defineProps({
   icon: {
     type: String,
     default: 'palette'
+  },
+  /** the icon role the row's icon is coloured by: what the role is about */
+  tint: {
+    type: String,
+    default: 'view'
   },
   label: {
     type: String,

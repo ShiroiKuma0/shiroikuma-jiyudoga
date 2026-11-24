@@ -1,6 +1,8 @@
 <!--
   One section of the 白い熊 UI settings page: the settled heading (bold, underlined accent) with
-  › folded / ⌄ open at the right, a tap on it folds or unfolds the rows. The line above stays
+  its icon at the left — the same glyph and the same one of the seven section colours as the
+  section's chip, both read from the page's section registry — and › folded / ⌄ open at the
+  right; a tap on it folds or unfolds the rows. The line above stays
   in both states — folding hides a section's rows, never its header or that line.
 -->
 <template>
@@ -19,6 +21,12 @@
       :aria-expanded="open"
       @click="layout.toggle(sectionKey)"
     >
+      <FontAwesomeIcon
+        v-if="meta"
+        :icon="['fas', meta.icon]"
+        class="skuiSectionIcon"
+        :class="`skuiSectionColor-${meta.color}`"
+      />
       <h4 class="skuiSectionTitle">
         {{ title }}
       </h4>
@@ -36,6 +44,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useSkuiPageLayout } from '../../helpers/skuiPageLayout'
 
 const props = defineProps({
@@ -52,6 +61,7 @@ const props = defineProps({
 const layout = useSkuiPageLayout()
 
 const open = computed(() => layout.isOpen(props.sectionKey))
+const meta = computed(() => layout.meta(props.sectionKey))
 </script>
 
 <style scoped src="./SkuiSettings.css" />

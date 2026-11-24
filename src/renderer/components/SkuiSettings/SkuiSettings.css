@@ -52,6 +52,22 @@
   text-align: start;
 }
 
+/* the section's icon: 1.25 × the heading's text (which is 1.25 em), never under 18 px */
+.skuiSectionIcon {
+  flex: 0 0 auto;
+  font-size: max(1.5625em, 18px);
+  margin-inline: 1em 0.5em;
+}
+
+/* the seven section-icon colours — settable roles (helpers/skui.js, "Section icons") */
+.skuiSectionColor-base { color: var(--skui-section-base); }
+.skuiSectionColor-controls { color: var(--skui-section-controls); }
+.skuiSectionColor-words { color: var(--skui-section-words); }
+.skuiSectionColor-frame { color: var(--skui-section-frame); }
+.skuiSectionColor-reach { color: var(--skui-section-reach); }
+.skuiSectionColor-warning { color: var(--skui-section-warning); }
+.skuiSectionColor-flash { color: var(--skui-section-flash); }
+
 .skuiFoldMark {
   color: var(--primary-color);
   font-size: 1.4em;
@@ -74,7 +90,7 @@
   font-size: 1.25em;
   font-weight: 700;
   margin-block: 0.5em 0.25em;
-  margin-inline-start: 1em;
+  margin-inline-start: 0;
   padding-block-end: 2px;
 }
 
@@ -124,10 +140,13 @@
   padding-inline-start: 10px;
 }
 
-/* every row's icon, coloured by what the row does; one column, so the labels share an edge */
+/* every row's icon, coloured by what the row does, and sized by the row's label: 1.25 × its
+   text, never under 18 px. The gutter grows with it — the row is a flex line, so the label
+   moves right by what the icon gained. */
 .skuiRowIcon {
   flex: 0 0 auto;
-  inline-size: 1.15em;
+  font-size: max(1.25em, 18px);
+  inline-size: 1em;
   text-align: center;
 }
 
@@ -174,9 +193,9 @@
 
 .skuiEntryAction {
   background: none;
-  border: 1.25px solid var(--primary-color);
+  border: 1.25px solid var(--skui-button-frame);
   border-radius: 100px;
-  color: var(--primary-color);
+  color: var(--skui-button-text);
   cursor: pointer;
   flex: 0 0 auto;
   font: inherit;
@@ -206,10 +225,10 @@
   align-items: center;
   gap: 0.6em;
   background: none;
-  border: 1.25px solid var(--primary-color);
+  border: 1.25px solid var(--skui-button-frame);
   border-radius: 100px;
   box-sizing: border-box;
-  color: var(--primary-text-color);
+  color: var(--skui-button-text);
   cursor: pointer;
   font: inherit;
   max-inline-size: 100%;
@@ -220,8 +239,8 @@
 
 /* a destructive action lends the warning colour to frame and label — still unfilled */
 .skuiPillDanger {
-  border-color: var(--skui-warn);
-  color: var(--skui-warn);
+  border-color: var(--skui-button-danger);
+  color: var(--skui-button-danger);
 }
 
 .skuiPill:disabled,
@@ -232,12 +251,19 @@
 
 .skuiPill:hover,
 .skuiPill:focus-visible {
-  background-color: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  background-color: var(--skui-menu-hover);
 }
 
 .skuiPillMain {
+  border-color: var(--skui-button-main-frame);
   border-width: 3px;
+  color: var(--skui-button-main-text);
   font-weight: 700;
+}
+
+.skuiPillMain.skuiPillDanger {
+  border-color: var(--skui-button-danger);
+  color: var(--skui-button-danger);
 }
 
 .skuiPillLabel {
@@ -247,16 +273,17 @@
 
 .skuiPillOpens::after {
   content: '›';
-  color: var(--primary-color);
+  color: inherit;
   flex: 0 0 auto;
   font-size: 1.3em;
   line-height: 1;
 }
 
-/* aligned with the label inside the pill: padding + frame + the icon column and its gap */
+/* aligned with the label inside the pill: padding + frame + the icon and its gap. The icon is
+   sized by the label (max(1.25em, 18px) of the PAGE's em); this text is 0.82 of that em. */
 .skuiPillSummary {
   margin-block-start: 0.2em;
-  padding-inline-start: calc(1em + 3px + 1.15em + 0.6em);
+  padding-inline-start: calc(1.6em / 0.82 + 3px + max(1.25em / 0.82, 18px));
 }
 
 /*
@@ -272,28 +299,28 @@
 /* free-text setting (the download filename template) — full width under its
    label rather than squeezed onto the row, since templates are long */
 .skuiEntryInput {
-  background-color: var(--card-bg-color);
-  border: 1px solid var(--primary-color);
+  background-color: var(--skui-field-ground);
+  border: 1px solid var(--skui-field-frame);
   border-radius: 6px;
   box-sizing: border-box;
-  color: var(--primary-text-color);
+  color: var(--skui-field-text);
   display: block;
   font-family: monospace;
   font-size: 0.85em;
 
-  /* under its row's label text: indent 2em + rule room 12px + icon 1.15em + gap 0.6em, in the
-     page's em (this field's own font is 0.85 of it) */
-  inline-size: calc(100% - 6.25em / 0.85 - 12px);
-  margin-inline-start: calc(3.75em / 0.85 + 12px);
+  /* under its row's label text: indent 2em + rule room 12px + the icon (max(1.25em, 18px)) +
+     its gap 0.6em, in the page's em (this field's own font is 0.85 of it) */
+  inline-size: calc(100% - 5.1em / 0.85 - 12px - max(1.25em / 0.85, 18px));
+  margin-inline-start: calc(2.6em / 0.85 + 12px + max(1.25em / 0.85, 18px));
   padding-block: 0.4em;
   padding-inline: 0.6em;
 }
 
 .skuiEntryNumber {
-  background-color: var(--card-bg-color);
-  border: 1px solid var(--primary-color);
+  background-color: var(--skui-field-ground);
+  border: 1px solid var(--skui-field-frame);
   border-radius: 6px;
-  color: var(--primary-text-color);
+  color: var(--skui-field-text);
   flex: 0 0 auto;
   font: inherit;
   font-size: 0.85em;
@@ -306,10 +333,10 @@
 /* a setting with two or three named answers -- worn like the number field, so a row
    reads the same whichever kind of control ends it */
 .skuiEntrySelect {
-  background-color: var(--card-bg-color);
-  border: 1px solid var(--primary-color);
+  background-color: var(--skui-field-ground);
+  border: 1px solid var(--skui-field-frame);
   border-radius: 6px;
-  color: var(--primary-text-color);
+  color: var(--skui-select-text);
   cursor: pointer;
   flex: 0 0 auto;
   font: inherit;
@@ -321,36 +348,36 @@
 
 /*
  * The switch is an OUTLINED pill with a solid dot — right and accent when on, left and the
- * opaque darker yellow (Roles › Switch, off) when off; never filled, not even when on
+ * opaque darker yellow (Switches › Off) when off; never filled, not even when on
  * (black-yellow-theme, "Switches"). Drawn on the checkbox itself, so every row keeps its
  * <input type="checkbox"> and its label.
  */
 .skuiEntrySwitch {
   appearance: none;
   background-color: transparent;
-  background-image: radial-gradient(circle, var(--skui-switch-off) 0 5.5px, transparent 6px);
-  background-position: left 1px center;
+  background-image: radial-gradient(circle, var(--skui-switch-off) 0 6.5px, transparent 7px);
+  background-position: left 2px center;
   background-repeat: no-repeat;
   background-size: 20px 20px;
-  block-size: 24px;
+  block-size: 28px;
   border: 2px solid var(--skui-switch-off);
   border-radius: 100px;
   box-sizing: border-box;
   cursor: pointer;
   flex: 0 0 auto;
-  inline-size: 44px;
+  inline-size: 52px;
   margin: 0;
   transition: background-position 180ms cubic-bezier(0, 0, 0.2, 1), border-color 180ms;
 }
 
 .skuiEntrySwitch:checked {
-  background-image: radial-gradient(circle, var(--primary-color) 0 5.5px, transparent 6px);
-  background-position: right 1px center;
-  border-color: var(--primary-color);
+  background-image: radial-gradient(circle, var(--skui-switch-on) 0 6.5px, transparent 7px);
+  background-position: right 2px center;
+  border-color: var(--skui-switch-on);
 }
 
 .skuiEntrySwitch:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--skui-focus-ring);
   outline-offset: 2px;
 }
 

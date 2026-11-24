@@ -54,13 +54,23 @@
               :class="{
                 listItemDivider: option.type === 'divider',
                 listItem: option.type !== 'divider',
+                skuiMenuRow: option.type !== 'divider' && !isChoiceList,
                 active: option.active
               }"
               @click="handleDropdownClick(option.value)"
               @keydown.enter="handleDropdownClick(option.value)"
               @keydown.space="handleDropdownClick(option.value)"
             >
-              {{ option.type === 'divider' ? '' : option.label }}
+              <template v-if="option.type !== 'divider'">
+                <template v-if="isChoiceList">
+                  {{ option.label }}
+                </template>
+                <SkuiMenuRow
+                  v-else
+                  :label="option.label"
+                  :item-key="option.value"
+                />
+              </template>
             </li>
           </ul>
         </slot>
@@ -95,19 +105,29 @@
               :class="{
                 listItemDivider: option.type === 'divider',
                 listItem: option.type !== 'divider',
+                skuiMenuRow: option.type !== 'divider' && !isChoiceList,
                 active: option.active
               }"
               @click="handleDropdownClick(option.value)"
               @keydown.enter="handleDropdownClick(option.value)"
               @keydown.space="handleDropdownClick(option.value)"
             >
-              <div class="checkmarkColumn">
-                <FontAwesomeIcon
-                  v-if="option.active"
-                  :icon="['fas', 'check']"
+              <template v-if="option.type !== 'divider'">
+                <template v-if="isChoiceList">
+                  <div class="checkmarkColumn">
+                    <FontAwesomeIcon
+                      v-if="option.active"
+                      :icon="['fas', 'check']"
+                    />
+                  </div>
+                  {{ option.label }}
+                </template>
+                <SkuiMenuRow
+                  v-else
+                  :label="option.label"
+                  :item-key="option.value"
                 />
-              </div>
-              {{ option.type === 'divider' ? '' : option.label }}
+              </template>
             </li>
           </ul>
         </slot>
@@ -121,6 +141,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, useTemplateRef } from 'vue'
 
 import FtPrompt from '../FtPrompt/FtPrompt.vue'
+import SkuiMenuRow from '../SkuiMenuRow.vue'
 
 const props = defineProps({
   title: {
@@ -190,6 +211,13 @@ const id = useId()
 
 const dropdownShown = ref(false)
 const useModal = ref(false)
+
+/**
+ * A menu whose options carry an `active` flag is a pure choice list (the format picker, the
+ * navigation history) and keeps its check-mark rows; every other one is an action menu, and its
+ * rows are full-width icon pills (black-yellow-theme, "Menus").
+ */
+const isChoiceList = computed(() => props.dropdownOptions.some(option => option.active !== undefined))
 
 let blockLeftClick = false
 let longPressTimer = null

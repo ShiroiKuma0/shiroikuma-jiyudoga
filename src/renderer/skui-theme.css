@@ -1,0 +1,702 @@
+/*
+ * 白い熊 自由動画 — the black-yellow look of every stock widget (black-yellow-theme skill).
+ *
+ * THE MIXED WAY (白い熊, 2026-11-23). This fork merges upstream's tip, so upstream's stylesheets
+ * are not edited for colour: they keep naming their own variables, which helpers/skui.js feeds
+ * from roles. What upstream wrote as a literal, or drew as a filled Material widget, is redrawn
+ * HERE, in one global sheet, from the same roles — every `--skui-*` variable is one settable role
+ * of the UI page (helpers/skui.js, SKUI_SECTIONS), set on body by applySkuiTheme.
+ *
+ * No colour is written in this file. `!important` is how a global rule reaches a widget whose
+ * own rules are scoped (a scoped selector outweighs a global one of the same shape), so it is
+ * the rule here rather than the exception.
+ */
+/* stylelint-disable declaration-no-important, selector-class-pattern, no-descending-specificity, selector-max-compound-selectors, selector-no-qualifying-type, max-nesting-depth, a11y/no-outline-none, property-no-vendor-prefix, selector-max-id */
+
+/* ── Text ───────────────────────────────────────────────────────────────────────────────── */
+
+::selection {
+  background-color: var(--skui-selection-bg);
+  color: var(--skui-selection-text);
+}
+
+:focus-visible {
+  outline-color: var(--skui-focus-ring);
+}
+
+/* ── Buttons: every one an outlined pill, never filled ──────────────────────────────────── */
+
+.btn.pill {
+  background-color: var(--skui-button-ground) !important;
+  border-color: var(--skui-button-frame) !important;
+  color: var(--skui-button-text) !important;
+}
+
+.btn.pill.pillMain {
+  border-color: var(--skui-button-main-frame) !important;
+  color: var(--skui-button-main-text) !important;
+}
+
+.btn.pill.pillDialog {
+  background-color: var(--skui-dialog-ground) !important;
+  border-color: var(--skui-dialog-button-frame) !important;
+  color: var(--skui-dialog-button-text) !important;
+}
+
+/* a deleting button lends its red to frame and label, still unfilled */
+.btn.pill.pillDanger {
+  border-color: var(--skui-button-danger) !important;
+  color: var(--skui-button-danger) !important;
+}
+
+.btn.ripple::after {
+  background-image: radial-gradient(circle, var(--skui-button-ripple) 10%, transparent 10.01%) !important;
+}
+
+/* the subscribe button and its profile toggle: one pill in two halves */
+.ftSubscribeButton .buttonList {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.ftSubscribeButton .buttonList .subscribeButton.hasProfileDropdownToggle.btn {
+  border: 3px solid var(--skui-button-main-frame) !important;
+  border-inline-end-width: 1.25px !important;
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+.ftSubscribeButton .buttonList .profileDropdownToggle.btn {
+  border: 3px solid var(--skui-button-main-frame) !important;
+  border-inline-start-width: 0 !important;
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+}
+
+.ftSubscribeButton .profile.subscribed {
+  background-color: var(--skui-menu-hover) !important;
+}
+
+.ftSubscribeButton .profile.subscribed .profileName {
+  color: var(--skui-menu-label) !important;
+  font-weight: 700;
+}
+
+/* glyph-only buttons stay glyphs — but none of them is a filled disc */
+.iconButton,
+.iconButton.base,
+.iconButton.primary,
+.iconButton.secondary {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--skui-icon-button-glyph) !important;
+}
+
+.iconButton.destructive {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--skui-icon-button-danger) !important;
+}
+
+.iconButton.favorite,
+.starVideoIcon.starred .iconButton {
+  color: var(--skui-tile-star) !important;
+}
+
+.iconButton:not(.disabled):hover,
+.iconButton:not(.disabled):focus-visible,
+.iconButton:not(.disabled).pressed,
+.iconButton:not(.disabled).active {
+  background-color: var(--skui-icon-button-hover) !important;
+}
+
+/* ── Dialogs ────────────────────────────────────────────────────────────────────────────── */
+
+.prompt {
+  background-color: var(--skui-dialog-scrim) !important;
+}
+
+.promptCard {
+  background-color: var(--skui-dialog-ground) !important;
+  border: 2px solid var(--skui-dialog-frame) !important;
+  box-sizing: border-box;
+  color: var(--skui-dialog-text) !important;
+}
+
+.promptCard h2,
+.promptCard h3,
+.promptCard .center strong {
+  color: var(--skui-dialog-title) !important;
+}
+
+.promptCard p,
+.promptCard label,
+.promptCard li {
+  color: var(--skui-dialog-text);
+}
+
+/* ── Switches: an outlined pill with a solid dot, never filled ──────────────────────────── */
+
+.switch-ctn .switch-label {
+  color: var(--skui-switch-label);
+  padding-inline-start: 62px !important;
+}
+
+.switch-ctn .switch-input {
+  block-size: 28px !important;
+  inline-size: 52px !important;
+  inset-block-start: 50% !important;
+  inset-inline-start: 0 !important;
+}
+
+.switch-ctn .switch-label::before {
+  background-color: transparent !important;
+  block-size: 24px !important;
+  border: 2px solid var(--skui-switch-off) !important;
+  border-radius: 100px !important;
+  inline-size: 48px !important;
+  inset-inline-start: 0 !important;
+}
+
+.switch-ctn .switch-label::after {
+  background-color: var(--skui-switch-off) !important;
+  block-size: 13px !important;
+  box-shadow: none !important;
+  inline-size: 13px !important;
+  inset-inline-start: 7px !important;
+  transition: transform 180ms ease-out, background-color 180ms ease-out !important;
+}
+
+.switch-ctn .switch-input:checked + .switch-label::before {
+  background-color: transparent !important;
+  border-color: var(--skui-switch-on) !important;
+}
+
+.switch-ctn .switch-input:checked + .switch-label::after {
+  background-color: var(--skui-switch-on) !important;
+  transform: translate(calc(25px * var(--horizontal-directionality-coefficient)), -50%) !important;
+}
+
+.switch-ctn .switch-input:disabled + .switch-label::before,
+.switch-ctn .switch-input:disabled + .switch-label::after {
+  opacity: 0.38;
+}
+
+/* ── Selection marks: check boxes and radio buttons stay marks, in their own roles ──────── */
+
+.checkbox + .label,
+.radio + .label {
+  color: var(--skui-check-label);
+}
+
+.checkbox + .label::before {
+  border-color: var(--skui-check-off) !important;
+  color: var(--skui-check-on) !important;
+}
+
+.checkbox:checked + .label::before,
+.checkbox:focus + .label::before,
+.checkbox:hover + .label::before {
+  border-color: var(--skui-check-on) !important;
+}
+
+.checkbox + .label::after {
+  border-color: var(--skui-check-on) !important;
+}
+
+.radio + .label::before {
+  border-color: var(--skui-radio-off) !important;
+}
+
+.radio:checked + .label::before,
+.radio:focus + .label::before,
+.radio:hover + .label::before {
+  border-color: var(--skui-radio-on) !important;
+}
+
+.radio + .label::after {
+  background-color: var(--skui-radio-on) !important;
+}
+
+.checkbox:disabled + .label::before,
+.radio:disabled + .label::before {
+  background-color: transparent !important;
+  opacity: 0.38;
+}
+
+/* ── Fields, pickers, sliders ───────────────────────────────────────────────────────────── */
+
+.ft-input-component .ft-input {
+  background-color: var(--skui-field-ground) !important;
+  border: 1px solid var(--skui-field-frame) !important;
+  color: var(--skui-field-text) !important;
+}
+
+.ft-input-component .ft-input::placeholder {
+  color: var(--skui-field-placeholder) !important;
+}
+
+.ft-input-component .clearInputTextButton,
+.ft-input-component .inputAction,
+.ft-input-component.search .ft-input,
+.ft-input-component.search .clearInputTextButton,
+.ft-input-component.search .inputAction {
+  color: var(--skui-field-text) !important;
+}
+
+.ft-input-component .list {
+  background-color: var(--skui-menu-ground) !important;
+  border: 2px solid var(--skui-menu-frame) !important;
+  box-shadow: none !important;
+  color: var(--skui-menu-label) !important;
+}
+
+.ft-input-component .list .hover {
+  background-color: var(--skui-menu-hover) !important;
+  color: var(--skui-menu-label) !important;
+}
+
+.searchContainer .ft-input-component .ft-input {
+  background-color: var(--skui-search-fill) !important;
+  border-color: var(--skui-search-border) !important;
+  color: var(--skui-search-text) !important;
+}
+
+.select .select-text {
+  background-color: var(--skui-select-ground) !important;
+  border: 1px solid var(--skui-select-frame) !important;
+  color: var(--skui-select-text) !important;
+}
+
+.select option {
+  background-color: var(--skui-select-ground) !important;
+  color: var(--skui-select-text) !important;
+}
+
+.select .select-label {
+  color: var(--skui-select-text) !important;
+}
+
+.select .select-down-icon {
+  color: var(--skui-select-frame) !important;
+}
+
+.select .select-bar::before,
+.select .select-bar::after {
+  background: var(--skui-select-frame) !important;
+}
+
+.pure-material-slider {
+  color: var(--skui-switch-label) !important;
+}
+
+.pure-material-slider .input::-webkit-slider-runnable-track {
+  background-color: var(--skui-slider-track) !important;
+}
+
+.pure-material-slider .input::-webkit-slider-thumb {
+  background-color: var(--skui-slider-thumb) !important;
+  box-shadow: none !important;
+  color: var(--skui-slider-thumb) !important;
+}
+
+.pure-material-slider .input::-moz-range-track {
+  background-color: var(--skui-slider-track) !important;
+}
+
+.pure-material-slider .input::-moz-range-thumb,
+.pure-material-slider .input::-moz-range-progress {
+  background-color: var(--skui-slider-thumb) !important;
+  box-shadow: none !important;
+}
+
+input[type='range'] {
+  accent-color: var(--skui-slider-thumb);
+}
+
+.ft-input-tags-component .ft-tag-box li {
+  background-color: var(--skui-field-ground) !important;
+  border: 1px solid var(--skui-field-frame);
+  color: var(--skui-field-text) !important;
+}
+
+.ft-input-tags-component .disabledMsg {
+  color: var(--skui-note) !important;
+}
+
+/* ── Menus ──────────────────────────────────────────────────────────────────────────────── */
+
+.iconDropdown,
+.skuiContextMenu,
+.profileDropdown,
+.profileList,
+.moreOptionContainer {
+  background-color: var(--skui-menu-ground) !important;
+  border: 2px solid var(--skui-menu-frame) !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  color: var(--skui-menu-label) !important;
+}
+
+/* the fork's own floating panels wear the same frame as a menu */
+.skuiFeedFilter .filterPanel,
+.skuiGridControls .panel {
+  border: 2px solid var(--skui-menu-frame) !important;
+  box-sizing: border-box;
+}
+
+/* an action row: the pill is the touch target, so the row itself neither pads wide nor lights up */
+.iconDropdown .listItem.skuiMenuRow,
+.promptCard .listItem.skuiMenuRow,
+.skuiContextMenu .listItem {
+  background-color: transparent !important;
+  display: block !important;
+  overflow: visible !important;
+  padding-block: 3px !important;
+  padding-inline: 8px !important;
+}
+
+.skuiMenuPill {
+  align-items: center;
+  border: 1.25px solid var(--skui-menu-row-frame);
+  border-radius: 100px;
+  box-sizing: border-box;
+  color: var(--skui-menu-label);
+  display: flex;
+  gap: 10px;
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding-block: 5px;
+  padding-inline: 14px;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+  white-space: nowrap;
+}
+
+.listItem:hover > .skuiMenuPill,
+.listItem:focus-visible > .skuiMenuPill,
+.listItem:active > .skuiMenuPill {
+  background-color: var(--skui-menu-hover);
+}
+
+.skuiMenuPillDanger {
+  border-color: var(--skui-role-delete);
+  color: var(--skui-role-delete);
+}
+
+.skuiMenuIcon {
+  flex: 0 0 auto;
+  inline-size: 1.15em;
+}
+
+.skuiMenuLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skuiMenuOpens {
+  flex: 0 0 auto;
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+.skuiMenuOpens::after {
+  content: '›';
+}
+
+/* a pure choice list keeps plain rows with its check mark */
+.iconDropdown .listItem:not(.skuiMenuRow) {
+  color: var(--skui-menu-label) !important;
+}
+
+.iconDropdown .listItem:not(.skuiMenuRow):hover,
+.iconDropdown .listItem:not(.skuiMenuRow):focus-visible,
+.iconDropdown .listItem:not(.skuiMenuRow).active,
+.profileDropdown .profile:hover,
+.profileList .profile:hover {
+  background-color: var(--skui-menu-hover) !important;
+  color: var(--skui-menu-label) !important;
+}
+
+/* group dividers: a clear 1 px darker-accent line, its ends on the pill edges */
+.iconDropdown .listItemDivider,
+.promptCard .listItemDivider,
+.skuiContextMenu .listItemDivider {
+  border-block-start: 1px solid var(--skui-menu-divider) !important;
+  inline-size: auto !important;
+  margin-block: 4px !important;
+  margin-inline: 8px !important;
+  opacity: 1 !important;
+}
+
+/* the icon role colours, wherever a row names one */
+.skuiRole-connect { color: var(--skui-role-connect); }
+.skuiRole-message { color: var(--skui-role-message); }
+.skuiRole-contact { color: var(--skui-role-contact); }
+.skuiRole-share { color: var(--skui-role-share); }
+.skuiRole-view { color: var(--skui-role-view); }
+.skuiRole-block { color: var(--skui-role-block); }
+.skuiRole-delete { color: var(--skui-role-delete); }
+
+/* ── Navigation: the side nav and the settings menu, icons coloured by what the row opens ── */
+
+.sideNav .navLabel {
+  color: var(--skui-side-nav-text);
+}
+
+.sideNav .navIcon {
+  color: var(--skui-role-view);
+}
+
+/* people and channels */
+.navOption[href$='/subscriptions'] .navIcon,
+.navOption[href$='/subscribedchannels'] .navIcon {
+  color: var(--skui-role-contact) !important;
+}
+
+/* feeds fetched from the network */
+.navOption[href$='/trending'] .navIcon,
+.navOption[href$='/popular'] .navIcon {
+  color: var(--skui-role-connect) !important;
+}
+
+/* what was kept */
+.navOption[href$='/userplaylists'] .navIcon {
+  color: var(--skui-role-share) !important;
+}
+
+.navOption[href$='/history'] .navIcon {
+  color: var(--skui-role-message) !important;
+}
+
+.sideNav hr {
+  background-color: var(--skui-list-divider) !important;
+}
+
+.settingsMenu {
+  background-color: var(--skui-menu-ground) !important;
+  border: 2px solid var(--skui-menu-frame) !important;
+  box-sizing: border-box;
+}
+
+.settingsMenu .title {
+  color: var(--skui-menu-label) !important;
+}
+
+.settingsMenu .headingIcon,
+.settingsMenu .titleIcon {
+  color: var(--skui-role-view);
+}
+
+.settingsMenu .title[data-section='subscription'] .titleIcon {
+  color: var(--skui-role-contact);
+}
+
+.settingsMenu .title[data-section='proxy'] .titleIcon,
+.settingsMenu .title[data-section='player'] .titleIcon {
+  color: var(--skui-role-connect);
+}
+
+.settingsMenu .title[data-section='data'] .titleIcon,
+.settingsMenu .title[data-section='external-player'] .titleIcon {
+  color: var(--skui-role-share);
+}
+
+.settingsMenu .title[data-section='distraction'] .titleIcon,
+.settingsMenu .title[data-section='privacy'] .titleIcon,
+.settingsMenu .title[data-section='parental-control'] .titleIcon,
+.settingsMenu .title[data-section='sponsor-block'] .titleIcon,
+.settingsMenu .title[data-section='password'] .titleIcon {
+  color: var(--skui-role-block);
+}
+
+.settingsMenu .title[data-section='experimental'] .titleIcon {
+  color: var(--skui-role-delete);
+}
+
+.settingsMenu .title[data-section='theme'] .titleIcon,
+.settingsMenu .title[data-section='general'] .titleIcon {
+  color: var(--skui-role-message);
+}
+
+/* ── Bars ───────────────────────────────────────────────────────────────────────────────── */
+
+.topNav {
+  background-color: var(--skui-top-bar-bg) !important;
+  box-shadow: 0 1px 0 0 var(--skui-list-divider) !important;
+}
+
+.topNav .navIcon,
+.topNav .navFilterIcon {
+  color: var(--skui-top-bar-text) !important;
+}
+
+.sideNav {
+  box-shadow: 1px 0 0 0 var(--skui-list-divider) !important;
+}
+
+/* ── Lists and tiles ────────────────────────────────────────────────────────────────────── */
+
+.ft-list-item .title,
+.ft-list-item .title a {
+  color: var(--skui-tile-title);
+}
+
+.ft-list-item .infoLine,
+.ft-list-item .channelName,
+.ft-list-item .description {
+  color: var(--skui-tile-info);
+}
+
+.ft-list-item .videoDuration,
+.ft-list-item .videoWatched,
+.ft-list-item .videoCountContainer {
+  background-color: var(--skui-tile-badge-ground) !important;
+  color: var(--skui-tile-badge-text) !important;
+}
+
+.ft-list-item .watchedProgressBar,
+.progressBar {
+  background-color: var(--skui-tile-progress) !important;
+}
+
+/* ── Toasts, tooltips, banners ──────────────────────────────────────────────────────────── */
+
+.toast-holder .toast {
+  background-color: var(--skui-toast-ground) !important;
+  border: 2px solid var(--skui-toast-frame) !important;
+  box-sizing: border-box;
+  color: var(--skui-toast-text) !important;
+}
+
+.tooltip .text,
+.skuiTitleTooltip {
+  background-color: var(--skui-tooltip-ground) !important;
+  border: 2px solid var(--skui-tooltip-frame) !important;
+  box-sizing: border-box;
+  color: var(--skui-tooltip-text) !important;
+}
+
+/* a banner is a notice, not a slab: framed, the ground showing through */
+.ftNotificationBanner {
+  background-color: var(--skui-toast-ground) !important;
+  border: 2px solid var(--skui-toast-frame) !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  color: var(--skui-toast-text) !important;
+}
+
+.proxy-warning {
+  background-color: transparent !important;
+  border: 2px solid var(--skui-warning) !important;
+  color: var(--skui-warning) !important;
+}
+
+/* ── The player's own menus (shaka): pill rows, role-coloured icons ─────────────────────── */
+
+.shaka-video-container .shaka-settings-menu,
+.shaka-video-container .shaka-overflow-menu {
+  background: var(--skui-player-menu-ground) !important;
+  border: 2px solid var(--skui-player-menu-frame) !important;
+  border-radius: 16px !important;
+  box-sizing: border-box;
+  color: var(--skui-player-menu-text) !important;
+  padding-block: 4px !important;
+}
+
+.shaka-video-container .shaka-settings-menu button,
+.shaka-video-container .shaka-overflow-menu button {
+  background: transparent !important;
+  border: 1.25px solid var(--skui-player-menu-frame) !important;
+  border-radius: 100px !important;
+  box-sizing: border-box;
+  color: var(--skui-player-menu-text) !important;
+  inline-size: calc(100% - 16px) !important;
+  margin-block: 3px !important;
+  margin-inline: 8px !important;
+  min-block-size: 32px !important;
+  padding-block: 2px !important;
+  padding-inline: 12px !important;
+}
+
+.shaka-video-container .shaka-settings-menu button:hover,
+.shaka-video-container .shaka-overflow-menu button:hover,
+.shaka-video-container .shaka-settings-menu button:focus-visible,
+.shaka-video-container .shaka-overflow-menu button:focus-visible {
+  background: var(--skui-menu-hover) !important;
+}
+
+.shaka-video-container .shaka-settings-menu button span,
+.shaka-video-container .shaka-overflow-menu button span,
+.shaka-video-container .shaka-settings-menu button label,
+.shaka-video-container .shaka-overflow-menu button label {
+  color: var(--skui-player-menu-text) !important;
+}
+
+.shaka-video-container .shaka-overflow-menu button .shaka-current-selection-span {
+  color: var(--skui-note) !important;
+}
+
+/* a submenu's first row is its way back and its title: plain, not a pill */
+.shaka-video-container .shaka-settings-menu .shaka-back-to-overflow-button {
+  border-color: transparent !important;
+  border-block-end: 1px solid var(--skui-menu-divider) !important;
+  border-radius: 0 !important;
+  font-weight: 700;
+}
+
+/* the row that is chosen in a submenu */
+.shaka-video-container .shaka-settings-menu button[aria-selected='true'] {
+  border-width: 3px !important;
+  font-weight: 700;
+}
+
+.shaka-video-container .shaka-overflow-menu button .material-svg-icon,
+.shaka-video-container .shaka-settings-menu button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu button .material-icons-round,
+.shaka-video-container .shaka-settings-menu button .material-icons-round {
+  color: var(--skui-role-view) !important;
+  fill: currentcolor !important;
+}
+
+/* words: captions, audio language */
+.shaka-video-container .shaka-overflow-menu .shaka-caption-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .shaka-language-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .audio-track-button .material-svg-icon {
+  color: var(--skui-role-message) !important;
+}
+
+/* hands the picture over: a screenshot, a cast, another window */
+.shaka-video-container .shaka-overflow-menu .screenshot-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .shaka-pip-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .shaka-cast-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .shaka-remote-button .material-svg-icon {
+  color: var(--skui-role-share) !important;
+}
+
+/* keeps going by itself: loop, autoplay, speed */
+.shaka-video-container .shaka-overflow-menu .shaka-loop-button .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .autoplay-toggle .material-svg-icon,
+.shaka-video-container .shaka-overflow-menu .shaka-playback-rate-button .material-svg-icon {
+  color: var(--skui-role-connect) !important;
+}
+
+.shaka-video-container .shaka-seek-bar-container {
+  accent-color: var(--skui-player-seek);
+}
+
+.shaka-video-container .shaka-controls-button-panel,
+.shaka-video-container .shaka-current-time {
+  color: var(--skui-player-overlay-text) !important;
+}
+
+/* the player's readouts: skipped-segment notes, the value-change bubble, the stats box */
+.ftVideoPlayer .skippedSegment,
+.ftVideoPlayer .valueChangePopup,
+.ftVideoPlayer .stats,
+.ftVideoPlayer .offlineWrapper {
+  background-color: var(--skui-player-overlay-ground) !important;
+  color: var(--skui-player-overlay-text) !important;
+}
